@@ -5,7 +5,6 @@
 #![feature(alloc)]
 #![feature(panic_info_message)]
 #![feature(concat_idents)]
-#![feature(integer_atomics)]
 #![feature(const_fn)]
 #![feature(core_panic_info)]
 #![feature(const_raw_ptr_deref)]
