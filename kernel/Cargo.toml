@@ -1,0 +1,20 @@
+[package]
+name = "resea-kernel"
+version = "0.0.0"
+authors = ["Seiya Nuta <nuta@seiya.me>"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
+path = "lib.rs"
+
+[profile.release]
+opt-level = "s"
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = false

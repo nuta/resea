@@ -1,0 +1,23 @@
+language: rust
+rust: nightly
+dist: xenial
+sudo: true
+os:
+  - linux
+  - macos
+
+env:
+  - RUST_BACKTRACE=1
+
+cache:
+  cargo: true
+
+notifications:
+  email: false
+
+install:
+  - make setup
+
+script:
+  - make
+  - make test

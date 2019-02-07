@@ -1,0 +1,5 @@
+colorama
+jinja2
+markdown2
+watchdog
+lark-parser

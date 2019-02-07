@@ -1,0 +1,11 @@
+[[package]]
+name = "memmgr"
+version = "0.0.1"
+dependencies = [
+ "resea 0.0.1",
+]
+
+[[package]]
+name = "resea"
+version = "0.0.1"
+

@@ -1,0 +1,2 @@
+[target.memmgr_x64.dependencies]
+alloc = {}

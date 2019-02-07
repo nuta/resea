@@ -1,0 +1,12 @@
+romimage: file=$BXSHARE/BIOS-bochs-latest
+config_interface: textconfig
+display_library: nogui
+# cpu: model=corei7_ivy_bridge_3770k, ips=50000000
+cpuid: xsave=1
+memory: guest=512, host=256
+com1: enabled=1, mode=file, dev=serial.log
+ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+ata0-slave: type=cdrom, path=resea.iso, status=inserted
+boot: cdrom
+magic_break: enabled=1
+debug_symbols: file=kernel.symbols
