@@ -1,0 +1,14 @@
+#!/bin/sh
+# Execute the LLVM Linker.
+
+case "$(uname)" in
+Darwin)
+    exec /usr/local/opt/llvm/bin/ld.lld $*
+    ;;
+Linux)
+    exec ld.lld-6.0 $*
+    ;;
+*)
+    echo "unsupported OS"
+    exit 1
+esac
