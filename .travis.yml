@@ -19,5 +19,4 @@ install:
   - make setup
 
 script:
-  - make
-  - make test
+  - make BUILD=release
