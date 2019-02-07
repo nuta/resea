@@ -1,10 +1,14 @@
 Resea
 ======
+[![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
+
 Resea is a new *pure* microkernel-based operating system featuring:
 
 - A straight-forward, flexible, and small microkernel.
 - Supports x86_64.
 - Written almost entirely in Rust.
+
+For more information read the **[Documentation](https://github.com/seiyanuta/resea/tree/master/docs).**
 
 ```sh
 make setup                # Install build prerequisites (LLVM, GNU Binutils, ...).
