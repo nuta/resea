@@ -12,7 +12,6 @@
 //! ```
 //!
 use crate::arch::StackFrame;
-use crate::printk;
 use crate::utils::LazyStatic;
 use core::mem::{self, size_of};
 use core::slice;
@@ -121,10 +120,10 @@ pub fn backtrace() {
     for i in 1..BACKTRACE_MAX {
         if let Some(return_addr) = unsafe { frame.return_addr() } {
             if let Some(sym) = find_symbol(return_addr) {
-                crate::printk!("    #{}: {:x} {}()+0x{:x}",
+                printk!("    #%d: %p %s()+%x",
                     i as u64, return_addr, sym.name, sym.offset as u64);
             } else {
-                crate::printk!("    #{}: {:x} (unknown)", i as u64, return_addr);
+                printk!("    #%d: %p (unknown)", i as u64, return_addr);
             }
         } else {
             // Invalid return address.
@@ -148,7 +147,7 @@ pub fn backtrace() {
         }
 
         if let Some(sym) = find_symbol(maybe_return_addr) {
-            crate::printk!("    ??: {}()+0x{:x}", sym.name, sym.offset as u64);
+            printk!("    ??: %s()+%x", sym.name, sym.offset as u64);
             remaining -= 1;
             if remaining == 0 {
                 break;
@@ -163,10 +162,9 @@ pub fn init() {
         core::slice::from_raw_parts(&__symbols as *const u8, 8)
     };
 
-    if magic == *b"SYMBOLS!" {
-        TABLE.init(Some(SymbolTable::new(unsafe { &__symbols as *const _ })));
-    } else {
-        printk!("failed to locate the symbol table");
-        TABLE.init(None);
+    if magic != *b"SYMBOLS!" {
+        panic!("failed to locate the symbol table");
     }
+
+    TABLE.init(Some(SymbolTable::new(unsafe { &__symbols as *const _ })));
 }

@@ -1,5 +1,5 @@
 use core::sync::atomic::{AtomicUsize, Ordering};
-use core::fmt;
+use crate::printk;
 
 #[repr(transparent)]
 pub struct Stat(AtomicUsize);
@@ -15,9 +15,9 @@ impl Stat {
     }
 }
 
-impl fmt::Display for Stat {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0.load(Ordering::Acquire))
+impl<'a> printk::Displayable<'a> for Stat {
+    fn display(&self) -> printk::Argument<'a> {
+        printk::Argument::Unsigned(self.0.load(Ordering::SeqCst))
     }
 }
 
@@ -38,20 +38,13 @@ pub static PAGE_FAULT_TOTAL: Stat = Stat::new();
 
 pub fn print() {
     printk!("kernel statistics --------------------------------");
-    printk!("ipc: total={}, send={}, recv={}, kcalls={}, errors={}",
+    printk!("ipc: total=%d, send=%d, recv=%d, kcalls=%d, errors=%d",
         IPC_TOTAL, IPC_SEND, IPC_RECV, IPC_KCALLS, IPC_ERRORS);
-    printk!("process: new={}",
-        PROCESS_NEW);
-    printk!("channel: new={}",
-        CHANNEL_NEW);
-    printk!("pid: allocs={}",
-        PID_ALLOCS);
-    printk!("thread: new={}, switches={}",
-        THREAD_NEW, THREAD_SWITCHES);
-    printk!("allocator: allocs={}, frees={}",
-        POOL_ALLOCS, POOL_FREES);
-    printk!("exception: pagefaults={}",
-        PAGE_FAULT_TOTAL);
-    printk!("timer: ticks={}",
-        TIMER_TICK);
+    printk!("process: new=%d", PROCESS_NEW);
+    printk!("channel: new=%d", CHANNEL_NEW);
+    printk!("pid: allocs=%d", PID_ALLOCS);
+    printk!("thread: new=%d, switches=%d", THREAD_NEW, THREAD_SWITCHES);
+    printk!("allocator: allocs=%d, frees=%d", POOL_ALLOCS, POOL_FREES);
+    printk!("exception: pagefaults=%d", PAGE_FAULT_TOTAL);
+    printk!("timer: ticks=%d", TIMER_TICK);
 }

@@ -11,6 +11,7 @@
 #![feature(const_raw_ptr_to_usize_cast)]
 #![feature(try_from)]
 #![feature(core_intrinsics)]
+#![feature(proc_macro_hygiene)]
 
 #[cfg(test)]
 #[macro_use]

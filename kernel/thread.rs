@@ -4,8 +4,8 @@ use crate::collections::{Link, List};
 use crate::process::{alloc_pid, Process, KERNEL_PROCESS};
 use crate::utils::{VAddr, LazyStatic};
 use crate::stats;
+use crate::printk;
 use core::cell::Cell;
-use core::fmt;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
@@ -21,9 +21,9 @@ impl TId {
     }
 }
 
-impl fmt::Display for TId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+impl<'a> printk::Displayable<'a> for TId {
+    fn display(&self) -> printk::Argument<'a> {
+        printk::Argument::Signed(self.0 as isize)
     }
 }
 

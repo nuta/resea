@@ -4,6 +4,7 @@ use crate::allocator::{Ref, Allocator, PAGE_POOL, OBJ_POOL};
 use crate::utils::{LazyStatic, compare_and_swap};
 use crate::arch::PAGE_SIZE;
 use crate::collections::List;
+use crate::printk;
 use crate::stats;
 use core::sync::atomic::{AtomicPtr, AtomicUsize};
 use core::mem::size_of;
@@ -22,6 +23,12 @@ impl CId {
 
     pub fn as_isize(&self) -> isize {
         self.0
+    }
+}
+
+impl<'a> printk::Displayable<'a> for CId {
+    fn display(&self) -> printk::Argument<'a> {
+        printk::Argument::Signed(self.0 as isize)
     }
 }
 

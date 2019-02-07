@@ -145,8 +145,7 @@ pub extern "C" fn ipc_handler(
         if let Some(ch) = proc.channels().get(header.channel()) {
             ch
         } else {
-            trace!("invalid channel: @{}.{}",
-                proc.pid(), header.channel().as_isize());
+            trace!("invalid channel: @%v.%v", proc.pid(), header.channel());
             stats::IPC_ERRORS.increment();
             return SyscallError::InvalidChannelId;
         }
@@ -168,7 +167,7 @@ pub extern "C" fn ipc_handler(
         stats::IPC_SEND.increment();
 
         if header.interface_id() != 4 {
-            trace!("send: @{}.{} -> @{}.{}, header: {:x}, m0: {:x}",
+            trace!("send: @%d.%d -> @%d.%d, header: %p, m0: %p",
                 proc.pid(),
                 header.channel().as_isize(),
                 dst.process().pid().as_isize(),
@@ -290,13 +289,13 @@ pub extern "C" fn open_handler() -> isize {
         SyscallError::InvalidChannelId as isize
     );
 
-    trace_user!("sys_open: created @{}", ch.cid().as_isize());
+    trace_user!("sys_open: created @%v", ch.cid());
     ch.cid().as_isize()
 }
 
 #[no_mangle]
 pub extern "C" fn link_handler(cid1: isize, cid2: isize) -> SyscallError {
-    trace_user!("entering sys_link({}, {})", cid1, cid2);
+    trace_user!("entering sys_link(%v, %v)", cid1, cid2);
 
     let proc = current().process();
     let table = proc.channels();
@@ -317,7 +316,7 @@ pub extern "C" fn link_handler(cid1: isize, cid2: isize) -> SyscallError {
 
 #[no_mangle]
 pub extern "C" fn transfer_handler(cid1: isize, cid2: isize) -> SyscallError {
-    trace_user!("entering sys_transfer({}, {})", cid1, cid2);
+    trace_user!("entering sys_transfer(%v, %v)", cid1, cid2);
 
     let proc = current().process();
     let table = proc.channels();

@@ -6,10 +6,10 @@ use crate::collections::{List, Link};
 use crate::thread::Thread;
 use crate::utils::LazyStatic;
 use crate::stats;
+use crate::printk;
 use core::sync::atomic::{AtomicIsize, Ordering};
-use core::fmt;
 
-#[derive(PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 #[repr(transparent)]
 pub struct PId(isize);
 
@@ -23,12 +23,11 @@ impl PId {
     }
 }
 
-impl fmt::Display for PId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+impl<'a> printk::Displayable<'a> for PId {
+    fn display(&self) -> printk::Argument<'a> {
+        printk::Argument::Signed(self.0 as isize)
     }
 }
-
 
 // The PID starts with 2. The ID 0 is reserved for the idle thread and 1 is for
 // the kernel process.
@@ -89,8 +88,8 @@ impl Process {
     }
 
     #[inline]
-    pub fn pid(&self) -> &PId {
-        &self.pid
+    pub fn pid(&self) -> PId {
+        self.pid
     }
 
     #[inline]
@@ -120,7 +119,7 @@ impl Process {
 static PROCESSES: LazyStatic<List<Ref<Process>>> = LazyStatic::new();
 pub fn get_process_by_pid(pid: &PId) -> Option<Ref<Process>> {
     for proc in PROCESSES.iter() {
-        if proc.pid() == pid {
+        if proc.pid() == *pid {
             return Some(proc.clone());
         }
     }

@@ -173,17 +173,17 @@ fn straight_mapping_pager(addr: VAddr) -> PAddr {
 
 pub fn page_fault_handler(addr: VAddr, requested: PageFaultFlags) {
     stats::PAGE_FAULT_TOTAL.increment();
-    printk!("page_fault_handler: addr={:x}", addr.as_usize());
+    printk!("page_fault_handler: addr=%p", addr.as_usize());
 
     if requested.caused_by_kernel() {
         // This will never occur. NEVER!
-        bug!("page fault in the kernel space");
+        panic!("page fault in the kernel space");
     }
 
     if requested.already_present() {
         // Invalid access. For instance the user thread has tried to write to
         // readonly area.
-        printk!("page fault: already present page access: addr={:x}", addr.as_usize());
+        printk!("page fault: already present page access: addr=%p", addr.as_usize());
         kill_current();
     }
 
@@ -196,7 +196,7 @@ pub fn page_fault_handler(addr: VAddr, requested: PageFaultFlags) {
     // Look for the associated vm area.
     let process = current().process();
     for area in process.vmareas() {
-        trace!("vmarea: base={:x}, len={:x}", area.addr.as_usize(), area.len);
+        trace!("vmarea: base=%p, len=%x", area.addr.as_usize(), area.len);
         if area.include_addr(aligned_vaddr) && area.allows_requested_flags(requested) {
             // This area includes `addr`, allows the requested access, and
             // the page does not yet exist in the page table. Looks a valid
@@ -221,7 +221,7 @@ pub fn page_fault_handler(addr: VAddr, requested: PageFaultFlags) {
 
     // No appropriate vm area. The user thread must have accessed unallocated
     // area (e.g. NULL pointer deference).
-    trace!("page fault: no appropriate vmarea: addr={:x}", addr.as_usize());
+    trace!("page fault: no appropriate vmarea: addr=%p", addr.as_usize());
     kill_current();
 }
 

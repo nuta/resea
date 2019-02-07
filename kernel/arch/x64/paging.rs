@@ -72,7 +72,7 @@ impl PageTable {
                 let mut offset: u64 = 0;
                 let mut paddr = paddr.as_usize() as u64;
                 while remaining > 0 && index < PAGE_ENTRY_NUM as isize {
-                    crate::printk!("link: {:x} -> {:x} (flags=0x{:x})", vaddr.as_usize() + offset as usize, paddr, attrs);
+                    printk!("link: %p -> %p (flags=0x%x)", vaddr.as_usize() + offset as usize, paddr, attrs);
                     table.offset(index).write(paddr | attrs);
                     asm::invlpg(vaddr.as_usize() as u64 + offset);
                     paddr += PAGE_SIZE as u64;

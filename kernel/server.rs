@@ -90,7 +90,7 @@ pub fn handle(header: Header, p0: Payload, p1: Payload, p2: Payload,
     p3: Payload, _p4: Payload, src: Ref<Channel>) ->Msg
 {
     if !header.send() || !header.recv() {
-//        trace_user!("kernel: invalid flags");
+        trace_user!("kernel: invalid flags");
         return error_message!(INVALID_MESSAGE);
     }
 
@@ -102,7 +102,7 @@ pub fn handle(header: Header, p0: Payload, p1: Payload, p2: Payload,
             builder.build()
         }
         CREATE_PROCESS_REQUEST => {
-//            trace_user!("kernel: create_process()");
+            trace_user!("kernel: create_process()");
             let proc = process::Process::new();
             let ch = unwrap_or_return!(proc.channels().alloc(),
                 error_message!(INVALID_MESSAGE));
@@ -110,7 +110,7 @@ pub fn handle(header: Header, p0: Payload, p1: Payload, p2: Payload,
                 error_message!(INVALID_MESSAGE));
             channel::link(ch, pager_ch);
 
-//            trace_user!("kernel: create_process_response(pid={})", proc.pid());
+            trace_user!("kernel: create_process_response(pid=%v)", proc.pid());
             let mut builder = MsgBuilder::new();
             builder
                 .id(CREATE_PROCESS_RESPONSE)
@@ -122,13 +122,13 @@ pub fn handle(header: Header, p0: Payload, p1: Payload, p2: Payload,
             let mut builder = MsgBuilder::new();
             let pid = process::PId::from_isize(p0 as isize);
             let start = VAddr::new(p1 as usize);
-//            trace_user!("kernel: spawn_thread(pid={}, start={:x})", pid, start.as_usize());
+            trace_user!("kernel: spawn_thread(pid=%v, start=%p)", pid, start.as_usize());
             if let Some(proc) = process::get_process_by_pid(&pid) {
                 let t = thread::Thread::new(proc, start, VAddr::new(0), 0);
                 t.set_state(thread::ThreadState::Runnable);
                 thread::enqueue(t);
 
-//                trace_user!("kernel: spawn_thread_response(tid={})", t.tid());
+                trace_user!("kernel: spawn_thread_response(tid=%v)", t.tid());
                 builder
                     .id(SPAWN_THREAD_RESPONSE)
                     .payload(0, PayloadType::Inline, t.tid().as_isize() as Payload);
@@ -144,12 +144,12 @@ pub fn handle(header: Header, p0: Payload, p1: Payload, p2: Payload,
             let mut flags = PageFlags::from_u8(p3 as u8);
             flags.set_user();
 
-//            trace_user!("kernel: add_pager(pid={}, start={:x}, len={:x})", pid, addr.as_usize(), len);
+            trace_user!("kernel: add_pager(pid=%v, start=%p, len=%p)", pid, addr.as_usize(), len);
             if let Some(proc) = process::get_process_by_pid(&pid) {
                 let pager = Pager::UserPager(src);
                 proc.add_vmarea(VmArea::new(addr, len, flags, pager));
 
-//                trace_user!("kernel: add_pager_response()");
+                trace_user!("kernel: add_pager_response()");
                 let mut builder = MsgBuilder::new();
                 builder.id(ADD_PAGER_RESPONSE);
                 builder.build()
@@ -158,14 +158,14 @@ pub fn handle(header: Header, p0: Payload, p1: Payload, p2: Payload,
             }
         }
         _ => {
-            // trace_user!("kernel: invalid ID: {:x}", header.msg_id());
+            trace_user!("kernel: invalid ID: %p", header.msg_id());
             error_message!(INVALID_MESSAGE)
         }
     }
 }
 
 pub fn user_pager(pager: &Ref<Channel>, addr: VAddr) -> PAddr {
-    trace_user!("user pager={}, addr={:x}", pager.cid().as_isize(), addr.as_usize());
+    trace_user!("user pager=%d, addr=%p", pager.cid().as_isize(), addr.as_usize());
     let mut builder = MsgBuilder::new();
     builder.id(FILL_PAGE_REQUEST);
     builder.flags(MSG_SEND | MSG_RECV);
@@ -175,7 +175,7 @@ pub fn user_pager(pager: &Ref<Channel>, addr: VAddr) -> PAddr {
     let m = builder.build();
 
     let r = kernel_ipc_call(m);
-    trace_user!("Ok, got a page addr={:x}", r.p0);
+    trace_user!("Ok, got a page addr=%p", r.p0);
     VAddr::new(r.p0 as usize).paddr()
 }
 

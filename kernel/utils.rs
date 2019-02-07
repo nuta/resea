@@ -251,7 +251,7 @@ impl<T> SpinLock<T> {
             }
 
             // FIXME: remove this or cfg(single_core)
-            crate::printk!("deadlock!");
+            oops!("deadlock!");
 
             pause();
         }

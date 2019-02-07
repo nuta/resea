@@ -57,8 +57,8 @@ unsafe fn calibrate_apic_timer() {
     let counts_per_sec =
         ((0xffff_ffff - APIC_REG_TIMER_CURRENT.read()) * freq as u32) << APIC_TIMER_DIV;
     APIC_REG_TIMER_INITCNT.write(counts_per_sec / TICK_HZ as u32);
-    crate::printk!(
-        "calibrated the APIC timer using PIT: {} counts/msec",
+    printk!(
+        "calibrated the APIC timer using PIT: %d counts/msec",
         counts_per_sec / 1000
     );
 }
