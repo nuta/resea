@@ -207,7 +207,7 @@ macro_rules! trace_user {
     ($fmt:expr, $($arg:expr), *) => {{
         use crate::printk::Displayable;
         crate::printk::do_printk(
-            concat!("#{}.{}: ", $fmt, "\n"),
+            concat!("#%v.%v: ", $fmt, "\n"),
             &[
                 crate::arch::current().process().pid().display(),
                 crate::arch::current().tid().display(),
