@@ -157,7 +157,7 @@ pub fn do_printk<'a>(fmt: &'static str, args: &[Argument<'a>]) {
     let mut args_iter = args.iter();
     loop {
         match (fmt_iter.next(), fmt_iter.peek()) {
-            (Some('$'), Some('$')) => arch::printchar('$'),
+            (Some('%'), Some('%')) => arch::printchar('%'),
             (Some('%'), Some(spec)) => {
                 let arg = args_iter.next().expect("too few arguments");
                 print_arg(arg, *spec);
