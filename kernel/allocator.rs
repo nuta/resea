@@ -5,6 +5,7 @@ use crate::arch::{
 use crate::utils::{FromVAddr, Pointer, VAddr};
 use crate::collections::{List, Link};
 use crate::stats;
+use crate::debug;
 use core::marker::PhantomData;
 use core::ops::Deref;
 use core::ptr::NonNull;
@@ -51,6 +52,8 @@ impl AllocationPool {
     }
 
     pub fn alloc(&self) -> Option<VAddr> {
+        debug::check_stack_canary();
+
         if let Some(elem) = self.free_list.pop_front() {
             stats::POOL_ALLOCS.increment();
             return Some(VAddr::from_ptr(elem.as_ptr()));

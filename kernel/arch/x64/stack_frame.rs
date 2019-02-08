@@ -49,3 +49,11 @@ impl StackFrame {
         }
     }
 }
+
+pub fn get_stack_pointer() -> usize {
+    unsafe {
+        let rsp: u64;
+        asm!("" : "={rsp}"(rsp));
+        rsp as usize
+    }
+}

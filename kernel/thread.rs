@@ -4,6 +4,7 @@ use crate::collections::{Link, List};
 use crate::process::{alloc_pid, Process, KERNEL_PROCESS};
 use crate::utils::{VAddr, LazyStatic};
 use crate::stats;
+use crate::debug;
 use crate::printk;
 use core::cell::Cell;
 
@@ -80,6 +81,7 @@ impl Thread {
         arg: usize,
     ) -> Ref<Thread> {
         let kernel_stack = KERNEL_STACK_POOL.alloc_or_panic();
+        debug::write_stack_canary(kernel_stack);
 
         let thread = THREAD_ALLOCATOR.alloc_init_or_panic(Thread {
             tid,
@@ -140,6 +142,8 @@ fn scheduler() -> Ref<Thread> {
 }
 
 pub fn do_switch(save_current: bool) {
+    debug::check_stack_canary();
+
     if current().state() == ThreadState::Runnable && RUN_QUEUE.len() == 0 {
         // No runnable threads other than the current one. Continue executing
         // the current thread.
@@ -156,6 +160,9 @@ pub fn do_switch(save_current: bool) {
 
     stats::THREAD_SWITCHES.increment();
     arch::switch(prev, next, save_current);
+
+    // Now we have returned from another threads.
+    debug::check_stack_canary();
 }
 
 /// Resumes another thread.

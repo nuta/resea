@@ -4,6 +4,7 @@ use crate::arch;
 use crate::thread::ThreadState;
 use crate::allocator::Ref;
 use crate::stats;
+use crate::debug;
 use crate::channel::{self, CId};
 use crate::utils::VAddr;
 use core::sync::atomic::Ordering;
@@ -135,6 +136,7 @@ pub extern "C" fn ipc_handler(
     m3: Payload,
     m4: Payload
 ) -> SyscallError {
+    debug::check_stack_canary();
     stats::IPC_TOTAL.increment();
 
     let header = Header::new(raw_header);
@@ -156,6 +158,10 @@ pub extern "C" fn ipc_handler(
         // Call the kernel server.
         stats::IPC_KCALLS.increment();
         let r = crate::server::handle(header, m0, m1, m2, m3, m4, src);
+
+        // The kernel server tends to consume too much stack.
+        debug::check_stack_canary();
+
         arch::return_from_kernel_server(r);
         return SyscallError::Ok;
     }
@@ -219,6 +225,8 @@ pub extern "C" fn ipc_handler(
             | (header.as_usize() & 0x3ff0000)
             | (header.msg_id() as usize)) as u64
         );
+
+        debug::check_stack_canary();
 
         arch::send(
             new_header.into(),

@@ -11,8 +11,8 @@
 //! }
 //! ```
 //!
-use crate::arch::StackFrame;
-use crate::utils::LazyStatic;
+use crate::arch::{StackFrame, get_stack_pointer, KERNEL_STACK_SIZE};
+use crate::utils::{LazyStatic, VAddr, align_down};
 use core::mem::{self, size_of};
 use core::slice;
 use core::str;
@@ -163,7 +163,36 @@ pub fn backtrace() {
     }
 }
 
+const STACK_CANARY: u32 = 0xdeadca71;
+
+/// Writes a kernel stack protection marker. The value `STACK_CANARY` is verified
+/// by calling check_stack_canary().
+///
+/// FIXME: `write' is not an appropriate verb. Canary is a bird!
+pub fn write_stack_canary(stack_bottom: VAddr) {
+    unsafe {
+        stack_bottom.as_ptr::<u32>().write(STACK_CANARY);
+    }
+}
+
+/// Each CPU have to call this function once during the boot.
+pub fn init_boot_stack_canary() {
+    let stack_bottom = align_down(get_stack_pointer(), KERNEL_STACK_SIZE);
+    write_stack_canary(VAddr::new(stack_bottom));
+}
+
+/// Verifies that stack canary is alive. If not so, register a complaint.
+pub fn check_stack_canary() {
+    let stack_bottom = align_down(get_stack_pointer(), KERNEL_STACK_SIZE);
+    let value = unsafe { VAddr::new(stack_bottom).as_ptr::<u32>().read() };
+    if value != STACK_CANARY {
+        panic!("The stack canary is no more! This is an ex-canary!");
+    }
+}
+
 pub fn init() {
+    init_boot_stack_canary();
+
     // Verify the magic.
     let magic = unsafe {
         core::slice::from_raw_parts(&__symbols as *const u8, 8)
