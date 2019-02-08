@@ -41,8 +41,9 @@ darwin_main() {
 
 ubuntu_main() {
     progress "Install apt packages"
-    run sudo apt install -y lld-6.0 clang python3 python3-pip binutils \
-        qemu-system-x86 grub-pc xorriso curl
+    run sudo apt update
+    run sudo apt install -y lld clang python3 python3-pip python3-setuptools \
+        binutils qemu-system-x86 grub-pc xorriso curl
 
     if ! rustup --version > /dev/null 2>&1; then
         progress "Install rustup"

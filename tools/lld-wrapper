@@ -6,7 +6,7 @@ Darwin)
     exec /usr/local/opt/llvm/bin/ld.lld $*
     ;;
 Linux)
-    exec ld.lld-6.0 $*
+    exec ld.lld-8 $*
     ;;
 *)
     echo "unsupported OS"

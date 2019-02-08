@@ -1,13 +1,30 @@
 language: rust
 rust: nightly
 dist: xenial
-sudo: true
+sudo: false
 os:
   - linux
-  - macos
+  - osx
 
 env:
   - RUST_BACKTRACE=1
+
+# Install clang, lld, and Python3.7 from PPA on Ubuntu 16.04 build.
+addons:
+  homebrew:
+    packages:
+      - binutils
+      - llvm
+  apt:
+    sources:
+      - deadsnakes
+      - llvm-toolchain-xenial-8
+    packages:
+      - python3.7
+      - python3.7-venv
+      - python3.7-dev
+      - lld-8
+      - clang-8
 
 cache:
   cargo: true
@@ -16,7 +33,7 @@ notifications:
   email: false
 
 install:
-  - make setup
+  - ./tools/ci/setup
 
 script:
-  - make BUILD=release
+  - ./tools/ci/script

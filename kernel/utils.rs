@@ -124,7 +124,9 @@ impl VAddr {
 
     #[inline]
     pub const fn from_ptr<T>(ptr: *const T) -> VAddr {
-        VAddr::new(ptr as usize)
+        unsafe {
+            VAddr::new(ptr as usize)
+        }
     }
 
     #[inline]

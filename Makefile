@@ -20,6 +20,7 @@ LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
 BINUTILS_PREFIX = /usr/local/opt/binutils/bin/g
 endif
 
+PYTHON3 ?= python3
 CC = $(LLVM_PREFIX)clang
 LD = $(LLVM_PREFIX)ld.lld
 NM = $(BINUTILS_PREFIX)nm
@@ -47,23 +48,23 @@ include kernel/arch/$(ARCH)/arch.mk
 build: kernel.elf
 
 setup:
-	./tools/setup
+	$(PYTHON3) ./tools/setup
 
 kernel.qemu.elf: kernel.elf
 	$(PROGRESS) TWEAK $@
 	cp kernel.elf $@
-	./tools/tweak-elf-for-qemu.py $@
+	$(PYTHON3) ./tools/tweak-elf-for-qemu.py $@
 	$(PROGRESS) QEMU $@
 
 run: kernel.qemu.elf
 	$(PROGRESS) QEMU kernel.qemu.elf
-	./tools/run-qemu.py -- $(QEMU) $(QEMUFLAGS) -kernel kernel.qemu.elf
+	$(PYTHON3) ./tools/run-qemu.py -- $(QEMU) $(QEMUFLAGS) -kernel kernel.qemu.elf
 
 test:
 	cargo test
 
 book:
-	./tools/gen-book.py docs kernel
+	$(PYTHON3) ./tools/gen-book.py docs kernel
 
 clean:
 	cd kernel && cargo clean
@@ -75,7 +76,7 @@ kernel.elf: $(objs)
 	$(LD) $(LDFLAGS) --script=$(ARCH_DIR)/$(ARCH).ld -o kernel.nosymbols.elf $(objs)
 	$(PROGRESS) "SYMBOLS" $@
 	cp kernel.nosymbols.elf kernel.nosymbols.elf.tmp
-	./tools/embed-symbols.py --nm $(NM) kernel.nosymbols.elf.tmp
+	$(PYTHON3) ./tools/embed-symbols.py --nm $(NM) kernel.nosymbols.elf.tmp
 	mv kernel.nosymbols.elf.tmp $@
 	rm kernel.nosymbols.elf
 	$(PROGRESS) "GEN" kernel.symbols
@@ -90,7 +91,7 @@ $(KERNEL_A): kernel/Cargo.toml initfs.bin Makefile
 
 initfs.bin: memmgr.bin initfs/startups/benchmark.elf
 	$(PROGRESS) "MKINITFS" initfs.bin
-	./tools/mkinitfs.py -s memmgr.bin -o $@ initfs
+	$(PYTHON3) ./tools/mkinitfs.py -s memmgr.bin -o $@ initfs
 
 %.o: %.S Makefile
 	$(PROGRESS) "CC" $@
@@ -103,7 +104,8 @@ memmgr.bin: $(BUILD_DIR)/memmgr/memmgr_$(ARCH)/$(BUILD)/memmgr
 idl_files := $(foreach name, $(IDLS), libs/resea/src/idl/$(name).rs)
 $(idl_files): libs/resea/src/idl/%.rs: idl/%.idl Makefile tools/idl.py
 	$(PROGRESS) "IDL" $@
-	./tools/idl.py -o $@ $<
+	mkdir -p libs/resea/src/idl
+	$(PYTHON3) ./tools/idl.py -o $@ $<
 
 libs/resea/src/idl/mod.rs: $(idl_files)
 	$(PROGRESS) "GEN" $@
@@ -129,6 +131,6 @@ initfs/startups/benchmark.elf: $(BUILD_DIR)/benchmark/user_$(ARCH)/$(BUILD)/benc
 	mkdir -p initfs/startups
 	cp $< $@
 
--include $(BUILD_DIR)/kernel/$(ARCH)/$(BUILD)/libresea_kernel.d
--include $(BUILD_DIR)/memmgr/memmgr_$(ARCH)/$(BUILD)/memmgr.d
--include $(BUILD_DIR)/benchmark/user_$(ARCH)/$(BUILD)/memmgr.d
+# -include $(BUILD_DIR)/kernel/$(ARCH)/$(BUILD)/libresea_kernel.d
+# -include $(BUILD_DIR)/memmgr/memmgr_$(ARCH)/$(BUILD)/memmgr.d
+# -include $(BUILD_DIR)/benchmark/user_$(ARCH)/$(BUILD)/benchmark.d
