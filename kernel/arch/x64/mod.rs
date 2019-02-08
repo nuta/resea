@@ -27,7 +27,7 @@ pub use self::cpu::{halt, cpu};
 pub use self::idle::idle;
 pub use self::paging::PageTable;
 pub use self::print::printchar;
-pub use self::stack_frame::StackFrame;
+pub use self::stack_frame::{StackFrame, get_stack_pointer};
 pub use self::thread::{current, set_current_thread, switch, ArchThread, send, overwrite_context};
 pub use self::send::return_from_kernel_server;
 pub const TICK_HZ: usize = 1000;
@@ -35,12 +35,15 @@ pub const PAGE_SIZE: usize = 0x1000;
 pub const KERNEL_BASE_ADDR: usize = 0xffff_8000_0000_0000;
 pub const CPU_VAR_ADDR: VAddr = VAddr::new(0xffff_8000_00b0_0000);
 pub const OBJ_POOL_ADDR: VAddr = VAddr::new(0xffff_8000_0100_0000);
-pub const OBJ_POOL_LEN: usize = 0x80_0000;
+pub const OBJ_POOL_LEN: usize = 0x40_0000;
+pub const KERNEL_STACK_POOL_ADDR: VAddr = VAddr::new(0xffff_8000_0140_0000);
+pub const KERNEL_STACK_POOL_LEN: usize = 0x40_0000;
 pub const PAGE_POOL_ADDR: VAddr = VAddr::new(0xffff_8000_0180_0000);
 pub const PAGE_POOL_LEN: usize = 0x80_0000;
 pub const INITFS_BASE: VAddr = VAddr::new(0x0010_0000);
 pub const INITFS_IMAGE_SIZE: usize = 0x0010_0000;
 pub const STRAIGHT_MAP_BASE: VAddr = VAddr::new(0x0200_0000);
+pub const KERNEL_STACK_SIZE: usize = 0x8000;
 
 /// boot.S calls this function.
 #[no_mangle]

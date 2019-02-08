@@ -1,7 +1,8 @@
+use super::KERNEL_STACK_SIZE;
 use super::asm;
 use super::gdt::{USER_CS64, USER_DS, USER_RPL};
 use super::PAGE_SIZE;
-use crate::allocator::{Ref, PAGE_POOL};
+use crate::allocator::Ref;
 use crate::process::Process;
 use crate::ipc::Payload;
 use crate::thread::Thread;
@@ -18,7 +19,7 @@ pub struct ArchThread {
     //  as well!
     rip: u64,           // 0
     rsp: u64,           // 8
-    rsp0: u64,          // 16: rsp0 == kstack + (size of stack)
+    rsp0: u64,          // 16: rsp0 == kernel_stack + (size of stack)
     channel_table: u64, // 24
     cr3: u64,           // 32
     rflags: u64,        // 40
@@ -28,19 +29,16 @@ pub struct ArchThread {
     r14: u64,           // 72
     r15: u64,           // 80
     rbx: u64,           // 88
-    kstack: VAddr,
 }
 
 impl ArchThread {
-    pub fn new(process: Ref<Process>, start: VAddr, stack: VAddr, arg: usize) -> ArchThread {
-        let kstack = PAGE_POOL.alloc_or_panic();
-
+    pub fn new(process: Ref<Process>, start: VAddr, stack: VAddr, kernel_stack: VAddr, arg: usize) -> ArchThread {
         // Temporarily use the kernel stack to pass `start` and `arg` to
         // `enter_userspace`.
         let initial_rsp: *mut u64;
         unsafe {
-            initial_rsp = kstack
-                    .add(PAGE_SIZE * 8 /* FIXME */)
+            initial_rsp = kernel_stack
+                    .add(KERNEL_STACK_SIZE)
                     .sub(size_of::<u64>() * 6)
                     .as_ptr();
 
@@ -67,7 +65,7 @@ impl ArchThread {
 
         ArchThread {
             rip: enter_userspace as *const () as u64,
-            rsp0: kstack.add(PAGE_SIZE * 8 /* FIXME */).as_usize() as u64,
+            rsp0: kernel_stack.add(PAGE_SIZE * 8 /* FIXME */).as_usize() as u64,
             rsp: initial_rsp as u64,
             cr3: process.page_table().pml4().paddr_as_usize() as u64,
             channel_table: 0, // TODO:
@@ -78,7 +76,6 @@ impl ArchThread {
             r14: 0,
             r15: 0,
             rbx: 0,
-            kstack,
         }
     }
 }

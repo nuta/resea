@@ -1,4 +1,7 @@
-use crate::arch::{OBJ_POOL_ADDR, OBJ_POOL_LEN, PAGE_POOL_ADDR, PAGE_POOL_LEN, PAGE_SIZE};
+use crate::arch::{
+    OBJ_POOL_ADDR, OBJ_POOL_LEN, PAGE_POOL_ADDR, PAGE_POOL_LEN, PAGE_SIZE,
+    KERNEL_STACK_SIZE, KERNEL_STACK_POOL_LEN, KERNEL_STACK_POOL_ADDR
+};
 use crate::utils::{FromVAddr, Pointer, VAddr};
 use crate::collections::{List, Link};
 use crate::stats;
@@ -230,7 +233,9 @@ const OBJ_MAX_SIZE: usize = 512;
 pub static OBJ_POOL: AllocationPool =
     AllocationPool::new(OBJ_POOL_ADDR, OBJ_POOL_LEN, OBJ_MAX_SIZE);
 pub static PAGE_POOL: AllocationPool =
-    AllocationPool::new(PAGE_POOL_ADDR, PAGE_POOL_LEN, PAGE_SIZE * 8 /* FIXME: for kernel stack */);
+    AllocationPool::new(PAGE_POOL_ADDR, PAGE_POOL_LEN, PAGE_SIZE);
+pub static KERNEL_STACK_POOL: AllocationPool =
+    AllocationPool::new(KERNEL_STACK_POOL_ADDR, KERNEL_STACK_POOL_LEN, KERNEL_STACK_SIZE);
 
 #[cfg(test)]
 mod tests {

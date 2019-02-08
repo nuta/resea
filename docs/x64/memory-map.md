@@ -11,7 +11,8 @@ Memory Map
 | `00a0_0000`              | CPU-local boot / idle thread stack                                     | 1MiB (4kiB per CPU) |
 | `00b0_0000`              | CPU-local variables (`struct CPU`)                                     | 1MiB                |
 | `00d0_0000`              | Unused                                                                 | 3MiB                |
-| `0100_0000`              | Kernel Data (`AllocationPool` for small objects like `struct Thread`)  | 8MiB                |
+| `0100_0000`              | Kernel Data (`AllocationPool` for small objects like `struct Thread`)  | 4MiB                |
+| `0140_0000`              | Kernel Data (`AllocationPool` for kernel stacks)                       | 4MiB                |
 | `0180_0000`              | Kernel Data (`AllocationPool` for page-sized objects)                  | 8MiB                |
 | `0200_0000`              | Available for userspace                                                |                     |
 | `fee0_0000`              | Local APIC                                                             |                     |

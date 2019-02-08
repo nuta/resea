@@ -1,4 +1,4 @@
-use crate::allocator::{Allocator, Ref, OBJ_POOL};
+use crate::allocator::{Allocator, Ref, OBJ_POOL, KERNEL_STACK_POOL};
 use crate::arch::{self, cpu, current, set_current_thread, ArchThread};
 use crate::collections::{Link, List};
 use crate::process::{alloc_pid, Process, KERNEL_PROCESS};
@@ -52,6 +52,8 @@ pub struct Thread {
     tid: TId,
     /// The current state of the thread.
     state: Cell<ThreadState>,
+    /// The beginning of (bottom of) dedicated kernel stack.
+    kernel_stack: VAddr,
     /// A link of a linked list in a runqueue.
     runqueue_link: Link<Ref<Thread>>,
     /// A link of a linked list of the process.
@@ -77,11 +79,14 @@ impl Thread {
         stack: VAddr,
         arg: usize,
     ) -> Ref<Thread> {
+        let kernel_stack = KERNEL_STACK_POOL.alloc_or_panic();
+
         let thread = THREAD_ALLOCATOR.alloc_init_or_panic(Thread {
             tid,
             process,
             state: Cell::new(ThreadState::Blocked),
-            arch: ArchThread::new(process, start, stack, arg),
+            arch: ArchThread::new(process, start, stack, kernel_stack, arg),
+            kernel_stack,
             runqueue_link: Link::null(),
             process_link: Link::null(),
             sender_queue_link: Link::null(),
