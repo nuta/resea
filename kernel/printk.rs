@@ -222,16 +222,16 @@ macro_rules! trace_user {
 #[macro_export]
 macro_rules! oops {
     () => {
-        crate::printk::do_printk(concat!("[Oops] (", file!(), ":", line!(), ")"), &[]);
+        crate::printk::do_printk(concat!("[Oops] (", file!(), ":", line!(), ")\n"), &[]);
         crate::debug::backtrace();
     };
     ($fmt:expr) => {
-        crate::printk::do_printk(concat!("[Oops] ", $fmt, " (", file!(), ":", line!(), ")"), &[]);
+        crate::printk::do_printk(concat!("[Oops] ", $fmt, " (", file!(), ":", line!(), ")\n"), &[]);
         crate::debug::backtrace();
     };
     ($fmt:expr, $($arg:expr), *) => {{
         use crate::printk::Displayable;
-        crate::printk::do_printk(concat!("[Oops] ", $fmt, " (", file!(), ":", line!(), ")"), &[$($arg.display()),*]);
+        crate::printk::do_printk(concat!("[Oops] ", $fmt, " (", file!(), ":", line!(), ")\n"), &[$($arg.display()),*]);
         crate::debug::backtrace();
     }}
 }
