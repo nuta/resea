@@ -153,6 +153,9 @@ fn print_arg<'a>(fmt: &Argument<'a>, spec: char) {
 }
 
 pub fn do_printk<'a>(fmt: &'static str, args: &[Argument<'a>]) {
+    // `tools/run-qemu.py` assumes that a kernel message line must starts with `> '.
+    print_str("> ");
+
     let mut fmt_iter = fmt.chars().peekable();
     let mut args_iter = args.iter();
     loop {
@@ -263,7 +266,7 @@ macro_rules! core_fmt_printk {
 
         #[allow(unused_import)]
         use core::fmt::Write;
-        write!(Logger::new(), "{}\n", format_args!($($arg)*)).ok();
+        write!(Logger::new(), "> {}\n", format_args!($($arg)*)).ok();
     }};
 }
 
