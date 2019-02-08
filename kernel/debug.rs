@@ -117,13 +117,13 @@ const BACKTRACE_MAX: usize = 16;
 pub fn backtrace() {
     let mut frame = StackFrame::get_current();
     let mut remaining = BACKTRACE_MAX;
-    for i in 1..BACKTRACE_MAX {
+    let mut index = 1;
+    while index <= BACKTRACE_MAX {
         if let Some(return_addr) = unsafe { frame.return_addr() } {
             if let Some(sym) = find_symbol(return_addr) {
-                printk!("    #%d: %p %s()+%x",
-                    i as u64, return_addr, sym.name, sym.offset as u64);
+                printk!("    #%d: %p %s()+%x", index, return_addr, sym.name, sym.offset);
             } else {
-                printk!("    #%d: %p (unknown)", i as u64, return_addr);
+                printk!("    #%d: %p (unknown)", index, return_addr);
             }
         } else {
             // Invalid return address.
@@ -138,6 +138,8 @@ pub fn backtrace() {
         if remaining == 0 {
             break;
         }
+
+        index += 1;
     }
 
     for i in 1..128 {
@@ -147,11 +149,16 @@ pub fn backtrace() {
         }
 
         if let Some(sym) = find_symbol(maybe_return_addr) {
-            printk!("    ??: %s()+%x", sym.name, sym.offset as u64);
+            printk!("    #%d: %p ?? %s()+%x", index, maybe_return_addr, sym.name, sym.offset);
             remaining -= 1;
             if remaining == 0 {
                 break;
             }
+        }
+
+        index += 1;
+        if index > BACKTRACE_MAX {
+            break;
         }
     }
 }
