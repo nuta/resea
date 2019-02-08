@@ -4,8 +4,8 @@ use crate::allocator::PAGE_POOL;
 
 global_asm!(r#"
 .globl initfs_image
-initfs_image:
 .align 0x10000
+initfs_image:
 .incbin "../initfs.bin"
 "#);
 
