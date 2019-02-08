@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
 import argparse
 import atexit
+import re
 import subprocess
 import colorama
 from colorama import Fore, Style
 
 def prettify_kernel_message(line):
-    pass
+    line = line.lstrip("> ")
+
+    if line.startswith("[PANIC]"):
+        print(f"{Style.BRIGHT}{Fore.RED}{line}{Fore.RESET}")
+    elif line.startswith("[Oops]"):
+        print(f"{Style.BRIGHT}{Fore.YELLOW}{line}{Fore.RESET}")
+    elif re.match("#\d+: ", line):
+        # Possibly a stack trace.
+        print(f"{Style.BRIGHT}{Fore.YELLOW}{line}{Fore.RESET}")
+    else:
+        print(line)
 
 def atexit_handler():
     # Kill all child processes.
