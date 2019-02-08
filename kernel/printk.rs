@@ -20,7 +20,8 @@ pub fn print_unsigned_int<T: TryInto<usize>>(value: T, base: usize, pad_ch: char
             let mut start = MAX_LEN - 1;
 
             if value == 0 {
-                arch::printchar('0');
+                // `buf[start]` is initialized by '0'.
+                start -= 1;
             }
 
             while value > 0 {
