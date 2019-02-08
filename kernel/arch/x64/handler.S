@@ -278,6 +278,7 @@ exception_handler\num:
     push [rsi + 32]     /* RFLAGS */
     push [rsi + 24]     /* CS */
     push [rsi + 16]     /* RIP */
+    push 0              /* error (unused) */
     mov rsi, [rsi + 8]  /* pop RSI */
 1:
     SAVE_REGS
@@ -314,9 +315,8 @@ exception_handler\num:
 1:
     SAVE_REGS
 
-    mov rdi, \num
-    mov rsi, [rsp + 8 * 15] /* error code */
-    mov rdx, [rsp + 8 * 16] /* RIP */
+    mov rdi, \num  /* exc*/
+    mov rsi, rsp   /* regs */
     call x64_handle_exception
     jmp ret_from_exp
 .endm
