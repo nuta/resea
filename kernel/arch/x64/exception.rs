@@ -49,6 +49,8 @@ pub extern "C" fn x64_handle_exception(exc: u8, regs: *const Regs) {
     unsafe {
         match exc {
             EXP_PAGE_FAULT => {
+                printk!("Exception #%d", exc);
+                print_regs(regs);
                 super::paging::handle_page_fault((*regs).error);
             }
             _ => {
