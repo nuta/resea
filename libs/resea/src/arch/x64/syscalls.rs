@@ -42,7 +42,7 @@ pub fn call(ch: isize, pre_header: usize, p0: usize, p1: usize, p2: usize, p3: u
               "={r10}"(r2), "={r8}"(r3), "={r9}"(r4)
             : "{rax}"(SYSCALL_IPC), "{rdi}"(header), "{rsi}"(p0), "{rdx}"(p1),
               "{r10}"(p2), "{r8}"(p3), "{r9}"(p4)
-            : "rcx", "r11"
+            : "rcx", "rbx", "rbp", "r11", "r12", "r13", "r14", "r15"
         );
 
         error_code_to_err(error, ||{
@@ -77,7 +77,7 @@ pub fn send(ch: isize, pre_header: usize, p0: usize, p1: usize, p2: usize, p3: u
               "={r10}"(_r2), "={r8}"(_r3), "={r9}"(_r4)
             : "{rax}"(SYSCALL_IPC), "{rdi}"(header), "{rsi}"(p0), "{rdx}"(p1),
               "{r10}"(p2), "{r8}"(p3), "{r9}"(p4)
-            : "rcx", "r11"
+            : "rcx", "rbx", "rbp", "r11", "r12", "r13", "r14", "r15"
         );
 
         error_code_to_err(error, || ())
@@ -96,12 +96,12 @@ pub fn recv(ch: isize, accept: usize) -> Result<Msg> {
 
         let header = (ch as usize) << 48 | accept << 32 | FLAG_RECV;
         asm!(
-            "syscall"
+            "syscall; xchg %bx, %bx; nop"
             :  "={rax}"(error), "={rdi}"(r_header), "={rsi}"(r0), "={rdx}"(r1),
               "={r10}"(r2), "={r8}"(r3), "={r9}"(r4)
             : "{rax}"(SYSCALL_IPC), "{rdi}"(header), "{rsi}"(0), "{rdx}"(0),
               "{r10}"(0), "{r8}"(0), "{r9}"(0)
-            : "rcx", "r11"
+            : "rcx", "rbx", "rbp", "r11", "r12", "r13", "r14", "r15"
         );
 
         error_code_to_err(error, || {
@@ -135,7 +135,7 @@ pub fn open() -> Result<CId> {
               "={r10}"(_r2), "={r8}"(_r3), "={r9}"(_r4)
             : "{rax}"(SYSCALL_OPEN), "{rdi}"(0), "{rsi}"(0), "{rdx}"(0),
               "{r10}"(0), "{r8}"(0), "{r9}"(0)
-            : "rcx", "r11"
+            : "rcx", "rbx", "rbp", "r11", "r12", "r13", "r14", "r15"
         );
 
 
@@ -158,7 +158,7 @@ pub fn link(ch1: CId, ch2: CId) -> Result<()> {
               "={r10}"(_r2), "={r8}"(_r3), "={r9}"(_r4)
             : "{rax}"(SYSCALL_LINK), "{rdi}"(ch1.as_isize()), "{rsi}"(ch2.as_isize()), "{rdx}"(0),
               "{r10}"(0), "{r8}"(0), "{r9}"(0)
-            : "rcx", "r11"
+            : "rcx", "rbx", "rbp", "r11", "r12", "r13", "r14", "r15"
         );
 
         error_code_to_err(error, || ())
@@ -180,7 +180,7 @@ pub fn transfer(src: CId, dst: CId) -> Result<()> {
               "={r10}"(_r2), "={r8}"(_r3), "={r9}"(_r4)
             : "{rax}"(SYSCALL_TRANSFER), "{rdi}"(src.as_isize()), "{rsi}"(dst.as_isize()), "{rdx}"(0),
               "{r10}"(0), "{r8}"(0), "{r9}"(0)
-            : "rcx", "r11"
+            : "rcx", "rbx", "rbp", "r11", "r12", "r13", "r14", "r15"
         );
 
         error_code_to_err(error, || ())
