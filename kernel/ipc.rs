@@ -262,7 +262,7 @@ pub extern "C" fn ipc_handler(
             {
                 // It seems that currently another thread is the receiver of
                 // the channel.
-                trace!("failed to get receiver right");
+                trace_user!("failed to get receiver right");
                 stats::IPC_ERRORS.increment();
                 return SyscallError::AlreadyReceived;
             }
