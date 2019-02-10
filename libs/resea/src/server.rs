@@ -15,7 +15,10 @@ macro_rules! serve_forever {
             };
 
             if let Some(Ok(r)) = r {
-                reply_to.send(r).ok();
+                if let Err(err) = reply_to.send(r) {
+                    println!("{}: wanrning: failed to reply: {:?}",
+                        env!("PROGRAM_NAME"), err);
+                }
             }
         }
     };
