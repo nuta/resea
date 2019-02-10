@@ -14,6 +14,10 @@ const SYSCALL_TRANSFER: u64 = 5;
 fn error_code_to_err<T, F: FnOnce() -> T>(code: i64, op: F) -> Result<T> {
     if code < 0 {
         match code {
+            -1 => Err(SyscallError::InvalidSyscall),
+            -2 => Err(SyscallError::InvalidChannelId),
+            -3 => Err(SyscallError::AlreadyReceived),
+            -4 => Err(SyscallError::InvalidPayload),
             _ => Err(SyscallError::Unknown),
         }
     } else {
