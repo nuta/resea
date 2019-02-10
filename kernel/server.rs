@@ -4,7 +4,7 @@ use crate::arch::current;
 use crate::process::{self, Pager};
 use crate::thread;
 use crate::channel;
-use crate::ipc::{Msg, Header, Payload};
+use crate::ipc::{Msg, Header, Payload, SyscallError};
 use crate::allocator::Ref;
 use crate::utils::{VAddr, PAddr};
 use crate::channel::{CId, Channel};
@@ -174,23 +174,36 @@ pub fn user_pager(pager: &Ref<Channel>, addr: VAddr) -> PAddr {
     builder.channel(pager.cid());
     let m = builder.build();
 
-    let r = kernel_ipc_call(m);
+    let r = match kernel_ipc_call(m) {
+        Ok(r) => r,
+        Err(_) => {
+            thread::kill_current();
+        }
+    };
+
     trace_user!("Ok, got a page addr=%p", r.p0);
     VAddr::new(r.p0 as usize).paddr()
 }
 
 #[inline(never)]
-fn kernel_ipc_call(m: Msg) -> Msg {
+fn kernel_ipc_call(m: Msg) -> Result<Msg, SyscallError> {
     // TODO:
     let builder = MsgBuilder::new();
     let mut r = builder.build();
+    let err: isize;
     unsafe {
         asm!(
             "call ipc_handler"
-            : "={rdi}"(r.header), "={rsi}"(r.p0), "={rdx}"(r.p1), "={rcx}"(r.p2), "={r8}"(r.p3), "={r9}"(r.p4)
+            : "={rax}"(err), "={rdi}"(r.header), "={rsi}"(r.p0), "={rdx}"(r.p1), "={rcx}"(r.p2), "={r8}"(r.p3), "={r9}"(r.p4)
             : "{rdi}"(m.header), "{rsi}"(m.p0), "{rdx}"(m.p1), "{rcx}"(m.p2), "{r8}"(m.p3), "{r9}"(m.p4)
+            : "rbx", "rbp", "r10", "r11", "r12", "r13", "r14", "r15"
         );
     }
 
-    r
+    if err == 0 {
+        Ok(r)
+    } else {
+        trace_user!("An error occurred in kernel_ipc_call: err = {:x}", err);
+        unimplemented!();
+    }
 }
