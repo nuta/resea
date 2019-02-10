@@ -16,6 +16,6 @@ fn lang_start<T>(main: fn() -> T, _argc: isize, _argv: *const *const u8) -> isiz
 #[no_mangle]
 #[cfg(not(test))]
 pub fn panic(info: &core::panic::PanicInfo) -> ! {
-    internal_println!("{}", info);
+    internal_println!("{}: {}", env!("PROGRAM_NAME"), info);
     loop {}
 }

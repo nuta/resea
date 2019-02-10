@@ -116,6 +116,7 @@ $(BUILD_DIR)/memmgr/memmgr_$(ARCH)/$(BUILD)/memmgr: servers/memmgr/src/arch/x64/
 	cd servers/memmgr && \
 		CARGO_TARGET_DIR="$(BUILD_DIR)/memmgr" \
 		RUST_TARGET_PATH="$(REPO_DIR)/servers/memmgr/src/arch/$(ARCH)" \
+		PROGRAM_NAME=memmgr \
 		RUSTFLAGS="$(RUSTFLAGS)" \
 			xargo build $(XARGOFLAGS) --target memmgr_$(ARCH)
 
@@ -124,6 +125,7 @@ $(BUILD_DIR)/benchmark/user_$(ARCH)/$(BUILD)/benchmark: libs/resea/src/arch/x64/
 	cd apps/benchmark && \
 		CARGO_TARGET_DIR="$(BUILD_DIR)/benchmark" \
 		RUST_TARGET_PATH="$(REPO_DIR)/libs/resea/src/arch/$(ARCH)" \
+		PROGRAM_NAME=benchmark \
 		RUSTFLAGS="$(RUSTFLAGS)" xargo build $(XARGOFLAGS) --target user_$(ARCH)
 	$(BINUTILS_PREFIX)strip $@
 

@@ -9,7 +9,7 @@ macro_rules! serve_forever {
                 resea::idl::$interface::INTERFACE_ID => resea::idl::$interface::Server::handle($server, m),
                 )*
                 _ => {
-                    println!("unknown message: {:04x}", m.header.msg_id());
+                    println!("{}: unknown message: {:04x}", env!("PROGRAM_NAME"), m.header.msg_id());
                     None
                 }
             };
