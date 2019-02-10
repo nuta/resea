@@ -267,7 +267,7 @@ macro_rules! core_fmt_printk {
 
         #[allow(unused_import)]
         use core::fmt::Write;
-        write!(Logger::new(), "> {}\n", format_args!($($arg)*)).ok();
+        write!(Logger::new(), "{}\n", format_args!($($arg)*)).ok();
     }};
 }
 
@@ -279,7 +279,7 @@ static ALREADY_PANICED: AtomicBool = AtomicBool::new(false);
 pub fn panic(info: &panic::PanicInfo) -> ! {
     if ALREADY_PANICED.load(Ordering::SeqCst) {
         // Prevent recursive panic since symbols::backtrace() may panic.
-        core_fmt_printk!("[DOUBLE PANIC] panicked in the panic handler: {}", info);
+        print_str("[DOUBLE PANIC] panicked in the panic handler\n");
         arch::halt();
     } else {
         ALREADY_PANICED.store(true, Ordering::SeqCst);
@@ -289,7 +289,7 @@ pub fn panic(info: &panic::PanicInfo) -> ! {
 
 #[cfg(not(test))]
 fn do_panic(info: &panic::PanicInfo) -> ! {
-    core_fmt_printk!("[PANIC] {}", info);
+    core_fmt_printk!("> [PANIC] {}", info);
     backtrace();
     core_fmt_printk!("");
     stats::print();
