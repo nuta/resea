@@ -19,6 +19,7 @@ const SPAWN_THREAD_REQUEST:    u16 = 0x0103;
 const SPAWN_THREAD_RESPONSE:   u16 = 0x0183;
 const ADD_PAGER_REQUEST:       u16 = 0x0104;
 const ADD_PAGER_RESPONSE:      u16 = 0x0184;
+const POWEROFF_REQUEST:        u16 = 0x0105;
 const FILL_PAGE_REQUEST:       u16 = 0x0301;
 //const FILL_PAGE_RESPONSE:      u16 = 0x0181;
 
@@ -100,6 +101,12 @@ pub fn handle(header: Header, p0: Payload, p1: Payload, p2: Payload,
             let mut builder = MsgBuilder::new();
             builder.id(PUTCHAR_RESPONSE);
             builder.build()
+        }
+        POWEROFF_REQUEST => {
+            printk!("Shutting down...");
+            unsafe {
+                arch::poweroff();
+            }
         }
         CREATE_PROCESS_REQUEST => {
             trace_user!("kernel: create_process()");

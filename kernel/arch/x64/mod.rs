@@ -19,6 +19,7 @@ mod thread;
 mod tss;
 mod vga;
 mod send;
+mod poweroff;
 
 use crate::utils::VAddr;
 
@@ -30,6 +31,7 @@ pub use self::print::printchar;
 pub use self::stack_frame::{StackFrame, get_stack_pointer};
 pub use self::thread::{current, set_current_thread, switch, ArchThread, send, overwrite_context};
 pub use self::send::return_from_kernel_server;
+pub use self::poweroff::poweroff;
 pub const TICK_HZ: usize = 1000;
 pub const PAGE_SIZE: usize = 0x1000;
 pub const KERNEL_BASE_ADDR: usize = 0xffff_8000_0000_0000;

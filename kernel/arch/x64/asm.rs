@@ -4,6 +4,11 @@ pub unsafe fn outb(port: u16, value: u8) {
 }
 
 #[inline(always)]
+pub unsafe fn outw(port: u16, value: u16) {
+    asm!("outw %ax, %dx" :: "{ax}"(value), "{dx}"(port) :: "volatile");
+}
+
+#[inline(always)]
 pub unsafe fn inb(port: u16) -> u8 {
     let value;
     asm!("inb %dx, %al" : "={al}"(value) : "{dx}"(port) :: "volatile");

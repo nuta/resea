@@ -12,4 +12,7 @@ interface kernel {
 
     [id(4), type(rpc)]
     add_pager(pid: pid, addr: usize, len: usize, flags: u8) -> ()
+
+    [id(5), type(rpc)]
+    poweroff() -> ()
 }
