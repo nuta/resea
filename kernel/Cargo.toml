@@ -1,5 +1,5 @@
 [package]
-name = "resea-kernel"
+name = "kernel"
 version = "0.0.0"
 authors = ["Seiya Nuta <nuta@seiya.me>"]
 edition = "2018"
