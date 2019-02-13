@@ -87,8 +87,7 @@ $(call build_dir, kernel)/libkernel.a: kernel/Cargo.toml initfs.bin Makefile
 		CARGO_TARGET_DIR="$(repo_dir)/target/kernel" \
 		RUST_TARGET_PATH="$(repo_dir)/$(arch_dir)" \
 		RUSTFLAGS="$(RUSTFLAGS)" xargo build $(XARGOFLAGS) --target $(ARCH)
-	# Make dependency paths relative.
-	sed -i "" "s#$(repo_dir)/##g" $(call build_dir, kernel)/libkernel.d
+	./tools/make-deps-relative.py "$(repo_dir)" "$(call build_dir, kernel)/libkernel.d"
 
 -include $(call build_dir, kernel)/libkernel.d
 
