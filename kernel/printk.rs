@@ -154,9 +154,6 @@ fn print_arg<'a>(fmt: &Argument<'a>, spec: char) {
 }
 
 pub fn do_printk<'a>(fmt: &'static str, args: &[Argument<'a>]) {
-    // `tools/run-qemu.py` assumes that a kernel message line must starts with `> '.
-    print_str("> ");
-
     let mut fmt_iter = fmt.chars().peekable();
     let mut args_iter = args.iter();
     loop {
@@ -289,7 +286,7 @@ pub fn panic(info: &panic::PanicInfo) -> ! {
 
 #[cfg(not(test))]
 fn do_panic(info: &panic::PanicInfo) -> ! {
-    core_fmt_printk!("> [PANIC] {}", info);
+    core_fmt_printk!("[PANIC] {}", info);
     backtrace();
     core_fmt_printk!("");
     stats::print();
