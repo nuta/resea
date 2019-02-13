@@ -15,6 +15,9 @@ target/{{ name }}/{{ target }}/$(BUILD)/{{ name }}: \\
 		RUST_TARGET_PATH="$(repo_dir)/{{ target_path }}" \\
 		PROGRAM_NAME={{ name }} \\
 		RUSTFLAGS="$(RUSTFLAGS)" xargo build $(XARGOFLAGS) --target {{ target }}
+	# Make paths relative.
+	sed -i "" "s#$(repo_dir)/##g" target/{{ name }}/{{ target }}/$(BUILD)/{{ name }}.d
+	# Remove debug info.
 	$(BINUTILS_PREFIX)strip $@
 
 {% if add_startup %}
@@ -22,6 +25,8 @@ initfs/startups/{{ name }}.elf: target/{{ name }}/{{ target }}/$(BUILD)/{{ name 
 	mkdir -p $(@D)
 	cp $< $@
 {% endif %}
+
+-include target/{{ name }}/{{ target }}/$(BUILD)/{{ name }}.d
 """
 
 def main():

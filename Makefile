@@ -71,7 +71,6 @@ build: kernel.elf
 clean:
 	rm -rf $(clean)
 
-
 # Kernel build rules.
 kernel.elf: $(kernel_objs) $(arch_dir)/$(ARCH).ld
 	$(PROGRESS) "LD" kernel.nosymbols.elf
@@ -88,6 +87,8 @@ $(call build_dir, kernel)/libkernel.a: kernel/Cargo.toml initfs.bin Makefile
 		CARGO_TARGET_DIR="$(repo_dir)/target/kernel" \
 		RUST_TARGET_PATH="$(repo_dir)/$(arch_dir)" \
 		RUSTFLAGS="$(RUSTFLAGS)" xargo build $(XARGOFLAGS) --target $(ARCH)
+	# Make dependency paths relative.
+	sed -i "" "s#$(repo_dir)/##g" $(call build_dir, kernel)/libkernel.d
 
 -include $(call build_dir, kernel)/libkernel.d
 
