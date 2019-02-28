@@ -32,11 +32,6 @@ void arch_thread_init(struct thread *thread,
     thread->arch.channel_table = 0;
     /* disable interrupts since we temporarily use the kernel stack. */
     thread->arch.rflags = 0x0002;
-    thread->arch.rbp = 0;
-    thread->arch.r12 = 0;
-    thread->arch.r13 = 0;
-    thread->arch.r14 = 0;
-    thread->arch.rbx = 0;
 }
 
 void arch_set_current_thread(struct thread *thread) {

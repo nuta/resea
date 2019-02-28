@@ -37,12 +37,6 @@ struct arch_thread {
     uint64_t channel_table; // 24
     uint64_t cr3;           // 32
     uint64_t rflags;        // 40
-    uint64_t rbp;           // 48
-    uint64_t r12;           // 56
-    uint64_t r13;           // 64
-    uint64_t r14;           // 72
-    uint64_t r15;           // 80
-    uint64_t rbx;           // 88
 };
 
 struct arch_page_table {
