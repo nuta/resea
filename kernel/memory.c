@@ -59,7 +59,6 @@ void free_object(UNUSED void *ptr) {
 }
 
 void page_fault_handler(vaddr_t addr, uintmax_t flags) {
-    // stats::PAGE_FAULT_TOTAL.increment();
     DEBUG("page_fault_handler: addr=%p", addr);
 
     if (!(flags & PF_USER)) {

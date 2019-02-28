@@ -105,7 +105,6 @@ void thread_switch(void) {
         list_push_back(&runqueue, &CURRENT->runqueue_elem);
     }
 
-    // stats::THREAD_SWITCHES.increment();
     arch_thread_switch(CURRENT, next);
 
     // Now we have returned from another threads.
