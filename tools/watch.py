@@ -9,7 +9,7 @@ def main():
     args = parser.parse_args()
 
     subprocess.run(args.command, shell=True)
-    subprocess.run(["watchmedo", "shell-command", "--patterns=*.rs;*.c;*.S;*.toml;*.py;*.sh;*.mk;*.json",
+    subprocess.run(["watchmedo", "shell-command", "--patterns=*.rs;*.c;*.h;*.S;*.toml;*.py;*.sh;*.mk;*.json",
         "--recursive", "--command", args.command])
 
 if __name__ == "__main__":

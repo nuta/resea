@@ -5,10 +5,31 @@ CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 BOCHS ?= bochs
 QEMU ?= qemu-system-x86_64
 QEMUFLAGS += -m 256 -nographic -cpu SandyBridge,rdtscp -rtc base=utc
-QEMUFLAGS += -device isa-debug-exit,iobase=0xf4,iosize=0x04
+QEMUFLAGS += -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04
 
 kernel_objs += kernel/arch/x64/boot.o
 clean += arch/x64/isofiles/kernel.elf kernel.qemu.elf serial.log resea.iso
+
+kernel_objs += \
+	kernel/arch/x64/apic.o \
+	kernel/arch/x64/cpu.o \
+	kernel/arch/x64/exception.o \
+	kernel/arch/x64/gdt.o \
+	kernel/arch/x64/handler.o \
+	kernel/arch/x64/idt.o \
+	kernel/arch/x64/interrupt.o \
+	kernel/arch/x64/ioapic.o \
+	kernel/arch/x64/paging.o \
+	kernel/arch/x64/pic.o \
+	kernel/arch/x64/print.o \
+	kernel/arch/x64/setup.o \
+	kernel/arch/x64/smp.o \
+	kernel/arch/x64/switch.o \
+	kernel/arch/x64/tss.o \
+	kernel/arch/x64/thread.o \
+	kernel/arch/x64/spinlock.o \
+	kernel/arch/x64/string.o \
+	kernel/arch/x64/syscall.o
 
 bochs: resea.iso
 	$(BOCHS) -qf boot/x64/bochsrc

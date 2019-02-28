@@ -5,6 +5,7 @@
 *.map
 *.img
 *.iso
+*.pyc
 *.log
 *.tmp
 *.xz

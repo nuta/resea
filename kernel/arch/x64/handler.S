@@ -77,9 +77,6 @@ x64_syscall_handler:
 x64_ipc_handler:
     SYSCALL_ENTER
     call ipc_handler
-
-    /* Set 3rd received payload. */
-    mov r10, rcx
     SYSCALL_LEAVE
 
 .extern open_handler

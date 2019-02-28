@@ -9,7 +9,8 @@ STARTUPS ?= benchmark
 # Variables.
 repo_dir := $(shell pwd)
 arch_dir := kernel/arch/$(ARCH)
-idl_files := $(foreach name, $(IDLS), libs/resea/src/idl/$(name).rs)
+idl_files := $(foreach name, $(IDLS), idl/$(name).idl)
+stub_files := $(foreach name, $(IDLS), libs/resea/src/idl/$(name).rs)
 initfs_files = $(foreach name, $(STARTUPS), initfs/startups/$(name).elf)
 
 # Functions.
@@ -37,12 +38,14 @@ LDFLAGS := $(LDFLAGS)
 # Common flags.
 LDFLAGS += --gc-sections
 CFLAGS += -O2 -g3 -std=c11 -ffreestanding -fno-builtin -nostdlib
+CFLAGS += -fstack-size-section
 CFLAGS += -Wall -Wextra
 CFLAGS += -Werror=implicit-function-declaration
 CFLAGS += -Werror=int-conversion
 CFLAGS += -Werror=incompatible-pointer-types
 CFLAGS += -Werror=shift-count-overflow
 CFLAGS += -Werror=shadow
+CFLAGS += -Werror=return-type
 XARGOFLAGS += --quiet
 RUSTFLAGS += -C soft-float --emit=link,dep-info -Z external-macro-backtrace
 
@@ -54,7 +57,8 @@ endif
 clean = target initfs kernel.elf kernel.map kernel.symbols memmgr.bin initfs.bin $(kernel_objs)
 
 # Arch-dependent variables.
-kernel_objs := $(call build_dir, kernel)/libkernel.a
+kernel_objs :=
+include kernel/kernel.mk
 include $(arch_dir)/arch.mk
 
 # Disable builtin implicit rules.
@@ -72,29 +76,22 @@ clean:
 	rm -rf $(clean)
 
 # Kernel build rules.
+$(kernel_objs): $(wildcard kernel/include/*.h kernel/arch/x64/include/*.h kernel/arch/x64/include/*/*.h) # TODO: use clang -MM
 kernel.elf: $(kernel_objs) $(arch_dir)/$(ARCH).ld
 	$(PROGRESS) "LD" kernel.nosymbols.elf
 	$(LD) $(LDFLAGS) --Map=kernel.map --script=$(arch_dir)/$(ARCH).ld -o kernel.nosymbols.elf $(kernel_objs)
 	$(PROGRESS) "SYMBOLS" $@
-	$(PYTHON3) ./tools/embed-symbols.py --nm $(NM) kernel.nosymbols.elf
+	$(PYTHON3) ./tools/embed-symbols.py --idl $(idl_files) --nm $(NM) kernel.nosymbols.elf
 	mv kernel.nosymbols.elf $@
 	$(PROGRESS) "GEN" kernel.symbols
 	$(BINUTILS_PREFIX)nm -g $@ | awk '{ print $$1, $$3 }' > kernel.symbols
 
-$(call build_dir, kernel)/libkernel.a: kernel/Cargo.toml initfs.bin Makefile
-	$(PROGRESS) "XARGO" kernel
-	cd kernel && \
-		CARGO_TARGET_DIR="$(repo_dir)/target/kernel" \
-		RUST_TARGET_PATH="$(repo_dir)/$(arch_dir)" \
-		RUSTFLAGS="$(RUSTFLAGS)" xargo build $(XARGOFLAGS) --target $(ARCH)
-	./tools/make-deps-relative.py "$(repo_dir)" "$(call build_dir, kernel)/libkernel.d"
-
--include $(call build_dir, kernel)/libkernel.d
-
 # Initfs build rules.
+kernel/boot.o: initfs.bin
 initfs.bin: memmgr.bin $(initfs_files)
 	$(PROGRESS) "MKINITFS" $@
 	$(PYTHON3) ./tools/mkinitfs.py -s memmgr.bin -o $@ initfs
+
 
 memmgr.bin: target/memmgr/memmgr_$(ARCH)/$(BUILD)/memmgr
 	$(PROGRESS) "OBJCOPY" $@
@@ -127,12 +124,12 @@ target/mk/%.mk: tools/gen-user-makefile.py Makefile
 		--name $(basename $(@F))
 
 # IDL build rules.
-$(idl_files): libs/resea/src/idl/%.rs: idl/%.idl Makefile tools/idl.py
-	$(PROGRESS) "IDL" $@
+$(stub_files): libs/resea/src/idl/%.rs: idl/%.idl Makefile tools/genstub.py
+	$(PROGRESS) "GENSTUB" $@
 	mkdir -p libs/resea/src/idl
-	$(PYTHON3) ./tools/idl.py -o $@ $<
+	$(PYTHON3) ./tools/genstub.py -o $@ $<
 
-libs/resea/src/idl/mod.rs: $(idl_files)
+libs/resea/src/idl/mod.rs: $(stub_files)
 	$(PROGRESS) "GEN" $@
 	for idl in $(IDLS); do echo "pub mod $$idl;"; done > $@
 

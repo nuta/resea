@@ -159,8 +159,8 @@ long_mode:
     mov rdi, 0x0700000
     mov qword ptr [edi], 0 /* unmap */
 
-    /* call init_x64() */
-    mov rax, init_x64_addr
+    /* call x64_setup() */
+    mov rax, x64_setup_addr
     call rax
 
     /* In case main() returns. */
@@ -180,8 +180,8 @@ bss_addr:
 bss_end_addr:
     .quad __bss_end
 
-init_x64_addr:
-    .quad init_x64
+x64_setup_addr:
+    .quad x64_setup
 
 gdtr:
     .word gdt_end - gdt - 1

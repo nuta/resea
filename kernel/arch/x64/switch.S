@@ -12,8 +12,8 @@
 .set MSR_GS_BASE, 0xc0000101
 .set MSR_KERNEL_GS_BASE, 0xc0000102
 
-.globl enter_userspace
-enter_userspace:
+.globl x64_enter_userspace
+x64_enter_userspace:
     /* Thread::new() pushed to the kernel stack (current one)
       `arg' and an IRET frame. Interrups are disabled. */
 
@@ -32,40 +32,6 @@ enter_userspace:
 
     iretq
 
-/* RDI = ArchThread */
-.globl x64_overwrite_context
-x64_overwrite_context:
-    /* Save RFLAGS. */
-    pushfq
-    popq %rax
-    movq %rax, ARCH_THREAD_RFLAGS(%rdi)
-
-    /* Pop the return address. */
-    pop %rax
-
-    /* Save callee-saved registers. */
-    movq %rax, ARCH_THREAD_RIP(%rdi)
-    movq %rsp, ARCH_THREAD_RSP(%rdi) /* %rsp is now post-return value */
-    movq %rbp, ARCH_THREAD_RBP(%rdi)
-    movq %rbx, ARCH_THREAD_RBX(%rdi)
-    movq %r12, ARCH_THREAD_R12(%rdi)
-    movq %r13, ARCH_THREAD_R13(%rdi)
-    movq %r14, ARCH_THREAD_R14(%rdi)
-    movq %r15, ARCH_THREAD_R15(%rdi)
-
-    /* Push back the return address. */
-    push %rax
-
-    movq $1, %rax
-    ret
-
-.globl x64_send
-x64_send:
-    mov 8(%rsp), %r10
-    mov 16(%rsp), %r11
-    mov $1, %rax
-    jmp do_switch
-
 /* Performs a context switch. RSI and RDI registers contains the previous
  * (e.g. the current) thread context and the next thread context respectively.
  *
@@ -76,12 +42,6 @@ x64_send:
 x64_switch:
     movq %rdi, %r10
     movq %rsi, %r11
-    movq %rdx, %rax
-    /* fall through into do_switch */
-
-do_switch:
-    test %rax, %rax
-    jz without_save
 
     /* Save callee-saved registers. */
     movabs $resume_point, %rax
@@ -99,7 +59,6 @@ do_switch:
     popq %rax
     movq %rax, ARCH_THREAD_RFLAGS(%r10)
 
-without_save:
     /* Set RSI to GS base address. We modify MSR_GS_BASE rather
      * than MSR_KERNEL_GS_BASE directory since the current GS base
      * will be swapped by SWAPGS in the interrupt handler or enter_userspace.
@@ -128,6 +87,7 @@ without_save:
 
     /* Resume next. */
     xor %rax, %rax
+    xchg %bx,%bx
     jmpq *ARCH_THREAD_RIP(%r11)
 
 resume_point:

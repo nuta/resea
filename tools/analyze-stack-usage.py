@@ -2,7 +2,6 @@
 #
 #  Usage:
 #
-#    $ make RUSTFLAGS="-Z emit-stack-sizes" kernel.elf
 #    $ ./tools/analyze-stack-usage.py kernel.elf | sort -n
 #
 import argparse

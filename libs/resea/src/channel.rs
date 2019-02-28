@@ -31,6 +31,10 @@ impl Channel {
         syscalls::open().map(Channel::from_cid)
     }
 
+    pub fn cid(&self) -> CId {
+        self.cid
+    }
+
     pub fn link(&self, ch: &Channel) -> syscalls::Result<()> {
         syscalls::link(self.cid, ch.cid)
     }

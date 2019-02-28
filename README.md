@@ -6,7 +6,6 @@ Resea is a new *pure* microkernel-based operating system featuring:
 
 - A straight-forward, flexible, and small microkernel.
 - Supports x86_64.
-- Written almost entirely in Rust.
 
 For more information read the **[Documentation](https://github.com/seiyanuta/resea/tree/master/docs).**
 
