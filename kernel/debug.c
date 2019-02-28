@@ -8,7 +8,7 @@ __asm__(
     ".global __symbols                     \n"
     "__symbols:                            \n"
     "   .ascii \"__SYMBOL_TABLE_START__\"  \n"
-    "   .space 0x10000                     \n"
+    "   .space 0x4000                      \n"
     "   .ascii \"__SYMBOL_TABLE_END__\"    \n"
 );
 
