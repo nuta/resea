@@ -90,7 +90,7 @@ struct thread *scheduler(void) {
 }
 
 void thread_switch(void) {
-    // debug::check_stack_canary();
+    check_stack_canary();
 
     if (CURRENT->state == THREAD_RUNNABLE && list_is_empty(&runqueue)) {
         // No runnable threads other than the current one. Continue executing
@@ -109,7 +109,7 @@ void thread_switch(void) {
     arch_thread_switch(CURRENT, next);
 
     // Now we have returned from another threads.
-    // debug::check_stack_canary();
+    check_stack_canary();
 }
 
 void thread_init(void) {
