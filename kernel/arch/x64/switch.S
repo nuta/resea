@@ -1,4 +1,4 @@
-.att_syntax prefix
+.intel_syntax noprefix
 .set ARCH_THREAD_RIP, 0
 .set ARCH_THREAD_RSP, 8
 .set ARCH_THREAD_RSP0, 16
@@ -11,18 +11,18 @@ x64_enter_userspace:
     /* Thread::new() pushed to the kernel stack (current one)
       `arg' and an IRET frame. Interrups are disabled. */
 
-    pop %rdi /* arg */
+    pop rdi /* arg */
 
     /* Sanitize registers except RDI (arg) to prevent information leak. */
-    xor %rax, %rax
-    xor %rbx, %rbx
-    xor %rcx, %rcx
-    xor %rdx, %rdx
-    xor %rsi, %rsi
-    xor %r8, %r8
-    xor %r9, %r9
-    xor %r10, %r10
-    xor %r11, %r11
+    xor rax, rax
+    xor rbx, rbx
+    xor rcx, rcx
+    xor rdx, rdx
+    xor rsi, rsi
+    xor r8, r8
+    xor r9, r9
+    xor r10, r10
+    xor r11, r11
 
     iretq
 
@@ -34,50 +34,47 @@ x64_enter_userspace:
  */
 .globl x64_switch
 x64_switch:
-    movq %rdi, %r10
-    movq %rsi, %r11
-
     /* Save the context. */
-    movabs $resume_point, %rax
-    movq %rax, ARCH_THREAD_RIP(%r10)
-    movq %rsp, ARCH_THREAD_RSP(%r10)
+    lea rax, [rip + resume_point]
+    mov [rdi + ARCH_THREAD_RIP], rax
+    mov [rdi + ARCH_THREAD_RSP], rsp
 
     /* Save callee-saved registers. */
-    push %rbp
-    push %rbx
-    push %r12
-    push %r13
-    push %r14
-    push %r15
+    push rbp
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
 
     /* Save RFLAGS. */
     pushfq
-    popq %rax
-    movq %rax, ARCH_THREAD_RFLAGS(%r10)
+    pop rax
+    mov [rdi + ARCH_THREAD_RFLAGS], rax
 
     /* Set the GS base. */
-    mov %r11, %rdx
-    mov $MSR_GS_BASE, %ecx
-    mov %edx, %eax
-    shrq $32, %rdx
+    mov ecx, MSR_GS_BASE
+    mov rdx, rsi
+    mov eax, edx
+    shr rdx, 32
     wrmsr
 
     /* Restore RFLAGS. */
-    movq ARCH_THREAD_RFLAGS(%r11), %rax
-    pushq %rax
+    mov rax, [rsi + ARCH_THREAD_RFLAGS]
+    push rax
     popfq
 
     /* Restore callee-saved registers. */
-    pop %r15
-    pop %r14
-    pop %r13
-    pop %r12
-    pop %rbx
-    pop %rbp
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    pop rbp
 
     /* Resume next. */
-    movq ARCH_THREAD_RSP(%r11), %rsp
-    jmpq *ARCH_THREAD_RIP(%r11)
+    mov rsp, [rsi + ARCH_THREAD_RSP]
+    jmp [rsi + ARCH_THREAD_RIP]
 
 resume_point:
     /* Resumed thread starts from here. Just return from arch_switch(). */
