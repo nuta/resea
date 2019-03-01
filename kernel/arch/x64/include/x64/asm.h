@@ -31,10 +31,6 @@ static inline void asm_cli(void) {
     __asm__ __volatile__("cli");
 }
 
-static inline void asm_hlt(void) {
-    __asm__ __volatile__("hlt");
-}
-
 static inline void asm_lgdt(uint64_t gdtr) {
     __asm__ __volatile__("lgdt (%%rax)" :: "a"(gdtr));
 }
@@ -51,10 +47,6 @@ static inline uint64_t asm_read_cr2(void) {
     uint64_t value;
     __asm__ __volatile__("mov %%cr2, %0" : "=r"(value));
     return value;
-}
-
-static inline void asm_write_cr3(uint64_t value) {
-    __asm__ __volatile__("mov %0, %%cr3" :: "r"(value) : "memory");
 }
 
 static inline void asm_wrmsr(uint32_t reg, uint64_t value) {

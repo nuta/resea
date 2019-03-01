@@ -37,7 +37,6 @@ void arch_thread_init(struct thread *thread,
     thread->arch.rsp = (uint64_t) rsp;
     thread->arch.rsp0 = kernel_stack + KERNEL_STACK_SIZE;
     thread->arch.cr3 = thread->process->page_table.pml4;
-    thread->arch.channel_table = 0;
 }
 
 void arch_set_current_thread(struct thread *thread) {
@@ -50,8 +49,5 @@ struct thread *arch_get_current_thread(void) {
 
 /// Saves the context in `prev` and resume the `next`. context.
 void arch_thread_switch(struct thread *prev, struct thread *next) {
-    // Switch the page table.
-    asm_write_cr3(next->arch.cr3);
-
     x64_switch(&prev->arch, &next->arch);
 }

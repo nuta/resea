@@ -2,6 +2,7 @@
 .set ARCH_THREAD_RIP, 0
 .set ARCH_THREAD_RSP, 8
 .set ARCH_THREAD_RSP0, 16
+.set ARCH_THREAD_CR3, 24
 .set MSR_GS_BASE, 0xc0000101
 .set MSR_KERNEL_GS_BASE, 0xc0000102
 
@@ -45,6 +46,10 @@ x64_switch:
     lea rax, [rip + resume_point]
     mov [rdi + ARCH_THREAD_RIP], rax
     mov [rdi + ARCH_THREAD_RSP], rsp
+
+    /* Load next's page table. */
+    mov rax, [rsi + ARCH_THREAD_CR3]
+    mov cr3, rax
 
     /* Set next's GS base. */
     mov ecx, MSR_GS_BASE
