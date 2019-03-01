@@ -2,7 +2,6 @@
 .set ARCH_THREAD_RIP, 0
 .set ARCH_THREAD_RSP, 8
 .set ARCH_THREAD_RSP0, 16
-.set ARCH_THREAD_RFLAGS, 40
 .set MSR_GS_BASE, 0xc0000101
 .set MSR_KERNEL_GS_BASE, 0xc0000102
 
@@ -47,17 +46,7 @@ x64_switch:
     mov [rdi + ARCH_THREAD_RIP], rax
     mov [rdi + ARCH_THREAD_RSP], rsp
 
-    /* Save RFLAGS. */
-    pushfq
-    pop rax
-    mov [rdi + ARCH_THREAD_RFLAGS], rax
-
-    /* Restore RFLAGS. */
-    mov rax, [rsi + ARCH_THREAD_RFLAGS]
-    push rax
-    popfq
-
-    /* Set the GS base. */
+    /* Set next's GS base. */
     mov ecx, MSR_GS_BASE
     mov rdx, rsi
     mov eax, edx

@@ -36,7 +36,6 @@ struct arch_thread {
     uint64_t rsp0;          // 16: rsp0 == kernel_stack + (size of stack)
     uint64_t channel_table; // 24
     uint64_t cr3;           // 32
-    uint64_t rflags;        // 40
 };
 
 struct arch_page_table {

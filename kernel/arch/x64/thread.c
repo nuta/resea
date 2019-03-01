@@ -38,8 +38,6 @@ void arch_thread_init(struct thread *thread,
     thread->arch.rsp0 = kernel_stack + KERNEL_STACK_SIZE;
     thread->arch.cr3 = thread->process->page_table.pml4;
     thread->arch.channel_table = 0;
-    /* disable interrupts since we temporarily use the kernel stack. */
-    thread->arch.rflags = 0x0002;
 }
 
 void arch_set_current_thread(struct thread *thread) {
