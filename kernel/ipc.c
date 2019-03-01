@@ -37,34 +37,46 @@ void channel_destroy(UNUSED struct channel *ch) {
 
 void channel_link(struct channel *ch1, struct channel *ch2) {
     if (ch1 == ch2) {
-        PANIC("FIXME: link to itself");
+        flags_t flags = spin_lock_irqsave(&ch1->lock);
+        if (ch1->linked_to != ch1) {
+            ch1->linked_to->ref_count--;
+        }
+
+        ch1->transfer_to = ch1;
+        spin_unlock_irqrestore(&ch1->lock, flags);
+    } else {
+        flags_t flags = spin_lock_irqsave(&ch1->lock);
+        spin_lock(&ch2->lock);
+
+        ch1->linked_to = ch2;
+        ch2->linked_to = ch1;
+        ch1->ref_count++;
+        ch2->ref_count++;
+
+        spin_unlock(&ch2->lock);
+        spin_unlock_irqrestore(&ch1->lock, flags);
     }
-
-    flags_t flags = spin_lock_irqsave(&ch1->lock);
-    spin_lock(&ch2->lock);
-
-    ch1->linked_to = ch2;
-    ch2->linked_to = ch1;
-    ch1->ref_count++;
-    ch2->ref_count++;
-
-    spin_unlock(&ch2->lock);
-    spin_unlock_irqrestore(&ch1->lock, flags);
 }
 
 void channel_transfer(struct channel *src, struct channel *dst) {
     if (src == dst) {
-        PANIC("FIXME: trasnfer to itself");
+        flags_t flags = spin_lock_irqsave(&src->lock);
+        if (src->transfer_to != src) {
+            src->transfer_to->ref_count--;
+        }
+
+        src->transfer_to = src;
+        spin_unlock_irqrestore(&src->lock, flags);
+    } else {
+        flags_t flags = spin_lock_irqsave(&src->lock);
+        spin_lock(&dst->lock);
+
+        src->transfer_to = dst;
+        dst->ref_count++;
+
+        spin_unlock(&dst->lock);
+        spin_unlock_irqrestore(&src->lock, flags);
     }
-
-    flags_t flags = spin_lock_irqsave(&src->lock);
-    spin_lock(&dst->lock);
-
-    src->transfer_to = dst;
-    dst->ref_count++;
-
-    spin_unlock(&dst->lock);
-    spin_unlock_irqrestore(&src->lock, flags);
 }
 
 cid_t sys_open(void) {
