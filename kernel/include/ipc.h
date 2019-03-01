@@ -19,7 +19,7 @@ typedef uintmax_t payload_t;
 struct channel *channel_create(struct process *process);
 void channel_destroy(struct channel *ch);
 void channel_link(struct channel *ch1, struct channel *ch2);
-error_t ipc_handler(payload_t header,
+error_t sys_ipc(payload_t header,
                     payload_t m0,
                     payload_t m1,
                     payload_t m2,

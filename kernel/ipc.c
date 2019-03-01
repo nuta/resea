@@ -67,7 +67,7 @@ void channel_transfer(struct channel *src, struct channel *dst) {
     spin_unlock_irqrestore(&src->lock, flags);
 }
 
-cid_t open_handler(void) {
+cid_t sys_open(void) {
     struct channel *ch = channel_create(CURRENT->process);
     if (!ch) {
         BUG("oh my: %s:%d", __FILE__, __LINE__);
@@ -78,7 +78,7 @@ cid_t open_handler(void) {
     return ch->cid;
 }
 
-error_t link_handler(cid_t ch1, cid_t ch2) {
+error_t sys_link(cid_t ch1, cid_t ch2) {
     struct channel *ch1_ch = idtable_get(&CURRENT->process->channels, ch1);
     if (!ch1_ch) {
         BUG("oh my: %s:%d", __FILE__, __LINE__);
@@ -96,7 +96,7 @@ error_t link_handler(cid_t ch1, cid_t ch2) {
     return OK;
 }
 
-error_t transfer_handler(cid_t src, cid_t dst) {
+error_t sys_transfer(cid_t src, cid_t dst) {
     struct channel *src_ch = idtable_get(&CURRENT->process->channels, src);
     if (!src_ch) {
         BUG("oh my: %s:%d", __FILE__, __LINE__);
@@ -142,7 +142,7 @@ static void copy_payload(struct thread *thread, int index, payload_t header, pay
     }
 }
 
-error_t ipc_handler(payload_t header,
+error_t sys_ipc(payload_t header,
                     payload_t m0,
                     payload_t m1,
                     payload_t m2,

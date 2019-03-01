@@ -12,7 +12,7 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     payload_t p0 = CURRENT->process->pid;
     payload_t p1 = vaddr;
     CURRENT->recved_by_kernel = 1;
-    ipc_handler(header, p0, p1, 0, 0, 0);
+    sys_ipc(header, p0, p1, 0, 0, 0);
     CURRENT->recved_by_kernel = 0;
 
     paddr_t paddr = CURRENT->buf[0];

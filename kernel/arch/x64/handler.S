@@ -5,12 +5,12 @@
 
 .align 8
 syscall_table:
-    .quad x64_ipc_handler         /* 0 */
+    .quad x64_sys_ipc             /* 0 */
     .quad invalid_syscall_handler /* 1 */
-    .quad x64_open_handler        /* 2 */
+    .quad x64_sys_open            /* 2 */
     .quad invalid_syscall_handler /* 3 */
-    .quad x64_link_handler        /* 4 */
-    .quad x64_transfer_handler    /* 5 */
+    .quad x64_sys_link            /* 4 */
+    .quad x64_sys_transfer        /* 5 */
     .quad invalid_syscall_handler /* 6 */
     .quad invalid_syscall_handler /* 7 */
     .quad invalid_syscall_handler /* 8 */
@@ -73,28 +73,28 @@ x64_syscall_handler:
     sysretq
 .endm
 
-.extern ipc_handler
-x64_ipc_handler:
+.extern sys_ipc
+x64_sys_ipc:
     SYSCALL_ENTER
-    call ipc_handler
+    call sys_ipc
     SYSCALL_LEAVE
 
-.extern open_handler
-x64_open_handler:
+.extern sys_open
+x64_sys_open:
     SYSCALL_ENTER
-    call open_handler
+    call sys_open
     SYSCALL_LEAVE
 
-.extern link_handler
-x64_link_handler:
+.extern sys_link
+x64_sys_link:
     SYSCALL_ENTER
-    call link_handler
+    call sys_link
     SYSCALL_LEAVE
 
-.extern transfer_handler
-x64_transfer_handler:
+.extern sys_transfer
+x64_sys_transfer:
     SYSCALL_ENTER
-    call transfer_handler
+    call sys_transfer
     SYSCALL_LEAVE
 
 invalid_syscall_handler:
