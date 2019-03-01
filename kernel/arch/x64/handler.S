@@ -240,6 +240,7 @@ do_handle_irq:
     test qword ptr [rsp + 16], 3
     jz 1f
 1:
+    xchg bx,bx
     iretq
 
 .globl interrupt_handler_size

@@ -13,7 +13,7 @@ x64_enter_userspace:
 
     pop rdi /* arg */
 
-    /* Sanitize registers except RDI (arg) to prevent information leak. */
+    /* Sanitize registers to prevent information leak. */
     xor rax, rax
     xor rbx, rbx
     xor rcx, rcx
@@ -34,11 +34,6 @@ x64_enter_userspace:
  */
 .globl x64_switch
 x64_switch:
-    /* Save the context. */
-    lea rax, [rip + resume_point]
-    mov [rdi + ARCH_THREAD_RIP], rax
-    mov [rdi + ARCH_THREAD_RSP], rsp
-
     /* Save callee-saved registers. */
     push rbp
     push rbx
@@ -47,10 +42,20 @@ x64_switch:
     push r14
     push r15
 
+    /* Save the context. */
+    lea rax, [rip + resume_point]
+    mov [rdi + ARCH_THREAD_RIP], rax
+    mov [rdi + ARCH_THREAD_RSP], rsp
+
     /* Save RFLAGS. */
     pushfq
     pop rax
     mov [rdi + ARCH_THREAD_RFLAGS], rax
+
+    /* Restore RFLAGS. */
+    mov rax, [rsi + ARCH_THREAD_RFLAGS]
+    push rax
+    popfq
 
     /* Set the GS base. */
     mov ecx, MSR_GS_BASE
@@ -59,10 +64,8 @@ x64_switch:
     shr rdx, 32
     wrmsr
 
-    /* Restore RFLAGS. */
-    mov rax, [rsi + ARCH_THREAD_RFLAGS]
-    push rax
-    popfq
+    /* Restore next's context. */
+    mov rsp, [rsi + ARCH_THREAD_RSP]
 
     /* Restore callee-saved registers. */
     pop r15
@@ -72,8 +75,7 @@ x64_switch:
     pop rbx
     pop rbp
 
-    /* Resume next. */
-    mov rsp, [rsi + ARCH_THREAD_RSP]
+    /* Resume the next thread. */
     jmp [rsi + ARCH_THREAD_RIP]
 
 resume_point:

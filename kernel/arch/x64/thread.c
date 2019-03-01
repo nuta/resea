@@ -16,14 +16,22 @@ void arch_thread_init(struct thread *thread,
                       vaddr_t kernel_stack,
                       size_t arg) {
 
-    // Temporarily use the kernel stack to pass `arg` and prepare an IRET frame.
-    uint64_t *rsp = (uint64_t *) (kernel_stack + KERNEL_STACK_SIZE - sizeof(uint64_t) * 6);
-    rsp[0] = arg;
-    rsp[1] = start;
-    rsp[2] = USER_CS64 | USER_RPL;
-    rsp[3] = INITIAL_RFLAGS;
-    rsp[4] = stack;
-    rsp[5] = USER_DS | USER_RPL;
+    // Temporarily use the kernel stack for x64_enter_userspace.
+    int num_regs = 12; /* arg, iret frame, and callee-saved regs */
+    int temp_stack_len = sizeof(uint64_t) * num_regs;
+    uint64_t *rsp = (uint64_t *) (kernel_stack + KERNEL_STACK_SIZE - temp_stack_len);
+    rsp[5]  = 0; /* initial R15 */
+    rsp[4]  = 0; /* initial R14 */
+    rsp[3]  = 0; /* initial R13 */
+    rsp[2]  = 0; /* initial R12 */
+    rsp[1]  = 0; /* initial RBX */
+    rsp[0]  = 0; /* initial RBP */
+    rsp[6]  = arg;
+    rsp[7]  = start;
+    rsp[8]  = USER_CS64 | USER_RPL;
+    rsp[9]  = INITIAL_RFLAGS;
+    rsp[10] = stack;
+    rsp[11] = USER_DS | USER_RPL;
 
     thread->arch.rip = (uint64_t) x64_enter_userspace;
     thread->arch.rsp = (uint64_t) rsp;
