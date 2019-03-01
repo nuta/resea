@@ -20,7 +20,7 @@ struct list_head {
 
 struct idtable {
     void **entries;
-    int num;
+    int num_entries;
 };
 
 void list_init(struct list_head *list);

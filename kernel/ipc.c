@@ -82,7 +82,6 @@ void channel_transfer(struct channel *src, struct channel *dst) {
 cid_t sys_open(void) {
     struct channel *ch = channel_create(CURRENT->process);
     if (!ch) {
-        BUG("oh my: %s:%d", __FILE__, __LINE__);
         return ERR_OUT_OF_RESOURCE;
     }
 
@@ -93,13 +92,11 @@ cid_t sys_open(void) {
 error_t sys_link(cid_t ch1, cid_t ch2) {
     struct channel *ch1_ch = idtable_get(&CURRENT->process->channels, ch1);
     if (!ch1_ch) {
-        BUG("oh my: %s:%d", __FILE__, __LINE__);
         return ERR_INVALID_CID;
     }
 
     struct channel *ch2_ch = idtable_get(&CURRENT->process->channels, ch2);
     if (!ch2_ch) {
-        BUG("oh my: %s:%d", __FILE__, __LINE__);
         return ERR_INVALID_CID;
     }
 
@@ -111,13 +108,11 @@ error_t sys_link(cid_t ch1, cid_t ch2) {
 error_t sys_transfer(cid_t src, cid_t dst) {
     struct channel *src_ch = idtable_get(&CURRENT->process->channels, src);
     if (!src_ch) {
-        BUG("oh my: %s:%d", __FILE__, __LINE__);
         return ERR_INVALID_CID;
     }
 
     struct channel *dst_ch = idtable_get(&CURRENT->process->channels, dst);
     if (!dst_ch) {
-        BUG("oh my: %s:%d", __FILE__, __LINE__);
         return ERR_INVALID_CID;
     }
 
