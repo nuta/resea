@@ -40,14 +40,6 @@ int list_is_empty(struct list_head *list) {
     return list->next == list;
 }
 
-static int id_to_index(int id) {
-    if (id < 1) {
-        BUG("tried to use an invalid id (id=%d)", id);
-    }
-
-    return id - 1;
-}
-
 // Returns 0 on failure.
 int idtable_init(struct idtable *table) {
     void **entries = alloc_page();
@@ -67,10 +59,10 @@ int idtable_init(struct idtable *table) {
 
 // You don't have to use spinlock for this. The implementation is lock-free.
 int idtable_alloc(struct idtable *table) {
-    for (int i = 0; i < table->num; i++) {
+    for (int i = ID_START; i < table->num; i++) {
         if (atomic_compare_and_swap(&table->entries[i], NULL, RESERVED)) {
             // Successfully reserved the entry.
-            return i + 1;
+            return i;
         }
     }
 
@@ -79,23 +71,31 @@ int idtable_alloc(struct idtable *table) {
 
 // You don't have to use spinlock for this. The implementation is lock-free.
 void idtable_free(struct idtable *table, int id) {
-    int index = id_to_index(id);
-    __atomic_store_n(&table->entries[index], NULL, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&table->entries[id], NULL, __ATOMIC_SEQ_CST);
 }
 
 // You don't have to use spinlock for this. The implementation is lock-free.
 void idtable_set(struct idtable *table, int id, void *value) {
-    int index = id_to_index(id);
-
-    if (table->entries[index] != RESERVED) {
+    if (table->entries[id] != RESERVED) {
         BUG("tried to use an allocated id, (id=%d)", id);
     }
 
-    __atomic_store_n(&table->entries[index], value, __ATOMIC_SEQ_CST);
+    if (id == 0 || id >= table->num) {
+        // We keep `table->entries[0]` always equals NULL to avoid a conditional
+        // branching in `idtable_get()`.
+        BUG("bad id (id=%d, num_entries=%d)", id, table->num);
+    }
+
+    __atomic_store_n(&table->entries[id], value, __ATOMIC_SEQ_CST);
 }
 
-// You don't have to use spinlock for this. The implementation is lock-free.
+// Returns NULL if `id' equals to 0. You don't have to use spinlock for
+// this. The implementation is lock-free.
 void *idtable_get(struct idtable *table, int id) {
-    int index = id_to_index(id);
-    return __atomic_load_n(&table->entries[index], __ATOMIC_SEQ_CST);
+    // We don't have to check if id != 0 since `table->entries[0]` is always NULL.
+    if (id >= table->num) {
+        BUG("bad id (id=%d, num_entries=%d)", id, table->num);
+    }
+
+    return __atomic_load_n(&table->entries[id], __ATOMIC_SEQ_CST);
 }

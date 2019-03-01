@@ -3,6 +3,8 @@
 
 #include <types.h>
 
+// We don't allocate id == 0 to use it as a *null* value.
+#define ID_START 1
 // Indicates that the entry is allocated but not yet set a value.
 #define RESERVED ((void *) 0xcafecafe)
 
