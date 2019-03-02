@@ -3,14 +3,17 @@
 
 #include <types.h>
 
+#define MP_FLOATPTR_SIGNATURE 0x5f504d5f  /* "_MP_" */
+#define MP_MPTABLE_SIGNATURE  0x504d4350  /* "PCMP" */
 #define MP_BASETABLE_PROCESSOR_ENTRY        0
 #define MP_BASETABLE_BUS_ENTRY              1
 #define MP_BASETABLE_IOAPIC_ENTRY           2
 #define MP_BASETABLE_IOINT_ASSIGN_ENTRY     3
 #define MP_BASETABLE_LOCALINT_ASSIGN_ENTRY  4
 
+
 struct mp_float_ptr {
-    uint8_t  signature[4];  // "_MP_"
+    uint32_t  signature;
     uint32_t mptable_header_addr;
     uint8_t  length;
     uint8_t  spec_rev;
@@ -21,7 +24,7 @@ struct mp_float_ptr {
 } PACKED;
 
 struct mp_table_header {
-    uint8_t  signature[4]; // "PCMP"
+    uint32_t  signature;
     uint16_t base_table_length;
     uint8_t  spec_rev;
     uint8_t  checksum;
