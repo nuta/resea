@@ -28,4 +28,7 @@ void printk(const char *fmt, ...);
         arch_panic(); \
     } while(0)
 
+#define UNIMPLEMENTED() \
+    PANIC("not yet implemented: %s:%d", __FILE__, __LINE__)
+
 #endif

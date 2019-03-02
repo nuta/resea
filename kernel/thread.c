@@ -105,7 +105,7 @@ void thread_block(struct thread *thread) {
 
 NORETURN void thread_kill_current(void) {
     // TODO:
-    PANIC("NYI");
+    UNIMPLEMENTED();
 }
 
 struct thread *scheduler(void) {

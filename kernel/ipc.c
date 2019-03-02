@@ -33,6 +33,7 @@ struct channel *channel_create(struct process *process) {
 
 void channel_destroy(UNUSED struct channel *ch) {
     // TODO:
+    UNIMPLEMENTED();
 }
 
 void channel_link(struct channel *ch1, struct channel *ch2) {
@@ -130,7 +131,7 @@ static void copy_payload(struct thread *dst, int index, payload_t header, payloa
         case PAGE_PAYLOAD: {
             /* FIXME:
             if (thread->process != kernel_process && INTERFACE_ID(header) != PAGER_INTERFACE) {
-                PANIC("NYI");
+                UNIMPLEMENTED();
             }
             */
 
@@ -140,7 +141,7 @@ static void copy_payload(struct thread *dst, int index, payload_t header, payloa
 
             if (!paddr) {
                 // TODO: return error
-                PANIC("NYI");
+                UNIMPLEMENTED();
             }
 
             dst->buffer->inlines[index] = paddr;

@@ -48,6 +48,7 @@ struct process *process_create(const char *name) {
 
 void process_destroy(UNUSED struct process *process) {
     // TODO:
+    UNIMPLEMENTED();
 }
 
 // Returns 0 on failure.

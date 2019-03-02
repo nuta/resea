@@ -55,10 +55,12 @@ void *alloc_object(void) {
 
 void free_object(UNUSED void *ptr) {
     // TODO:
+    UNIMPLEMENTED();
 }
 
 void free_page(UNUSED void *ptr) {
     // TODO:
+    UNIMPLEMENTED();
 }
 
 
