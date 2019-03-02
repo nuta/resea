@@ -3,8 +3,10 @@
 .set ARCH_THREAD_RSP, 8
 .set ARCH_THREAD_RSP0, 16
 .set ARCH_THREAD_CR3, 24
+.set ARCH_THREAD_INFO, 32
+.set ARCH_THREAD_BUFFER, 40
+.set MSR_FS_BASE, 0xc0000100
 .set MSR_GS_BASE, 0xc0000101
-.set MSR_KERNEL_GS_BASE, 0xc0000102
 
 .globl x64_enter_userspace
 x64_enter_userspace:
@@ -50,6 +52,14 @@ x64_switch:
     /* Load next's page table. */
     mov rax, [rsi + ARCH_THREAD_CR3]
     mov cr3, rax
+
+    /* Set next's FS base. */
+    mov r8, [rsi + ARCH_THREAD_INFO]
+    mov ecx, MSR_FS_BASE
+    mov rdx, r8
+    mov eax, edx
+    shr rdx, 32
+    wrmsr
 
     /* Set next's GS base. */
     mov ecx, MSR_GS_BASE

@@ -97,12 +97,6 @@ def args_list(args):
         s += f", {name}: {rename_type(type_)}"
     return s
 
-def payloads(rets):
-    values = []
-    for _,type_ in rets:
-        values.append(f"{rename_type(type_)}")
-    return ", ".join(values)
-
 def rets_list(rets):
     values = []
     for _,type_ in rets:
@@ -111,7 +105,7 @@ def rets_list(rets):
 
 def cast_payload(p):
     if len(p) == 0:
-        return f"Payload::Inline(0)"
+        return "unsafe { core::mem::uninitialized() }"
     else:
         name, type_ = p
         return f"{name}.into()"
@@ -155,7 +149,7 @@ def cast_to_msg(payloads, method_name, args):
             name, type_ = payloads[i]
             s += f"p{i}: {args}.{i}.into(), "
         else:
-            s += f"p{i}: Payload::Inline(0), "
+            s += f"p{i}: unsafe {{ core::mem::uninitialized() }}, "
     s += "}"
     return s
 

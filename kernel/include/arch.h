@@ -17,6 +17,7 @@ void arch_thread_init(struct thread *thread,
                       vaddr_t start,
                       vaddr_t stack,
                       vaddr_t kernel_stack,
+                      vaddr_t user_buffer,
                       size_t arg);
 void arch_set_current_thread(struct thread *thread);
 struct thread *arch_get_current_thread(void);

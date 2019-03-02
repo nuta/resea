@@ -14,6 +14,7 @@ void arch_thread_init(struct thread *thread,
                       vaddr_t start,
                       vaddr_t stack,
                       vaddr_t kernel_stack,
+                      vaddr_t user_buffer,
                       size_t arg) {
 
     // Temporarily use the kernel stack for x64_enter_userspace.
@@ -33,10 +34,13 @@ void arch_thread_init(struct thread *thread,
     rsp[10] = stack;
     rsp[11] = USER_DS | USER_RPL;
 
-    thread->arch.rip = (uint64_t) x64_enter_userspace;
-    thread->arch.rsp = (uint64_t) rsp;
-    thread->arch.rsp0 = kernel_stack + KERNEL_STACK_SIZE;
-    thread->arch.cr3 = thread->process->page_table.pml4;
+    thread->arch.rip    = (uint64_t) x64_enter_userspace;
+    thread->arch.rsp    = (uint64_t) rsp;
+    thread->arch.rsp0   = kernel_stack + KERNEL_STACK_SIZE;
+    thread->arch.cr3    = thread->process->page_table.pml4;
+    thread->arch.buffer = (uint64_t) thread->buffer;
+    thread->arch.info   = user_buffer;
+    thread->info->user_buffer = user_buffer + PAGE_SIZE;
 }
 
 void arch_set_current_thread(struct thread *thread) {

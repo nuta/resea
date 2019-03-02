@@ -37,7 +37,6 @@ void *pool_alloc(struct pool *pool) {
         size_t index = pool->elements_used;
         void *ptr = (void *) (pool->elements + pool->element_size * index);
         pool->elements_used++;
-        DEBUG("alloc: %p", ptr);
         spin_unlock_irqrestore(&pool->lock, flags);
         return ptr;
     }
@@ -58,6 +57,10 @@ void free_object(UNUSED void *ptr) {
     // TODO:
 }
 
+void free_page(UNUSED void *ptr) {
+    // TODO:
+}
+
 void page_fault_handler(vaddr_t addr, uintmax_t flags) {
     DEBUG("page_fault_handler: addr=%p", addr);
 
@@ -69,7 +72,7 @@ void page_fault_handler(vaddr_t addr, uintmax_t flags) {
     if (flags & PF_PRESENT) {
         // Invalid access. For instance the user thread has tried to write to
         // readonly area.
-        DEBUG("page fault: already present page access: addr=%p", addr);
+        DEBUG("page fault: already present: addr=%p", addr);
         thread_kill_current();
     }
 

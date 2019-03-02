@@ -39,7 +39,7 @@ static void userland(void) {
         PANIC("failed to create a process");
     }
 
-    struct thread *thread = thread_create(user_process, INITFS_ADDR, 0, 0);
+    struct thread *thread = thread_create(user_process, INITFS_ADDR, 0, 0x1000, 0);
     if (!thread) {
         PANIC("failed to create a user thread");
     }

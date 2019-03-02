@@ -16,12 +16,6 @@
 #define POWEROFF_REQUEST        0x0105
 #define FILL_PAGE_REQUEST       0x0301
 
-error_t kernel_server(payload_t header,
-                      payload_t p0,
-                      payload_t p1,
-                      payload_t p2,
-                      payload_t p3,
-                      payload_t p4,
-                      struct thread *client);
+error_t kernel_server(void);
 
 #endif

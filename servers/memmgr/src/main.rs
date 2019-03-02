@@ -124,7 +124,13 @@ fn main() {
             kernel.add_pager(proc, 1, 0x0300_0000, 0x0302_0000, 0x06).ok();
 
             println!("spawning a thread...");
-            kernel.spawn_thread(proc, elf.entry as usize).expect("failed to create a thread");
+            kernel.spawn_thread(
+                proc,
+                elf.entry as usize,
+                0 /* stack */,
+                0x1000, /* user buffer */
+                0 /* arg */
+            ).expect("failed to create a thread");
 
             server.programs.insert(proc, Program { elf, file: file.clone() });
         }

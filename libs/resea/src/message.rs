@@ -29,19 +29,6 @@ impl Header {
     }
 }
 
-#[repr(transparent)]
-pub struct Accept(usize);
-
-impl Accept {
-    pub fn allocate() -> Accept {
-        Accept(0)
-    }
-
-    pub fn as_usize(&self) -> usize {
-        self.0
-    }
-}
-
 #[derive(Debug)]
 pub enum PagePayload {
     Move {
@@ -55,29 +42,12 @@ pub enum PagePayload {
 }
 
 #[derive(Debug)]
-pub enum Payload {
-    Inline(usize),
-    Page(PagePayload),
-}
-
-pub fn encode_payload(p: Payload) -> usize {
-    match p {
-        Payload::Inline(value) => value,
-        Payload::Page(ref page) => match page {
-            PagePayload::Move { addr, exp } => (addr & 0xffff_ffff_fff_f000) | (exp << 3),
-            PagePayload::Shared { .. } => unimplemented!(),
-        },
-    }
-}
-
-pub fn decode_payload(p: usize) -> Payload {
-    // TODO: support Page
-    Payload::Inline(p)
-}
+#[repr(transparent)]
+pub struct Payload(usize);
 
 impl Into<Payload> for usize {
     fn into(self)-> Payload {
-        Payload::Inline(self)
+        Payload(self)
     }
 }
 
@@ -89,7 +59,7 @@ impl From<Payload> for usize {
 
 impl Into<Payload> for isize {
     fn into(self)-> Payload {
-        Payload::Inline(self as usize)
+        Payload(self as usize)
     }
 }
 
@@ -101,7 +71,7 @@ impl From<Payload> for isize {
 
 impl Into<Payload> for u8 {
     fn into(self)-> Payload {
-        Payload::Inline(self as usize)
+        Payload(self as usize)
     }
 }
 
@@ -112,11 +82,7 @@ impl From<Payload> for u8 {
 }
 
 pub fn payload_as_usize(p: Payload) -> usize {
-    match p {
-        Payload::Inline(value) => value,
-        // TODO: return error instead
-        Payload::Page(_) => panic!("invalid payload"),
-    }
+    p.0
 }
 
 fn usize_to_page_size(size: usize) -> usize {
@@ -147,24 +113,23 @@ impl Page {
 
 impl Into<Payload> for Page {
     fn into(self)-> Payload {
-        Payload::Page(self.0)
+        match self.0 {
+            PagePayload::Move { addr, exp } => Payload((addr & 0xffff_ffff_fff_f000) | (exp << 3)),
+            PagePayload::Shared { .. } => unimplemented!(),
+        }
     }
 }
 
 impl From<Payload> for Page {
-    fn from(p: Payload) -> Page {
-        match p {
-            // TODO: return error instead
-            Payload::Inline(_) => panic!("invalid payload"),
-            Payload::Page(payload) => Page::from_payload(payload),
-        }
+    fn from(_p: Payload) -> Page {
+        unimplemented!();
     }
 }
 
 #[derive(Debug)]
 pub struct Msg {
-    pub from: Channel,
     pub header: Header,
+    pub from: Channel,
     pub p0: Payload,
     pub p1: Payload,
     pub p2: Payload,

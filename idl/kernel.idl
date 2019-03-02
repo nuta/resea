@@ -8,7 +8,7 @@ interface kernel {
     create_process() -> (pid: pid, pager: cid)
 
     [id(3), type(rpc)]
-    spawn_thread(pid: pid, start: usize) -> (tid: tid)
+    spawn_thread(pid: pid, start: usize, stack: usize, buffer: usize, arg: usize) -> (tid: tid)
 
     [id(4), type(rpc)]
     add_pager(pid: pid, pager: cid, start: usize, end: usize, flags: u8) -> ()

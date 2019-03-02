@@ -122,10 +122,10 @@ error_t sys_transfer(cid_t src, cid_t dst) {
 }
 
 #define PAGER_INTERFACE 3
-static void copy_payload(struct thread *thread, int index, payload_t header, payload_t p) {
+static void copy_payload(struct thread *dst, int index, payload_t header, payload_t p) {
     switch (PAYLOAD_TYPE(header, index)) {
         case INLINE_PAYLOAD:
-            thread->buf[index] = p;
+            dst->buffer->inlines[index] = p;
             break;
         case PAGE_PAYLOAD: {
             /* FIXME:
@@ -143,45 +143,30 @@ static void copy_payload(struct thread *thread, int index, payload_t header, pay
                 PANIC("NYI");
             }
 
-            thread->buf[index] = paddr;
+            dst->buffer->inlines[index] = paddr;
             break;
         }
     }
 }
 
-error_t sys_ipc(payload_t header,
-                    payload_t m0,
-                    payload_t m1,
-                    payload_t m2,
-                    payload_t m3,
-                    payload_t m4) {
-
-    int cid = header >> 48;
+error_t sys_ipc(cid_t cid, int options) {
     struct channel *ch = idtable_get(&CURRENT->process->channels, cid);
     if (!ch) {
         return ERR_INVALID_CID;
     }
 
+    payload_t header = CURRENT->buffer->header;
     if (ch->linked_to->process == kernel_process) {
-        if (!FLAG_SEND(header) || !FLAG_RECV(header)) {
+        if (!FLAG_SEND(options) || !FLAG_RECV(options)) {
             DEBUG("invalid header");
             return ERR_INVALID_HEADER;
         }
 
-        error_t err = kernel_server(header, m0, m1, m2, m3, m4, CURRENT);
-        __asm__ __volatile__(
-            // "movq %%r, %%rdi   \n"
-            "movq 0(%%rax), %%rsi   \n"
-            "movq 8(%%rax), %%rdx   \n"
-            "movq 16(%%rax), %%r10   \n"
-            "movq 24(%%rax), %%r8    \n"
-            "movq 32(%%rax), %%r9    \n"
-        :: "D"(CURRENT->header), "a"(CURRENT->buf)
-        );
-        return err;
+        kernel_server();
+        return OK;
     }
 
-    if (FLAG_SEND(header)) {
+    if (FLAG_SEND(options)) {
 retry_send:;
         struct channel *linked_to = ch->linked_to;
         struct channel *dst = linked_to->transfer_to;
@@ -208,21 +193,22 @@ retry_send:;
         // Now we have the linked_to channel lock and the receiver. Time to send
         // a message!
         cid_t sent_from = linked_to->cid;
-        receiver->header = (header & 0x3ffffff) | (sent_from << 48);
-        copy_payload(receiver, 0, header, m0);
-        copy_payload(receiver, 1, header, m1);
-        copy_payload(receiver, 2, header, m2);
-        copy_payload(receiver, 3, header, m3);
-        copy_payload(receiver, 4, header, m4);
+        receiver->buffer->header = header;
+        receiver->buffer->sent_from = sent_from;
+        copy_payload(receiver, 0, header, CURRENT->buffer->inlines[0]);
+        copy_payload(receiver, 1, header, CURRENT->buffer->inlines[1]);
+        copy_payload(receiver, 2, header, CURRENT->buffer->inlines[2]);
+        copy_payload(receiver, 3, header, CURRENT->buffer->inlines[3]);
+        copy_payload(receiver, 4, header, CURRENT->buffer->inlines[4]);
 
         thread_resume(receiver);
         dst->receiver = NULL;
         spin_unlock_irqrestore(&dst->lock, flags);
     }
 
-    if (FLAG_RECV(header)) {
+    if (FLAG_RECV(options)) {
         struct channel *recv_on;
-        if (FLAG_REPLY(header)) {
+        if (FLAG_REPLY(options)) {
             recv_on = ch->transfer_to;
         } else {
             recv_on = ch;
@@ -248,16 +234,7 @@ retry_send:;
         spin_unlock_irqrestore(&ch->lock, flags);
         thread_switch();
 
-        // Now `CURRENT->buf` is filled by the sender thread.
-        __asm__ __volatile__(
-            // "movq %%r, %%rdi   \n"
-            "movq 0(%%rax), %%rsi   \n"
-            "movq 8(%%rax), %%rdx   \n"
-            "movq 16(%%rax), %%r10   \n"
-            "movq 24(%%rax), %%r8    \n"
-            "movq 32(%%rax), %%r9    \n"
-        :: "D"(CURRENT->header), "a"(CURRENT->buf)
-        );
+        // Now `CURRENT->buffer` is filled by the sender thread.
         return OK;
     }
 

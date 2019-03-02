@@ -8,6 +8,7 @@
 static struct thread *thread_create_with_pid(struct process *process,
                                              uintmax_t start,
                                              uintmax_t stack,
+                                             vaddr_t user_buffer,
                                              uintmax_t arg,
                                              pid_t tid) {
     struct thread *thread = alloc_object();
@@ -21,17 +22,41 @@ static struct thread *thread_create_with_pid(struct process *process,
         return NULL;
     }
 
+    struct message *buffer = (struct message *) alloc_page();
+    if (!buffer) {
+        free_object(thread);
+        free_page((void *) kernel_stack);
+        return NULL;
+    }
+
+    struct arch_thread_info *thread_info = (struct arch_thread_info *) alloc_page();
+    if (!buffer) {
+        free_object(thread);
+        free_page((void *) kernel_stack);
+        free_page((void *) buffer);
+        return NULL;
+    }
+
     thread->tid = tid;
     thread->state = THREAD_BLOCKED;
     thread->kernel_stack = kernel_stack;
     thread->process = process;
-    thread->recved_by_kernel = 0;
+    thread->buffer = buffer;
+    thread->info = thread_info;
     spin_lock_init(&thread->lock);
     write_stack_canary(kernel_stack);
-    arch_thread_init(thread, start, stack, kernel_stack, arg);
+    arch_thread_init(thread, start, stack, kernel_stack, user_buffer, arg);
+
+    // Allow threads to read and write the buffer.
+    flags_t flags = spin_lock_irqsave(&process->lock);
+    arch_link_page(&process->page_table, user_buffer, into_paddr(thread_info), 1,
+        PAGE_USER);
+    arch_link_page(&process->page_table, user_buffer + PAGE_SIZE, into_paddr(buffer), 1,
+        PAGE_USER | PAGE_WRITABLE);
+    list_push_back(&process->threads, &thread->next);
+    spin_unlock_irqrestore(&process->lock, flags);
 
     idtable_set(&all_processes, tid, (void *) thread);
-    list_push_back(&process->threads, &thread->next);
 
     DEBUG("new thread: pid=%d, tid=%d", process->pid, tid);
     return thread;
@@ -40,6 +65,7 @@ static struct thread *thread_create_with_pid(struct process *process,
 struct thread *thread_create(struct process * process,
                              uintmax_t start,
                              uintmax_t stack,
+                             vaddr_t user_buffer,
                              uintmax_t arg) {
 
     int tid = idtable_alloc(&all_processes);
@@ -47,7 +73,9 @@ struct thread *thread_create(struct process * process,
         return NULL;
     }
 
-    struct thread *thread = thread_create_with_pid(process, start, stack, arg, tid);
+    struct thread *thread = thread_create_with_pid(process, start, stack,
+        user_buffer, arg, tid);
+
     if (!thread) {
         idtable_free(&all_processes, tid);
         return NULL;
@@ -113,7 +141,7 @@ void thread_switch(void) {
 
 void thread_init(void) {
     list_init(&runqueue);
-    struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0);
+    struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0, 0);
     arch_set_current_thread(idle_thread);
     CPUVAR->idle_thread = idle_thread;
 }

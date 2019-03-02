@@ -11,6 +11,11 @@ void printk(const char *fmt, ...);
     printk("%s.%d: " fmt "\n", CURRENT->process->name, CURRENT->tid, ## __VA_ARGS__)
 #define INFO(fmt, ...) printk(fmt "\n", ## __VA_ARGS__)
 #define WARN(fmt, ...) printk("WARN: " fmt "\n", ## __VA_ARGS__)
+#define OOPS(fmt, ...) do {\
+        printk("[Oops] " fmt "\n", ## __VA_ARGS__); \
+        backtrace(); \
+    } while(0)
+
 #define BUG(fmt, ...) do {\
         printk("[PANIC] BUG: " fmt "\n", ## __VA_ARGS__); \
         backtrace(); \

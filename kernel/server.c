@@ -8,30 +8,23 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     struct channel *pager = vma->arg;
     DEBUG("user pager=%d, addr=%p", pager->cid, vaddr);
 
-    payload_t header = (pager->cid << 48) | MSG_SEND | MSG_RECV | FILL_PAGE_REQUEST;
-    payload_t p0 = CURRENT->process->pid;
-    payload_t p1 = vaddr;
-    CURRENT->recved_by_kernel = 1;
-    sys_ipc(header, p0, p1, 0, 0, 0);
-    CURRENT->recved_by_kernel = 0;
+    struct message *m = CURRENT->buffer;
+    m->header     = FILL_PAGE_REQUEST;
+    m->inlines[0] = CURRENT->process->pid;
+    m->inlines[1] = vaddr;
+    sys_ipc(pager->cid, MSG_SEND | MSG_RECV);
 
-    paddr_t paddr = CURRENT->buf[0];
+    paddr_t paddr = m->inlines[0];
     DEBUG("Ok, got a page addr=%p", paddr);
     return paddr;
 }
 
-error_t kernel_server(payload_t header,
-                      payload_t p0,
-                      payload_t p1,
-                      payload_t p2,
-                      payload_t p3,
-                      UNUSED payload_t p4,
-                      struct thread *client) {
-
-    switch (MSG_ID(header)) {
+error_t kernel_server(void) {
+    struct message *m = CURRENT->buffer;
+    switch (MSG_ID(m->header)) {
         case PUTCHAR_REQUEST: {
-            arch_putchar(p0);
-            client->header = PUTCHAR_RESPONSE;
+            arch_putchar(m->inlines[0]);
+            m->header = PUTCHAR_RESPONSE;
             break;
         }
         case CREATE_PROCESS_REQUEST: {
@@ -58,14 +51,17 @@ error_t kernel_server(payload_t header,
 
             DEBUG("kernel: create_process_response(pid=%d, pager_ch=%d)",
                 proc->pid, pager_ch->cid);
-            client->header = CREATE_PROCESS_RESPONSE;
-            client->buf[0] = proc->pid;
-            client->buf[1] = pager_ch->cid;
+            m->header = CREATE_PROCESS_RESPONSE;
+            m->inlines[0] = proc->pid;
+            m->inlines[1] = pager_ch->cid;
             break;
         }
         case SPAWN_THREAD_REQUEST: {
-            int pid = p0;
-            vaddr_t start = p1;
+            int pid = m->inlines[0];
+            vaddr_t start = m->inlines[1];
+            vaddr_t stack = m->inlines[2];
+            vaddr_t buffer = m->inlines[3];
+            uintmax_t arg = m->inlines[4];
             DEBUG("kernel: spawn_thread(pid=%d, start=%p)", pid, start);
 
             struct process *proc = idtable_get(&all_processes, pid);
@@ -73,7 +69,7 @@ error_t kernel_server(payload_t header,
                 return ERR_INVALID_MESSAGE;
             }
 
-            struct thread *thread = thread_create(proc, start, 0, 0);
+            struct thread *thread = thread_create(proc, start, stack, buffer, arg);
             if (!thread) {
                 return ERR_OUT_OF_RESOURCE;
             }
@@ -81,16 +77,16 @@ error_t kernel_server(payload_t header,
             thread_resume(thread);
 
             DEBUG("kernel: spawn_thread_response(tid=%d)", thread->tid);
-            client->header = SPAWN_THREAD_RESPONSE;
-            client->buf[0] = thread->tid;
+            m->header = SPAWN_THREAD_RESPONSE;
+            m->inlines[0] = thread->tid;
             break;
         }
         case ADD_PAGER_REQUEST: {
-            int pid = p0;
-            int pager = p1;
-            vaddr_t start = p2;
-            vaddr_t end = p3;
-            int flags = p4;
+            int pid = m->inlines[0];
+            int pager = m->inlines[1];
+            vaddr_t start = m->inlines[2];
+            vaddr_t end = m->inlines[3];
+            int flags = m->inlines[4];
             flags |= PAGE_USER;
 
             DEBUG("kernel: add_pager(pid=%d, pager=%d, range=%p-%p)",
@@ -109,7 +105,7 @@ error_t kernel_server(payload_t header,
             vmarea_add(proc, start, end, user_pager, pager_ch, flags);
 
             DEBUG("kernel: add_pager_response()");
-            client->header = ADD_PAGER_RESPONSE;
+            m->header = ADD_PAGER_RESPONSE;
         }
     }
 

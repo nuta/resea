@@ -1,5 +1,5 @@
 use crate::syscalls;
-use crate::message::{Msg, Accept, encode_payload};
+use crate::message::Msg;
 
 #[derive(Copy, Clone, Debug)]
 #[repr(transparent)]
@@ -16,6 +16,7 @@ impl CId {
 }
 
 #[derive(Copy, Clone, Debug)]
+#[repr(transparent)]
 pub struct Channel {
     cid: CId,
 }
@@ -44,33 +45,24 @@ impl Channel {
     }
 
     pub fn send(&self, m: Msg) -> syscalls::Result<()> {
-        syscalls::send(
-            self.cid.as_isize(),
-            m.header.as_usize(),
-            encode_payload(m.p0),
-            encode_payload(m.p1),
-            encode_payload(m.p2),
-            encode_payload(m.p3),
-            encode_payload(m.p4),
-        )
+        unsafe {
+            syscalls::update_thread_local_buffer(&m);
+            syscalls::send(self.cid)
+        }
     }
 
     pub fn recv(&self) -> syscalls::Result<Msg> {
-        let accept = Accept::allocate();
-        syscalls::recv(self.cid.as_isize(), accept.as_usize())
+        unsafe {
+            syscalls::recv(self.cid)
+                .map(|_| syscalls::read_thread_local_buffer())
+        }
     }
 
     pub fn call(&self, m: Msg) -> syscalls::Result<Msg> {
-        let accept = Accept::allocate();
-        syscalls::call(
-            self.cid.as_isize(),
-            m.header.as_usize(),
-            encode_payload(m.p0),
-            encode_payload(m.p1),
-            encode_payload(m.p2),
-            encode_payload(m.p3),
-            encode_payload(m.p4),
-            accept.as_usize()
-        )
+        unsafe {
+            syscalls::update_thread_local_buffer(&m);
+            syscalls::call(self.cid)
+                .map(|_| syscalls::read_thread_local_buffer())
+        }
     }
 }

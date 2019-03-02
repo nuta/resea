@@ -28,13 +28,20 @@
 typedef uint64_t flags_t;
 typedef uint8_t spinlock_t;
 
+// Thread-local information accessible from the user.
+struct arch_thread_info {
+    uint64_t user_buffer;
+} PACKED;
+
 struct arch_thread {
     // IMPORTANT NOTE: Don't forget to update offsets in switch.S and handler.S
     //  as well!
-    uint64_t rip;           // 0
-    uint64_t rsp;           // 8
-    uint64_t rsp0;          // 16: rsp0 == kernel_stack + (size of stack)
-    uint64_t cr3;           // 24
+    uint64_t rip;     // 0
+    uint64_t rsp;     // 8
+    uint64_t rsp0;    // 16: rsp0 == kernel_stack + (size of stack)
+    uint64_t cr3;     // 24
+    uint64_t info;    // 32
+    uint64_t buffer;  // 40
 };
 
 struct arch_page_table {

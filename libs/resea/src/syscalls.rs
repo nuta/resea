@@ -16,4 +16,4 @@ pub enum SyscallError {
 }
 
 pub type Result<T> = core::result::Result<T, SyscallError>;
-pub use crate::arch::syscalls::{open, send, recv, call, link, transfer};
+pub use crate::arch::syscalls::*;

@@ -16,6 +16,8 @@ typedef intmax_t tid_t;
 struct thread {
     // Architecture-dependent context such as registers.
     struct arch_thread arch;
+    // Architecture-dependent thread-local information block.
+    struct arch_thread_info *info;
     // The thread ID.
     tid_t tid;
     // The thread lock.
@@ -26,11 +28,8 @@ struct thread {
     int state;
     // The beginning of (bottom of) dedicated kernel stack.
     vaddr_t kernel_stack;
-
-    payload_t header;
-    payload_t buf[6];
-    int recved_by_kernel;
-
+    // The thread-local message buffer.
+    struct message *buffer;
     // List elements.
     struct list_head runqueue_elem;
     struct list_head sender_queue_elem;
@@ -42,6 +41,7 @@ void thread_switch(void);
 struct thread *thread_create(struct process * process,
                              uintmax_t start,
                              uintmax_t stack,
+                             vaddr_t user_buffer,
                              uintmax_t arg);
 void thread_block(struct thread *thread);
 void thread_resume(struct thread *thread);
