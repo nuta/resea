@@ -61,6 +61,41 @@ void free_page(UNUSED void *ptr) {
     // TODO:
 }
 
+
+// Checks if `vma` includes `addr`, allows the requested access, and
+// the page does not yet exist in the page table.
+static int is_valid_page_fault_for(struct vmarea *vma, vaddr_t vaddr, uintmax_t flags) {
+    if (!(vma->start <= vaddr && vaddr < vma->end)) {
+        return 0;
+    }
+
+    if (flags & PF_USER && vma->flags & !(PAGE_USER)) {
+        return 0;
+    }
+
+    if (flags & PF_WRITE && vma->flags & !(PAGE_WRITABLE)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+
+static void fill_page(struct process *process, struct vmarea *vma, vaddr_t vaddr) {
+    // Ask the associated pager to fill a physical page.
+    DEBUG("calling pager: pager=%p, vaddr=%p", vma->pager, vaddr);
+    paddr_t paddr = vma->pager(vma, vaddr);
+
+    if (!paddr) {
+        DEBUG("failed to fill a page");
+        thread_kill_current();
+    }
+
+    // Register the filled page with the page table.
+    DEBUG("#PF: link vaddr %p to %p", vaddr, paddr);
+    arch_link_page(&process->page_table, vaddr, paddr, 1, vma->flags);
+}
+
 void page_fault_handler(vaddr_t addr, uintmax_t flags) {
     DEBUG("page_fault_handler: addr=%p", addr);
 
@@ -82,38 +117,13 @@ void page_fault_handler(vaddr_t addr, uintmax_t flags) {
     struct process *process = CURRENT->process;
     LIST_FOR_EACH(entry, &process->vmareas) {
         struct vmarea *vma = LIST_CONTAINER(vmarea, next, entry);
-        if (!(vma->start <= aligned_vaddr && aligned_vaddr < vma->end)) {
-            continue;
+        if (is_valid_page_fault_for(vma, aligned_vaddr, flags)) {
+            fill_page(process, vma, aligned_vaddr);
+
+            // Now we've done what we have to do. Return to the exception
+            // handler and resume the thread.
+            return;
         }
-
-        if (flags & PF_USER && vma->flags & !(PAGE_USER)) {
-            continue;
-        }
-
-        if (flags & PF_WRITE && vma->flags & !(PAGE_WRITABLE)) {
-            continue;
-        }
-
-        // This area includes `addr`, allows the requested access, and
-        // the page does not yet exist in the page table. Looks a valid
-        // page fault. Let's handle this!
-
-        // Ask the associated pager to fill a physical page.
-        DEBUG("calling pager: pager=%p, vaddr=%p", vma->pager, aligned_vaddr);
-        paddr_t paddr = vma->pager(vma, aligned_vaddr);
-
-        if (!paddr) {
-            DEBUG("failed to fill a page");
-            thread_kill_current();
-        }
-
-        // Register the filled page with the page table.
-        DEBUG("#PF: link vaddr %p to %p", aligned_vaddr, paddr);
-        arch_link_page(&process->page_table, aligned_vaddr, paddr, 1, vma->flags);
-
-        // Now we've done what we have to do. Return to the exception
-        // handler and resume the thread.
-        return;
     }
 
     // No appropriate vm area. The user thread must have accessed unallocated
