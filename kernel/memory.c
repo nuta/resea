@@ -79,7 +79,7 @@ void page_fault_handler(vaddr_t addr, uintmax_t flags) {
     struct process *process = CURRENT->process;
     LIST_FOR_EACH(entry, &process->vmareas) {
         struct vmarea *vma = LIST_CONTAINER(vmarea, next, entry);
-        if (!(vma->vaddr <= aligned_vaddr && aligned_vaddr <= vma->vaddr + vma->len)) {
+        if (!(vma->start <= aligned_vaddr && aligned_vaddr < vma->end)) {
             continue;
         }
 

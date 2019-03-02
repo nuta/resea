@@ -119,9 +119,9 @@ fn main() {
             println!("registering pagers...");
             // TODO: remove hardcoded values
             // The executable image.
-            kernel.add_pager(proc, 1, 0x0010_0000, 0x20000, 0x06).ok();
+            kernel.add_pager(proc, 1, 0x0010_0000, 0x0012_0000, 0x06).ok();
             // The zeroed pages (heap).
-            kernel.add_pager(proc, 1, 0x0300_0000, 0x20000, 0x06).ok();
+            kernel.add_pager(proc, 1, 0x0300_0000, 0x0302_0000, 0x06).ok();
 
             println!("spawning a thread...");
             kernel.spawn_thread(proc, elf.entry as usize).expect("failed to create a thread");

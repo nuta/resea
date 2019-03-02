@@ -11,10 +11,10 @@
 #define OBJ_POOL_LEN            0x400000
 #define KERNEL_STACK_POOL_LEN   0x400000
 #define PAGE_POOL_LEN           0x800000
-#define INITFS_BASE             0x00100000
-#define INITFS_IMAGE_SIZE       0x00100000
-#define STRAIGHT_MAP_BASE       0x02000000
-#define STRAIGHT_MAP_SIZE       0xf000000000000000ULL /* FIXME: replace vma->len with vma->end */
+#define INITFS_ADDR             0x0000000000100000
+#define INITFS_END              0x0000000000200000
+#define STRAIGHT_MAP_ADDR       0x0000000002000000
+#define STRAIGHT_MAP_END        0xffffffffffffffff
 #define OBJ_MAX_SIZE    1024
 #define TICK_HZ         1000
 #define PAGE_SIZE       4096

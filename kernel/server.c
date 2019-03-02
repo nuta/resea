@@ -88,13 +88,13 @@ error_t kernel_server(payload_t header,
         case ADD_PAGER_REQUEST: {
             int pid = p0;
             int pager = p1;
-            vaddr_t vaddr = p2;
-            size_t len = p3;
+            vaddr_t start = p2;
+            vaddr_t end = p3;
             int flags = p4;
             flags |= PAGE_USER;
 
-            DEBUG("kernel: add_pager(pid=%d, pager=%d, vaddr=%p, len=%p)",
-                pid, pager, vaddr, len);
+            DEBUG("kernel: add_pager(pid=%d, pager=%d, range=%p-%p)",
+                pid, pager, start, end);
 
             struct process *proc = idtable_get(&all_processes, pid);
             if (!proc) {
@@ -106,7 +106,7 @@ error_t kernel_server(payload_t header,
                 return ERR_INVALID_MESSAGE;
             }
 
-            vmarea_add(proc, vaddr, len, user_pager, pager_ch, flags);
+            vmarea_add(proc, start, end, user_pager, pager_ch, flags);
 
             DEBUG("kernel: add_pager_response()");
             client->header = ADD_PAGER_RESPONSE;

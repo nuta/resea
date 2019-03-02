@@ -18,7 +18,7 @@ static paddr_t initfs_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
         return 0;
     }
 
-    vaddr_t offset = vaddr - INITFS_BASE;
+    vaddr_t offset = vaddr - INITFS_ADDR;
     vaddr_t copy_from = (vaddr_t) __initfs + offset;
     memcpy(page, PAGE_SIZE, (void *) copy_from, PAGE_SIZE);
 
@@ -39,7 +39,7 @@ static void userland(void) {
         PANIC("failed to create a process");
     }
 
-    struct thread *thread = thread_create(user_process, INITFS_BASE, 0, 0);
+    struct thread *thread = thread_create(user_process, INITFS_ADDR, 0, 0);
     if (!thread) {
         PANIC("failed to create a user thread");
     }
@@ -59,11 +59,11 @@ static void userland(void) {
 
     // Set up pagers.
     int flags = PAGE_WRITABLE | PAGE_USER;
-    if (!vmarea_add(user_process, INITFS_BASE, INITFS_IMAGE_SIZE, initfs_pager, NULL, flags)) {
+    if (!vmarea_add(user_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL, flags)) {
         PANIC("failed to add a vmarea");
     }
 
-    if (!vmarea_add(user_process, STRAIGHT_MAP_BASE, STRAIGHT_MAP_SIZE, straight_map_pager, NULL, flags)) {
+    if (!vmarea_add(user_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END, straight_map_pager, NULL, flags)) {
         PANIC("failed to add a vmarea");
     }
 

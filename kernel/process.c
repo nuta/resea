@@ -52,8 +52,8 @@ void process_destroy(UNUSED struct process *process) {
 
 // Returns 0 on failure.
 int vmarea_add(struct process* process,
-               vaddr_t vaddr,
-               size_t len,
+               vaddr_t start,
+               vaddr_t end,
                pager_t pager,
                void *pager_arg,
                int flags) {
@@ -63,9 +63,9 @@ int vmarea_add(struct process* process,
         return 0;
     }
 
-    DEBUG("new vmarea: vaddr=%p, len=%p", vaddr, len);
-    vma->vaddr = vaddr;
-    vma->len   = len;
+    DEBUG("new vmarea: vaddr=%p-%p", start, end);
+    vma->start = start;
+    vma->end   = end;
     vma->pager = pager;
     vma->arg   = pager_arg;
     vma->flags = flags;

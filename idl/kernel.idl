@@ -11,7 +11,7 @@ interface kernel {
     spawn_thread(pid: pid, start: usize) -> (tid: tid)
 
     [id(4), type(rpc)]
-    add_pager(pid: pid, pager: cid, addr: usize, len: usize, flags: u8) -> ()
+    add_pager(pid: pid, pager: cid, start: usize, end: usize, flags: u8) -> ()
 
     [id(5), type(rpc)]
     poweroff() -> ()

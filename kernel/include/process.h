@@ -28,8 +28,8 @@ struct channel {
 
 struct vmarea {
     struct list_head next;
-    vaddr_t vaddr;
-    size_t len;
+    vaddr_t start;
+    vaddr_t end;
     pager_t pager;
     void *arg;
     uintmax_t flags;
@@ -53,8 +53,8 @@ void process_init(void);
 struct process *process_create(const char *name);
 void process_destroy(struct process *process);
 int vmarea_add(struct process* process,
-               vaddr_t vaddr,
-               size_t len,
+               vaddr_t start,
+               vaddr_t end,
                pager_t pager,
                void *pager_arg,
                int flags);
