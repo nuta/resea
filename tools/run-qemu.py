@@ -12,6 +12,8 @@ def prettify_kernel_message(line):
         print(f"{Style.BRIGHT}{Fore.RED}{line}{Fore.RESET}")
     elif line.startswith("[Oops]"):
         print(f"{Style.BRIGHT}{Fore.YELLOW}{line}{Fore.RESET}")
+    elif line.startswith("WARN"):
+        print(f"{Style.BRIGHT}{Fore.MAGENTA}{line}{Fore.RESET}")
     elif re.match(r"[ ]*#\d+: ", line):
         # Possibly a stack trace.
         print(f"{Style.BRIGHT}{Fore.YELLOW}{line}{Fore.RESET}")
