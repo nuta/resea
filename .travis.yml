@@ -12,6 +12,7 @@ env:
 # Install clang, lld, and Python3.7 from PPA on Ubuntu 16.04 build.
 addons:
   homebrew:
+    update: true
     packages:
       - binutils
       - llvm
