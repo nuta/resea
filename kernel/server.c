@@ -8,13 +8,17 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     struct channel *pager = vma->arg;
     DEBUG("user pager=%d, addr=%p", pager->cid, vaddr);
 
+    // FIXME: define message structs
     struct message *m = CURRENT->buffer;
-    m->header     = FILL_PAGE_REQUEST;
+    m->header = FILL_PAGE_REQUEST << MSG_ID_OFFSET
+              | sizeof(*m) << INLINE_PAYLOAD_LEN_OFFSET;
     m->inlines[0] = CURRENT->process->pid;
     m->inlines[1] = vaddr;
-    sys_ipc(pager->cid, MSG_SEND | MSG_RECV);
 
-    paddr_t paddr = m->inlines[0];
+    payload_t options = 1 << FLAG_SEND_OFFSET | 1 << FLAG_RECV_OFFSET;
+    sys_ipc(pager->cid, options);
+
+    paddr_t paddr = m->pages[0];
     DEBUG("Ok, got a page addr=%p", paddr);
     return paddr;
 }

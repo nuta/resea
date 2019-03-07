@@ -1,5 +1,5 @@
 use crate::syscalls;
-use crate::message::Msg;
+use crate::message::{Msg, Header};
 
 #[derive(Copy, Clone, Debug)]
 #[repr(transparent)]
@@ -15,7 +15,7 @@ impl CId {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Debug)]
 #[repr(transparent)]
 pub struct Channel {
     cid: CId,
@@ -44,21 +44,37 @@ impl Channel {
         syscalls::transfer(self.cid, dest.cid)
     }
 
-    pub fn send(&self, m: Msg) -> syscalls::Result<()> {
+    pub fn send<T: Msg>(&self, m: T) -> syscalls::Result<()> {
         unsafe {
             syscalls::update_thread_local_buffer(&m);
             syscalls::send(self.cid)
         }
     }
 
-    pub fn recv(&self) -> syscalls::Result<Msg> {
+    pub fn peek_header(&self) -> Header {
+        unsafe {
+            syscalls::read_thread_local_buffer()
+        }
+    }
+
+    pub fn read_buffer<T: Msg>(&self) -> T {
+        unsafe {
+            syscalls::read_thread_local_buffer()
+        }
+    }
+
+    pub fn wait(&self) -> syscalls::Result<()> {
+        syscalls::recv(self.cid)
+    }
+
+    pub fn recv<T: Msg>(&self) -> syscalls::Result<T> {
         unsafe {
             syscalls::recv(self.cid)
                 .map(|_| syscalls::read_thread_local_buffer())
         }
     }
 
-    pub fn call(&self, m: Msg) -> syscalls::Result<Msg> {
+    pub fn call<T: Msg, U: Msg>(&self, m: T) -> syscalls::Result<U> {
         unsafe {
             syscalls::update_thread_local_buffer(&m);
             syscalls::call(self.cid)

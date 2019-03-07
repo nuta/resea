@@ -122,34 +122,6 @@ error_t sys_transfer(cid_t src, cid_t dst) {
     return OK;
 }
 
-#define PAGER_INTERFACE 3
-static void copy_payload(struct thread *dst, int index, payload_t header, payload_t p) {
-    switch (PAYLOAD_TYPE(header, index)) {
-        case INLINE_PAYLOAD:
-            dst->buffer->inlines[index] = p;
-            break;
-        case PAGE_PAYLOAD: {
-            /* FIXME:
-            if (thread->process != kernel_process && INTERFACE_ID(header) != PAGER_INTERFACE) {
-                UNIMPLEMENTED();
-            }
-            */
-
-            vaddr_t vaddr = ALIGN_DOWN(p, PAGE_SIZE);
-            paddr_t paddr = arch_resolve_paddr_from_vaddr(
-                &CURRENT->process->page_table, vaddr);
-
-            if (!paddr) {
-                // TODO: return error
-                UNIMPLEMENTED();
-            }
-
-            dst->buffer->inlines[index] = paddr;
-            break;
-        }
-    }
-}
-
 error_t sys_ipc(cid_t cid, int options) {
     struct channel *ch = idtable_get(&CURRENT->process->channels, cid);
     if (!ch) {
@@ -159,7 +131,7 @@ error_t sys_ipc(cid_t cid, int options) {
     payload_t header = CURRENT->buffer->header;
     if (ch->linked_to->process == kernel_process) {
         if (!FLAG_SEND(options) || !FLAG_RECV(options)) {
-            DEBUG("invalid header");
+            DEBUG("kernel server: invalid options");
             return ERR_INVALID_HEADER;
         }
 
@@ -193,14 +165,35 @@ retry_send:;
 
         // Now we have the linked_to channel lock and the receiver. Time to send
         // a message!
-        cid_t sent_from = linked_to->cid;
-        receiver->buffer->header = header;
-        receiver->buffer->sent_from = sent_from;
-        copy_payload(receiver, 0, header, CURRENT->buffer->inlines[0]);
-        copy_payload(receiver, 1, header, CURRENT->buffer->inlines[1]);
-        copy_payload(receiver, 2, header, CURRENT->buffer->inlines[2]);
-        copy_payload(receiver, 3, header, CURRENT->buffer->inlines[3]);
-        copy_payload(receiver, 4, header, CURRENT->buffer->inlines[4]);
+        struct message *src_buffer = CURRENT->buffer;
+        struct message *dst_buffer = receiver->buffer;
+
+        // Copy inline payloads.
+        memcpy(dst_buffer->inlines, INLINE_PAYLOAD_LEN_MAX,
+            src_buffer->inlines, INLINE_PAYLOAD_LEN(header));
+
+        // Copy page payloads.
+        for (size_t i = 0; i < PAGE_PAYLOAD_NUM(header); i++) {
+            /* FIXME:
+            if (thread->process != kernel_process && INTERFACE_ID(header) != PAGER_INTERFACE) {
+                UNIMPLEMENTED();
+            }
+            */
+
+            vaddr_t vaddr = ALIGN_DOWN(src_buffer->pages[i], PAGE_SIZE);
+            paddr_t paddr = arch_resolve_paddr_from_vaddr(
+                &CURRENT->process->page_table, vaddr);
+
+            if (!paddr) {
+                // TODO: return error
+                UNIMPLEMENTED();
+            }
+            dst_buffer->pages[i] = paddr;
+        }
+
+        // Set header and the source channel ID.
+        dst_buffer->header = header;
+        dst_buffer->from = linked_to->cid;
 
         thread_resume(receiver);
         dst->receiver = NULL;

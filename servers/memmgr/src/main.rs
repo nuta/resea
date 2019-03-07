@@ -14,6 +14,7 @@ mod page;
 use resea::channel::{Channel, CId};
 use resea::message::Page;
 use resea::idl;
+use resea::idl::kernel::CreateProcessResponseMsg;
 use resea::syscalls;
 use crate::elf::Elf;
 use crate::page::{PAGE_SIZE, alloc_page};
@@ -23,14 +24,12 @@ extern "C" {
 }
 
 struct MemMgrServer {
-    ch: Channel,
     programs: BTreeMap<resea::idl::kernel::pid, Program>,
 }
 
 impl MemMgrServer {
     pub fn new() -> MemMgrServer {
         MemMgrServer {
-            ch: Channel::create().unwrap(),
             programs: BTreeMap::new(),
         }
     }
@@ -100,6 +99,7 @@ struct Program {
 fn main() {
     println!("memmgr: starting");
     let mut server = MemMgrServer::new();
+    let mut server_ch = Channel::create().unwrap();
 
     // Load initfs.
     let fs = initfs::InitFs::new(unsafe { &initfs_header as *const u8 });
@@ -112,9 +112,10 @@ fn main() {
             let mut kernel = resea::idl::kernel::Client::from_channel(Channel::from_cid(CId::new(1)));
 
             println!("creating process...");
-            let (proc, pager_cid) = kernel.create_process().expect("failed to create a process");
+            let r = kernel.create_process().expect("failed to create a process");
+            let CreateProcessResponseMsg { pid: proc, pager: pager_cid, .. } = r;
             let pager = Channel::from_cid(CId::new(pager_cid));
-            pager.transfer_to(&server.ch).unwrap();
+            pager.transfer_to(&server_ch).unwrap();
 
             println!("registering pagers...");
             // TODO: remove hardcoded values
@@ -137,5 +138,5 @@ fn main() {
     }
 
     println!("memmgr: ready");
-    serve_forever!(&mut server, [memmgr, putchar, pager]);
+    serve_forever!(&mut server, &mut server_ch, [memmgr, putchar, pager]);
 }

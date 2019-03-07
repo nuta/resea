@@ -1,25 +1,20 @@
 #[macro_export]
 macro_rules! serve_forever {
-    ($server:expr, [$($interface:ident), *]) => {
+    ($server:expr, $server_ch:expr, [$($interface:ident), *]) => {
         loop {
-            let m = $server.ch.recv().expect("failed to recv");
-            let reply_to = m.from.clone();
-            let r = match m.header.interface_id() {
-                $(
-                resea::idl::$interface::INTERFACE_ID => resea::idl::$interface::Server::handle($server, m),
-                )*
+            $server_ch.wait().expect("failed to wait");
+            let header = $server_ch.peek_header();
+            let r = match header.interface_id() {
+            $(
+                resea::idl::$interface::INTERFACE_ID => {
+                    resea::idl::$interface::Server::handle($server, &$server_ch, header);
+                }
+            )*
                 _ => {
-                    println!("{}: unknown message: {:04x}", env!("PROGRAM_NAME"), m.header.msg_id());
-                    None
+                    println!("{}: unknown message: {:04x}",
+                        env!("PROGRAM_NAME"), header.msg_id());
                 }
             };
-
-            if let Some(Ok(r)) = r {
-                if let Err(err) = reply_to.send(r) {
-                    println!("{}: wanrning: failed to reply: {:?}",
-                        env!("PROGRAM_NAME"), err);
-                }
-            }
         }
     };
 }

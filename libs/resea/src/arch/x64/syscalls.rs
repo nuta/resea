@@ -1,9 +1,8 @@
 use crate::syscalls::{Result, SyscallError};
-use crate::message::Msg;
 use crate::channel::CId;
 
-const FLAG_SEND: u64 = 1 << 26;
-const FLAG_RECV: u64 = 1 << 27;
+const FLAG_SEND: u64 = 1 << 0;
+const FLAG_RECV: u64 = 1 << 1;
 const SYSCALL_IPC: u64 = 0;
 const SYSCALL_OPEN: u64 = 2;
 //const SYSCALL_CLOSE: u64 = 0;
@@ -38,8 +37,8 @@ unsafe fn syscall(syscall_type: u64, a0: u64, a1: u64) -> i64 {
     return retvalue;
 }
 
-pub unsafe fn update_thread_local_buffer(m: &Msg) {
-    let len = core::mem::size_of::<Msg>();
+pub unsafe fn update_thread_local_buffer<T>(m: &T) {
+    let len = core::mem::size_of::<T>();
     asm!(r#"
         mov %fs:(0), %rdi
         cld
@@ -50,8 +49,8 @@ pub unsafe fn update_thread_local_buffer(m: &Msg) {
     );
 }
 
-pub unsafe fn read_thread_local_buffer() -> Msg {
-    let len = core::mem::size_of::<Msg>();
+pub unsafe fn read_thread_local_buffer<T>() -> T {
+    let len = core::mem::size_of::<T>();
     let mut m = core::mem::uninitialized();
 
     asm!(r#"

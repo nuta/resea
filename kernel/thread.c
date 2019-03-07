@@ -111,6 +111,7 @@ NORETURN void thread_kill_current(void) {
 struct thread *scheduler(void) {
     struct list_head *next = list_pop_front(&runqueue);
     if (!next) {
+        OOPS("resuming idle!");
         return CPUVAR->idle_thread;
     }
 
