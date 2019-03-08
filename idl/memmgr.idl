@@ -1,4 +1,4 @@
-[id(2)]
+[id(10)]
 interface memmgr {
     [id(1), type(rpc)]
     nop() -> ()

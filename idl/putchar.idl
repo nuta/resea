@@ -1,4 +1,4 @@
-[id(4)]
+[id(3)]
 interface putchar {
     [id(1), type(rpc)]
     putchar(ch: usize) -> ()

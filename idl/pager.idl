@@ -1,4 +1,4 @@
-[id(3)]
+[id(2)]
 interface pager {
     [id(1), type(rpc)]
     fill_page(pid: isize, addr: usize) -> (page: page)
