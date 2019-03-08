@@ -3,15 +3,16 @@ default: build
 V ?=
 ARCH ?= x64
 BUILD ?= debug
-IDLS = kernel memmgr pager putchar
-STARTUPS ?= benchmark
+IDLS = kernel memmgr drvmgr pager putchar
+STARTUPS ?=
+SERVERS ?= drvmgr
 
 # Variables.
 repo_dir := $(shell pwd)
 arch_dir := kernel/arch/$(ARCH)
 idl_files := $(foreach name, $(IDLS), idl/$(name).idl)
 stub_files := $(foreach name, $(IDLS), libs/resea/src/idl/$(name).rs)
-initfs_files = $(foreach name, $(STARTUPS), initfs/startups/$(name).elf)
+initfs_files = $(foreach name, $(SERVERS) $(STARTUPS), initfs/startups/$(name).elf)
 
 # Functions.
 build_dir = target/$(strip $(1))/$(ARCH)/$(BUILD)
@@ -98,11 +99,12 @@ memmgr.bin: target/memmgr/memmgr_$(ARCH)/$(BUILD)/memmgr
 	$(OBJCOPY) -j.startup -j.text -j.data -j.rodata -j.bss -Obinary $< $@
 
 # Userland executable build rules.
--include $(foreach app, memmgr $(STARTUPS), target/mk/$(app).mk)
+-include $(foreach app, $(STARTUPS), target/mk/apps/$(app).mk)
+-include $(foreach server, memmgr $(SERVERS), target/mk/servers/$(server).mk)
 
-target/mk/memmgr.mk: tools/gen-user-makefile.py Makefile
+target/mk/servers/memmgr.mk: tools/gen-user-makefile.py Makefile
 	$(PROGRESS) "GEN" $@
-	mkdir -p target/mk
+	mkdir -p target/mk/servers
 	$(PYTHON3) ./tools/gen-user-makefile.py \
 		--target-path servers/memmgr/src/arch/$(ARCH) \
 		--target memmgr_$(ARCH) \
@@ -111,9 +113,21 @@ target/mk/memmgr.mk: tools/gen-user-makefile.py Makefile
 		--output $@ \
 		--name memmgr
 
-target/mk/%.mk: tools/gen-user-makefile.py Makefile
+target/mk/servers/%.mk: tools/gen-user-makefile.py Makefile
 	$(PROGRESS) "GEN" $@
-	mkdir -p target/mk
+	mkdir -p target/mk/servers
+	$(PYTHON3) ./tools/gen-user-makefile.py \
+		--target-path libs/resea/src/arch/$(ARCH) \
+		--target user_$(ARCH) \
+		--path servers/$(basename $(@F)) \
+		--arch $(ARCH) \
+		--output $@ \
+		--add-startup \
+		--name $(basename $(@F))
+
+target/mk/apps/%.mk: tools/gen-user-makefile.py Makefile
+	$(PROGRESS) "GEN" $@
+	mkdir -p target/mk/apps
 	$(PYTHON3) ./tools/gen-user-makefile.py \
 		--target-path libs/resea/src/arch/$(ARCH) \
 		--target user_$(ARCH) \
