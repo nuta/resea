@@ -9,7 +9,6 @@
 #![feature(core_panic_info)]
 #![feature(const_raw_ptr_deref)]
 #![feature(const_raw_ptr_to_usize_cast)]
-#![feature(try_from)]
 #![feature(core_intrinsics)]
 
 extern crate alloc;
