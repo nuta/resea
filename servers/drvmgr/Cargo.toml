@@ -1,0 +1,19 @@
+[package]
+name = "drvmgr"
+version = "0.0.1"
+authors = ["Seiya Nuta <nuta@seiya.me>"]
+
+[dependencies]
+resea = { path = "../../libs/resea" }
+resea_driver = { path = "../../libs/driver" }
+
+[profile.release]
+opt-level = 2
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = false
