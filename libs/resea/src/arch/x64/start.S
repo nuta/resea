@@ -25,4 +25,4 @@ start:
 _Unwind_Resume:
     ud2
 
-.include "libs/memcpy/memcpy_x64.S"
+.include "libs/resea/src/arch/x64/memcpy.S"
