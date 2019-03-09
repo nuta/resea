@@ -208,24 +208,24 @@ retry_send:;
             recv_on = ch;
         }
 
-        flags_t flags = spin_lock_irqsave(&ch->lock);
+        flags_t flags = spin_lock_irqsave(&recv_on->lock);
 
         // Try to get the receiver right.
-        if (ch->receiver != NULL) {
+        if (recv_on->receiver != NULL) {
             return ERR_ALREADY_RECEVING;
         }
 
         // Resume a thread in the sender queue if exists.
-        struct list_head *node = list_pop_front(&ch->sender_queue);
+        struct list_head *node = list_pop_front(&recv_on->sender_queue);
         if (node) {
             struct thread *thread = LIST_CONTAINER(thread, sender_queue_elem, node);
             thread_resume(thread);
         }
 
         // The sender thread will resume us.
-        ch->receiver = CURRENT;
+        recv_on->receiver = CURRENT;
         thread_block(CURRENT);
-        spin_unlock_irqrestore(&ch->lock, flags);
+        spin_unlock_irqrestore(&recv_on->lock, flags);
         thread_switch();
 
         // Now `CURRENT->buffer` is filled by the sender thread.
