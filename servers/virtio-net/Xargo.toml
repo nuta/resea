@@ -1,0 +1,2 @@
+[target.user_x64.dependencies]
+alloc = {}
