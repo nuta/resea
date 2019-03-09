@@ -110,6 +110,80 @@ error_t kernel_server(void) {
 
             DEBUG("kernel: add_pager_response()");
             m->header = ADD_PAGER_RESPONSE;
+            break;
+        }
+        case ALLOW_IO_REQUEST: {
+            DEBUG("kernel: allow_io()");
+
+            // Allow *ALL* io ports for now.
+            // TODO: Allow only specific ports by updating the TSS io port bitmap on
+            //       context switches.
+            arch_allow_io(CURRENT);
+            m->header = ALLOW_IO_RESPONSE;
+            break;
+        }
+        case CREATE_KERNEL_CHANNEL_REQUEST: {
+            intmax_t pid = m->inlines[0];
+            DEBUG("kernel: create_kernel_channel(pid=%d)", pid);
+
+            struct process *proc = idtable_get(&all_processes, pid);
+            if (!proc) {
+                return ERR_INVALID_MESSAGE;
+            }
+
+            struct channel *their_ch = channel_create(proc);
+            if (!their_ch) {
+                return ERR_OUT_OF_RESOURCE;
+            }
+
+            struct channel *our_ch = channel_create(kernel_process);
+            if (!our_ch) {
+                channel_destroy(their_ch);
+                return ERR_OUT_OF_RESOURCE;
+            }
+
+            channel_link(their_ch, our_ch);
+            m->header = CREATE_KERNEL_CHANNEL_RESPONSE;
+            m->inlines[0] = their_ch->cid;
+            break;
+        }
+        case CREATE_THREAD_REQUEST: {
+            int pid = m->inlines[0];
+            vaddr_t start = m->inlines[1];
+            vaddr_t stack = m->inlines[2];
+            vaddr_t buffer = m->inlines[3];
+            uintmax_t arg = m->inlines[4];
+            DEBUG("kernel: create_thread(pid=%d, start=%p)", pid, start);
+
+            struct process *proc = idtable_get(&all_processes, pid);
+            if (!proc) {
+                return ERR_INVALID_MESSAGE;
+            }
+
+            struct thread *thread = thread_create(proc, start, stack, buffer, arg);
+            if (!thread) {
+                return ERR_OUT_OF_RESOURCE;
+            }
+
+            DEBUG("kernel: create_thread_response(tid=%d)", thread->tid);
+            m->header = CREATE_THREAD_RESPONSE;
+            m->inlines[0] = thread->tid;
+            break;
+        }
+        case START_THREAD_REQUEST: {
+            int tid = m->inlines[0];
+            DEBUG("kernel: start_thread(tid=%d)", tid);
+
+            struct thread *thread = idtable_get(&all_processes, tid);
+            if (!thread) {
+                return ERR_INVALID_MESSAGE;
+            }
+
+            thread_resume(thread);
+
+            DEBUG("kernel: create_thread_response()");
+            m->header = START_THREAD_RESPONSE;
+            break;
         }
     }
 

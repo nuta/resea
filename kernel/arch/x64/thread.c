@@ -57,3 +57,8 @@ struct thread *arch_get_current_thread(void) {
 void arch_thread_switch(struct thread *prev, struct thread *next) {
     x64_switch(&prev->arch, &next->arch);
 }
+
+void arch_allow_io(struct thread *thread) {
+    /* let IOPL = 3 */
+    thread->arch.rflags_ormask = 3 << 12;
+}

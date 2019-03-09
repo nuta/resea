@@ -14,5 +14,14 @@ interface kernel {
     add_pager(pid: pid, pager: cid, start: usize, end: usize, flags: u8) -> ()
 
     [id(5), type(rpc)]
-    poweroff() -> ()
+    allow_io() -> ()
+
+    [id(6), type(rpc)]
+    create_kernel_channel(pid: pid) -> (cid: cid)
+
+    [id(7), type(rpc)]
+    create_thread(pid: pid, start: usize, stack: usize, buffer: usize, arg: usize) -> (tid: tid)
+
+    [id(8), type(rpc)]
+    start_thread(tid: tid) -> ()
 }
