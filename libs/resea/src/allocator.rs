@@ -2,7 +2,7 @@ use core::alloc::{GlobalAlloc, Layout};
 
 pub struct MyAllocator {}
 
-static mut NEXT_MALLOC: u64 = 0x0300_0000;
+static mut NEXT_MALLOC: u64 = 0x0310_0000;
 
 unsafe impl GlobalAlloc for MyAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {

@@ -13,17 +13,13 @@ start:
     rep stosb
 
     /* Prepare stack. */
-    lea rsp, __stack_end
+    mov rsp, 0x03100000
     call main
 
     xchg bx,bx
     mov rax, 0x00000000deadbeed
     mov rax, [rax]
     ud2
-
-__stack:
-.space 8192
-__stack_end:
 
 .globl _Unwind_Resume
 _Unwind_Resume:
