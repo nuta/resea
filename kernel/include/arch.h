@@ -31,6 +31,7 @@ flags_t spin_lock_irqsave(spinlock_t *lock);
 void spin_unlock_irqrestore(spinlock_t *lock, flags_t flags);
 vaddr_t arch_get_stack_pointer(void);
 
+void *memset(void *dst, size_t dst_len, char ch, size_t len);
 void *memcpy(void *dst, size_t dst_len, void *src, size_t copy_len);
 char *strcpy(char *dst, size_t dst_len, const char *src);
 

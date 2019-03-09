@@ -1,6 +1,15 @@
 #include <arch.h>
 #include <printk.h>
 
+void *memset(void *dst, size_t dst_len, char ch, size_t len) {
+    if (dst_len < len) {
+        PANIC("bad memset");
+    }
+
+    __asm__ __volatile__("cld; rep stosb" :: "D"(dst), "a"(ch), "c"(len));
+    return dst;
+}
+
 void *memcpy(void *dst, size_t dst_len, void *src, size_t copy_len) {
     if (dst_len < copy_len) {
         PANIC("bad memcpy");
