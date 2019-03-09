@@ -137,8 +137,12 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn from_channel(server: Channel) -> Client {
-        Client { server }
+    pub fn from_channel(ch: Channel) -> Client {
+        Client { server: ch }
+    }
+
+    pub fn from_raw_cid(cid: isize) -> Client {
+        Client { server: Channel::from_raw_cid(cid) }
     }
 
 {% for m in messages %}\

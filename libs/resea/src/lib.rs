@@ -13,7 +13,6 @@
 
 extern crate alloc;
 
-
 #[macro_use]
 pub mod print;
 #[macro_use]
@@ -26,6 +25,8 @@ pub mod channel;
 pub mod syscalls;
 pub mod message;
 pub mod idl;
+
+pub use channel::Channel;
 
 #[cfg(not(std))]
 #[global_allocator]

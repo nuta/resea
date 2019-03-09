@@ -15,13 +15,19 @@ impl CId {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(transparent)]
 pub struct Channel {
     cid: CId,
 }
 
 impl Channel {
+    pub fn from_raw_cid(cid: isize) -> Channel {
+        Channel {
+            cid: CId::new(cid)
+        }
+    }
+
     pub fn from_cid(cid: CId) -> Channel {
         Channel {
             cid
