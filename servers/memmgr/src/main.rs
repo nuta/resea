@@ -11,10 +11,14 @@ mod elf;
 mod initfs;
 mod page;
 
+use alloc::vec::Vec;
+use alloc::collections::BTreeMap;
+use alloc::prelude::*;
 use resea::channel::{Channel, CId};
-use resea::message::Page;
+use resea::message::{Page, FixedString};
 use resea::idl;
-use resea::idl::kernel::CreateProcessResponseMsg;
+use resea::idl::memmgr;
+use resea::idl::kernel::{CreateProcessResponseMsg, CreateThreadResponseMsg};
 use resea::syscalls;
 use crate::elf::Elf;
 use crate::page::{PAGE_SIZE, alloc_page};
@@ -23,21 +27,100 @@ extern "C" {
     static initfs_header: u8;
 }
 
+struct Program {
+    elf: elf::Elf,
+    file: initfs::File,
+    thread: idl::kernel::tid,
+}
+
 struct MemMgrServer {
-    programs: BTreeMap<resea::idl::kernel::pid, Program>,
+    programs: BTreeMap<idl::kernel::pid, Program>,
+    initfs: initfs::InitFs,
+    server_ch: Channel,
+    kernel_server: idl::kernel::Client,
 }
 
 impl MemMgrServer {
-    pub fn new() -> MemMgrServer {
+    pub fn new(server_ch: Channel, initfs: initfs::InitFs) -> MemMgrServer {
         MemMgrServer {
             programs: BTreeMap::new(),
+            kernel_server: idl::kernel::Client::from_raw_cid(1),
+            server_ch,
+            initfs,
         }
+    }
+
+    fn create_initfs_process(&mut self, path: &str) -> syscalls::Result<idl::kernel::pid> {
+        let file = match self.find_file(path) {
+            Some(file) => file,
+            None => unimplemented!() /* TODO: */,
+        };
+
+        println!("creating process...");
+        let elf = Elf::new(file.content);
+        let r = self.kernel_server.create_process()?;
+        let CreateProcessResponseMsg { pid: proc, pager: pager_cid, .. } = r;
+        let pager = Channel::from_cid(CId::new(pager_cid));
+        pager.transfer_to(&self.server_ch)?;
+
+        println!("registering pagers...");
+        // TODO: remove hardcoded values
+        // The executable image.
+        self.kernel_server.add_pager(proc, 1, 0x0010_0000, 0x0012_0000, 0x06)?;
+        // The zeroed pages (heap).
+        self.kernel_server.add_pager(proc, 1, 0x0300_0000, 0x0400_0000, 0x06)?;
+
+        // The driver servers requires direct access to the kernel to call
+        // `self.kernel_server.allow_io`.
+        println!("connecting to the kernel server...");
+        let kernel_cid = self.kernel_server.create_kernel_channel(proc)?.cid;
+        assert!(kernel_cid == 2);
+
+        println!("spawning a thread...");
+        let CreateThreadResponseMsg { tid, .. } = self.kernel_server.create_thread(
+            proc, elf.entry as usize, 0 /* stack */, 0x1000, 0)?;
+
+        self.programs.insert(proc, Program { elf, thread: tid, file: file.clone() });
+
+        Ok(proc)
+    }
+
+    fn start_initfs_process(&mut self, pid: idl::kernel::pid) -> syscalls::Result<()> {
+        if let Some(Program { thread, .. }) = self.programs.get(&pid) {
+            self.kernel_server.start_thread(*thread)?;
+        }
+
+        Ok(())
+    }
+
+
+    fn find_file(&self, path: &str) -> Option<initfs::File> {
+        for (name, file) in self.initfs.files().iter() {
+            if name == path {
+                return Some(*file)
+            }
+        }
+
+        None
     }
 }
 
-impl idl::memmgr::Server for MemMgrServer {
+impl memmgr::Server for MemMgrServer {
     fn nop(&mut self) -> syscalls::Result<()> {
         Ok(())
+    }
+
+    fn create_process_from_initfs(&mut self, string: FixedString) -> syscalls::Result<memmgr::pid> {
+        if let Ok(string) = string.as_str() {
+            let pid = self.create_initfs_process(string)?;
+            return Ok(pid);
+        }
+
+        unimplemented!();
+    }
+
+    fn start_process(&mut self, pid: memmgr::pid) -> syscalls::Result<()> {
+        self.start_initfs_process(pid)
     }
 }
 
@@ -89,52 +172,27 @@ impl idl::pager::Server for MemMgrServer {
     }
 }
 
-use alloc::collections::BTreeMap;
-
-struct Program {
-    elf: elf::Elf,
-    file: initfs::File,
-}
-
 fn main() {
     println!("memmgr: starting");
-    let mut server = MemMgrServer::new();
-    let mut server_ch = Channel::create().unwrap();
 
     // Load initfs.
     let fs = initfs::InitFs::new(unsafe { &initfs_header as *const u8 });
 
-    // Launch servers.
-    for (name, file) in fs.files().iter() {
+    let mut startup_files = Vec::new();
+    for (name, _) in fs.files().iter() {
         if name.starts_with("startups/") {
-            println!("starting {}", name);
-            let elf = Elf::new(file.content);
-            let mut kernel = resea::idl::kernel::Client::from_channel(Channel::from_cid(CId::new(1)));
-
-            println!("creating process...");
-            let r = kernel.create_process().expect("failed to create a process");
-            let CreateProcessResponseMsg { pid: proc, pager: pager_cid, .. } = r;
-            let pager = Channel::from_cid(CId::new(pager_cid));
-            pager.transfer_to(&server_ch).unwrap();
-
-            println!("registering pagers...");
-            // TODO: remove hardcoded values
-            // The executable image.
-            kernel.add_pager(proc, 1, 0x0010_0000, 0x0012_0000, 0x06).ok();
-            // The zeroed pages (heap).
-            kernel.add_pager(proc, 1, 0x0300_0000, 0x0302_0000, 0x06).ok();
-
-            println!("spawning a thread...");
-            kernel.spawn_thread(
-                proc,
-                elf.entry as usize,
-                0 /* stack */,
-                0x1000, /* user buffer */
-                0 /* arg */
-            ).expect("failed to create a thread");
-
-            server.programs.insert(proc, Program { elf, file: file.clone() });
+            startup_files.push(name.to_string());
         }
+    }
+
+    // Launch servers.
+    let mut server_ch = Channel::create().unwrap();
+    let mut server = MemMgrServer::new(server_ch.clone(), fs);
+    for path in startup_files {
+        let pid = server.create_initfs_process(&path)
+            .expect("failed to create a process");
+        server.start_initfs_process(pid)
+            .expect("failed to start a process");
     }
 
     println!("memmgr: ready");
