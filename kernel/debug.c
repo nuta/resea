@@ -38,7 +38,6 @@ void backtrace(void) {
     uint64_t *rbp = (uint64_t *) current_rbp;
 
     int i = 0;
-    uint64_t last_valid_return_addr = 0;
     for (; i < BACKTRACE_MAX; i++) {
         uint64_t return_addr = rbp[1];
         if (return_addr < KERNEL_BASE_ADDR) {
@@ -49,7 +48,6 @@ void backtrace(void) {
         const char *name = find_symbol(return_addr, &offset);
         INFO("    #%d: %p %s()+%x", i, return_addr, name, offset);
 
-        last_valid_return_addr = return_addr;
         rbp = (uint64_t *) *rbp;
         if ((vaddr_t) rbp < KERNEL_BASE_ADDR) {
             break;
