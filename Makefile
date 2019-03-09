@@ -70,7 +70,7 @@ MAKEFLAGS += --no-builtin-rules
 $(V).SILENT:
 
 # Commands.
-.PHONY: build clean
+.PHONY: default build clean
 build: kernel.elf
 
 clean:
