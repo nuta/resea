@@ -27,7 +27,7 @@ fn rdtscp() -> u64 {
 
 fn main() {
     println!("benchmark: starting");
-    let memmgr = resea::idl::memmgr::Client::from_channel(Channel::from_cid(CId::new(1)));
+    let memmgr = resea::idl::memmgr::Client::from_raw_cid(1);
 
     let mut results = Vec::new();
     for _ in 0..32 {
