@@ -18,7 +18,7 @@ TEMPLATE = """\
 #![allow(non_camel_case_types)]
 
 use crate::channel::{Channel, CId};
-use crate::message::{Msg, Header, Page};
+use crate::message::{Msg, Header, Page, FixedString};
 use crate::syscalls::Result;
 
 pub const INTERFACE_ID: u8 = {{ interface_id }};
@@ -169,6 +169,7 @@ impl Client {
 def rename_type(name):
     rename_map = {
         "page": "Page",
+        "string": "FixedString",
     }
 
     return rename_map.get(name, name)

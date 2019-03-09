@@ -49,3 +49,32 @@ impl Page {
 }
 
 pub trait Msg {}
+
+const FIXED_STRING_LEN_MAX: usize = 128;
+
+#[repr(C, packed)]
+pub struct FixedString {
+    len: u8,
+    data: [u8; FIXED_STRING_LEN_MAX],
+}
+
+impl FixedString {
+    pub fn from_str(str: &str) -> Option<FixedString> {
+        if str.len() > FIXED_STRING_LEN_MAX {
+            return None;
+        }
+
+        // TODO: copy the string without zero clear.
+        let mut data = [0; FIXED_STRING_LEN_MAX];
+        data.clone_from_slice(str.as_bytes());
+
+        Some(FixedString {
+            len: str.len() as u8,
+            data,
+        }
+    }
+
+    pub fn as_str(&self) -> Result<&str, core::str::Utf8Error> {
+        core::str::from_utf8(&self.data[..self.len as usize])
+    }
+}
