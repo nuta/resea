@@ -8,6 +8,7 @@
 *.pyc
 *.log
 *.tmp
+*.bz2
 *.xz
 *.pdf
 *.symbols
@@ -15,5 +16,7 @@
 !/libs/resea/src/idl/README.md
 /index.html
 /qemu
+# clang static analyzer
+/checker-*
 /initfs
 target
