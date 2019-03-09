@@ -39,7 +39,7 @@ LDFLAGS := $(LDFLAGS)
 # Common flags.
 LDFLAGS += --gc-sections
 CFLAGS += -O2 -g3 -std=c11 -ffreestanding -fno-builtin -nostdlib
-CFLAGS += -fstack-size-section
+CFLAGS += -fstack-size-section -fsanitize=undefined -fno-omit-frame-pointer
 CFLAGS += -Wall -Wextra
 CFLAGS += -Werror=implicit-function-declaration
 CFLAGS += -Werror=int-conversion

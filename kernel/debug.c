@@ -100,6 +100,28 @@ void init_boot_stack_canary(void) {
     write_stack_canary(get_current_stack_canary_address());
 }
 
+// Clang undefined behavior sanitizer: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+void __ubsan_handle_type_mismatch_v1() {
+    UNIMPLEMENTED();
+}
+
+#define UBSAN_HANDLER(name) \
+    void __ubsan_handle_##name () { \
+        PANIC("detected an undefined behavior: " #name); \
+    }
+
+UBSAN_HANDLER(add_overflow)
+UBSAN_HANDLER(sub_overflow)
+UBSAN_HANDLER(mul_overflow)
+UBSAN_HANDLER(divrem_overflow)
+UBSAN_HANDLER(negate_overflow)
+UBSAN_HANDLER(pointer_overflow)
+UBSAN_HANDLER(out_of_bounds)
+UBSAN_HANDLER(shift_out_of_bounds)
+UBSAN_HANDLER(builtin_unreachable)
+
+
+
 void debug_init(void) {
     symbol_table_init();
 }
