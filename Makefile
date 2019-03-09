@@ -4,15 +4,16 @@ V ?=
 ARCH ?= x64
 BUILD ?= debug
 IDLS = kernel memmgr drvmgr pager putchar
-STARTUPS ?=
-SERVERS ?= drvmgr
+APPS ?=
+SERVERS ?= drvmgr virtio-net
+STARTUPS ?= drvmgr
 
 # Variables.
 repo_dir := $(shell pwd)
 arch_dir := kernel/arch/$(ARCH)
 idl_files := $(foreach name, $(IDLS), idl/$(name).idl)
 stub_files := $(foreach name, $(IDLS), libs/resea/src/idl/$(name).rs)
-initfs_files = $(foreach name, $(SERVERS) $(STARTUPS), initfs/startups/$(name).elf)
+initfs_files :=
 
 # Functions.
 build_dir = target/$(strip $(1))/$(ARCH)/$(BUILD)
@@ -87,19 +88,8 @@ kernel.elf: $(kernel_objs) $(arch_dir)/$(ARCH).ld
 	$(PROGRESS) "GEN" kernel.symbols
 	$(BINUTILS_PREFIX)nm -g $@ | awk '{ print $$1, $$3 }' > kernel.symbols
 
-# Initfs build rules.
-kernel/boot.o: initfs.bin
-initfs.bin: memmgr.bin $(initfs_files)
-	$(PROGRESS) "MKINITFS" $@
-	$(PYTHON3) ./tools/mkinitfs.py -s memmgr.bin -o $@ initfs
-
-
-memmgr.bin: target/memmgr/memmgr_$(ARCH)/$(BUILD)/memmgr
-	$(PROGRESS) "OBJCOPY" $@
-	$(OBJCOPY) -j.startup -j.text -j.data -j.rodata -j.bss -Obinary $< $@
-
 # Userland executable build rules.
--include $(foreach app, $(STARTUPS), target/mk/apps/$(app).mk)
+-include $(foreach app, $(APPS), target/mk/apps/$(app).mk)
 -include $(foreach server, memmgr $(SERVERS), target/mk/servers/$(server).mk)
 
 target/mk/servers/memmgr.mk: tools/gen-user-makefile.py Makefile
@@ -122,7 +112,7 @@ target/mk/servers/%.mk: tools/gen-user-makefile.py Makefile
 		--path servers/$(basename $(@F)) \
 		--arch $(ARCH) \
 		--output $@ \
-		--add-startup \
+		$(if $(findstring $(basename $(notdir $@)), $(STARTUPS)), --add-startup,) \
 		--name $(basename $(@F))
 
 target/mk/apps/%.mk: tools/gen-user-makefile.py Makefile
@@ -136,6 +126,16 @@ target/mk/apps/%.mk: tools/gen-user-makefile.py Makefile
 		--output $@ \
 		--add-startup \
 		--name $(basename $(@F))
+
+# Initfs build rules.
+kernel/boot.o: initfs.bin
+initfs.bin: memmgr.bin $(initfs_files)
+	$(PROGRESS) "MKINITFS" $@
+	$(PYTHON3) ./tools/mkinitfs.py -s memmgr.bin -o $@ initfs
+
+memmgr.bin: target/memmgr/memmgr_$(ARCH)/$(BUILD)/memmgr
+	$(PROGRESS) "OBJCOPY" $@
+	$(OBJCOPY) -j.startup -j.text -j.data -j.rodata -j.bss -Obinary $< $@
 
 # IDL build rules.
 $(stub_files): libs/resea/src/idl/%.rs: idl/%.idl Makefile tools/genstub.py

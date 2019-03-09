@@ -20,11 +20,10 @@ target/{{ name }}/{{ target }}/$(BUILD)/{{ name }}: \\
 	# Remove debug info.
 	$(BINUTILS_PREFIX)strip $@
 
-{% if add_startup %}
-initfs/startups/{{ name }}.elf: target/{{ name }}/{{ target }}/$(BUILD)/{{ name }}
+initfs_files += initfs/{{ initfs_dir }}/{{ name }}.elf
+initfs/{{ initfs_dir }}/{{ name }}.elf: target/{{ name }}/{{ target }}/$(BUILD)/{{ name }}
 	mkdir -p $(@D)
 	cp $< $@
-{% endif %}
 
 -include target/{{ name }}/{{ target }}/$(BUILD)/{{ name }}.d
 """
@@ -40,7 +39,12 @@ def main():
     parser.add_argument("--add-startup", action="store_true")
     args = parser.parse_args()
 
-    mk = jinja2.Template(TEMPLATE).render(**vars(args))
+    vs = vars(args)
+    vs.update(dict(
+        initfs_dir="startups" if args.add_startup else "servers"
+    ))
+
+    mk = jinja2.Template(TEMPLATE).render(**vs)
     with open(args.output, "w") as f:
         f.write(mk)
 
