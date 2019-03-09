@@ -42,6 +42,8 @@ struct arch_thread {
     uint64_t cr3;     // 24
     uint64_t info;    // 32
     uint64_t buffer;  // 40
+    uint64_t rflags;  // 48
+    uint64_t rflags_ormask; // 56
 };
 
 struct arch_page_table {

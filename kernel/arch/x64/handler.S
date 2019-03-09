@@ -1,4 +1,6 @@
 .set ARCH_THREAD_RSP0, 16
+.set ARCH_RFLAGS, 48
+.set ARCH_RFLAGS_ORMASK, 56
 .set USER_RPL, 3
 .set USER_DS, 32 | USER_RPL
 .intel_syntax noprefix
@@ -70,6 +72,11 @@ x64_syscall_handler:
     pop r11
     pop rsp
 
+    /* Update RFLAGS in case we have handled kernel.allow_io message. */
+    push rax
+    mov rax, gs:[ARCH_RFLAGS_ORMASK]
+    or r11, rax
+    pop rax
     sysretq
 .endm
 

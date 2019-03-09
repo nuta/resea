@@ -5,6 +5,8 @@
 .set ARCH_THREAD_CR3, 24
 .set ARCH_THREAD_INFO, 32
 .set ARCH_THREAD_BUFFER, 40
+.set ARCH_RFLAGS, 48
+.set ARCH_RFLAGS_ORMASK, 56
 .set MSR_FS_BASE, 0xc0000100
 .set MSR_GS_BASE, 0xc0000101
 
@@ -49,6 +51,11 @@ x64_switch:
     mov [rdi + ARCH_THREAD_RIP], rax
     mov [rdi + ARCH_THREAD_RSP], rsp
 
+    /* Save RFLAGS. */
+    pushfq
+    pop rax
+    mov [rdi + ARCH_RFLAGS], rax
+
     /* Load next's page table. */
     mov rax, [rsi + ARCH_THREAD_CR3]
     mov cr3, rax
@@ -78,6 +85,10 @@ x64_switch:
     pop r12
     pop rbx
     pop rbp
+
+    /* Restore RFLAGS. */
+    push [rsi + ARCH_RFLAGS]
+    popfq
 
     /* Resume the next thread. */
     jmp [rsi + ARCH_THREAD_RIP]

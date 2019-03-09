@@ -41,6 +41,8 @@ void arch_thread_init(struct thread *thread,
     thread->arch.buffer = (uint64_t) thread->buffer;
     thread->arch.info   = user_buffer;
     thread->info->user_buffer = user_buffer + PAGE_SIZE;
+    thread->arch.rflags = INITIAL_RFLAGS;
+    thread->arch.rflags_ormask = 0;
 }
 
 void arch_set_current_thread(struct thread *thread) {
