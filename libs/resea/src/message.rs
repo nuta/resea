@@ -71,7 +71,7 @@ impl FixedString {
         Some(FixedString {
             len: str.len() as u8,
             data,
-        }
+        })
     }
 
     pub fn as_str(&self) -> Result<&str, core::str::Utf8Error> {

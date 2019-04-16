@@ -1,6 +1,7 @@
 #![no_std]
 #![feature(asm)]
 #![feature(alloc)]
+#![feature(alloc_prelude)]
 #![feature(link_args)]
 
 #[macro_use]
@@ -13,7 +14,7 @@ mod page;
 
 use alloc::vec::Vec;
 use alloc::collections::BTreeMap;
-use alloc::prelude::*;
+use alloc::string::ToString;
 use resea::channel::{Channel, CId};
 use resea::message::{Page, FixedString};
 use resea::idl;
