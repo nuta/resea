@@ -2,6 +2,7 @@
 
 /* void *memcpy(void *dst, const void *src, size_t n); */
 .globl memcpy
+.weak memcpy 
 memcpy:
     mov rcx, rdx
     mov rax, rdi
@@ -11,6 +12,7 @@ memcpy:
 
 /* void *memmove(void *dst, const void *src, size_t n); */
 .globl memmove
+.weak memmove
 memmove:
     mov rcx, rdx
     mov rax, rdi
@@ -30,6 +32,7 @@ memmove:
 
 /* void *memset(void *ptr, int value, size_t n); */
 .globl memset
+.weak memset
 memset:
     mov rcx, rdx
     mov r8, rdi
@@ -41,6 +44,7 @@ memset:
 
 /* void *memcmp(void *ptr1, void *ptr2, size_t n); */
 .globl memcmp
+.weak memcmp
 memcmp:
     mov rcx, rdx
     cld
