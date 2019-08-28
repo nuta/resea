@@ -1,5 +1,5 @@
 #include <x64/print.h>
-#include <x64/asm.h>
+#include <x64/x64.h>
 
 void x64_print_init(void) {
     int baud = 9600;
@@ -11,8 +11,8 @@ void x64_print_init(void) {
     asm_out8(IOPORT_SERIAL + FCR, 0x00); // No FIFO
 }
 
-
 void arch_putchar(char ch) {
-    while ((asm_in8(IOPORT_SERIAL + LSR) & TX_READY) == 0);
+    while ((asm_in8(IOPORT_SERIAL + LSR) & TX_READY) == 0)
+        ;
     asm_out8(IOPORT_SERIAL, ch);
 }

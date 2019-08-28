@@ -1,0 +1,39 @@
+[id(1)]
+interface kernel {
+    [id(1), type(call)]
+    create_process() -> (pid: pid, pager_ch: cid)
+
+    [id(2), type(call)]
+    destroy_process(pid: pid) -> ()
+
+    [id(3), type(call)]
+    spawn_thread(pid: pid, start: uintptr, stack: uintptr, buffer: uintptr,
+                 arg: uintptr) -> (tid: tid)
+
+    [id(4), type(call)]
+    destroy_thread(tid: tid) -> ()
+
+    [id(5), type(call)]
+    add_pager(pid: pid, pager: cid, start: uintptr, size: size, flags: uint8)
+        -> ()
+}
+
+[id(2)]
+interface pager {
+    [id(1), type(call)]
+    fill_page_request(pid: pid, addr: uintptr, size: size) -> (page: page)
+}
+
+[id(3)]
+interface memmgr {
+    [id(1), type(call)]
+    benchmark_nop() -> ()
+}
+
+[id(4)]
+interface runtime {
+    [id(1), type(call)]
+    exit_current(code: int32) -> ()
+    [id(2), type(call)]
+    printchar(ch: uint8) -> ()
+}

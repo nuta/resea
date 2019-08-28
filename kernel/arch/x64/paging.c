@@ -1,22 +1,25 @@
-#include <types.h>
+#include <arch.h>
 #include <memory.h>
 #include <printk.h>
-#include <x64/asm.h>
-#include <x64/paging.h>
+#include <x64/x64.h>
 
-#define NTH_LEVEL_INDEX(level, vaddr) (((vaddr) >> ((((level) - 1) * 9) + 12)) & 0x1ff)
-#define ENTRY_PADDR(entry) ((entry) & 0x7ffffffffffff000)
+#define NTH_LEVEL_INDEX(level, vaddr) \
+    (((vaddr) >> ((((level) -1) * 9) + 12)) & 0x1ff)
+#define ENTRY_PADDR(entry) ((entry) &0x7ffffffffffff000)
 
 void arch_page_table_init(struct arch_page_table *pt) {
-    void *pml4 = alloc_page();
+    void *pml4 = kmalloc(&page_arena);
     memcpy(pml4, PAGE_SIZE, from_paddr(KERNEL_PML4_PADDR), PAGE_SIZE);
     pt->pml4 = (paddr_t) into_paddr(pml4);
 }
 
-void arch_link_page(struct arch_page_table *pt, vaddr_t vaddr, paddr_t paddr, int num, uintmax_t flags) {
-    if (vaddr >= KERNEL_BASE_ADDR) {
-        PANIC("tried to link a kernel page");
-    }
+void arch_page_table_destroy(UNUSED struct arch_page_table *pt) {
+    // TODO:
+}
+
+void arch_link_page(struct arch_page_table *pt, vaddr_t vaddr, paddr_t paddr,
+    int num_pages, uintmax_t flags) {
+    ASSERT(vaddr < KERNEL_BASE_ADDR && "tried to link a kernel page");
 
     uint64_t attrs = PAGE_PRESENT | flags;
     while (1) {
@@ -26,7 +29,7 @@ void arch_link_page(struct arch_page_table *pt, vaddr_t vaddr, paddr_t paddr, in
             int index = NTH_LEVEL_INDEX(level, vaddr);
             if (!table[index]) {
                 /* The PDPT, PD or PT is not allocated. Allocate it. */
-                void *page = alloc_page();
+                void *page = kmalloc(&page_arena);
                 if (!page) {
                     PANIC("failed to allocate a page for a page table");
                 }
@@ -44,10 +47,10 @@ void arch_link_page(struct arch_page_table *pt, vaddr_t vaddr, paddr_t paddr, in
 
         // `table` now points to the PT.
         int index = NTH_LEVEL_INDEX(1, vaddr);
-        int remaining = num;
+        int remaining = num_pages;
         uint64_t offset = 0;
         while (remaining > 0 && index < PAGE_ENTRY_NUM) {
-            DEBUG("link: %p -> %p (flags=0x%x)", vaddr, paddr, attrs);
+            TRACE("link: %p -> %p (flags=0x%x)", vaddr, paddr, attrs);
             table[index] = paddr | attrs;
             asm_invlpg(vaddr + offset);
             paddr += PAGE_SIZE;
@@ -64,7 +67,8 @@ void arch_link_page(struct arch_page_table *pt, vaddr_t vaddr, paddr_t paddr, in
     }
 }
 
-paddr_t arch_resolve_paddr_from_vaddr(struct arch_page_table *pt, vaddr_t vaddr) {
+paddr_t arch_resolve_paddr_from_vaddr(
+    struct arch_page_table *pt, vaddr_t vaddr) {
     uint64_t *table = from_paddr(pt->pml4);
     int level = 4;
     while (level > 1) {

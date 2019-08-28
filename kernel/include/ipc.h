@@ -1,38 +1,69 @@
 #ifndef __IPC_H__
 #define __IPC_H__
 
-#include <process.h>
+#include <types.h>
 
-/* header */
-#define INLINE_PAYLOAD_LEN_OFFSET 0
-#define PAGE_PAYLOAD_NUM_OFFSET   12
-#define MSG_ID_OFFSET             16
-#define INLINE_PAYLOAD_LEN(header)  (((header) >> INLINE_PAYLOAD_LEN_OFFSET) & 0xfff)
-#define PAGE_PAYLOAD_NUM(header)    (((header) >> PAGE_PAYLOAD_NUM_OFFSET) & 0x3)
-#define MSG_ID(header)              (((header) >> MSG_ID_OFFSET) & 0xffff)
-#define INTERFACE_ID(header)        ((MSG_ID(header) >> 8) & 0xff)
-#define INLINE_PAYLOAD_LEN_MAX      (PAGE_SIZE - sizeof(payload_t) * 5)
+//
+//  Syscall numbers and flags
+//
+#define SYSCALL_IPC 0
+#define SYSCALL_OPEN 1
+#define SYSCALL_LINK 3
+#define SYSCALL_TRANSFER 4
 
-/* flags */
-#define FLAG_SEND_OFFSET   0
-#define FLAG_RECV_OFFSET   1
-#define FLAG_REPLY_OFFSET  2
-#define FLAG_SEND(options)   ((options) & 1ULL << FLAG_SEND_OFFSET)
-#define FLAG_RECV(options)   ((options) & 1ULL << FLAG_RECV_OFFSET)
-#define FLAG_REPLY(options)  ((options) & 1ULL << FLAG_REPLY_OFFSET)
+#define IPC_SEND (1ull << 8)
+#define IPC_RECV (1ull << 9)
+#define IPC_REPLY (1ull << 10)
+#define IPC_FROM_KERNEL (1ull << 11)
+#define SYSCALL_TYPE(syscall_id) ((syscall_id) &0xff)
 
-typedef uintmax_t payload_t;
+//
+//  Header
+//
+typedef uint32_t header_t;
+#define MSG_INLINE_LEN_OFFSET 0
+#define MSG_NUM_PAGES_OFFSET 12
+#define MSG_NUM_CHANNELS_OFFSET 14
+#define MSG_LABEL_OFFSET 16
+#define INLINE_PAYLOAD_LEN(header) (((header) >> MSG_INLINE_LEN_OFFSET) & 0x7ff)
+#define PAGE_PAYLOAD_NUM(header) (((header) >> MSG_NUM_PAGES_OFFSET) & 0x3)
+#define CHANNELS_PAYLOAD_NUM(header) \
+    (((header) >> MSG_NUM_CHANNELS_OFFSET) & 0x3)
+#define PAGE_PAYLOAD_ADDR(page) ((page) &0xfffffffffffff000ull)
+#define MSG_LABEL(header) (((header) >> MSG_LABEL_OFFSET) & 0xffff)
+#define INTERFACE_ID(header) (MSG_LABEL(header) >> 8)
+#define INLINE_PAYLOAD_LEN_MAX 2047
 
-/// Don't forget to update INLINE_PAYLOAD_LEN_MAX!
+// A bit mask to determine if a message satisfies one of fastpath
+// prerequisites. This test checks if page/channel payloads are
+// not contained in the message.
+#define SYSCALL_FASTPATH_TEST(header) ((header) &0xf000ull)
+
+//
+//  Page payload
+//
+typedef uintmax_t page_t;
+#define PAGE_EXP(page) ((page) & 0x1f)
+#define PAGE_TYPE(page) (((page) >> 5) & 0x3)
+#define PAGE_TYPE_MOVE   1
+#define PAGE_TYPE_SHARED 2
+
 struct message {
-    payload_t header;
-    payload_t from;
-    payload_t pages[3];
-    payload_t inlines[5];
+    header_t header;
+    cid_t from;
+    cid_t channels[4];
+    page_t pages[4];
+    uint8_t data[INLINE_PAYLOAD_LEN_MAX];
 } PACKED;
 
+struct process;
+struct channel;
 struct channel *channel_create(struct process *process);
-void channel_destroy(struct channel *ch);
+void channel_incref(struct channel *ch);
+void channel_decref(struct channel *ch);
 void channel_link(struct channel *ch1, struct channel *ch2);
-error_t sys_ipc(cid_t ch, int options);
+void channel_transfer(struct channel *src, struct channel *dst);
+error_t sys_ipc(cid_t cid, uint32_t ops);
+intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t arg3,
+                         uintmax_t syscall);
 #endif

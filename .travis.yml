@@ -1,40 +1,28 @@
-language: rust
-rust: nightly
-dist: xenial
+language: c
+dist: bionic
 sudo: false
 os:
   - linux
   - osx
 
-env:
-  - RUST_BACKTRACE=1
+notifications:
+  email: false
 
-# Install clang, lld, and Python3.7 from PPA on Ubuntu 16.04 build.
 addons:
   homebrew:
     update: true
     packages:
-      - binutils
       - llvm
   apt:
-    sources:
-      - deadsnakes
-      - llvm-toolchain-xenial-8
     packages:
-      - python3.7
-      - python3.7-venv
-      - python3.7-dev
-      - lld-8
-      - clang-8
-
-cache:
-  cargo: true
-
-notifications:
-  email: false
+      - llvm
+      - lld
+      - clang
 
 install:
-  - ./tools/ci/setup
+  - "if [[ $TRAVIS_OS_NAME == linux ]]; then pyenv global 3.7.1; fi"
+  - pip3 install -r tools/requirements.txt
 
 script:
-  - ./tools/ci/script
+  - make defconfig
+  - make -j2

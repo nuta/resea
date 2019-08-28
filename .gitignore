@@ -1,4 +1,7 @@
-*.rs.bk
+/build
+/.vscode
+/.config
+
 *.o
 *.bin
 *.elf
@@ -10,13 +13,5 @@
 *.tmp
 *.bz2
 *.xz
+*.ps
 *.pdf
-*.symbols
-/libs/resea/src/idl
-!/libs/resea/src/idl/README.md
-/index.html
-/qemu
-# clang static analyzer
-/checker-*
-/initfs
-target

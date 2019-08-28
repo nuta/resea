@@ -1,50 +1,39 @@
+#include <arch.h>
+#include <debug.h>
+#include <ipc.h>
 #include <memory.h>
+#include <printk.h>
 #include <process.h>
 #include <thread.h>
-#include <ipc.h>
-#include <printk.h>
-#include <arch.h>
 
 extern char __initfs[];
-__asm__(
-    ".align 8                \n"
-    "__initfs:               \n"
-    ".incbin \"initfs.bin\"  \n"
-);
 
 static paddr_t initfs_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
-    void *page = alloc_page();
-    if (!page) {
-        return 0;
-    }
-
-    vaddr_t offset = vaddr - INITFS_ADDR;
-    vaddr_t copy_from = (vaddr_t) __initfs + offset;
-    memcpy(page, PAGE_SIZE, (void *) copy_from, PAGE_SIZE);
-
-    return into_paddr(page);
+    ASSERT(((vaddr_t) &__initfs & (PAGE_SIZE - 1)) == 0 &&
+           "initfs is not aligned");
+    return into_paddr(__initfs + (vaddr - INITFS_ADDR));
 }
 
 static paddr_t straight_map_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
     return vaddr;
 }
 
-// Spawns the first user process from the initfs. Here we don't lock objects
-// since it won't be problem here: we run this function exactly once on the
-// bootstrap processor with interrupts disabled.
+// Spawns the first user process from the initfs.
 static void userland(void) {
     // Create the very first user process and thread.
-    struct process *user_process = process_create("memmgr");
+    struct process *user_process = process_create("startup");
     if (!user_process) {
         PANIC("failed to create a process");
     }
 
-    struct thread *thread = thread_create(user_process, INITFS_ADDR, 0, 0x1000, 0);
+    struct thread *thread = thread_create(user_process, INITFS_ADDR,
+        0 /* stack */, THREAD_INFO_ADDR, 0 /* arg */);
     if (!thread) {
         PANIC("failed to create a user thread");
     }
 
-    // Create a channel connection between the kernel server and the user process.
+    // Create a channel connection between the kernel server and the user
+    // process.
     struct channel *kernel_ch = channel_create(kernel_process);
     if (!kernel_ch) {
         PANIC("failed to create a channel");
@@ -59,11 +48,13 @@ static void userland(void) {
 
     // Set up pagers.
     int flags = PAGE_WRITABLE | PAGE_USER;
-    if (!vmarea_add(user_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL, flags)) {
+    if (vmarea_add(user_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL,
+                   flags) != OK) {
         PANIC("failed to add a vmarea");
     }
 
-    if (!vmarea_add(user_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END, straight_map_pager, NULL, flags)) {
+    if (vmarea_add(user_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END,
+                   straight_map_pager, NULL, flags) != OK) {
         PANIC("failed to add a vmarea");
     }
 
@@ -89,11 +80,10 @@ void boot(void) {
 
     userland();
 
-    // Perform the very first context switch. The current context will be a
+    // Perform the very first context switch. The current context will become a
     // CPU-local idle thread.
-    DEBUG("first switch...");
     thread_switch();
 
-    // Now we're in the idle thread context.
+    // Now we're in the CPU-local idle thread context.
     idle();
 }

@@ -1,125 +1,134 @@
+#include <arch.h>
 #include <debug.h>
 #include <ipc.h>
 #include <printk.h>
+#include <thread.h>
 
-extern char __symbols[];
-__asm__(
-    ".align 8                              \n"
-    ".global __symbols                     \n"
-    "__symbols:                            \n"
-    "   .ascii \"__SYMBOL_TABLE_START__\"  \n"
-    "   .space 0x4000                      \n"
-    "   .ascii \"__SYMBOL_TABLE_END__\"    \n"
-);
+// The symbol table will be embedded by tools/link.py during the build
+// process.
+extern struct symbol_table __symtable;
 
-struct symbol_table symbol_table;
-
+/// Resolves the symbol name and the offset from the beginning of symbol.
+/// This function always returns "(invalid address)" if the symbol does not
+/// exist in the kernel executable.
 static const char *find_symbol(vaddr_t vaddr, size_t *offset) {
-    for (size_t i = 0; i < symbol_table.num_symbols; i++) {
-        if (vaddr < symbol_table.symbols[i].addr) {
-            if (i == 0) {
-                *offset = 0;
-                return "(maybe null)";
-            }
+    ASSERT(
+        __symtable.magic == SYMBOL_TABLE_MAGIC && "invalid symbol table magic");
 
-            uint64_t strbuf_offset = symbol_table.symbols[i - 1].strbuf_offset;
-            *offset = vaddr - symbol_table.symbols[i - 1].addr;
-            return &symbol_table.strbuf[strbuf_offset];
+    // Do a binary search. Since `__symtable.num_symbols` is unsigned 16-bit
+    // integer, we need larger signed integer to hold -1 here, namely, int32_t.
+    int32_t l = -1;
+    int32_t r = __symtable.num_symbols;
+    while (r - l > 1) {
+        // We don't have to care about integer overflow here because
+        // `INT32_MIN < -1 <= l + r < UINT16_MAX * 2 < INT32_MAX` always holds.
+        //
+        // Read this article if you are not familiar with a famous overflow bug:
+        // https://ai.googleblog.com/2006/06/extra-extra-read-all-about-it-nearly.html
+        int32_t mid = (l + r) / 2;
+        if (vaddr >= __symtable.symbols[mid].addr) {
+            l = mid;
+        } else {
+            r = mid;
         }
     }
 
-    *offset = 0;
-    return "(unknown)";
+    if (l == -1) {
+        *offset = 0;
+        return "(invalid address)";
+    } else {
+        *offset = vaddr - __symtable.symbols[l].addr;
+        return &__symtable.strbuf[__symtable.symbols[l].offset];
+    }
 }
 
+/// Prints the stack trace.
 void backtrace(void) {
-    uint64_t current_rbp;
-    __asm__ __volatile__("mov %%rbp, %%rax" : "=a"(current_rbp));
-    uint64_t *rbp = (uint64_t *) current_rbp;
-
-    int i = 0;
-    for (; i < BACKTRACE_MAX; i++) {
-        uint64_t return_addr = rbp[1];
-        if (return_addr < KERNEL_BASE_ADDR) {
+    INFO("Backtrace:");
+    struct stack_frame *frame = get_stack_frame();
+    for (int i = 0; i < BACKTRACE_MAX; i++) {
+        if (frame->return_addr < KERNEL_BASE_ADDR) {
             break;
         }
 
         size_t offset;
-        const char *name = find_symbol(return_addr, &offset);
-        INFO("    #%d: %p %s()+%x", i, return_addr, name, offset);
+        const char *name = find_symbol(frame->return_addr, &offset);
+        INFO("    #%d: %p %s()+0x%x", i, frame->return_addr, name, offset);
 
-        rbp = (uint64_t *) *rbp;
-        if ((vaddr_t) rbp < KERNEL_BASE_ADDR) {
+        if ((uint64_t) frame->next < KERNEL_BASE_ADDR) {
             break;
         }
+
+        frame = frame->next;
     }
 }
 
-const char *find_msg_name(payload_t msg_id) {
-    size_t offset;
-    return find_symbol(MSG_ID_SYMBOL_PREFIX | msg_id, &offset);
-}
-
-void symbol_table_init(void) {
-    struct symbol_table_header *header = (struct symbol_table_header *) &__symbols;
-    if (header->magic != SYMBOL_TABLE_MAGIC) {
-        PANIC("invald symbol table magic");
-    }
-
-    vaddr_t symbols_base = (vaddr_t) &__symbols + sizeof(struct symbol_table_header);
-    vaddr_t strbuf_base = symbols_base + header->strbuf_offset;
-    symbol_table.symbols = (struct symbol *) symbols_base;
-    symbol_table.num_symbols = header->num_symbols;
-    symbol_table.strbuf = (char *) strbuf_base;
-}
-
+/// Returns the pointer to the kernel stack's canary. The stack canary exists
+/// at the end (bottom) of the stack. The kernel must not modify it as the
+/// kernel stack should be large enough. This function assumes that the size
+/// of kernel stack equals to PAGE_SIZE.
 static inline vaddr_t get_current_stack_canary_address(void) {
+    STATIC_ASSERT(PAGE_SIZE == KERNEL_STACK_SIZE);
     return ALIGN_DOWN(arch_get_stack_pointer(), PAGE_SIZE);
 }
 
-/// Writes a kernel stack protection marker. The value `STACK_CANARY` is verified
-/// by calling check_stack_canary().
-///
-/// FIXME: `write' is not an appropriate verb. Canary is a bird!
-void write_stack_canary(vaddr_t canary) {
-    *((uint32_t *) canary) = STACK_CANARY;
+/// Writes a kernel stack protection marker. The value `STACK_CANARY` is
+/// verified by calling check_stack_canary().
+void init_stack_canary(vaddr_t stack_bottom) {
+    *((uint32_t *) stack_bottom) = STACK_CANARY;
 }
 
 /// Verifies that stack canary is alive. If not so, register a complaint.
 void check_stack_canary(void) {
-    uint32_t *stack_bottom = (uint32_t *) get_current_stack_canary_address();
-    if (*stack_bottom != STACK_CANARY) {
+    uint32_t *canary = (uint32_t *) get_current_stack_canary_address();
+    if (*canary != STACK_CANARY) {
         PANIC("The stack canary is no more! This is an ex-canary!");
     }
 }
 
 /// Each CPU have to call this function once during the boot.
 void init_boot_stack_canary(void) {
-    write_stack_canary(get_current_stack_canary_address());
+    init_stack_canary(get_current_stack_canary_address());
 }
 
-// Clang undefined behavior sanitizer: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+// Undefined behavior event handlers (UBSan).
+// https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+static void report_ubsan_event(const char *event) {
+    PANIC("detected an undefined behavior: %s", event);
+}
+
+// TODO: Parse type_mismatch_data_v1
 void __ubsan_handle_type_mismatch_v1() {
-    UNIMPLEMENTED();
+    report_ubsan_event("type_mismatch");
 }
 
-#define UBSAN_HANDLER(name) \
-    void __ubsan_handle_##name () { \
-        PANIC("detected an undefined behavior: " #name); \
-    }
-
-UBSAN_HANDLER(add_overflow)
-UBSAN_HANDLER(sub_overflow)
-UBSAN_HANDLER(mul_overflow)
-UBSAN_HANDLER(divrem_overflow)
-UBSAN_HANDLER(negate_overflow)
-UBSAN_HANDLER(pointer_overflow)
-UBSAN_HANDLER(out_of_bounds)
-UBSAN_HANDLER(shift_out_of_bounds)
-UBSAN_HANDLER(builtin_unreachable)
-
-
+void __ubsan_handle_add_overflow() {
+    report_ubsan_event("add_overflow");
+}
+void __ubsan_handle_sub_overflow() {
+    report_ubsan_event("sub overflow");
+}
+void __ubsan_handle_mul_overflow() {
+    report_ubsan_event("mul overflow");
+}
+void __ubsan_handle_divrem_overflow() {
+    report_ubsan_event("divrem overflow");
+}
+void __ubsan_handle_negate_overflow() {
+    report_ubsan_event("negate overflow");
+}
+void __ubsan_handle_pointer_overflow() {
+    report_ubsan_event("pointer overflow");
+}
+void __ubsan_handle_out_of_bounds() {
+    report_ubsan_event("out of bounds");
+}
+void __ubsan_handle_shift_out_of_bounds() {
+    report_ubsan_event("shift out of bounds");
+}
+void __ubsan_handle_builtin_unreachable() {
+    report_ubsan_event("builtin unreachable");
+}
 
 void debug_init(void) {
-    symbol_table_init();
 }

@@ -1,20 +1,31 @@
-#include <process.h>
 #include <memory.h>
 #include <printk.h>
-#include <collections.h>
+#include <process.h>
+#include <server.h>
+#include <table.h>
+#include <thread.h>
 
-// Processes and threads share this id space.
+/// The process/thread idtable.
 struct idtable all_processes;
+/// The kernel process.
 struct process *kernel_process;
 
-static struct process *process_create_with_pid(const char *name, pid_t pid) {
-    struct process *proc = alloc_object();
+/// Creates a new process. `name` is used for just debugging use.
+struct process *process_create(const char *name) {
+    int pid = idtable_alloc(&all_processes);
+    if (!pid) {
+        return NULL;
+    }
+
+    struct process *proc = kmalloc(&page_arena);
     if (!proc) {
+        idtable_free(&all_processes, pid);
         return NULL;
     }
 
     if (!idtable_init(&proc->channels)) {
-        free_object(proc);
+        kfree(&small_arena, proc);
+        idtable_free(&all_processes, pid);
         return NULL;
     }
 
@@ -27,62 +38,41 @@ static struct process *process_create_with_pid(const char *name, pid_t pid) {
 
     idtable_set(&all_processes, pid, (void *) proc);
 
-    DEBUG("new process: pid=%d, name=%s", pid, &proc->name);
+    TRACE("new process: pid=%d, name=%s", pid, &proc->name);
     return proc;
 }
 
-struct process *process_create(const char *name) {
-    int pid = idtable_alloc(&all_processes);
-    if (!pid) {
-        return NULL;
-    }
-
-    struct process *proc = process_create_with_pid(name, pid);
-    if (!proc) {
-        idtable_free(&all_processes, pid);
-        return NULL;
-    }
-
-    return proc;
-}
-
+/// Destroys a process.
 void process_destroy(UNUSED struct process *process) {
-    // TODO:
     UNIMPLEMENTED();
 }
 
-// Returns 0 on failure.
-int vmarea_add(struct process* process,
-               vaddr_t start,
-               vaddr_t end,
-               pager_t pager,
-               void *pager_arg,
-               int flags) {
+// Adds a new vm area.
+error_t vmarea_add(struct process *process, vaddr_t start, vaddr_t end,
+                   pager_t pager, void *pager_arg, int flags) {
 
-    struct vmarea *vma = alloc_object();
+    struct vmarea *vma = kmalloc(&page_arena);
     if (!vma) {
-        return 0;
+        return ERR_OUT_OF_MEMORY;
     }
 
-    DEBUG("new vmarea: vaddr=%p-%p", start, end);
+    TRACE("new vmarea: vaddr=%p-%p", start, end);
     vma->start = start;
-    vma->end   = end;
+    vma->end = end;
     vma->pager = pager;
-    vma->arg   = pager_arg;
+    vma->arg = pager_arg;
     vma->flags = flags;
 
     list_push_back(&process->vmareas, &vma->next);
-    return 1;
+    return OK;
 }
 
+/// Initializes the process subsystem.
 void process_init(void) {
     if (!idtable_init(&all_processes)) {
         PANIC("failed to initialize all_processes");
     }
 
-    if (idtable_alloc(&all_processes) != KERNEL_PID) {
-        PANIC("failed to reserve KERNEL_PID");
-    }
-
-    kernel_process = process_create_with_pid("kernel", KERNEL_PID);
+    kernel_process = process_create("kernel");
+    ASSERT(kernel_process->pid == KERNEL_PID);
 }

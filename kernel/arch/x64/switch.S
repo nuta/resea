@@ -1,41 +1,24 @@
 .intel_syntax noprefix
-.set ARCH_THREAD_RIP, 0
-.set ARCH_THREAD_RSP, 8
-.set ARCH_THREAD_RSP0, 16
-.set ARCH_THREAD_CR3, 24
-.set ARCH_THREAD_INFO, 32
-.set ARCH_THREAD_BUFFER, 40
-.set ARCH_RFLAGS, 48
-.set ARCH_RFLAGS_ORMASK, 56
-.set MSR_FS_BASE, 0xc0000100
-.set MSR_GS_BASE, 0xc0000101
+.set ARCH_THREAD_RSP, 0
 
 .globl x64_enter_userspace
 x64_enter_userspace:
-    /* Thread::new() pushed to the kernel stack (current one)
-      `arg' and an IRET frame. Interrups are disabled. */
-
-    pop rdi /* arg */
-
     /* Sanitize registers to prevent information leak. */
     xor rax, rax
     xor rbx, rbx
     xor rcx, rcx
     xor rdx, rdx
+    xor rdi, rdi
     xor rsi, rsi
     xor r8, r8
     xor r9, r9
     xor r10, r10
     xor r11, r11
 
+    cli
+    swapgs
     iretq
 
-/* Performs a context switch. RSI and RDI registers contains the previous
- * (e.g. the current) thread context and the next thread context respectively.
- *
- * Here we assume that the kernel is compiled with System V ABI. Refer
- * https://wiki.osdev.org/System_V_ABI for details.
- */
 .globl x64_switch
 x64_switch:
     /* Save callee-saved registers. */
@@ -45,40 +28,14 @@ x64_switch:
     push r13
     push r14
     push r15
-
-    /* Save the context. */
-    lea rax, [rip + resume_point]
-    mov [rdi + ARCH_THREAD_RIP], rax
-    mov [rdi + ARCH_THREAD_RSP], rsp
-
-    /* Save RFLAGS. */
     pushfq
-    pop rax
-    mov [rdi + ARCH_RFLAGS], rax
 
-    /* Load next's page table. */
-    mov rax, [rsi + ARCH_THREAD_CR3]
-    mov cr3, rax
-
-    /* Set next's FS base. */
-    mov r8, [rsi + ARCH_THREAD_INFO]
-    mov ecx, MSR_FS_BASE
-    mov rdx, r8
-    mov eax, edx
-    shr rdx, 32
-    wrmsr
-
-    /* Set next's GS base. */
-    mov ecx, MSR_GS_BASE
-    mov rdx, rsi
-    mov eax, edx
-    shr rdx, 32
-    wrmsr
-
-    /* Restore next's context. */
+    /* Save and restore the stack pointer. */
+    mov [rdi + ARCH_THREAD_RSP], rsp
     mov rsp, [rsi + ARCH_THREAD_RSP]
 
     /* Restore callee-saved registers. */
+    popfq
     pop r15
     pop r14
     pop r13
@@ -86,13 +43,5 @@ x64_switch:
     pop rbx
     pop rbp
 
-    /* Restore RFLAGS. */
-    push [rsi + ARCH_RFLAGS]
-    popfq
-
     /* Resume the next thread. */
-    jmp [rsi + ARCH_THREAD_RIP]
-
-resume_point:
-    /* Resumed thread starts from here. Just return from arch_switch(). */
     ret

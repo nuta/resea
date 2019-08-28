@@ -11,8 +11,9 @@ FS_HEADER_SIZE = 128
 FILE_HEADER_SIZE = 64
 
 def construct_file_header(name, data, length):
+    assert len(str(name)) < 48
     padding = PAGE_SIZE - (length % PAGE_SIZE)
-    header = struct.pack("32sII24x", str(name).encode("utf-8"), length, padding)
+    header = struct.pack("48sIH10x", str(name).encode("utf-8"), length, padding)
     return header, padding
 
 def make_image(startup, root_dir):
@@ -41,25 +42,34 @@ def make_image(startup, root_dir):
         image += header + data + struct.pack(f"{padding}x")
         num_files += 1
 
-    # Append the end-of-file-system maker.
-    image += bytes([0xff, 0xa0, 0xb0, 0xc0])
-
     # Write the file system header.
-    fs_header = struct.pack("III", VERSION, len(image),num_files)
+    fs_header = struct.pack("III", VERSION, len(image), num_files)
     image = image[:JUMP_CODE_SIZE] + fs_header + image[JUMP_CODE_SIZE+len(fs_header):]
 
     return image
+
+def generate_asm(binfile):
+    return f"""\
+.globl __initfs
+.align 4096
+__initfs:
+    .incbin "{binfile}"
+"""
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", dest="output")
     parser.add_argument("-s", dest="startup")
+    parser.add_argument("--generate-asm")
     parser.add_argument("dir")
     args = parser.parse_args()
 
-    image = make_image(args.startup, args.dir)
     with open(args.output, "wb") as f:
-        f.write(image)
+        f.write(make_image(args.startup, args.dir))
+
+    if args.generate_asm:
+        with open(args.generate_asm, "w") as f:
+            f.write(generate_asm(args.output))
 
 if __name__ == "__main__":
     main()

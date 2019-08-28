@@ -1,71 +1,14 @@
 #include <arch.h>
-#include <thread.h>
-#include <process.h>
+#include <debug.h>
 #include <memory.h>
 #include <printk.h>
-#include <collections.h>
+#include <process.h>
+#include <table.h>
+#include <thread.h>
 
-static struct thread *thread_create_with_pid(struct process *process,
-                                             uintmax_t start,
-                                             uintmax_t stack,
-                                             vaddr_t user_buffer,
-                                             uintmax_t arg,
-                                             pid_t tid) {
-    struct thread *thread = alloc_object();
-    if (!thread) {
-        return NULL;
-    }
-
-    vaddr_t kernel_stack = (vaddr_t) alloc_page();
-    if (!kernel_stack) {
-        free_object(thread);
-        return NULL;
-    }
-
-    struct message *buffer = (struct message *) alloc_page();
-    if (!buffer) {
-        free_object(thread);
-        free_page((void *) kernel_stack);
-        return NULL;
-    }
-
-    struct arch_thread_info *thread_info = (struct arch_thread_info *) alloc_page();
-    if (!buffer) {
-        free_object(thread);
-        free_page((void *) kernel_stack);
-        free_page((void *) buffer);
-        return NULL;
-    }
-
-    thread->tid = tid;
-    thread->state = THREAD_BLOCKED;
-    thread->kernel_stack = kernel_stack;
-    thread->process = process;
-    thread->buffer = buffer;
-    thread->info = thread_info;
-    spin_lock_init(&thread->lock);
-    write_stack_canary(kernel_stack);
-    arch_thread_init(thread, start, stack, kernel_stack, user_buffer, arg);
-
-    // Allow threads to read and write the buffer.
-    flags_t flags = spin_lock_irqsave(&process->lock);
-    arch_link_page(&process->page_table, user_buffer, into_paddr(thread_info), 1,
-        PAGE_USER);
-    arch_link_page(&process->page_table, user_buffer + PAGE_SIZE, into_paddr(buffer), 1,
-        PAGE_USER | PAGE_WRITABLE);
-    list_push_back(&process->threads, &thread->next);
-    spin_unlock_irqrestore(&process->lock, flags);
-
-    idtable_set(&all_processes, tid, (void *) thread);
-
-    DEBUG("new thread: pid=%d, tid=%d", process->pid, tid);
-    return thread;
-}
-
-struct thread *thread_create(struct process * process,
-                             uintmax_t start,
-                             uintmax_t stack,
-                             vaddr_t user_buffer,
+/// Creates a new thread.
+struct thread *thread_create(struct process *process, uintmax_t start,
+                             uintmax_t stack, vaddr_t user_buffer,
                              uintmax_t arg) {
 
     int tid = idtable_alloc(&all_processes);
@@ -73,8 +16,45 @@ struct thread *thread_create(struct process * process,
         return NULL;
     }
 
-    struct thread *thread = thread_create_with_pid(process, start, stack,
-        user_buffer, arg, tid);
+    struct thread *thread = kmalloc(&page_arena);
+    if (!thread) {
+        return NULL;
+    }
+
+    vaddr_t kernel_stack = (vaddr_t) kmalloc(&page_arena);
+    if (!kernel_stack) {
+        kfree(&small_arena, thread);
+        return NULL;
+    }
+
+    struct thread_info *thread_info =
+        (struct thread_info *) kmalloc(&page_arena);
+    if (!thread_info) {
+        kfree(&small_arena, thread);
+        kfree(&page_arena, (void *) kernel_stack);
+        return NULL;
+    }
+
+    thread_info->arg = arg;
+    thread->tid = tid;
+    thread->state = THREAD_BLOCKED;
+    thread->kernel_stack = kernel_stack;
+    thread->process = process;
+    thread->info = thread_info;
+    spin_lock_init(&thread->lock);
+    init_stack_canary(kernel_stack);
+    arch_thread_init(thread, start, stack, kernel_stack, user_buffer);
+
+    // Allow threads to read and write the buffer.
+    flags_t flags = spin_lock_irqsave(&process->lock);
+    arch_link_page(&process->page_table, user_buffer, into_paddr(thread_info),
+        1, PAGE_USER | PAGE_WRITABLE);
+    list_push_back(&process->threads, &thread->next);
+    spin_unlock_irqrestore(&process->lock, flags);
+
+    idtable_set(&all_processes, tid, (void *) thread);
+
+    TRACE("new thread: pid=%d, tid=%d", process->pid, tid);
 
     if (!thread) {
         idtable_free(&all_processes, tid);
@@ -84,8 +64,21 @@ struct thread *thread_create(struct process * process,
     return thread;
 }
 
-struct list_head runqueue;
+/// Destroys a thread.
+void thread_destroy(UNUSED struct thread *thread) {
+    UNIMPLEMENTED();
+}
 
+/// Kills the current thread and switches into another thread. This function
+/// won't return.
+NORETURN void thread_kill_current(void) {
+    thread_destroy(CURRENT);
+    UNREACHABLE;
+}
+
+static struct list_head runqueue;
+
+/// Marks a thread runnable.
 void thread_resume(struct thread *thread) {
     flags_t flags = spin_lock_irqsave(&thread->lock);
 
@@ -97,49 +90,49 @@ void thread_resume(struct thread *thread) {
     spin_unlock_irqrestore(&thread->lock, flags);
 }
 
+/// Marks a thread blocked.
 void thread_block(struct thread *thread) {
     flags_t flags = spin_lock_irqsave(&thread->lock);
     thread->state = THREAD_BLOCKED;
     spin_unlock_irqrestore(&thread->lock, flags);
 }
 
-NORETURN void thread_kill_current(void) {
-    // TODO:
-    UNIMPLEMENTED();
-}
+/// Picks the next thread to run.
+static struct thread *scheduler(struct thread *current) {
+    if (current->state == THREAD_RUNNABLE) {
+        list_push_back(&runqueue, &current->runqueue_elem);
+    }
 
-struct thread *scheduler(void) {
     struct list_head *next = list_pop_front(&runqueue);
     if (!next) {
-        OOPS("resuming idle!");
+        // No runnable threads. Enter the idle thread.
         return CPUVAR->idle_thread;
     }
 
     return LIST_CONTAINER(thread, runqueue_elem, next);
 }
 
+/// Saves the current context and switches into the next thread. This function
+/// will return when another thread resumed the current thread.
 void thread_switch(void) {
     check_stack_canary();
 
-    if (CURRENT->state == THREAD_RUNNABLE && list_is_empty(&runqueue)) {
+    struct thread *current = CURRENT;
+    struct thread *next = scheduler(current);
+    if (next == current) {
         // No runnable threads other than the current one. Continue executing
         // the current thread.
         return;
     }
 
-    struct thread *next = scheduler();
-    if (CURRENT->state == THREAD_RUNNABLE) {
-        // The current thread has spent its quantum. Enqueue it into the
-        // runqueue again to resume later.
-        list_push_back(&runqueue, &CURRENT->runqueue_elem);
-    }
-
+    // Switch into the next thread. This function will return when another
+    // thread switches into the current one.
     arch_thread_switch(CURRENT, next);
 
-    // Now we have returned from another threads.
     check_stack_canary();
 }
 
+/// Initializes the thread subsystem.
 void thread_init(void) {
     list_init(&runqueue);
     struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0, 0);

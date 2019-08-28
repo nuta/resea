@@ -1,8 +1,7 @@
-#include <types.h>
 #include <arch.h>
+#include <types.h>
 
 static void print_str(const char *s) {
-
     while (*s != '\0') {
         arch_putchar(*s);
         s++;
@@ -17,7 +16,7 @@ static void print_uint(uintmax_t n, int base, char pad, int width) {
         n /= base;
         width--;
         i--;
-    } while(n > 0 && i > 0);
+    } while (n > 0 && i > 0);
 
     while (width-- > 0) {
         arch_putchar(pad);
@@ -27,86 +26,86 @@ static void print_uint(uintmax_t n, int base, char pad, int width) {
     print_str(&tmp[i + 1]);
 }
 
-static uintmax_t va_arg_uint(va_list vargs, int num_size) {
-    switch (num_size) {
-        case 3: return va_arg(vargs, unsigned long long);
-        case 2: return va_arg(vargs, unsigned long);
-        default: return va_arg(vargs, unsigned);
-    }
-}
-
-
 void vprintk(const char *fmt, va_list vargs) {
-    int num_size;
-    int width;
-    char pad;
-    int in_fmt = 0;
-
-    for (int i=0; fmt[i] != '\0'; i++) {
-        if (in_fmt) {
-            switch(fmt[i]) {
+    while (*fmt) {
+        if (*fmt != '%') {
+            arch_putchar(*fmt++);
+        } else {
+            int num_len = 1; // int
+            int width = 0;
+            char pad = ' ';
+            bool alt = false;
+            uintmax_t n;
+            bool not_attr = false;
+            while (*++fmt) {
+                switch (*fmt) {
                 case 'l':
-                    num_size++;
-                case '%':
-                    arch_putchar('%');
-                    in_fmt = 0;
+                    num_len++;
+                    break;
+                case 'h':
+                    num_len--;
                     break;
                 case '0':
                     pad = '0';
                     break;
                 case '#':
-                    print_str("0x");
+                    alt = false;
                     break;
-                case 'p':
-                    num_size = 3;
-                    pad = '0';
-                    width = sizeof(vaddr_t) * 2;
-                    // fallthrough
-                case 'x':
-                    print_uint(va_arg_uint(vargs, num_size), 16, pad, width);
-                    in_fmt = 0;
-                    break;
-                case 'd': {
-                    uintmax_t n = va_arg_uint(vargs, width);
-                    if ((int) n < 0) {
-                        arch_putchar('-');
-                        n = - ((int) n);
-                    }
+                case '\0':
+                    print_str("<invalid format>");
+                    return;
+                default:
+                    not_attr = true;
+                }
 
-                    print_uint(n, 10, pad, width);
-                    in_fmt = 0;
+                if (not_attr) {
                     break;
                 }
-                case 'u':
-                    print_uint(va_arg_uint(vargs, num_size), 10, pad, width);
-                    in_fmt = 0;
-                    break;
-                case 'c':
-                    arch_putchar(va_arg(vargs, int));
-                    in_fmt = 0;
-                    break;
-                case 's':
-                    print_str(va_arg(vargs, char *));
-                    in_fmt = 0;
-                    break;
-                default:
-                    arch_putchar('%');
-                    arch_putchar(fmt[i]);
-                    in_fmt = 0;
             }
-        } else if (fmt[i] == '%' && fmt[i + 1] == '\0') {
-            arch_putchar('%');
-        } else if (fmt[i] == '%') {
-            in_fmt = 1;
-            num_size = 1;
-            width = 0; // no padding
-            pad = ' ';
-        } else {
-            arch_putchar(fmt[i]);
+
+            switch (*fmt++) {
+            case 'd':
+                n = (num_len == 3) ? va_arg(vargs, long long) :
+                                     va_arg(vargs, int);
+                if ((intmax_t) n < 0) {
+                    arch_putchar('-');
+                    n = -((intmax_t) n);
+                }
+                print_uint(n, 10, pad, width);
+                break;
+            case 'p':
+#if __x86_64__
+                num_len = 3;
+                width = 16;
+#else
+#    error "unsupported CPU architecture"
+#endif
+                pad = '0';
+                // fallthrough
+            case 'x':
+                alt = true;
+                // Fallthrough.
+            case 'u':
+                n = (num_len == 3) ? va_arg(vargs, unsigned long long) :
+                                     va_arg(vargs, unsigned);
+                print_uint(n, alt ? 16 : 10, pad, width);
+                break;
+            case 'c':
+                arch_putchar(va_arg(vargs, int));
+                break;
+            case 's':
+                print_str(va_arg(vargs, char *));
+                break;
+            case '%':
+                arch_putchar('%');
+                break;
+            default: // Including '\0'.
+                print_str("<invalid format>");
+                return;
+            }
         }
     }
 }
-
 
 void printk(const char *fmt, ...) {
     va_list vargs;

@@ -3,11 +3,13 @@
 
 #include <types.h>
 
-void *alloc_page(void);
-void *alloc_object(void);
-void free_page(void *ptr);
-void free_object(void *ptr);
-void page_fault_handler(vaddr_t vaddr, uintmax_t error);
+struct arena;
+extern struct arena page_arena;
+extern struct arena small_arena;
+
+void *kmalloc(struct arena *arena);
+void kfree(struct arena *arena, void *ptr);
+paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags);
 void memory_init(void);
 
 #endif
