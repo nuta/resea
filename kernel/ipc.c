@@ -146,17 +146,16 @@ error_t sys_transfer(cid_t src, cid_t dst) {
 }
 
 /// Resolves the physical address linked to the given virtual address.
-static paddr_t resolve_paddr(vaddr_t vaddr) {
-    paddr_t paddr =
-        arch_resolve_paddr_from_vaddr(&CURRENT->process->page_table, vaddr);
+static paddr_t resolve_paddr(struct arch_page_table *page_table, vaddr_t vaddr) {
+    paddr_t paddr = arch_resolve_paddr_from_vaddr(page_table, vaddr);
     if (paddr) {
         return paddr;
     }
 
-    // The page does not exist in the page table. Perhaps it is not filled by
-    // the pager. Note that page_fault_handler always
-    // returns a valid paddr; if the vaddr is invalid, it kills the current
-    // thread and won't return.
+    // The page does not exist in the page table. Invoke the page fault handler
+    // since perhaps it is just not filled by the pager (not yet accessed by
+    // the user). Note that page_fault_handler always returns a valid paddr; if
+    // the vaddr is invalid, it kills the current thread and won't return.
     TRACE("page payload %p does not exist, trying the pager...", vaddr);
     return page_fault_handler(vaddr, PF_USER);
 }
@@ -225,6 +224,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             INLINE_PAYLOAD_LEN(header));
 
         // Copy page payloads.
+        struct arch_page_table *page_table = &current->process->page_table;
         for (size_t i = 0; i < PAGE_PAYLOAD_NUM(header); i++) {
             page_t page = m->pages[i];
             int page_type = PAGE_TYPE(page);
@@ -235,7 +235,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             ASSERT(page_type == PAGE_TYPE_SHARED);
 
             if (receiver->recv_in_kernel) {
-                dst_m->pages[i] = resolve_paddr(page);
+                dst_m->pages[i] = resolve_paddr(page_table, page);
             } else {
                 UNIMPLEMENTED();
             }
