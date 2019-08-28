@@ -7,17 +7,17 @@
     (((vaddr) >> ((((level) -1) * 9) + 12)) & 0x1ff)
 #define ENTRY_PADDR(entry) ((entry) &0x7ffffffffffff000)
 
-void arch_page_table_init(struct arch_page_table *pt) {
+void page_table_init(struct page_table *pt) {
     void *pml4 = kmalloc(&page_arena);
     memcpy(pml4, PAGE_SIZE, from_paddr(KERNEL_PML4_PADDR), PAGE_SIZE);
     pt->pml4 = (paddr_t) into_paddr(pml4);
 }
 
-void arch_page_table_destroy(UNUSED struct arch_page_table *pt) {
+void page_table_destroy(UNUSED struct page_table *pt) {
     // TODO:
 }
 
-void arch_link_page(struct arch_page_table *pt, vaddr_t vaddr, paddr_t paddr,
+void arch_link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
     int num_pages, uintmax_t flags) {
     ASSERT(vaddr < KERNEL_BASE_ADDR && "tried to link a kernel page");
 
@@ -68,7 +68,7 @@ void arch_link_page(struct arch_page_table *pt, vaddr_t vaddr, paddr_t paddr,
 }
 
 paddr_t arch_resolve_paddr_from_vaddr(
-    struct arch_page_table *pt, vaddr_t vaddr) {
+    struct page_table *pt, vaddr_t vaddr) {
     uint64_t *table = from_paddr(pt->pml4);
     int level = 4;
     while (level > 1) {

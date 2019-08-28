@@ -14,7 +14,7 @@ struct process {
     spinlock_t lock;
     struct list_head vmareas;
     struct list_head threads;
-    struct arch_page_table page_table;
+    struct page_table page_table;
     struct idtable channels;
 };
 

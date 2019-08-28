@@ -34,7 +34,7 @@ struct process *process_create(const char *name) {
     spin_lock_init(&proc->lock);
     list_init(&proc->vmareas);
     list_init(&proc->threads);
-    arch_page_table_init(&proc->page_table);
+    page_table_init(&proc->page_table);
 
     idtable_set(&all_processes, pid, (void *) proc);
 

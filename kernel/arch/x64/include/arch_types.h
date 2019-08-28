@@ -53,7 +53,7 @@ struct arch_thread {
     uint64_t info;
 } PACKED;
 
-struct arch_page_table {
+struct page_table {
     // The physical address points to a PML4.
     paddr_t pml4;
 };

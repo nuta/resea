@@ -146,7 +146,7 @@ error_t sys_transfer(cid_t src, cid_t dst) {
 }
 
 /// Resolves the physical address linked to the given virtual address.
-static paddr_t resolve_paddr(struct arch_page_table *page_table, vaddr_t vaddr) {
+static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
     paddr_t paddr = arch_resolve_paddr_from_vaddr(page_table, vaddr);
     if (paddr) {
         return paddr;
@@ -224,7 +224,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             INLINE_PAYLOAD_LEN(header));
 
         // Copy page payloads.
-        struct arch_page_table *page_table = &current->process->page_table;
+        struct page_table *page_table = &current->process->page_table;
         for (size_t i = 0; i < PAGE_PAYLOAD_NUM(header); i++) {
             page_t page = m->pages[i];
             int page_type = PAGE_TYPE(page);

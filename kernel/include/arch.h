@@ -10,8 +10,8 @@ void arch_init(void);
 void arch_idle(void);
 NORETURN void arch_panic(void);
 void arch_putchar(char ch);
-void arch_page_table_init(struct arch_page_table *pt);
-void arch_page_table_destroy(struct arch_page_table *pt);
+void page_table_init(struct page_table *pt);
+void page_table_destroy(struct page_table *pt);
 
 struct thread;
 void arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
@@ -19,9 +19,9 @@ void arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
 struct thread *arch_get_current_thread(void);
 void arch_set_current_thread(struct thread *thread);
 void arch_thread_switch(struct thread *prev, struct thread *next);
-void arch_link_page(struct arch_page_table *pt, vaddr_t vaddr, paddr_t paddr,
+void arch_link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
                     int num_pages, uintmax_t flags);
-paddr_t arch_resolve_paddr_from_vaddr(struct arch_page_table *pt,
+paddr_t arch_resolve_paddr_from_vaddr(struct page_table *pt,
                                       vaddr_t vaddr);
 void spin_lock_init(spinlock_t *lock);
 void spin_lock(spinlock_t *lock);
