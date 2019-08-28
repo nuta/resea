@@ -3,17 +3,17 @@ Resea
 [![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
 
 Resea is a *pure* microkernel-based operating system written from scratch. It
-aims to be clean, simple, and fun to learn the implementation and experience
-microkernel-style development.
+aims to be easy to learn the implementation and experience microkernel-style
+development.
 
 Road Map
 --------
 - [x] Kernel for x86_64
 - [x] IPC benchmark app
-- [ ] `memmgr`: the user-level memory management server **(WIP)**
+- [ ] **`memmgr`:** the user-level memory management server **(WIP)**
 - [ ] GUI server
-- [ ] `drvmgr`: the device driver management server
-- [ ] `fsmgr`: the file system management server
+- [ ] **`drvmgr`:** the device driver management server
+- [ ] **`fsmgr`:** the file system management server
 - [ ] virtio-blk device driver
 - [ ] FAT file system server
 - [ ] virtio-net device driver
