@@ -29,6 +29,7 @@
 #define ERR_NO_LONGER_LINKED (-7)
 #define ERR_CHANNEL_CLOSED (-8)
 #define ERR_OUT_OF_MEMORY (-9)
+#define ERR_INVALID_SYSCALL (-10)
 
 typedef int bool;
 #define true 1

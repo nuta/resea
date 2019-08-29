@@ -392,8 +392,6 @@ intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, UNUSED uintmax_t arg3,
     case SYSCALL_TRANSFER:
         return (intmax_t) sys_transfer((cid_t) arg0, (cid_t) arg1);
     default:
-        // FIXME:
-        PANIC("unknown syscall: id=%x", syscall);
-        return 0;
+        return ERR_INVALID_SYSCALL;
     }
 }
