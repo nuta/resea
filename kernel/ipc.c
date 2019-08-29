@@ -153,9 +153,9 @@ static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
     }
 
     // The page does not exist in the page table. Invoke the page fault handler
-    // since perhaps it is just not filled by the pager (not yet accessed by
-    // the user). Note that page_fault_handler always returns a valid paddr; if
-    // the vaddr is invalid, it kills the current thread and won't return.
+    // since perhaps it is just not filled by the pager (i.e., not yet accessed
+    // by the user). Note that page_fault_handler always returns a valid paddr;
+    // if the vaddr is invalid, it kills the current thread and won't return.
     TRACE("page payload %p does not exist, trying the pager...", vaddr);
     return page_fault_handler(vaddr, PF_USER);
 }
@@ -195,7 +195,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         spin_unlock_irqrestore(&ch->lock, flags);
 
         while (1) {
-            // TODO: we don't have to use _irqsave
             flags_t flags = spin_lock_irqsave(&dst->lock);
             receiver = dst->receiver;
             if (receiver != NULL) {
@@ -282,9 +281,15 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     return OK;
 }
 
-/// The ipc system call (faster version): it optmizes the send and receive
-/// operation. If preconditions are not met, fall back into the full-featured
-/// version (`sys_ipc()`).
+/// The ipc system call (faster version): it optmizes the common case: payloads
+/// are inline only (i.e., no channel/page payloads), both IPC_SEND and
+/// IPC_RECV are specified, and a receiver thread already waits for a message.
+///
+/// If preconditions are not met, fall back into the full-featured version
+/// (`sys_ipc()`).
+///
+/// Note that the current implementation is not fast enough. We need to
+/// eliminate branches and memory accesses as much as possible.
 error_t sys_ipc_fastpath(cid_t cid) {
     struct thread *current = CURRENT;
     struct channel *ch = idtable_get(&current->process->channels, cid);
