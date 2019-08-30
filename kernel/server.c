@@ -130,6 +130,11 @@ static error_t handle_add_pager_msg(pid_t pid, cid_t pager, vaddr_t start,
     return OK;
 }
 
+NORETURN static void handle_exit_kernel_test_msg(void) {
+    INFO("Power off");
+    arch_poweroff();
+}
+
 /// The kernel server.
 error_t kernel_server(void) {
     struct message *ipc_buffer = &CURRENT->info->ipc_buffer;
@@ -155,6 +160,10 @@ error_t kernel_server(void) {
         struct add_pager_msg *m = (struct add_pager_msg *) ipc_buffer;
         return handle_add_pager_msg(m->pid, m->pager, m->start, m->size,
             m->flags, (struct add_pager_reply_msg *) ipc_buffer);
+    }
+    case EXIT_KERNEL_TEST_MSG: {
+        handle_exit_kernel_test_msg();
+        break;
     }
     } // switch
 

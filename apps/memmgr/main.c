@@ -56,6 +56,12 @@ static error_t handle_printchar(
     return printchar(kernel_ch, m->ch);
 }
 
+static error_t handle_exit_kernel_test(UNUSED struct exit_kernel_test_msg *m,
+    UNUSED struct exit_kernel_test_reply_msg *r) {
+    // Forward to the kernel sever.
+    return exit_kernel_test(kernel_ch);
+}
+
 static error_t handle_benchmark_nop(UNUSED struct benchmark_nop_msg *m,
     UNUSED struct benchmark_nop_reply_msg *r) {
     return OK;
@@ -73,6 +79,9 @@ void mainloop(cid_t server_ch) {
             UNIMPLEMENTED();
         case PRINTCHAR_MSG:
             err = dispatch_printchar(handle_printchar, &m, &r);
+            break;
+        case EXIT_KERNEL_TEST_MSG:
+            err = dispatch_exit_kernel_test(handle_exit_kernel_test, &m, &r);
             break;
         case FILL_PAGE_REQUEST_MSG:
             err = dispatch_fill_page_request(handle_fill_page_request, &m, &r);

@@ -37,3 +37,9 @@ interface runtime {
     [id(2), type(call)]
     printchar(ch: uint8) -> ()
 }
+
+[id(5)]
+interface kernel_test {
+    [id(1), type(call)]
+    exit_kernel_test() -> ()
+}
