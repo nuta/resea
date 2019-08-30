@@ -168,9 +168,12 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         return ERR_INVALID_CID;
     }
 
-    struct message *m = &current->info->ipc_buffer;
-    header_t header = m->header;
+    //
+    //  Send Phase
+    //
     if (syscall & IPC_SEND) {
+        struct message *m = &current->info->ipc_buffer;
+        header_t header = m->header;
         flags_t flags = spin_lock_irqsave(&ch->lock);
         struct channel *linked_to = ch->linked_to;
         struct channel *dst = linked_to->transfer_to;
@@ -246,6 +249,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         thread_resume(receiver);
     }
 
+    //
+    //  Receive Phase
+    //
     if (syscall & IPC_RECV) {
         flags_t flags = spin_lock_irqsave(&ch->lock);
         struct channel *recv_on = ch->transfer_to;
