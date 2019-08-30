@@ -197,6 +197,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
         spin_unlock_irqrestore(&ch->lock, flags);
 
+        // Wait for a receiver thread.
         while (1) {
             flags_t flags = spin_lock_irqsave(&dst->lock);
             receiver = dst->receiver;
@@ -206,15 +207,16 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 break;
             }
 
-            // The receiver is not ready or another thread is sending a message
-            // to the channel.
+            // A receiver is not ready or another thread is sending a message
+            // to the channel. Block the current thread until a receiver thread
+            // resumes us.
             list_push_back(&dst->queue, &current->queue_elem);
             thread_block(current);
             spin_unlock_irqrestore(&dst->lock, flags);
             thread_switch();
         }
 
-        // Now we have the receiver thread. Time to send a message!
+        // Now we have a receiver thread. It's time to send a message!
         struct message *dst_m = &receiver->info->ipc_buffer;
 
         // Set header and the source channel ID.
@@ -272,7 +274,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             thread_resume(LIST_CONTAINER(thread, queue_elem, node));
         }
 
-        // The sender thread will resume us.
+        // Wait for a message...
         spin_unlock_irqrestore(&recv_on->lock, flags);
         thread_switch();
 
@@ -287,11 +289,11 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     return OK;
 }
 
-/// The ipc system call (faster version): it optmizes the common case: payloads
+/// The ipc system call (faster version): it optmizes a common case: payloads
 /// are inline only (i.e., no channel/page payloads), both IPC_SEND and
 /// IPC_RECV are specified, and a receiver thread already waits for a message.
 ///
-/// If preconditions are not met, fall back into the full-featured version
+/// If preconditions are not met, it fall backs into the full-featured version
 /// (`sys_ipc()`).
 ///
 /// Note that the current implementation is not fast enough. We need to
