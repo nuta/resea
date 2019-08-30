@@ -188,8 +188,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         }
 
         if (INTERFACE_ID(header) != 4) {
-            TRACE("send: @%d.%d -> @%d.%d (header=%p)", current->process->pid,
-                ch->cid, dst->process->pid, dst->cid, header);
+            TRACE("send: @%s.%d -> @%s.%d (header=%p)", current->process->name,
+                ch->cid, dst->process->name, dst->cid, header);
         }
 
         spin_unlock_irqrestore(&ch->lock, flags);
@@ -272,7 +272,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
         // Now `CURRENT->info->ipc_buffer` is filled by the sender thread.
         if (INTERFACE_ID(current->info->ipc_buffer.header) != 4) {
-            TRACE("recv: @%d.%d <- @%d (header=%p)", current->process->pid,
+            TRACE("recv: @%s.%d <- @%d (header=%p)", current->process->name,
                 recv_on->cid, current->info->ipc_buffer.from,
                 current->info->ipc_buffer.header);
         }
@@ -339,8 +339,8 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // Now all prerequisites are met. Copy the message and wait on the our
     // channel.
     if (INTERFACE_ID(header) != 4) {
-        TRACE("ipc (fastpath): @%d.%d -> @%d.%d (header=%p)",
-            current->process->pid, ch->cid, dst_ch->process->pid, dst_ch->cid,
+        TRACE("ipc (fastpath): @%s.%d -> @%s.%d (header=%p)",
+            current->process->name, ch->cid, dst_ch->process->name, dst_ch->cid,
             header);
     }
 
