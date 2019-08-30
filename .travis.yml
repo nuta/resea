@@ -13,11 +13,13 @@ addons:
     update: true
     packages:
       - llvm
+      - qemu
   apt:
     packages:
       - llvm
       - lld
       - clang
+      - qemu
 
 install:
   - "if [[ $TRAVIS_OS_NAME == linux ]]; then pyenv global 3.7.1; fi"
