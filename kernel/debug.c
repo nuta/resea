@@ -44,7 +44,7 @@ static const char *find_symbol(vaddr_t vaddr, size_t *offset) {
 
 /// Prints the stack trace.
 void backtrace(void) {
-    INFO("Backtrace:");
+    WARN("Backtrace:");
     struct stack_frame *frame = get_stack_frame();
     for (int i = 0; i < BACKTRACE_MAX; i++) {
         if (frame->return_addr < KERNEL_BASE_ADDR) {
@@ -53,7 +53,7 @@ void backtrace(void) {
 
         size_t offset;
         const char *name = find_symbol(frame->return_addr, &offset);
-        INFO("    #%d: %p %s()+0x%x", i, frame->return_addr, name, offset);
+        WARN("    #%d: %p %s()+0x%x", i, frame->return_addr, name, offset);
 
         if ((uint64_t) frame->next < KERNEL_BASE_ADDR) {
             break;

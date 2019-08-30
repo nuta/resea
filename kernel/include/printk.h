@@ -11,6 +11,7 @@ void printk(const char *fmt, ...);
 // TODO: Add ifdef guard "CONFIG_DISABLE_ANSI_COLOR"
 #define COLOR_BOLD_RED "\e[1;91m"
 #define COLOR_YELLOW "\e[0;33m"
+#define COLOR_BLUE "\e[0;94m"
 #define COLOR_CYAN "\e[0;96m"
 #define COLOR_RESET "\e[0m"
 
@@ -24,7 +25,7 @@ void printk(const char *fmt, ...);
         printk(COLOR_CYAN "[kernel] " fmt COLOR_RESET "\n", ##__VA_ARGS__)
 #endif
 
-#define INFO(fmt, ...) printk("[kernel] " fmt COLOR_RESET "\n", ##__VA_ARGS__)
+#define INFO(fmt, ...) printk(COLOR_BLUE "[kernel] " fmt COLOR_RESET "\n", ##__VA_ARGS__)
 #define WARN(fmt, ...) \
     printk(COLOR_YELLOW "[kernel] WARN: " fmt COLOR_RESET "\n", ##__VA_ARGS__)
 #define OOPS(fmt, ...)                                              \
@@ -53,13 +54,14 @@ void printk(const char *fmt, ...);
 #define UNIMPLEMENTED() \
     PANIC("[kernel] not yet implemented: %s:%d", __FILE__, __LINE__)
 
-#define ASSERT(expr)                                           \
-    do {                                                       \
-        if (!(expr)) {                                         \
-            printk("[kernel] ASSERTION FAILURE: " #expr "\n"); \
-            backtrace();                                       \
-            arch_panic();                                      \
-        }                                                      \
+#define ASSERT(expr)                                             \
+    do {                                                         \
+        if (!(expr)) {                                           \
+            printk(COLOR_BOLD_RED "[kernel] ASSERTION FAILURE: " \
+                   #expr "\n" COLOR_RESET);                      \
+            backtrace();                                         \
+            arch_panic();                                        \
+        }                                                        \
     } while (0)
 
 #endif

@@ -47,20 +47,21 @@ void try_or_panic(error_t err, const char *file, int lineno);
 
 #define TRY_OR_PANIC(err) try_or_panic(err, __FILE__, __LINE__)
 
-#define assert(expr)                                  \
-    do {                                              \
-        if (!(expr)) {                                \
-            printf("ASSERTION FAILURE: " #expr "\n"); \
-            do_backtrace("");                         \
-            exit(1);                                  \
-        }                                             \
-    } while (0)
-
 // TODO: Add ifdef guard "CONFIG_DISABLE_ANSI_COLOR"
 #define COLOR_BOLD_RED "\e[1;91m"
 #define COLOR_YELLOW "\e[0;33m"
+#define COLOR_BLUE "\e[0;94m"
 #define COLOR_CYAN "\e[0;96m"
 #define COLOR_RESET "\e[0m"
+
+#define assert(expr)                                                             \
+    do {                                                                         \
+        if (!(expr)) {                                                           \
+            printf(COLOR_BOLD_RED "ASSERTION FAILURE: " #expr "\n" COLOR_RESET); \
+            do_backtrace("");                                                    \
+            exit(1);                                                             \
+        }                                                                        \
+    } while (0)
 
 #ifdef RELEASE_BUILD
 #    define TRACE(fmt, ...)
@@ -74,7 +75,7 @@ void try_or_panic(error_t err, const char *file, int lineno);
 
 #define BACKTRACE() do_backtrace("[" APP_NAME "] ")
 #define INFO(fmt, ...) \
-    printf("[%s] " fmt COLOR_RESET "\n", APP_NAME, ##__VA_ARGS__)
+    printf(COLOR_BLUE "[%s] " fmt COLOR_RESET "\n", APP_NAME, ##__VA_ARGS__)
 #define WARN(fmt, ...)                                                \
     printf(COLOR_YELLOW "[%s] WARN: " fmt COLOR_RESET "\n", APP_NAME, \
         ##__VA_ARGS__)
