@@ -2,6 +2,7 @@
 import argparse
 import os
 import platform
+import sys
 
 def generate_default(args):
     cc = ""
@@ -29,6 +30,12 @@ def generate_default(args):
         "GRUB_PREFIX": grub_prefix,
     }
 
+    for user_var in args.vars:
+        if "=" not in user_var:
+            sys.exit("Variables must be formatted as 'FOO=bar'.")
+        k,v = user_var.split("=", 1)
+        config[k] = v
+
     config_mk = ""
     for key, value in config.items():
         config_mk += f"{key} := {value}\n"
@@ -39,8 +46,13 @@ def main():
     parser.add_argument("-o", dest="outfile", default=".config", help="The output file.")
     subparsers = parser.add_subparsers()
     default_parser = subparsers.add_parser("default", help="Generates default config.")
+    default_parser.add_argument("vars", nargs="*", help="Config definitions (VAR_NAME=value).")
     default_parser.set_defaults(func=generate_default)
     args = parser.parse_args()    
+
+    if "func" not in args:
+        parser.print_help()
+        sys.exit("")
 
     config = args.func(args)
 
