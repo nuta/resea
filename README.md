@@ -7,7 +7,8 @@ aims to be easy to learn the implementation and experience microkernel-style
 development. Resea consists of a microkernel and servers. The microkernel
 provides essential functionalities: process, thread, and message passing (IPC).
 Servers are userland programs that provide services such as memory allocation,
-device drivers, file system, and TCP/IP.
+device drivers, file system, and TCP/IP. See **[Documentation](#documentation)**
+for details.
 
 Road Map
 --------
