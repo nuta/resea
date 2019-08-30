@@ -1,7 +1,23 @@
 Internals
 =========
 
-Data Structures
+This document describes the design of Resea.
+
+System calls
+------------
+- `int sys_open(void)`
+  - Creates a new channel.
+- `error_t sys_ipc(cid_t ch, uint32_t ops)`
+  - Performs asynchronous IPC operations. `ops` can be send, receive, or both
+    of them (akin to **Remote Procedure Call**).
+- `error_t sys_link(cid_t ch1, cid_t ch2)`
+  - Links two channels. Messages from `ch1` (resp. `ch2`) will be sent to `ch2`
+    (resp. `ch1`).
+- `error_t sys_transfer(cid_t src, cid_t dst)`
+  - Transfer messages from the channel linked to `src` to `dst` channels.
+
+
+Data structures
 ---------------
 
 ### System Call ID
