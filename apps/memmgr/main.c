@@ -116,7 +116,10 @@ void main(void) {
     const struct initfs_file *file;
     while ((file = initfs_readdir(&dir)) != NULL) {
         if (strncmp(file->path, "startups/", 9) == 0) {
-            spawn_process(kernel_ch, server_ch, file);
+            error_t err = spawn_process(kernel_ch, server_ch, file);
+            if (err != OK) {
+                ERROR("failed to spawn '%s' (%d)", file->path, err);
+            }
         }
     }
 
