@@ -16,6 +16,7 @@ Road Map
 - [x] IPC benchmark app
 - [ ] **`memmgr`:** the user-level memory management server **(WIP)**
 - [ ] GUI server
+- [ ] SMP support
 - [ ] **`drvmgr`:** the device driver management server
 - [ ] **`fsmgr`:** the file system management server
 - [ ] virtio-blk device driver

@@ -31,8 +31,8 @@ management, interrupts, etc.
 
 Only memmgr and startup servers (apps spawned by memmgr) has a channel
 connected to the kernel server at cid 1. There're no differences between the
-kernel server and other servers from userland. Use `sys_ipc` to communicate with
-the kernel server as if it is a normal userland server.
+kernel server and other servers. Use `sys_ipc` to communicate with the kernel
+server as if it is a normal userland server.
 
 Data structures
 ---------------
