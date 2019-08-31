@@ -18,7 +18,7 @@ All system calls are only essential ones for message passing:
   - Destroys a channel.
 - `error_t sys_ipc(cid_t ch, uint32_t ops)`
   - Performs asynchronous IPC operations. `ops` can be send, receive, or both
-    of them (akin to **Remote Procedure Call**).
+    of them (so-called *Remote Procedure Call*).
 - `error_t sys_link(cid_t ch1, cid_t ch2)`
   - Links two channels. Messages from `ch1` (resp. `ch2`) will be sent to `ch2`
     (resp. `ch1`).
