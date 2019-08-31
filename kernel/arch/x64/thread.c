@@ -10,42 +10,30 @@ STATIC_ASSERT(offsetof(struct thread, arch) == 0);
 void arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
                       vaddr_t kernel_stack, vaddr_t user_buffer,
                       bool is_kernel_thread) {
-
-    uint64_t *rsp;
+    // Set up a temporary kernel stack frame for x64_switch and
+    // x64_start_kernel_thread/x64_enter_userspace.
+    uint64_t *rsp= (uint64_t *) (kernel_stack + KERNEL_STACK_SIZE);
     if (is_kernel_thread) {
-        rsp = (uint64_t *) (kernel_stack + KERNEL_STACK_SIZE);
         *--rsp = start;
-        *--rsp = (uint64_t) &x64_start_kernel_thread; // Initial return address.
-        *--rsp = 0; // Initial RBP.
-        *--rsp = 0; // Initial RBX.
-        *--rsp = 0; // Initial R12.
-        *--rsp = 0; // Initial R13.
-        *--rsp = 0; // Initial R14.
-        *--rsp = 0; // Initial R15.
-        *--rsp = 0x02;
+        *--rsp = (uint64_t) &x64_start_kernel_thread;
     } else {
-        // Temporarily use the kernel stack for x64_enter_userspace.
-        int num_regs = 13; /* iret frame, rflags, and callee-saved regs */
-        int temp_stack_len = sizeof(uint64_t) * num_regs;
-        rsp =
-            (uint64_t *) (kernel_stack + KERNEL_STACK_SIZE - temp_stack_len);
-        // Temporary thread state to be restored in x64_switch.
-        rsp[0] = 0x2; // RFLAGS.
-        rsp[1] = 0; // Initial RBP.
-        rsp[2] = 0; // Initial RBX.
-        rsp[3] = 0; // Initial R12.
-        rsp[4] = 0; // Initial R13.
-        rsp[5] = 0; // Initial R14.
-        rsp[6] = 0; // Initial R15.
-        rsp[7] = (uint64_t) &x64_enter_userspace; // Initial return address.
-
         // IRET frame to be restored in x64_enter_userspace.
-        rsp[8] = start;
-        rsp[9] = USER_CS64 | USER_RPL;
-        rsp[10] = 0x202; // RFLAGS (interrupts enabled).
-        rsp[11] = stack;
-        rsp[12] = USER_DS | USER_RPL;
+        *--rsp = USER_DS | USER_RPL;
+        *--rsp = stack;
+        *--rsp = 0x202; // RFLAGS (interrupts enabled).
+        *--rsp = USER_CS64 | USER_RPL;
+        *--rsp = start;
+        *--rsp = (uint64_t) &x64_enter_userspace;
     }
+
+    // Set up a temporary kernel stack frame for x64_switch.
+    *--rsp = 0; // Initial RBP.
+    *--rsp = 0; // Initial RBX.
+    *--rsp = 0; // Initial R12.
+    *--rsp = 0; // Initial R13.
+    *--rsp = 0; // Initial R14.
+    *--rsp = 0; // Initial R15.
+    *--rsp = 0x02; // RFLAGS.
 
     thread->arch.info = user_buffer;
     thread->arch.rsp = (uint64_t) rsp;
