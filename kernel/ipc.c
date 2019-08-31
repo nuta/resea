@@ -111,6 +111,18 @@ cid_t sys_open(void) {
     return ch->cid;
 }
 
+/// The close system call: destroys a new channel.
+error_t sys_close(cid_t cid) {
+    struct channel *ch = idtable_get(&CURRENT->process->channels, cid);
+    if (!ch) {
+        return ERR_INVALID_CID;
+    }
+
+    TRACE("close: @%d", ch->cid);
+    channel_decref(ch);
+    return OK;
+}
+
 /// The link system call: links channels.
 error_t sys_link(cid_t ch1, cid_t ch2) {
     struct channel *ch1_ch = idtable_get(&CURRENT->process->channels, ch1);

@@ -48,6 +48,16 @@ int sys_open(void) {
     return cid_or_err;
 }
 
+error_t sys_close(cid_t ch) {
+    int cid_or_err;
+    __asm__ __volatile__(
+        "syscall"
+        : "=a"(cid_or_err)
+        : "a"(SYSCALL_CLOSE), "D"(ch)
+        : "%rsi", "%rdx", "%rcx", "%r8", "%r9", "%r10", "%r11");
+    return cid_or_err;
+}
+
 error_t sys_transfer(cid_t src, cid_t dst) {
     error_t err;
     __asm__ __volatile__("syscall"

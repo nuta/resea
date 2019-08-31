@@ -29,6 +29,7 @@
 
 #define SYSCALL_IPC 0
 #define SYSCALL_OPEN 1
+#define SYSCALL_CLOSE 2
 #define SYSCALL_TRANSFER 4
 
 typedef uint32_t header_t;
@@ -51,10 +52,12 @@ struct message *get_ipc_buffer(void);
 void copy_to_ipc_buffer(const struct message *m);
 void copy_from_ipc_buffer(struct message *buf);
 int sys_open(void);
+error_t sys_close(cid_t ch);
 error_t sys_transfer(cid_t src, cid_t dst);
 error_t sys_ipc(cid_t ch, uint32_t ops);
 
 error_t open(cid_t *ch);
+error_t close(cid_t ch);
 error_t transfer(cid_t src, cid_t dst);
 error_t ipc_recv(cid_t ch, struct message *r);
 error_t ipc_call(cid_t ch, struct message *m, struct message *r);

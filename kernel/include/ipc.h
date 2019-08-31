@@ -8,6 +8,7 @@
 //
 #define SYSCALL_IPC 0
 #define SYSCALL_OPEN 1
+#define SYSCALL_CLOSE 2
 #define SYSCALL_LINK 3
 #define SYSCALL_TRANSFER 4
 
@@ -65,6 +66,7 @@ void channel_decref(struct channel *ch);
 void channel_link(struct channel *ch1, struct channel *ch2);
 void channel_transfer(struct channel *src, struct channel *dst);
 cid_t sys_open(void);
+error_t sys_close(cid_t cid);
 error_t sys_ipc(cid_t cid, uint32_t ops);
 intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t arg3,
                          uintmax_t syscall);

@@ -9,6 +9,10 @@ error_t open(cid_t *ch) {
     return OK;
 }
 
+error_t close(cid_t ch) {
+    return sys_close(ch);
+}
+
 error_t transfer(cid_t src, cid_t dst) {
     return sys_transfer(src, dst);
 }
