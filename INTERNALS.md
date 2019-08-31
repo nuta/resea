@@ -5,10 +5,10 @@ This document describes the design of Resea.
 
 System calls
 ------------
-Similar to **"Everything is a file"** philosophy in Unix, Resea has a
-philosophy: **"Everything is a message passing"**. Wants to read a file? Send a
-message to the file system server! Wants to spawn a new thread? Send a message
-to the kernel server!
+Similar to *"Everything is a file"* philosophy in Unix, Resea has aphilosophy:
+*"Everything is a message passing"*. Wants to read a file? Send a message to
+the file system server! Wants to spawn a new thread? Send a messageto the kernel
+server!
 
 All system calls are only essential ones for message passing:
 
