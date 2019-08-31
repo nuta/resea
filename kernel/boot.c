@@ -21,7 +21,7 @@ static paddr_t straight_map_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
 // Spawns the first user process from the initfs.
 static void userland(void) {
     // Create the very first user process and thread.
-    struct process *user_process = process_create("startup");
+    struct process *user_process = process_create("memmgr");
     if (!user_process) {
         PANIC("failed to create a process");
     }
