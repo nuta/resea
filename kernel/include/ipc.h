@@ -33,6 +33,7 @@ typedef uint32_t header_t;
 #define MSG_LABEL(header) (((header) >> MSG_LABEL_OFFSET) & 0xffff)
 #define INTERFACE_ID(header) (MSG_LABEL(header) >> 8)
 #define INLINE_PAYLOAD_LEN_MAX 2047
+#define ERROR_TO_HEADER(error) ((uint32_t) (error) << MSG_LABEL_OFFSET)
 
 // A bit mask to determine if a message satisfies one of fastpath
 // prerequisites. This test checks if page/channel payloads are
@@ -63,6 +64,7 @@ void channel_incref(struct channel *ch);
 void channel_decref(struct channel *ch);
 void channel_link(struct channel *ch1, struct channel *ch2);
 void channel_transfer(struct channel *src, struct channel *dst);
+cid_t sys_open(void);
 error_t sys_ipc(cid_t cid, uint32_t ops);
 intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t arg3,
                          uintmax_t syscall);

@@ -6,6 +6,8 @@
 #include <thread.h>
 #include <types.h>
 
+struct channel *kernel_server_ch = NULL;
+
 /// The user pager. When a page fault occurred in vm areas that are registered
 /// with this function, the kernel invokes this function to fill the page.
 static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
@@ -42,11 +44,11 @@ static error_t handle_printchar_msg(uint8_t ch) {
 }
 
 static NORETURN void handle_exit_current_msg(UNUSED int code) {
-    // TODO: Kill the current process.
+    // TODO: Kill the sender process.
     UNIMPLEMENTED();
 }
 
-static error_t handle_create_process_msg(struct create_process_reply_msg *r) {
+static error_t handle_create_process_msg(struct process *sender, struct create_process_reply_msg *r) {
     TRACE("kernel: create_process()");
     struct process *proc = process_create("user" /* TODO: */);
     if (!proc) {
@@ -59,7 +61,7 @@ static error_t handle_create_process_msg(struct create_process_reply_msg *r) {
         return ERR_OUT_OF_RESOURCE;
     }
 
-    struct channel *pager_ch = channel_create(CURRENT->process);
+    struct channel *pager_ch = channel_create(sender);
     if (!pager_ch) {
         channel_decref(pager_ch);
         process_destroy(proc);
@@ -85,7 +87,8 @@ static error_t handle_spawn_thread_msg(pid_t pid, vaddr_t start, vaddr_t stack,
         return ERR_INVALID_MESSAGE;
     }
 
-    struct thread *thread = thread_create(proc, start, stack, buffer, arg);
+    struct thread *thread = thread_create(proc, start, stack, buffer,
+                                          (void *) arg);
     if (!thread) {
         return ERR_OUT_OF_RESOURCE;
     }
@@ -135,37 +138,72 @@ NORETURN static void handle_exit_kernel_test_msg(void) {
     arch_poweroff();
 }
 
-/// The kernel server.
-error_t kernel_server(void) {
+NORETURN static void mainloop(cid_t server_ch) {
     struct message *ipc_buffer = &CURRENT->info->ipc_buffer;
-    switch (MSG_LABEL(ipc_buffer->header)) {
-    case PRINTCHAR_MSG: {
-        struct printchar_msg *m = (struct printchar_msg *) ipc_buffer;
-        return handle_printchar_msg(m->ch);
-    }
-    case EXIT_CURRENT_MSG: {
-        struct exit_current_msg *m = (struct exit_current_msg *) ipc_buffer;
-        handle_exit_current_msg(m->code);
-    }
-    case CREATE_PROCESS_MSG: {
-        return handle_create_process_msg(
-            (struct create_process_reply_msg *) ipc_buffer);
-    }
-    case SPAWN_THREAD_MSG: {
-        struct spawn_thread_msg *m = (struct spawn_thread_msg *) ipc_buffer;
-        return handle_spawn_thread_msg(m->pid, m->start, m->stack, m->buffer,
-            m->arg, (struct spawn_thread_reply_msg *) ipc_buffer);
-    }
-    case ADD_PAGER_MSG: {
-        struct add_pager_msg *m = (struct add_pager_msg *) ipc_buffer;
-        return handle_add_pager_msg(m->pid, m->pager, m->start, m->size,
-            m->flags, (struct add_pager_reply_msg *) ipc_buffer);
-    }
-    case EXIT_KERNEL_TEST_MSG: {
-        handle_exit_kernel_test_msg();
-        break;
-    }
-    } // switch
+    // struct message m;
+    sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
 
-    return OK;
+    while (1) {
+        cid_t from = ipc_buffer->from;
+        struct channel *ch = idtable_get(&kernel_process->channels, from);
+        ASSERT(ch != NULL);
+        struct process *sender = ch->linked_to->process;
+        error_t err;
+        switch (MSG_LABEL(ipc_buffer->header)) {
+        case PRINTCHAR_MSG: {
+            struct printchar_msg *m = (struct printchar_msg *) ipc_buffer;
+            err = handle_printchar_msg(m->ch);
+            break;
+        }
+        case EXIT_CURRENT_MSG: {
+            struct exit_current_msg *m = (struct exit_current_msg *) ipc_buffer;
+            handle_exit_current_msg(m->code);
+        }
+        case CREATE_PROCESS_MSG: {
+            err = handle_create_process_msg(sender,
+                (struct create_process_reply_msg *) ipc_buffer);
+            break;
+        }
+        case SPAWN_THREAD_MSG: {
+            struct spawn_thread_msg *m = (struct spawn_thread_msg *) ipc_buffer;
+            err = handle_spawn_thread_msg(m->pid, m->start, m->stack, m->buffer,
+                m->arg, (struct spawn_thread_reply_msg *) ipc_buffer);
+            break;
+        }
+        case ADD_PAGER_MSG: {
+            struct add_pager_msg *m = (struct add_pager_msg *) ipc_buffer;
+            err = handle_add_pager_msg(m->pid, m->pager, m->start, m->size,
+                m->flags, (struct add_pager_reply_msg *) ipc_buffer);
+            break;
+        }
+        case EXIT_KERNEL_TEST_MSG:
+            handle_exit_kernel_test_msg();
+            break;
+        default:
+            WARN("invalid message type %x", MSG_LABEL(ipc_buffer->header));
+            err = ERR_INVALID_MESSAGE;
+            ipc_buffer->header = ERROR_TO_HEADER(err);
+        }
+
+        if (err == ERR_DONT_REPLY) {
+            sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
+        } else {
+            sys_ipc(from, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
+        }
+    }
+}
+
+static void kernel_server_main(void) {
+    ASSERT(CURRENT->process == kernel_process);
+    mainloop(kernel_server_ch->cid);
+}
+
+void kernel_server_init(void) {
+    kernel_server_ch = channel_create(kernel_process);
+    struct thread *thread = thread_create(kernel_process,
+                                          (vaddr_t) kernel_server_main,
+                                          0 /* stack */,
+                                          0 /* buffer */,
+                                          0 /* arg */);
+    thread_resume(thread);
 }

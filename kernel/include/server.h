@@ -3,6 +3,7 @@
 
 #include <ipc.h>
 
-error_t kernel_server(void);
+extern struct channel *kernel_server_ch;
+void kernel_server_init(void);
 
 #endif

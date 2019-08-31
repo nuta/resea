@@ -4,6 +4,7 @@
 #include <memory.h>
 #include <printk.h>
 #include <process.h>
+#include <server.h>
 #include <thread.h>
 
 extern char __initfs[];
@@ -44,6 +45,7 @@ static void userland(void) {
         PANIC("failed to create a channel");
     }
 
+    channel_transfer(kernel_ch, kernel_server_ch);
     channel_link(kernel_ch, user_ch);
 
     // Set up pagers.
@@ -77,6 +79,7 @@ void boot(void) {
     arch_init();
     process_init();
     thread_init();
+    kernel_server_init();
 
     userland();
 

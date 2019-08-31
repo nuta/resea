@@ -179,17 +179,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct channel *dst = linked_to->transfer_to;
         struct thread *receiver;
 
-        if (linked_to->process == kernel_process) {
-            if ((syscall & IPC_RECV) == 0) {
-                TRACE("kernel server: invalid header");
-                return ERR_INVALID_HEADER;
-            }
-
-            // TODO: Run the kernel server as a kernel thread.
-            spin_unlock_irqrestore(&ch->lock, flags);
-            return kernel_server();
-        }
-
         if (INTERFACE_ID(header) != 4) {
             TRACE("send: @%s.%d -> @%s.%d (header=%p)", current->process->name,
                 ch->cid, dst->process->name, dst->cid, header);
@@ -326,11 +315,6 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
     struct channel *linked_to = ch->linked_to;
     struct channel *dst_ch = linked_to->transfer_to;
-
-    // Kernel calls are handled in the slowpath.
-    if (UNLIKELY(linked_to->process == kernel_process)) {
-        goto slowpath2;
-    }
 
     // Try locking the destination channel.
     if (UNLIKELY(!spin_try_lock(&dst_ch->lock))) {
