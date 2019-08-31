@@ -15,7 +15,7 @@ All system calls are only essential ones for message passing:
 - `int sys_open(void)`
   - Creates a new channel.
 - `int sys_close(cid_t ch)`
-  - Destroys a new channel.
+  - Destroys a channel.
 - `error_t sys_ipc(cid_t ch, uint32_t ops)`
   - Performs asynchronous IPC operations. `ops` can be send, receive, or both
     of them (akin to **Remote Procedure Call**).
