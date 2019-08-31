@@ -5,6 +5,13 @@ This document describes the design of Resea.
 
 System calls
 ------------
+Similar to **"Everything is a file"** philosophy in Unix, Resea has a
+philosophy: **"Everything is a message passing"**. Wants to read a file? Send a
+message to the file system server! Wants to spawn a new thread? Send a message
+to the kernel server!
+
+All system calls are only essential ones for message passing:
+
 - `int sys_open(void)`
   - Creates a new channel.
 - `error_t sys_ipc(cid_t ch, uint32_t ops)`
@@ -16,6 +23,16 @@ System calls
 - `error_t sys_transfer(cid_t src, cid_t dst)`
   - Transfer messages from the channel linked to `src` to `dst` channels.
 
+Kernel server
+-------------
+Kernel server is a kernel thread which provdes features that only the kernel can
+provide: kernel-level thread (not kernel thread!), pager management, interrupts,
+etc.
+
+Only memmgr and startup servers (apps spawned by the memmgr) has a channel
+connected to the kernel server at cid 1. There're no differences between the
+kernel server and other servers from userland. Use `sys_ipc` to communicate with
+the kernel server as if it is a normal userland server.
 
 Data structures
 ---------------
