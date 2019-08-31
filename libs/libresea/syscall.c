@@ -13,6 +13,10 @@ error_t close(cid_t ch) {
     return sys_close(ch);
 }
 
+error_t link(cid_t ch1, cid_t ch2) {
+    return sys_link(ch1, ch2);
+}
+
 error_t transfer(cid_t src, cid_t dst) {
     return sys_transfer(src, dst);
 }

@@ -58,6 +58,15 @@ error_t sys_close(cid_t ch) {
     return cid_or_err;
 }
 
+error_t sys_link(cid_t ch1, cid_t ch2) {
+    error_t err;
+    __asm__ __volatile__("syscall"
+                         : "=a"(err)
+                         : "a"(SYSCALL_LINK), "D"(ch1), "S"(ch2)
+                         : "%rdx", "%rcx", "%r8", "%r9", "%r10", "%r11");
+    return err;
+}
+
 error_t sys_transfer(cid_t src, cid_t dst) {
     error_t err;
     __asm__ __volatile__("syscall"
