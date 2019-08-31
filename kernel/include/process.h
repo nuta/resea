@@ -7,6 +7,7 @@
 
 #define KERNEL_PID 1
 #define PROCESS_NAME_LEN_MAX 16
+#define IS_KERNEL_PROCESS(proc) ((proc) == kernel_process)
 
 struct process {
     pid_t pid;

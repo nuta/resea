@@ -15,7 +15,8 @@ void page_table_destroy(struct page_table *pt);
 
 struct thread;
 void arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
-                      vaddr_t kernel_stack, vaddr_t user_buffer);
+                      vaddr_t kernel_stack, vaddr_t user_buffer,
+                      bool is_kernel_thread);
 struct thread *arch_get_current_thread(void);
 void arch_set_current_thread(struct thread *thread);
 void arch_thread_switch(struct thread *prev, struct thread *next);

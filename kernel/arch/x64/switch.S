@@ -1,6 +1,19 @@
 .intel_syntax noprefix
 .set ARCH_THREAD_RSP, 0
 
+/// The entry point of kernel threads.
+.globl x64_start_kernel_thread
+x64_start_kernel_thread:
+    // Clear RBP to stop backtrace here.
+    mov rbp, 0
+
+    // Call the kernel thread. Note that a kernel thread NEVER returns.
+    pop rax
+    call rax
+
+    // Invoke an exception to notice that the kernel thread returned.
+    ud2
+
 .globl x64_enter_userspace
 x64_enter_userspace:
     /* Sanitize registers to prevent information leak. */

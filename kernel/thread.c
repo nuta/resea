@@ -6,10 +6,13 @@
 #include <table.h>
 #include <thread.h>
 
-/// Creates a new thread.
-struct thread *thread_create(struct process *process, uintmax_t start,
-                             uintmax_t stack, vaddr_t user_buffer,
-                             uintmax_t arg) {
+/// Creates a new thread. If `process` is `kernel_process`, it creates a kernel
+/// thread, which is a special thread which runs only in the kernel land. In
+/// that case, `stack` and `user_buffer` are ignored (it uses kernel stack and
+/// buffer allocated in this function).
+struct thread *thread_create(struct process *process, vaddr_t start,
+                             vaddr_t stack, vaddr_t user_buffer,
+                             void *arg) {
 
     int tid = idtable_alloc(&all_processes);
     if (!tid) {
@@ -35,7 +38,8 @@ struct thread *thread_create(struct process *process, uintmax_t start,
         return NULL;
     }
 
-    thread_info->arg = arg;
+    bool is_kernel_thread = IS_KERNEL_PROCESS(process);
+    thread_info->arg = (vaddr_t) arg;
     thread->tid = tid;
     thread->state = THREAD_BLOCKED;
     thread->kernel_stack = kernel_stack;
@@ -43,14 +47,17 @@ struct thread *thread_create(struct process *process, uintmax_t start,
     thread->info = thread_info;
     spin_lock_init(&thread->lock);
     init_stack_canary(kernel_stack);
-    arch_thread_init(thread, start, stack, kernel_stack, user_buffer);
+    arch_thread_init(thread, start, stack, kernel_stack, user_buffer,
+                     is_kernel_thread);
 
     // Allow threads to read and write the buffer.
-    flags_t flags = spin_lock_irqsave(&process->lock);
-    arch_link_page(&process->page_table, user_buffer, into_paddr(thread_info),
-        1, PAGE_USER | PAGE_WRITABLE);
-    list_push_back(&process->threads, &thread->next);
-    spin_unlock_irqrestore(&process->lock, flags);
+    if (!is_kernel_thread) {
+        flags_t flags = spin_lock_irqsave(&process->lock);
+        arch_link_page(&process->page_table, user_buffer, into_paddr(thread_info),
+            1, PAGE_USER | PAGE_WRITABLE);
+        list_push_back(&process->threads, &thread->next);
+        spin_unlock_irqrestore(&process->lock, flags);
+    }
 
     idtable_set(&all_processes, tid, (void *) thread);
 

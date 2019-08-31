@@ -14,7 +14,7 @@
 // Thread-local information block. Keep in mind that this block is readable and
 // WRITABLE from the user: don't put sensitive data in it.
 struct thread_info {
-    uintmax_t arg;
+    vaddr_t arg;
     struct message ipc_buffer;
 } PACKED;
 
@@ -44,9 +44,9 @@ struct thread {
 
 void thread_init(void);
 void thread_switch(void);
-struct thread *thread_create(struct process *process, uintmax_t start,
-                             uintmax_t stack, vaddr_t user_buffer,
-                             uintmax_t arg);
+struct thread *thread_create(struct process *process, vaddr_t start,
+                             vaddr_t stack, vaddr_t user_buffer,
+                             void *arg);
 void thread_destroy(struct thread *thread);
 void thread_block(struct thread *thread);
 void thread_resume(struct thread *thread);
