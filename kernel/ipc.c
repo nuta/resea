@@ -266,7 +266,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             return ERR_ALREADY_RECEVING;
         }
         recv_on->receiver = current;
-        current->recv_in_kernel = (syscall | IPC_FROM_KERNEL) != 0;
+        current->recv_in_kernel = (syscall & IPC_FROM_KERNEL) != 0;
         thread_block(current);
 
         // Resume a thread in the sender queue if exists.
