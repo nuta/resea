@@ -44,10 +44,26 @@ void exit(int status);
 // Include `resea/ipc.h` to enable:
 #include <resea/ipc.h>
 
-struct message;
+struct message {
+    // The message header (see INTERNALS.md for details).
+    uint32_t header;
+    // The source channel.
+    cid_t from;
+    // Channel payloads.
+    cid_t channels[4];
+    // Page payloads.
+    page_t pages[4];
+    // Inline payloads. INLINE_PAYLOAD_LEN_MAX is 2047.
+    uint8_t data[INLINE_PAYLOAD_LEN_MAX];
+}
 
 // Creates a new channel.
 error_t open(cid_t *ch);
+// Destroys a channel.
+error_t close(cid_t ch);
+// Links channels. Messages sent from ch1 (resp. ch2) will be sent to ch2
+// (resp. ch1).
+error_t link(cid_t ch1, cid_t ch2);
 // Transfer messages sent to `src` to `dst`.
 error_t transfer(cid_t src, cid_t dst);
 // Receive a message.
@@ -56,7 +72,9 @@ error_t ipc_recv(cid_t ch, struct message *r);
 error_t ipc_call(cid_t ch, struct message *m, struct message *r);
 // Send and receive a message. The difference from the `ipc_call` is that in
 // send phase, `ipc_replyrecv` won't block (returns an error) if the receiver
-// does not exist.
+// does not exist. This is useful when you reply a message to a client from a
+// server: if the client is not waiting for the reply, `ipc_call` would block
+// forever and it leads to a Denial-of-Service attack to the server.
 error_t ipc_replyrecv(cid_t ch, struct message *m, struct message *r);
 ```
 

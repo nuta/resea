@@ -25,6 +25,9 @@ All system calls are only essential ones for message passing:
 - `error_t sys_transfer(cid_t src, cid_t dst)`
   - Transfer messages from the channel linked to `src` to `dst` channels.
 
+The message buffer to send/receive a message is located in the thread-local
+buffer (see [Thread Information Block](#thread-information-block)).
+
 Kernel server
 -------------
 Kernel server is a kernel thread which provdes features that only the kernel can
@@ -80,16 +83,20 @@ Data structures
   must be a power of the two.
 
 ### Thread Infomation Block
+Thread Information Block (TIB) is a thread-local page filled by the kernel. TIB
+is always visible from both the kernel and the user. In x64, you can locate it
+by the RDGSBASE instruction in the user mode.
+
 ```
 |63                                                                         0|
 +----------------------------------------------------------------------------+
-|                                    arg                                     |  0
+|                               arg  (user-defined)                          |  0
 +----------------------------------------------------------------------------+
-|                                                                            |  
-|                                                                            |  
-|                                  IPC buffer                                |  16
-|                                                                            |  
-|                                                                            |  
+|                                                                            |  8
+|                                                                            |
+|                                  IPC buffer                                |
+|                               (struct message)                             |
+|                                                                            |
 +----------------------------------------------------------------------------+
 ```
 
