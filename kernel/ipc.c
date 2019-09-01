@@ -396,6 +396,8 @@ intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, UNUSED uintmax_t arg3,
         return (intmax_t) sys_ipc((cid_t) arg0, (uint32_t) syscall);
     case SYSCALL_OPEN:
         return (intmax_t) sys_open();
+    case SYSCALL_CLOSE:
+        return (intmax_t) sys_close((cid_t) arg0);
     case SYSCALL_LINK:
         return (intmax_t) sys_link((cid_t) arg0, (cid_t) arg1);
     case SYSCALL_TRANSFER:
