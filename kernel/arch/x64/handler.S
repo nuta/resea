@@ -22,12 +22,12 @@ x64_syscall_handler:
 
     // Interrupts are automatically disabled by MSR_FMASK. If interrupts are
     // enabled, an interrupt may occurs before SWAPGS and as a result, an
-    // interrupt handler mistakenly use the user GS base because the interrupt
+    // interrupt handler mistakenly use the user's GS base because the interrupt
     // has occurred in the kernel mode and SWAPGS won't be performed.
     //
     // Note that we can't re-enable interrupts until we go back into the user
-    // mode or resume the next thread: the kernel stack is shared with
-    // exception/interrupt handlers!
+    // mode or resume the next thread: the (per-thread) kernel stack is shared
+    // with exception/interrupt handlers!
     swapgs
 
     // TODO: Add LFENCE to mitigate speculative side-channel attacks.
@@ -38,7 +38,7 @@ x64_syscall_handler:
     mov gs:[ARCH_THREAD_RSP], rsp
     mov rsp, gs:[ARCH_THREAD_KERNEL_STACK]
     
-    // Save SYSRET context and callee-saved registers.
+    // Save SYSRET context and callee-saved registers onto the kernel stack.
     push gs:[ARCH_THREAD_RSP] // User RSP.
     push r11 // User RFLAGS.
     push rcx // User RIP.
