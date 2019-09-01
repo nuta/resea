@@ -383,7 +383,7 @@ intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, UNUSED uintmax_t arg3,
     // Try IPC fastpath if possible.
     if (LIKELY(syscall == (SYSCALL_IPC | IPC_SEND | IPC_RECV))) {
         // TODO: Support SYSCALL_REPLY.
-        return sys_ipc_fastpath((cid_t) arg0);
+        return sys_ipc_fastpath(arg0);
     }
 
     // IPC_FROM_KERNEL must not be specified by the user.
@@ -393,15 +393,15 @@ intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, UNUSED uintmax_t arg3,
 
     switch (SYSCALL_TYPE(syscall)) {
     case SYSCALL_IPC:
-        return (intmax_t) sys_ipc((cid_t) arg0, (uint32_t) syscall);
+        return sys_ipc(arg0, (uint32_t) syscall);
     case SYSCALL_OPEN:
-        return (intmax_t) sys_open();
+        return sys_open();
     case SYSCALL_CLOSE:
-        return (intmax_t) sys_close((cid_t) arg0);
+        return sys_close(arg0);
     case SYSCALL_LINK:
-        return (intmax_t) sys_link((cid_t) arg0, (cid_t) arg1);
+        return sys_link(arg0, arg1);
     case SYSCALL_TRANSFER:
-        return (intmax_t) sys_transfer((cid_t) arg0, (cid_t) arg1);
+        return sys_transfer(arg0, arg1);
     default:
         return ERR_INVALID_SYSCALL;
     }
