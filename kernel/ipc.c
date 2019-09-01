@@ -173,6 +173,9 @@ static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
 }
 
 /// The ipc system call: sends/receives messages.
+///
+/// TODO: Can we replace spin_lock_irqsave with spin_lock?
+///
 error_t sys_ipc(cid_t cid, uint32_t syscall) {
     struct thread *current = CURRENT;
     struct channel *ch = idtable_get(&current->process->channels, cid);
@@ -320,9 +323,14 @@ error_t sys_ipc_fastpath(cid_t cid) {
         goto slowpath1;
     }
 
-    // Make sure that no threads are waitng for us.
-    if (UNLIKELY(!list_is_empty(&ch->queue))) {
+    struct channel *recv_on = ch->transfer_to;
+    if (UNLIKELY(!spin_try_lock(&recv_on->lock))) {
         goto slowpath2;
+    }
+
+    // Make sure that no threads are waitng for us.
+    if (UNLIKELY(!list_is_empty(&recv_on->queue))) {
+        goto slowpath3;
     }
 
     struct channel *linked_to = ch->linked_to;
@@ -330,14 +338,14 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
     // Try locking the destination channel.
     if (UNLIKELY(!spin_try_lock(&dst_ch->lock))) {
-        goto slowpath2;
+        goto slowpath3;
     }
 
     // Make sure that a receiver thread is already waiting on the destination
     // channel.
     struct thread *receiver = dst_ch->receiver;
     if (UNLIKELY(!receiver)) {
-        goto slowpath3;
+        goto slowpath4;
     }
 
     // Now all prerequisites are met. Copy the message and wait on the our
@@ -353,12 +361,13 @@ error_t sys_ipc_fastpath(cid_t cid) {
     dst_m->from = linked_to->cid;
     memcpy_unchecked(&dst_m->data, m->data, INLINE_PAYLOAD_LEN(header));
 
-    ch->receiver = current;
+    recv_on->receiver = current;
     current->state = THREAD_BLOCKED;
     receiver->state = THREAD_RUNNABLE;
 
     dst_ch->receiver = NULL;
     spin_unlock(&dst_ch->lock);
+    spin_unlock(&recv_on->lock);
     spin_unlock(&ch->lock);
 
     // Do a direct context switch into the receiver thread. The current thread
@@ -368,8 +377,10 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // Resumed by a sender thread.
     return OK;
 
-slowpath3:
+slowpath4:
     spin_unlock(&dst_ch->lock);
+slowpath3:
+    spin_unlock(&recv_on->lock);
 slowpath2:
     spin_unlock(&ch->lock);
 slowpath1:
