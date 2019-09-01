@@ -1,7 +1,8 @@
 Hacking
 =======
 
-This document describes how to add new features to Resea.
+This document describes how to twiddle with Resea. You should read
+INTERNALS.md first to learn its design.
 
 The Resea standard library (`libresea`)
 ---------------------------------------

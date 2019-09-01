@@ -28,6 +28,21 @@ All system calls are only essential ones for message passing:
 The message buffer to send/receive a message is located in the thread-local
 buffer (see [Thread Information Block](#thread-information-block)).
 
+### Notifications
+*Detailed design is under consideration and this feature is not yet implemented.* 
+
+While synchronous (blocking) IPC works pretty fine in most cases, sometimes you
+may want asynchronous (non-blocking) IPC. For example, the kernel converts
+interrupts into messages but it should not block.
+
+Notifications is a simple solution just like *signal* in Unix:
+
+1. The `notify` system call sends a notification. It simply updates the
+   notification field in the destination channel and never blocks
+   (asynchronous).
+2. When you receive a message from the channel, the kernel first checks the
+   notification field. If a notifcation exists, it returns the notification.
+
 Kernel server
 -------------
 Kernel server is a kernel thread which provdes features that only the kernel can
