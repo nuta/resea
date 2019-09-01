@@ -343,7 +343,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // Now all prerequisites are met. Copy the message and wait on the our
     // channel.
     if (INTERFACE_ID(header) != 4) {
-        TRACE("ipc (fastpath): @%s.%d -> @%s.%d (header=%p)",
+        TRACE("send (fastpath): @%s.%d -> @%s.%d (header=%p)",
             current->process->name, ch->cid, dst_ch->process->name, dst_ch->cid,
             header);
     }
