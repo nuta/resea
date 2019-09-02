@@ -69,16 +69,25 @@ void arch_thread_switch(struct thread *prev, struct thread *next) {
     // Update the kernel stack.
     CPUVAR->tss.rsp0 = next_arch->kernel_stack;
     // Set TS flag for lazy FPU context switching.
-    asm_write_cr0(asm_read_cr0() | CR0_TS);
+    if (CPUVAR->current_fpu_owner != next) {
+        asm_write_cr0(asm_read_cr0() | CR0_TS);
+    }
     // Restore registers (resume the thread).
     x64_switch(&prev->arch, next_arch);
 }
 
 /// Switches FPU states.
 void x64_lazy_fpu_switch(void) {
-    struct arch_thread *arch = &CURRENT->arch;
-    asm_xsave(arch->xsave_area);
-    asm_xrstor(arch->xsave_area);
-    CPUVAR->current_fpu_owner = arch;
+    struct thread *current = CURRENT;
+
+    // Save and restore the FPU states. `current_fpu_owner` is NULL at the very
+    // first FPU context switch.
+    if (CPUVAR->current_fpu_owner != NULL) {
+        asm_xsave(CPUVAR->current_fpu_owner->arch.xsave_area);
+    }
+    asm_xrstor(current->arch.xsave_area);
+    CPUVAR->current_fpu_owner = current;
+
+    // Clear the TS flag in case CPU doesn't do that.
     asm_write_cr0(asm_read_cr0() & ~CR0_TS);
 }

@@ -35,7 +35,7 @@ struct cpuvar {
     uint64_t ioapic;
     uint64_t gdt[GDT_DESC_NUM];
     struct idt_entry idt[IDT_DESC_NUM];
-    struct arch_thread *current_fpu_owner;
+    struct thread *current_fpu_owner;
 };
 
 typedef uint64_t flags_t;
