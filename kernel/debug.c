@@ -98,8 +98,11 @@ static void report_ubsan_event(const char *event) {
 }
 
 // TODO: Parse type_mismatch_data_v1
-void __ubsan_handle_type_mismatch_v1() {
-    report_ubsan_event("type_mismatch");
+void __ubsan_handle_type_mismatch_v1(UNUSED void *data, vaddr_t ptr) {
+    if (ptr)
+        report_ubsan_event("type_mismatch");
+    else
+        report_ubsan_event("NULL pointer dereference");
 }
 
 void __ubsan_handle_add_overflow() {
