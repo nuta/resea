@@ -30,6 +30,8 @@ void x64_handle_interrupt(uint8_t vec, struct interrupt_regs *regs) {
         break;
     }
     case EXP_DEVICE_NOT_AVAILABLE:
+        // TODO: Make sure that the exception has not occurred in the
+        //       kernel mode.
         x64_lazy_fpu_switch();
         break;
     case APIC_TIMER_VECTOR:
