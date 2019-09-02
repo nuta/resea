@@ -72,6 +72,9 @@ struct thread *thread_create(struct process *process, vaddr_t start,
 
     if (!thread) {
         idtable_free(&all_processes, tid);
+        kfree(&small_arena, thread);
+        kfree(&page_arena, (void *) kernel_stack);
+        kfree(&page_arena, thread_info);
         return NULL;
     }
 
