@@ -1,19 +1,14 @@
 #ifndef __PRINTK_H__
 #define __PRINTK_H__
 
+#include <color.h>
+
 // Declare here instead of including header files to allow inline functions
 // in header files to use these macros.
 void arch_panic(void);
 void backtrace(void);
 
 void printk(const char *fmt, ...);
-
-// TODO: Add ifdef guard "CONFIG_DISABLE_ANSI_COLOR"
-#define COLOR_BOLD_RED "\e[1;91m"
-#define COLOR_YELLOW "\e[0;33m"
-#define COLOR_BLUE "\e[0;94m"
-#define COLOR_CYAN "\e[0;96m"
-#define COLOR_RESET "\e[0m"
 
 #ifdef RELEASE_BUILD
 #    define TRACE(fmt, ...)

@@ -2,6 +2,7 @@
 #define __RESEA_H__
 
 #include <types.h>
+#include <color.h>
 typedef uint64_t uintptr_t;
 
 #include <resea/ipc.h>
@@ -48,13 +49,6 @@ void exit(int status);
 void try_or_panic(error_t err, const char *file, int lineno);
 
 #define TRY_OR_PANIC(err) try_or_panic(err, __FILE__, __LINE__)
-
-// TODO: Add ifdef guard "CONFIG_DISABLE_ANSI_COLOR"
-#define COLOR_BOLD_RED "\e[1;91m"
-#define COLOR_YELLOW "\e[0;33m"
-#define COLOR_BLUE "\e[0;94m"
-#define COLOR_CYAN "\e[0;96m"
-#define COLOR_RESET "\e[0m"
 
 #define assert(expr)                                                             \
     do {                                                                         \
