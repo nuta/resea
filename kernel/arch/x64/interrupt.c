@@ -3,6 +3,7 @@
 #include <x64/apic.h>
 #include <x64/interrupt.h>
 #include <x64/x64.h>
+#include <x64/thread.h>
 
 static void print_regs(struct interrupt_regs *regs) {
     TRACE("RIP = %p    CS  = %p    RFL = %p", regs->rip, regs->cs, regs->rflags);
@@ -28,6 +29,9 @@ void x64_handle_interrupt(uint8_t vec, struct interrupt_regs *regs) {
         page_fault_handler(addr, regs->error);
         break;
     }
+    case EXP_DEVICE_NOT_AVAILABLE:
+        x64_lazy_fpu_switch();
+        break;
     case APIC_TIMER_VECTOR:
         timer_interrupt_handler();
         x64_ack_interrupt();

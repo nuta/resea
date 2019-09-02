@@ -12,12 +12,27 @@ void ipc_test(void) {
     }
 }
 
+void float_test(void) {
+    INFO(">>> Float tests");
+    // TODO: verify that floating-point registers are saved and restored between
+    // context switches.
+    volatile double a = __builtin_readcyclecounter() / 12.345;
+    volatile double b = 9.87;
+
+    for (int i = 0; i < 4; i++) {
+        a *= b;
+    }
+
+    assert(a != __builtin_inf());
+}
+
 int main(void) {
     INFO("*");
     INFO("* Kernel test");
     INFO("*");
 
     ipc_test();
+    float_test();
 
     INFO("Finished all tests!");
     exit_kernel_test(1 /* memmgr */);

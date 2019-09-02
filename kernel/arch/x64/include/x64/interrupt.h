@@ -3,6 +3,7 @@
 
 #include <types.h>
 
+#define EXP_DEVICE_NOT_AVAILABLE 7
 #define EXP_PAGE_FAULT 14
 
 struct interrupt_regs {

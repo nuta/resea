@@ -10,6 +10,16 @@
 static void cpu_features_init(void) {
     // TODO: Check CPUID.
     asm_write_cr4(asm_read_cr4() | CR4_FSGSBASE);
+
+    //
+    //  Initialize FPU.
+    //
+    CPUVAR->current_fpu_owner = NULL;
+    // Enable XSAVE/XRSTOR instruction.
+    asm_write_cr4(asm_read_cr4() | CR4_OSXSAVE);
+    // Set TS flag to issue an interrupt on use of floating-point registers
+    // during boot.
+    asm_write_cr0(asm_read_cr0() | CR0_TS);
 }
 
 static void gdt_init(void) {

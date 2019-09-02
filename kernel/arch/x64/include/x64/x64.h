@@ -55,7 +55,9 @@ struct idtr {
 //
 //  Control Registers
 //
+#define CR0_TS       (1ul << 3)
 #define CR4_FSGSBASE (1ul << 16)
+#define CR4_OSXSAVE  (1ul << 18)
 
 //
 //  Model Specific Registers (MSR)
@@ -137,6 +139,12 @@ static inline void asm_ltr(uint16_t tr) {
     __asm__ __volatile__("ltr %0" ::"a"(tr));
 }
 
+static inline uint64_t asm_read_cr0(void) {
+    uint64_t value;
+    __asm__ __volatile__("mov %%cr0, %0" : "=r"(value));
+    return value;
+}
+
 static inline uint64_t asm_read_cr2(void) {
     uint64_t value;
     __asm__ __volatile__("mov %%cr2, %0" : "=r"(value));
@@ -147,6 +155,10 @@ static inline uint64_t asm_read_cr4(void) {
     uint64_t value;
     __asm__ __volatile__("mov %%cr4, %0" : "=r"(value));
     return value;
+}
+
+static inline void asm_write_cr0(uint64_t value) {
+    __asm__ __volatile__("mov %0, %%cr0" ::"r"(value));
 }
 
 static inline void asm_write_cr3(uint64_t value) {
@@ -183,6 +195,14 @@ static inline void asm_wrgsbase(uint64_t gsbase) {
 
 static inline void asm_swapgs(void) {
     __asm__ __volatile__("swapgs");
+}
+
+static inline void asm_xsave(vaddr_t xsave_area) {
+    __asm__ __volatile__("xsave (%0)" :: "r"(xsave_area) : "memory");
+}
+
+static inline void asm_xrstor(vaddr_t xsave_area) {
+    __asm__ __volatile__("xrstor (%0)" :: "r"(xsave_area) : "memory");
 }
 
 #endif

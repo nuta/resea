@@ -47,8 +47,15 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     thread->info = thread_info;
     spin_lock_init(&thread->lock);
     init_stack_canary(kernel_stack);
-    arch_thread_init(thread, start, stack, kernel_stack, user_buffer,
-                     is_kernel_thread);
+
+    error_t err = arch_thread_init(thread, start, stack, kernel_stack,
+                                   user_buffer, is_kernel_thread);
+    if (err != OK) {
+        kfree(&small_arena, thread);
+        kfree(&page_arena, (void *) kernel_stack);
+        kfree(&page_arena, thread_info);
+        return NULL;
+    }
 
     // Allow threads to read and write the buffer.
     if (!is_kernel_thread) {

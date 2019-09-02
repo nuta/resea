@@ -1,18 +1,19 @@
 #include <process.h>
 #include <thread.h>
 #include <x64/switch.h>
+#include <x64/thread.h>
 #include <x64/x64.h>
 
 // Make sure that MSR_GS_BASE points to both 'struct arch_thread' and
 // 'struct thread'.
 STATIC_ASSERT(offsetof(struct thread, arch) == 0);
 
-void arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
-                      vaddr_t kernel_stack, vaddr_t user_buffer,
-                      bool is_kernel_thread) {
+error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
+                         vaddr_t kernel_stack, vaddr_t user_buffer,
+                         bool is_kernel_thread) {
     // Set up a temporary kernel stack frame for x64_switch and
     // x64_start_kernel_thread/x64_enter_userspace.
-    uint64_t *rsp= (uint64_t *) (kernel_stack + KERNEL_STACK_SIZE);
+    uint64_t *rsp = (uint64_t *) (kernel_stack + KERNEL_STACK_SIZE);
     if (is_kernel_thread) {
         *--rsp = start;
         *--rsp = (uint64_t) &x64_start_kernel_thread;
@@ -35,10 +36,17 @@ void arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
     *--rsp = 0; // Initial R15.
     *--rsp = 0x02; // RFLAGS.
 
+    vaddr_t xsave_area = (vaddr_t) kmalloc(&page_arena);
+    if (!xsave_area) {
+        return ERR_NO_MEMORY;
+    }
+    thread->arch.xsave_area = xsave_area;
+
     thread->arch.info = user_buffer;
     thread->arch.rsp = (uint64_t) rsp;
     thread->arch.kernel_stack = kernel_stack + KERNEL_STACK_SIZE;
     thread->arch.cr3 = thread->process->page_table.pml4;
+    return OK;
 }
 
 void arch_set_current_thread(struct thread *thread) {
@@ -60,6 +68,17 @@ void arch_thread_switch(struct thread *prev, struct thread *next) {
     asm_swapgs();
     // Update the kernel stack.
     CPUVAR->tss.rsp0 = next_arch->kernel_stack;
+    // Set TS flag for lazy FPU context switching.
+    asm_write_cr0(asm_read_cr0() | CR0_TS);
     // Restore registers (resume the thread).
     x64_switch(&prev->arch, next_arch);
+}
+
+/// Switches FPU states.
+void x64_lazy_fpu_switch(void) {
+    struct arch_thread *arch = &CURRENT->arch;
+    asm_xsave(arch->xsave_area);
+    asm_xrstor(arch->xsave_area);
+    CPUVAR->current_fpu_owner = arch;
+    asm_write_cr0(asm_read_cr0() & ~CR0_TS);
 }

@@ -35,6 +35,7 @@ struct cpuvar {
     uint64_t ioapic;
     uint64_t gdt[GDT_DESC_NUM];
     struct idt_entry idt[IDT_DESC_NUM];
+    struct arch_thread *current_fpu_owner;
 };
 
 typedef uint64_t flags_t;
@@ -49,6 +50,7 @@ struct arch_thread {
     /// thread/process) in order to reduce cache pollution in IPC fastpath.
     uint64_t cr3;
     uint64_t info;
+    uint64_t xsave_area;
 } PACKED;
 
 struct page_table {
