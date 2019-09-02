@@ -38,8 +38,19 @@ struct thread *thread_create(struct process *process, vaddr_t start,
         return NULL;
     }
 
+    struct message *kernel_ipc_buffer =
+        (struct message *) kmalloc(&page_arena);
+    if (!kernel_ipc_buffer) {
+        kfree(&small_arena, thread);
+        kfree(&page_arena, (void *) kernel_stack);
+        kfree(&page_arena, thread_info);
+        return NULL;
+    }
+
     bool is_kernel_thread = IS_KERNEL_PROCESS(process);
     thread_info->arg = (vaddr_t) arg;
+    thread->ipc_buffer = &thread_info->ipc_buffer;
+    thread->kernel_ipc_buffer = kernel_ipc_buffer;
     thread->tid = tid;
     thread->state = THREAD_BLOCKED;
     thread->kernel_stack = kernel_stack;
@@ -54,6 +65,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
         kfree(&small_arena, thread);
         kfree(&page_arena, (void *) kernel_stack);
         kfree(&page_arena, thread_info);
+        kfree(&page_arena, kernel_ipc_buffer);
         return NULL;
     }
 
@@ -75,6 +87,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
         kfree(&small_arena, thread);
         kfree(&page_arena, (void *) kernel_stack);
         kfree(&page_arena, thread_info);
+        kfree(&page_arena, kernel_ipc_buffer);
         return NULL;
     }
 

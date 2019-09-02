@@ -11,7 +11,7 @@ struct channel *kernel_server_ch = NULL;
 /// The user pager. When a page fault occurred in vm areas that are registered
 /// with this function, the kernel invokes this function to fill the page.
 static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
-    struct message *ipc_buffer = &CURRENT->info->ipc_buffer;
+    struct message *ipc_buffer = CURRENT->kernel_ipc_buffer;
     struct channel *pager = vma->arg;
     TRACE("user pager=%d, addr=%p", pager->cid, vaddr);
 
@@ -139,8 +139,7 @@ NORETURN static void handle_exit_kernel_test_msg(void) {
 }
 
 NORETURN static void mainloop(cid_t server_ch) {
-    struct message *ipc_buffer = &CURRENT->info->ipc_buffer;
-    // struct message m;
+    struct message *ipc_buffer = CURRENT->kernel_ipc_buffer;
     sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
 
     while (1) {

@@ -183,11 +183,14 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         return ERR_INVALID_CID;
     }
 
+    bool from_kernel = (syscall & IPC_FROM_KERNEL) != 0;
+
     //
     //  Send Phase
     //
     if (syscall & IPC_SEND) {
-        struct message *m = &current->info->ipc_buffer;
+        struct message *m = from_kernel ? current->kernel_ipc_buffer
+                                        : &current->info->ipc_buffer;
         header_t header = m->header;
         flags_t flags = spin_lock_irqsave(&ch->lock);
         struct channel *linked_to = ch->linked_to;
@@ -221,7 +224,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         }
 
         // Now we have a receiver thread. It's time to send a message!
-        struct message *dst_m = &receiver->info->ipc_buffer;
+        struct message *dst_m = receiver->ipc_buffer;
 
         // Set header and the source channel ID.
         dst_m->header = header;
@@ -268,8 +271,13 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         if (recv_on->receiver != NULL) {
             return ERR_ALREADY_RECEVING;
         }
+
+        current->recv_in_kernel = from_kernel;
+        if (from_kernel) {
+            current->ipc_buffer = current->kernel_ipc_buffer;
+        }
+
         recv_on->receiver = current;
-        current->recv_in_kernel = (syscall & IPC_FROM_KERNEL) != 0;
         thread_block(current);
 
         // Resume a thread in the sender queue if exists.
@@ -282,11 +290,16 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         spin_unlock_irqrestore(&recv_on->lock, flags);
         thread_switch();
 
-        // Now `CURRENT->info->ipc_buffer` is filled by the sender thread.
-        if (INTERFACE_ID(current->info->ipc_buffer.header) != 4) {
+        // Now `CURRENT->ipc_buffer` is filled by the sender thread.
+
+        if (INTERFACE_ID(current->ipc_buffer->header) != 4) {
             TRACE("recv: @%s.%d <- @%d (header=%p)", current->process->name,
-                recv_on->cid, current->info->ipc_buffer.from,
-                current->info->ipc_buffer.header);
+                recv_on->cid, current->ipc_buffer->from,
+                current->ipc_buffer->header);
+        }
+
+        if (from_kernel) {
+            current->ipc_buffer = &current->info->ipc_buffer;
         }
     }
 
@@ -309,7 +322,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
         goto slowpath1;
     }
 
-    struct message *m = &current->info->ipc_buffer;
+    struct message *m = current->ipc_buffer;
     header_t header = m->header;
 
     // Fastpath accepts only inline payloads.
@@ -356,7 +369,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
             header);
     }
 
-    struct message *dst_m = &receiver->info->ipc_buffer;
+    struct message *dst_m = receiver->ipc_buffer;
     dst_m->header = header;
     dst_m->from = linked_to->cid;
     memcpy_unchecked(&dst_m->data, m->data, INLINE_PAYLOAD_LEN(header));

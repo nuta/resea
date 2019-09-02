@@ -24,6 +24,24 @@ struct thread {
     struct arch_thread arch;
     // The thread-local information block.
     struct thread_info *info;
+    // The current thread-local IPC buffer. This points to whether
+    // info->ipc_buffer or kernel_ipc_buffer.
+    struct message *ipc_buffer;
+    // The thread-local kernel IPC buffer. The kernel use this buffer when it
+    // sends a message on behalf of the thread (e.g. pager.fill_message).
+    //
+    // Here's reason why we need it. Consider the following program in userland:
+    //
+    //    ipc_buffer->header = PRINTCHAR_HEADER;
+    //    ipc_buffer->data[0] = foo();
+    //    /* Page fault occurs in foo(). */
+    //    sys_ipc(ch);
+    //
+    // If kernel and user share one ipc_buffer, sys_ipc() will send a reply
+    // message of pager.fill_request, not runtime.printchar because the page
+    // fault handler will overwrite the buffer to call the pager.
+    //
+    struct message *kernel_ipc_buffer;
     // The thread ID.
     tid_t tid;
     // The thread lock.
