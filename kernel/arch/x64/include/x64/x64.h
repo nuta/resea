@@ -205,4 +205,19 @@ static inline void asm_xrstor(vaddr_t xsave_area) {
     __asm__ __volatile__("xrstor (%0)" :: "r"(xsave_area) : "memory");
 }
 
+static inline void asm_cpuid(uint32_t leaf, uint32_t *eax, uint32_t *ebx,
+                             uint32_t *ecx, uint32_t *edx) {
+    __asm__ __volatile__("cpuid"
+        : "=a"(*eax), "=b" (*ebx), "=c"(*ecx), "=d"(*edx)
+        : "0"(leaf));
+}
+
+static inline void asm_cpuid_count(uint32_t leaf, uint32_t subleaf,
+                                   uint32_t *eax, uint32_t *ebx, uint32_t *ecx,
+                                   uint32_t *edx) {
+    __asm__ __volatile__("cpuid"
+        : "=a"(*eax), "=b" (*ebx), "=c"(*ecx), "=d"(*edx)
+        : "0"(leaf), "2"(subleaf));
+}
+
 #endif

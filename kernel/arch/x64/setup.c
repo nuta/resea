@@ -7,19 +7,62 @@
 #include <x64/smp.h>
 #include <x64/x64.h>
 
+// EAX input values.
+#define CPUID_VENDOR         0x00000000
+#define CPUID_FEATURES       0x00000001
+#define CPUID_EXT_FEATURES   0x00000007
+#define CPUID_EXT_STATE_ENUM 0x0000000d
+
+#define CPUID_VENDOR_INTEL_EBX 0x756e6547
+#define CPUID_VENDOR_INTEL_ECX 0x6c65746e
+#define CPUID_VENDOR_INTEL_EDX 0x49656e69
+#define CPUID_FEATURES_ECX_XSAVE (1ul << 26)
+#define CPUID_EXT_FEATURES_EBX_FSGSBASE (1ul << 0)
+
+// Checks if a bit in the specified CPUID field is set. If not, do panic.
+#define CHECK_CPUID_BIT(leaf, subleaf, reg, mask)                              \
+    do {                                                                       \
+        uint32_t __eax, __ebx, __ecx, __edx;                                   \
+        asm_cpuid_count(leaf, subleaf, &__eax, &__ebx, &__ecx, &__edx);        \
+        if ((__##reg & mask) == 0) {                                           \
+            PANIC("CPUID flag is not set: %s", #mask);                         \
+        }                                                                      \
+    } while (0)
+
 static void cpu_features_init(void) {
-    // TODO: Check CPUID.
+    uint32_t eax, ebx, ecx, edx;
+
+    // Veirfy the vendor ID. Currently, we don't support AMD processors.
+    asm_cpuid(CPUID_VENDOR, &eax, &ebx, &ecx, &edx);
+    if (ebx != CPUID_VENDOR_INTEL_EBX || ecx != CPUID_VENDOR_INTEL_ECX
+        || edx != CPUID_VENDOR_INTEL_EDX) {
+        PANIC("Unsupported CPU vendor; only Intel processors are supported for"
+              " now (EBX=%x, ECX=%x, EDX=%x)",
+              ebx, ecx, edx);
+    }
+
+    // Activate RDGSBASE/WRGSBASE instructions.
+    CHECK_CPUID_BIT(CPUID_EXT_FEATURES, 0, ebx,
+                    CPUID_EXT_FEATURES_EBX_FSGSBASE);
     asm_write_cr4(asm_read_cr4() | CR4_FSGSBASE);
 
-    //
-    //  Initialize FPU.
-    //
-    CPUVAR->current_fpu_owner = NULL;
-    // Enable XSAVE/XRSTOR instruction.
+    // Make sure that XSAVE area is smaller than PAGE_SIZE.
+    asm_cpuid_count(CPUID_EXT_STATE_ENUM, 0, &eax, &ebx, &ecx, &edx);
+    if (ebx > PAGE_SIZE) {
+        PANIC("XSAVE area is too big (size=%d)", ebx);
+    }
+}
+
+static void fpu_init(void) {
+    CHECK_CPUID_BIT(CPUID_FEATURES, 0, ecx, CPUID_FEATURES_ECX_XSAVE);
+
+    // Enable XSAVE/XRSTOR instructions.
     asm_write_cr4(asm_read_cr4() | CR4_OSXSAVE);
     // Set TS flag to issue an interrupt on use of floating-point registers
     // during the kernel initialization.
     asm_write_cr0(asm_read_cr0() | CR0_TS);
+
+    CPUVAR->current_fpu_owner = NULL;
 }
 
 static void gdt_init(void) {
@@ -117,6 +160,7 @@ void x64_setup(void) {
 
 void arch_init(void) {
     cpu_features_init();
+    fpu_init();
     pic_init();
     x64_apic_init();
     gdt_init();
