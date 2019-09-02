@@ -1,3 +1,4 @@
+#include <resea.h>
 #include "alloc_pages.h"
 
 uintptr_t alloc_pages(size_t num) {

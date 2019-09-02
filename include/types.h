@@ -30,7 +30,11 @@
 #define ERR_CHANNEL_CLOSED (-8)
 #define ERR_OUT_OF_MEMORY (-9)
 #define ERR_INVALID_SYSCALL (-10)
+#define ERR_NOT_FOUND (-64)
+#define ERR_TOO_SHORT (-65)
+#define ERR_INVALID_DATA (-66)
 #define ERR_DONT_REPLY (-67)
+#define ERR_NO_MEMORY (-68)
 
 typedef int bool;
 #define true 1

@@ -1,8 +1,10 @@
 #ifndef __RESEA_H__
 #define __RESEA_H__
 
+#include <types.h>
+typedef uint64_t uintptr_t;
+
 #include <resea/ipc.h>
-#include <resea/types.h>
 
 //
 //  Arch-dependent stuff.

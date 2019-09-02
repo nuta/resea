@@ -1,7 +1,7 @@
 #ifndef __RESEA_IPC_H__
 #define __RESEA_IPC_H__
 
-#include <resea/types.h>
+#include <types.h>
 
 /* header */
 #define MSG_INLINE_LEN_OFFSET 0

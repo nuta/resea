@@ -67,6 +67,7 @@ COMMON_CFLAGS += -Werror=int-conversion
 COMMON_CFLAGS += -Werror=incompatible-pointer-types
 COMMON_CFLAGS += -Werror=shift-count-overflow
 COMMON_CFLAGS += -Werror=return-type
+COMMON_CFLAGS += -Iinclude
 KERNEL_CFLAGS += -DKERNEL -Ikernel/include -Ikernel/arch/$(ARCH)/include -I$(BUILD_DIR)/include
 KERNEL_CFLAGS += $(COMMON_CFLAGS)
 APP_CFLAGS += $(COMMON_CFLAGS) -I$(BUILD_DIR)/include

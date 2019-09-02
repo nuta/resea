@@ -3,7 +3,7 @@
 
 #include "elf.h"
 
-#include <resea/types.h>
+#include <types.h>
 #include <resea_idl.h>
 
 #define NUM_PROCESSES_MAX 128
