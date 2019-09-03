@@ -67,6 +67,13 @@ static inline void screen_putchar(char ch) {
         vram[y * SCREEN_WIDTH + x] = (COLOR << 8 | ch);
         x++;
     }
+
+    // Move the cursor.
+    int pos = y * SCREEN_WIDTH + x;
+	asm_out8(0x3d4, 0x0f);
+	asm_out8(0x3d5, pos & 0xff);
+	asm_out8(0x3d4, 0x0e);
+	asm_out8(0x3d5, (pos >> 8) & 0xff);
 }
 
 static inline void do_putchar(char ch) {
