@@ -19,6 +19,33 @@ static void print_uint(uintmax_t n, int base, char pad, int width) {
     puts(&tmp[i + 1]);
 }
 
+static void print_ptr(const char **fmt, va_list vargs) {
+    switch (*(*fmt)++) {
+    // Hex dump.
+    case 'h': {
+        uint8_t *buf = va_arg(vargs, uint8_t *);
+        unsigned long len = va_arg(vargs, unsigned long);
+        for (unsigned long i = 0; len > 0; i++) {
+            if (i % 16 == 0) {
+                if (i > 0) {
+                    puts("\n");
+                }
+                puts("\t");
+                print_uint(i, 16, '0', 4);
+                puts(": ");
+            }
+            print_uint(*buf, 16, '0', 2);
+            puts(" ");
+            buf++;
+            len--;
+        }
+        break;
+    }
+    default:
+        puts("<invalid format>");
+    }
+}
+
 void vprintf(const char *fmt, va_list vargs) {
     while (*fmt) {
         if (*fmt != '%') {
@@ -88,6 +115,9 @@ void vprintf(const char *fmt, va_list vargs) {
                 break;
             case 's':
                 puts(va_arg(vargs, char *));
+                break;
+            case '*':
+                print_ptr(&fmt, vargs);
                 break;
             case '%':
                 putchar('%');
