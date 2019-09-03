@@ -1,5 +1,6 @@
 #include <arch.h>
 #include <types.h>
+#include <thread.h>
 #include <process.h>
 
 static void print_str(const char *s) {
@@ -29,6 +30,15 @@ static void print_uint(uintmax_t n, int base, char pad, int width) {
 
 static void print_ptr(const char **fmt, va_list vargs) {
     switch (*(*fmt)++) {
+    // Thread.
+    case 't': {
+        struct thread *thread = va_arg(vargs, struct thread *);
+        print_str("#");
+        print_str(thread->process->name);
+        print_str(".");
+        print_uint(thread->tid, 10, ' ', 0);
+        break;
+    }
     // Channel.
     case 'c': {
         struct channel *ch = va_arg(vargs, struct channel *);
@@ -52,6 +62,7 @@ static void print_ptr(const char **fmt, va_list vargs) {
 ///  %d  - An unsigned integer (in decimal).
 ///  %x  - A hexadecimal integer.
 ///  %p  - An pointer value.
+///  %*t - `struct thread *`.
 ///  %*c - `struct channel *`.
 ///
 void vprintk(const char *fmt, va_list vargs) {
