@@ -9,7 +9,7 @@
 #define THREAD_BLOCKED 0
 #define THREAD_RUNNABLE 1
 #define KERNEL_STACK_SIZE PAGE_SIZE
-#define CURRENT arch_get_current_thread()
+#define CURRENT get_current_thread()
 
 // Thread-local information block. Keep in mind that this block is readable and
 // WRITABLE from the user: don't put sensitive data in it.

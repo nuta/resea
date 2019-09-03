@@ -49,7 +49,7 @@ error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
     return OK;
 }
 
-void arch_set_current_thread(struct thread *thread) {
+void set_current_thread(struct thread *thread) {
     asm_wrgsbase((uint64_t) thread);
 }
 

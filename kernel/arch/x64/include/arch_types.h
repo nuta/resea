@@ -82,7 +82,7 @@ static inline vaddr_t arch_get_stack_pointer(void) {
     return rsp;
 }
 
-static inline struct thread *arch_get_current_thread(void) {
+static inline struct thread *get_current_thread(void) {
     struct thread *thread;
     __asm__ __volatile__("rdgsbase %0" : "=r"(thread));
     return thread;

@@ -159,7 +159,7 @@ error_t sys_transfer(cid_t src, cid_t dst) {
 
 /// Resolves the physical address linked to the given virtual address.
 static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
-    paddr_t paddr = arch_resolve_paddr_from_vaddr(page_table, vaddr);
+    paddr_t paddr = resolve_paddr_from_vaddr(page_table, vaddr);
     if (paddr) {
         return paddr;
     }

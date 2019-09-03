@@ -17,8 +17,8 @@ void page_table_destroy(UNUSED struct page_table *pt) {
     // TODO:
 }
 
-void arch_link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
-    int num_pages, uintmax_t flags) {
+void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
+               int num_pages, uintmax_t flags) {
     ASSERT(vaddr < KERNEL_BASE_ADDR && "tried to link a kernel page");
 
     uint64_t attrs = PAGE_PRESENT | flags;
@@ -67,7 +67,7 @@ void arch_link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
     }
 }
 
-paddr_t arch_resolve_paddr_from_vaddr(
+paddr_t resolve_paddr_from_vaddr(
     struct page_table *pt, vaddr_t vaddr) {
     uint64_t *table = from_paddr(pt->pml4);
     int level = 4;

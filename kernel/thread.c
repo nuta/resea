@@ -72,7 +72,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     // Allow threads to read and write the buffer.
     if (!is_kernel_thread) {
         flags_t flags = spin_lock_irqsave(&process->lock);
-        arch_link_page(&process->page_table, user_buffer, into_paddr(thread_info),
+        link_page(&process->page_table, user_buffer, into_paddr(thread_info),
             1, PAGE_USER | PAGE_WRITABLE);
         list_push_back(&process->threads, &thread->next);
         spin_unlock_irqrestore(&process->lock, flags);
@@ -166,6 +166,6 @@ void thread_switch(void) {
 void thread_init(void) {
     list_init(&runqueue);
     struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0, 0);
-    arch_set_current_thread(idle_thread);
+    set_current_thread(idle_thread);
     CPUVAR->idle_thread = idle_thread;
 }

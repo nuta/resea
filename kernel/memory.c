@@ -119,7 +119,7 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
 
             // Register the filled page with the page table.
             TRACE("#PF: link vaddr %p to %p", aligned_vaddr, paddr);
-            arch_link_page(
+            link_page(
                 &process->page_table, aligned_vaddr, paddr, 1, vma->flags);
 
             // Now we've done what we have to do. Return to the exception
