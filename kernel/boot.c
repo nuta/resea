@@ -65,7 +65,7 @@ static void userland(void) {
 }
 
 static void idle(void) {
-    while (0) {
+    while (1) {
         arch_idle();
     }
 }
