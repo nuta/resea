@@ -63,9 +63,7 @@ static inline void screen_putchar(char ch) {
         for (int i = TAB_SIZE - (current_x % TAB_SIZE); i > 0; i--) {
             screen_putchar(' ');
         }
-    }
-
-    if (ch != '\n' && ch != '\r') {
+    } else if (ch != '\n' && ch != '\r') {
         vram[current_y * SCREEN_WIDTH + current_x] = (COLOR << 8 | ch);
         current_x++;
     }
