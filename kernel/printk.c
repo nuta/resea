@@ -1,5 +1,6 @@
 #include <arch.h>
 #include <types.h>
+#include <process.h>
 
 static void print_str(const char *s) {
     while (*s != '\0') {
@@ -26,6 +27,33 @@ static void print_uint(uintmax_t n, int base, char pad, int width) {
     print_str(&tmp[i + 1]);
 }
 
+static void print_ptr(const char **fmt, va_list vargs) {
+    switch (*(*fmt)++) {
+    // Channel.
+    case 'c': {
+        struct channel *ch = va_arg(vargs, struct channel *);
+        print_str("@");
+        print_str(ch->process->name);
+        print_str(".");
+        print_uint(ch->cid, 10, ' ', 0);
+        break;
+    }
+    default:
+        print_str("<invalid format>");
+    }
+}
+
+///
+///  The vprintf implementation for the kernel.
+///
+///  %c  - An ASCII character.
+///  %s  - An NUL-terminated ASCII string.
+///  %d  - An signed integer (in decimal).
+///  %d  - An unsigned integer (in decimal).
+///  %x  - A hexadecimal integer.
+///  %p  - An pointer value.
+///  %*c - `struct channel *`.
+///
 void vprintk(const char *fmt, va_list vargs) {
     while (*fmt) {
         if (*fmt != '%') {
@@ -95,6 +123,9 @@ void vprintk(const char *fmt, va_list vargs) {
                 break;
             case 's':
                 print_str(va_arg(vargs, char *));
+                break;
+            case '*':
+                print_ptr(&fmt, vargs);
                 break;
             case '%':
                 arch_putchar('%');

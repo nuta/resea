@@ -198,8 +198,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct thread *receiver;
 
         if (INTERFACE_ID(header) != 4) {
-            TRACE("send: @%s.%d -> @%s.%d (header=%p)", current->process->name,
-                ch->cid, dst->process->name, dst->cid, header);
+            TRACE("send: %*c -> %*c (header=%p)", ch, dst, header);
         }
 
         spin_unlock_irqrestore(&ch->lock, flags);
@@ -293,9 +292,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Now `CURRENT->ipc_buffer` is filled by the sender thread.
 
         if (INTERFACE_ID(current->ipc_buffer->header) != 4) {
-            TRACE("recv: @%s.%d <- @%d (header=%p)", current->process->name,
-                recv_on->cid, current->ipc_buffer->from,
-                current->ipc_buffer->header);
+            TRACE("recv: %*c <- @%d (header=%p)", recv_on,
+                current->ipc_buffer->from, current->ipc_buffer->header);
         }
 
         if (from_kernel) {
@@ -364,9 +362,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // Now all prerequisites are met. Copy the message and wait on the our
     // channel.
     if (INTERFACE_ID(header) != 4) {
-        TRACE("send (fastpath): @%s.%d -> @%s.%d (header=%p)",
-            current->process->name, ch->cid, dst_ch->process->name, dst_ch->cid,
-            header);
+        TRACE("send (fastpath): %*c -> %*c (header=%p)", ch, dst_ch, header);
     }
 
     struct message *dst_m = receiver->ipc_buffer;
