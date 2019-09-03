@@ -113,10 +113,14 @@ static inline void spin_unlock(spinlock_t *lock) {
     __atomic_store_n(lock, 0, __ATOMIC_SEQ_CST);
 }
 
-static inline void *memset(void *dst, size_t dst_len, char ch, size_t len) {
-    ASSERT(len <= dst_len && "bad memset");
+static inline void *memset_unchecked(void *dst, char ch, size_t len) {
     __asm__ __volatile__("cld; rep stosb" ::"D"(dst), "a"(ch), "c"(len));
     return dst;
+}
+
+static inline void *memset(void *dst, size_t dst_len, char ch, size_t len) {
+    ASSERT(len <= dst_len && "bad memset");
+    return memset_unchecked(dst, ch, len);
 }
 
 static inline void *memcpy(
