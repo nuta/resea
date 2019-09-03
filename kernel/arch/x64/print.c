@@ -22,8 +22,8 @@ static inline void serial_putchar(char ch) {
 #define SCREEN_HEIGHT 25
 #define SCREEN_WIDTH  80
 static inline void screen_putchar(char ch) {
-    static int current_x = 0;
-    static int current_y = 0;
+    static int x = 0;
+    static int y = 0;
     static bool in_esc = false;
     uint16_t *vram = (uint16_t *) from_paddr(0xb8000);
 
@@ -38,34 +38,34 @@ static inline void screen_putchar(char ch) {
         return;
     }
 
-    if (ch == '\n' || current_x >= SCREEN_WIDTH) {
-        current_x = 0;
-        current_y++;
+    if (ch == '\n' || x >= SCREEN_WIDTH) {
+        x = 0;
+        y++;
     }
 
-    if (current_y >= SCREEN_HEIGHT) {
+    if (y >= SCREEN_HEIGHT) {
         // Scroll lines.
-        int diff = current_y - SCREEN_HEIGHT + 1;
-        for (int y = diff; y < SCREEN_HEIGHT; y++) {
-            memcpy_unchecked(vram + (y - diff) * SCREEN_WIDTH,
-                             vram + y * SCREEN_WIDTH,
+        int diff = y - SCREEN_HEIGHT + 1;
+        for (int from = diff; from < SCREEN_HEIGHT; from++) {
+            memcpy_unchecked(vram + (from - diff) * SCREEN_WIDTH,
+                             vram + from * SCREEN_WIDTH,
                              SCREEN_WIDTH * sizeof(uint16_t));
         }
 
         // Clear the new lines.
-        memset_unchecked(vram + (SCREEN_HEIGHT - diff) * SCREEN_WIDTH,
-                         0, SCREEN_WIDTH * sizeof(uint16_t) * diff);
+        memset_unchecked(vram + (SCREEN_HEIGHT - diff) * SCREEN_WIDTH, 0,
+                         SCREEN_WIDTH * sizeof(uint16_t) * diff);
 
-        current_y  = SCREEN_HEIGHT - 1;
+        y = SCREEN_HEIGHT - 1;
     }
 
     if (ch == '\t') {
-        for (int i = TAB_SIZE - (current_x % TAB_SIZE); i > 0; i--) {
+        for (int i = TAB_SIZE - (x % TAB_SIZE); i > 0; i--) {
             screen_putchar(' ');
         }
     } else if (ch != '\n' && ch != '\r') {
-        vram[current_y * SCREEN_WIDTH + current_x] = (COLOR << 8 | ch);
-        current_x++;
+        vram[y * SCREEN_WIDTH + x] = (COLOR << 8 | ch);
+        x++;
     }
 }
 
