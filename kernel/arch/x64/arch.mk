@@ -4,8 +4,9 @@ KERNEL_CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 
 BOCHS ?= bochs
 QEMU ?= qemu-system-x86_64
-QEMUFLAGS += -m 256 -nographic -cpu IvyBridge,rdtscp -rtc base=utc
+QEMUFLAGS += -m 256 -cpu IvyBridge,rdtscp -rtc base=utc
 QEMUFLAGS += -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04
+QEMUFLAGS += $(if $(GUI),, -nographic)
 
 objs += \
 	kernel/arch/x64/boot.o \

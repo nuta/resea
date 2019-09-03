@@ -49,7 +49,8 @@ $ make defconfig            # Generate a default .config file.
 $ make build                # Build a kernel executable (debug build).
 $ make build BUILD=release  # Build a kernel executable (release build).
 $ make build V=1            # Build a kernel executable with verbose command output.
-$ make run                  # Run on QEMU.
+$ make run                  # Run on QEMU (-nographic).
+$ make run GUI=1            # Run on QEMU with graphical output.
 $ make bochs                # Run on Bochs.
 $ make clean                # Remove built files.
 $ make docs                 # Generate a source code reference.
