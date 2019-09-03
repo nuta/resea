@@ -334,8 +334,9 @@ error_t sys_ipc_fastpath(cid_t cid) {
         goto slowpath1;
     }
 
+    // Lock the channel where we will wait for a message if necessary.
     struct channel *recv_on = ch->transfer_to;
-    if (UNLIKELY(!spin_try_lock(&recv_on->lock))) {
+    if (UNLIKELY(ch != recv_on && !spin_try_lock(&recv_on->lock))) {
         goto slowpath2;
     }
 
@@ -376,8 +377,10 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
     dst_ch->receiver = NULL;
     spin_unlock(&dst_ch->lock);
-    spin_unlock(&recv_on->lock);
     spin_unlock(&ch->lock);
+    if (ch != ch->transfer_to) {
+        spin_unlock(&recv_on->lock);
+    }
 
     // Do a direct context switch into the receiver thread. The current thread
     // is now blocked and will be resumed by another IPC call.
@@ -389,7 +392,9 @@ error_t sys_ipc_fastpath(cid_t cid) {
 slowpath4:
     spin_unlock(&dst_ch->lock);
 slowpath3:
-    spin_unlock(&recv_on->lock);
+    if (ch != ch->transfer_to) {
+        spin_unlock(&recv_on->lock);
+    }
 slowpath2:
     spin_unlock(&ch->lock);
 slowpath1:
