@@ -30,8 +30,8 @@ void printf(const char *fmt, ...);
 ### Special printf format specifiers
 libresea provides some useful printf format specifiers:
 
-- `%*h`: Hex dump. It cosumes two arguments: pointer and length.
-  - Example: `printf("hexdump: %*h", (void *) buf, (unsigned long) buf_len)`
+- `%ph`: Hex dump. It cosumes two arguments: pointer and length.
+  - Example: `printf("hexdump: %ph", (void *) buf, (unsigned long) buf_len)`
 
 ### Math
 ```c

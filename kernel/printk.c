@@ -29,9 +29,10 @@ static void print_uint(uintmax_t n, int base, char pad, int width) {
 }
 
 static void print_ptr(const char **fmt, va_list vargs) {
-    switch (*(*fmt)++) {
+    char ch = *(*fmt)++;
+    switch (ch) {
     // Thread.
-    case 't': {
+    case 'T': {
         struct thread *thread = va_arg(vargs, struct thread *);
         print_str("#");
         print_str(thread->process->name);
@@ -40,7 +41,7 @@ static void print_ptr(const char **fmt, va_list vargs) {
         break;
     }
     // Channel.
-    case 'c': {
+    case 'C': {
         struct channel *ch = va_arg(vargs, struct channel *);
         print_str("@");
         print_str(ch->process->name);
@@ -48,8 +49,11 @@ static void print_ptr(const char **fmt, va_list vargs) {
         print_uint(ch->cid, 10, ' ', 0);
         break;
     }
+    // A pointer value (%p) and a following character.
     default:
-        print_str("<invalid format>");
+        print_uint((uintmax_t) va_arg(vargs, void *), 16, '0',
+                   sizeof(vaddr_t) * 2);
+        arch_putchar(ch);
     }
 }
 
@@ -62,8 +66,8 @@ static void print_ptr(const char **fmt, va_list vargs) {
 ///  %d  - An unsigned integer (in decimal).
 ///  %x  - A hexadecimal integer.
 ///  %p  - An pointer value.
-///  %*t - `struct thread *`.
-///  %*c - `struct channel *`.
+///  %pT - `struct thread *`.
+///  %pC - `struct channel *`.
 ///
 void vprintk(const char *fmt, va_list vargs) {
     while (*fmt) {
@@ -103,6 +107,9 @@ void vprintk(const char *fmt, va_list vargs) {
             }
 
             switch (*fmt++) {
+            case 'p':
+                print_ptr(&fmt, vargs);
+                break;
             case 'd':
                 n = (num_len == 3) ? va_arg(vargs, long long) :
                                      va_arg(vargs, int);
@@ -112,15 +119,6 @@ void vprintk(const char *fmt, va_list vargs) {
                 }
                 print_uint(n, 10, pad, width);
                 break;
-            case 'p':
-#if __x86_64__
-                num_len = 3;
-                width = 16;
-#else
-#    error "unsupported CPU architecture"
-#endif
-                pad = '0';
-                // fallthrough
             case 'x':
                 alt = true;
                 // Fallthrough.
@@ -134,9 +132,6 @@ void vprintk(const char *fmt, va_list vargs) {
                 break;
             case 's':
                 print_str(va_arg(vargs, char *));
-                break;
-            case '*':
-                print_ptr(&fmt, vargs);
                 break;
             case '%':
                 arch_putchar('%');
