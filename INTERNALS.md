@@ -29,7 +29,7 @@ The message buffer to send/receive a message is located in the thread-local
 buffer (see [Thread Information Block](#thread-information-block)).
 
 ### Notifications
-*Detailed design is under consideration and this feature is not yet implemented.* 
+*The detailed design is under consideration and this feature is not yet implemented.* 
 
 While synchronous (blocking) IPC works pretty fine in most cases, sometimes you
 may want asynchronous (non-blocking) IPC. For example, the kernel converts
@@ -46,8 +46,8 @@ Notifications is a simple solution just like *signal* in Unix:
 Kernel server
 -------------
 Kernel server is a kernel thread which provdes features that only the kernel can
-provide: kernel-level thread (not kernel thread!), virtual memory pager
-management, interrupts, etc.
+provide: kernel-level thread (do't get confused with kernel thread!), virtual
+memory pager management, interrupts, etc.
 
 Only memmgr and startup servers (apps spawned by memmgr) has a channel
 connected to the kernel server at cid 1. There're no differences between the

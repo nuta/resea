@@ -2,7 +2,7 @@ Hacking
 =======
 
 This document describes how to twiddle with Resea. You should read
-INTERNALS.md first to learn its design.
+[INTERNALS.md](INTERNALS.md) first to learn its design.
 
 The Resea standard library (`libresea`)
 ---------------------------------------
@@ -72,10 +72,11 @@ error_t ipc_recv(cid_t ch, struct message *r);
 // Send and receive a message.
 error_t ipc_call(cid_t ch, struct message *m, struct message *r);
 // Send and receive a message. The difference from the `ipc_call` is that in
-// send phase, `ipc_replyrecv` won't block (returns an error) if the receiver
-// does not exist. This is useful when you reply a message to a client from a
-// server: if the client is not waiting for the reply, `ipc_call` would block
-// forever and it leads to a Denial-of-Service attack to the server.
+// send phase, `ipc_replyrecv` won't block (returns an error) if no receivers
+// wait on the destination channel. This is useful when you reply a message to
+// a client from a server: if the client is not waiting for the reply,
+// `ipc_call` would block forever and it leads to a Denial-of-Service attack to
+// the server.
 error_t ipc_replyrecv(cid_t ch, struct message *m, struct message *r);
 ```
 
