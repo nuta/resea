@@ -86,6 +86,7 @@ clean:
 .PHONY: defconfig
 defconfig:
 	$(PYTHON3) tools/buildconfig.py default
+	echo "Generated .config"
 
 .PHONY: docs
 docs:
