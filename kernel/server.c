@@ -82,7 +82,7 @@ static error_t handle_spawn_thread_msg(pid_t pid, vaddr_t start, vaddr_t stack,
     vaddr_t buffer, vaddr_t arg, struct spawn_thread_reply_msg *r) {
     TRACE("kernel: spawn_thread(pid=%d, start=%p)", pid, start);
 
-    struct process *proc = idtable_get(&all_processes, pid);
+    struct process *proc = table_get(&all_processes, pid);
     if (!proc) {
         return ERR_INVALID_MESSAGE;
     }
@@ -106,13 +106,13 @@ static error_t handle_add_pager_msg(pid_t pid, cid_t pager, vaddr_t start,
     TRACE("kernel: add_pager(pid=%d, pager=%d, range=%p-%p)", pid, pager, start,
         start + size);
 
-    struct process *proc = idtable_get(&all_processes, pid);
+    struct process *proc = table_get(&all_processes, pid);
     if (!proc) {
         WARN("invalid proc");
         return ERR_INVALID_MESSAGE;
     }
 
-    struct channel *pager_ch = idtable_get(&proc->channels, pager);
+    struct channel *pager_ch = table_get(&proc->channels, pager);
     if (!pager_ch) {
         WARN("invalid pger_ch %d", pager);
         process_destroy(proc);
@@ -138,15 +138,19 @@ NORETURN static void handle_exit_kernel_test_msg(void) {
     arch_poweroff();
 }
 
+/// The kernel server mainloop.
 NORETURN static void mainloop(cid_t server_ch) {
     struct message *ipc_buffer = CURRENT->kernel_ipc_buffer;
     sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
 
     while (1) {
         cid_t from = ipc_buffer->from;
-        struct channel *ch = idtable_get(&kernel_process->channels, from);
+
+        // Resolves the sender thread.
+        struct channel *ch = table_get(&kernel_process->channels, from);
         ASSERT(ch != NULL);
         struct process *sender = ch->linked_to->process;
+
         error_t err;
         switch (MSG_LABEL(ipc_buffer->header)) {
         case PRINTCHAR_MSG: {
@@ -192,15 +196,15 @@ NORETURN static void mainloop(cid_t server_ch) {
     }
 }
 
+/// The kernel server thread entrypoint.
 static void kernel_server_main(void) {
     ASSERT(CURRENT->process == kernel_process);
     mainloop(kernel_server_ch->cid);
 }
 
+/// Initializes the kernel server.
 void kernel_server_init(void) {
     kernel_server_ch = channel_create(kernel_process);
-    INFO("kernel_server_ch1: %p", &kernel_server_ch);
-    INFO("kernel_server_ch: %p", kernel_server_ch);
     struct thread *thread = thread_create(kernel_process,
                                           (vaddr_t) kernel_server_main,
                                           0 /* stack */,

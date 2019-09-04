@@ -9,12 +9,16 @@
 
 extern char __initfs[];
 
+/// The pager which maps the initfs image in the kernel executable image.
 static paddr_t initfs_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
     ASSERT(((vaddr_t) &__initfs & (PAGE_SIZE - 1)) == 0 &&
            "initfs is not aligned");
+
     return into_paddr(__initfs + (vaddr - INITFS_ADDR));
 }
 
+/// The pager which maps the physical page whose address is identical with the
+/// requested virtual address.
 static paddr_t straight_map_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
     return vaddr;
 }
@@ -64,12 +68,7 @@ static void userland(void) {
     thread_resume(thread);
 }
 
-static void idle(void) {
-    while (1) {
-        arch_idle();
-    }
-}
-
+/// Initializes the kernel and starts the first userland process.
 void boot(void) {
     init_boot_stack_canary();
 
@@ -88,5 +87,7 @@ void boot(void) {
     thread_switch();
 
     // Now we're in the CPU-local idle thread context.
-    idle();
+    while (1) {
+        arch_idle();
+    }
 }

@@ -4,7 +4,7 @@
 #include <types.h>
 
 //
-//  Syscall numbers and flags
+//  Syscall numbers and flags.
 //
 #define SYSCALL_IPC 0
 #define SYSCALL_OPEN 1
@@ -19,7 +19,7 @@
 #define SYSCALL_TYPE(syscall_id) ((syscall_id) &0xff)
 
 //
-//  Header
+//  Message Header.
 //
 typedef uint32_t header_t;
 #define MSG_INLINE_LEN_OFFSET 0
@@ -42,7 +42,7 @@ typedef uint32_t header_t;
 #define SYSCALL_FASTPATH_TEST(header) ((header) &0xf000ull)
 
 //
-//  Page payload
+//  Page Payload.
 //
 typedef uintmax_t page_t;
 #define PAGE_EXP(page) ((page) & 0x1f)

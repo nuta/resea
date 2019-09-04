@@ -7,7 +7,7 @@
 #include <table.h>
 #include <thread.h>
 
-/// Memory pool.
+/// A memory pool.
 struct arena {
     spinlock_t lock;
     /// The memory pool buffer.
@@ -140,6 +140,7 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
     thread_kill_current();
 }
 
+/// Initializes the memory subsystem.
 void memory_init(void) {
     arena_init(&small_arena, SMALL_ARENA_ADDR, SMALL_ARENA_LEN, OBJ_MAX_SIZE);
     arena_init(&page_arena, PAGE_ARENA_ADDR, PAGE_ARENA_LEN, PAGE_SIZE);

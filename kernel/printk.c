@@ -69,6 +69,8 @@ static void print_ptr(const char **fmt, va_list vargs) {
 ///  %pT - `struct thread *`.
 ///  %pC - `struct channel *`.
 ///
+///  TODO: Support printing error_t.
+///
 void vprintk(const char *fmt, va_list vargs) {
     while (*fmt) {
         if (*fmt != '%') {
@@ -144,6 +146,7 @@ void vprintk(const char *fmt, va_list vargs) {
     }
 }
 
+/// Prints a message. See vprintk() for detailed formatting specifications.
 void printk(const char *fmt, ...) {
     va_list vargs;
 

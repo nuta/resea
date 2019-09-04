@@ -8,7 +8,7 @@
 
 /// Creates a channel in the given process. Returns NULL if failed.
 struct channel *channel_create(struct process *process) {
-    int cid = idtable_alloc(&process->channels);
+    int cid = table_alloc(&process->channels);
     if (!cid) {
         TRACE("failed to allocate cid");
         return NULL;
@@ -17,7 +17,7 @@ struct channel *channel_create(struct process *process) {
     struct channel *channel = kmalloc(&page_arena);
     if (!channel) {
         TRACE("failed to allocate a channel");
-        idtable_free(&process->channels, cid);
+        table_free(&process->channels, cid);
         return NULL;
     }
 
@@ -30,7 +30,7 @@ struct channel *channel_create(struct process *process) {
     spin_lock_init(&channel->lock);
     list_init(&channel->queue);
 
-    idtable_set(&process->channels, cid, channel);
+    table_set(&process->channels, cid, channel);
     return channel;
 }
 
@@ -113,7 +113,7 @@ cid_t sys_open(void) {
 
 /// The close system call: destroys a new channel.
 error_t sys_close(cid_t cid) {
-    struct channel *ch = idtable_get(&CURRENT->process->channels, cid);
+    struct channel *ch = table_get(&CURRENT->process->channels, cid);
     if (!ch) {
         return ERR_INVALID_CID;
     }
@@ -125,12 +125,12 @@ error_t sys_close(cid_t cid) {
 
 /// The link system call: links channels.
 error_t sys_link(cid_t ch1, cid_t ch2) {
-    struct channel *ch1_ch = idtable_get(&CURRENT->process->channels, ch1);
+    struct channel *ch1_ch = table_get(&CURRENT->process->channels, ch1);
     if (!ch1_ch) {
         return ERR_INVALID_CID;
     }
 
-    struct channel *ch2_ch = idtable_get(&CURRENT->process->channels, ch2);
+    struct channel *ch2_ch = table_get(&CURRENT->process->channels, ch2);
     if (!ch2_ch) {
         return ERR_INVALID_CID;
     }
@@ -142,12 +142,12 @@ error_t sys_link(cid_t ch1, cid_t ch2) {
 
 /// The transfer system call: transfers messages.
 error_t sys_transfer(cid_t src, cid_t dst) {
-    struct channel *src_ch = idtable_get(&CURRENT->process->channels, src);
+    struct channel *src_ch = table_get(&CURRENT->process->channels, src);
     if (!src_ch) {
         return ERR_INVALID_CID;
     }
 
-    struct channel *dst_ch = idtable_get(&CURRENT->process->channels, dst);
+    struct channel *dst_ch = table_get(&CURRENT->process->channels, dst);
     if (!dst_ch) {
         return ERR_INVALID_CID;
     }
@@ -178,7 +178,7 @@ static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
 ///
 error_t sys_ipc(cid_t cid, uint32_t syscall) {
     struct thread *current = CURRENT;
-    struct channel *ch = idtable_get(&current->process->channels, cid);
+    struct channel *ch = table_get(&current->process->channels, cid);
     if (!ch) {
         return ERR_INVALID_CID;
     }
@@ -314,7 +314,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 /// eliminate branches and memory accesses as much as possible.
 error_t sys_ipc_fastpath(cid_t cid) {
     struct thread *current = CURRENT;
-    struct channel *ch = idtable_get(&current->process->channels, cid);
+    struct channel *ch = table_get(&current->process->channels, cid);
     if (UNLIKELY(!ch)) {
         goto slowpath1;
     }

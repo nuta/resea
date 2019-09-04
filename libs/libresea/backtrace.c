@@ -2,10 +2,11 @@
 
 #include <resea.h>
 
-// The symbol table will be embedded by tools/link.py during the build
-// process.
+/// The symbol table. This is embedded by tools/link.py during the build.
 extern struct symbol_table __symtable;
 
+/// Search the symbol table for the symbol. It never returns NULL; if the given
+/// address is out of bounds, it returns the pointer to `"(invalid address)"`.
 static const char *find_symbol(uintptr_t vaddr, size_t *offset) {
     // Do a binary search. Since `__symtable.num_symbols` is unsigned 16-bit
     // integer, we need larger signed integer to hold -1 here, namely, int32_t.
@@ -34,17 +35,20 @@ static const char *find_symbol(uintptr_t vaddr, size_t *offset) {
     }
 }
 
-extern char __text;
-extern char __text_end;
+/// These symbols will be added by the linker.
+extern char __text[];
+extern char __text_end[];
+
+/// Checks whether the address is within the kernel executable region.
 static inline bool in_text_section(uintptr_t addr) {
-    return ((uintptr_t) &__text <= addr && addr < (uintptr_t) &__text_end);
+    return ((uintptr_t) __text <= addr && addr < (uintptr_t) __text_end);
 }
 
-#define BACKTRACE_MAX 16
+/// Prints a backtrace.
 void do_backtrace(const char *prefix) {
     printf("%sBacktrace:\n", prefix);
     struct stack_frame *frame = get_stack_frame();
-    for (int i = 0; frame != NULL && i < BACKTRACE_MAX; i++) {
+    for (int i = 0; frame != NULL && i < 16; i++) {
         if (!in_text_section(frame->return_addr)) {
             break;
         }

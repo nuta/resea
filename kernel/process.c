@@ -5,27 +5,27 @@
 #include <table.h>
 #include <thread.h>
 
-/// The process/thread idtable.
-struct idtable all_processes;
+/// The process/thread table.
+struct table all_processes;
 /// The kernel process.
 struct process *kernel_process;
 
 /// Creates a new process. `name` is used for just debugging use.
 struct process *process_create(const char *name) {
-    int pid = idtable_alloc(&all_processes);
+    int pid = table_alloc(&all_processes);
     if (!pid) {
         return NULL;
     }
 
     struct process *proc = kmalloc(&page_arena);
     if (!proc) {
-        idtable_free(&all_processes, pid);
+        table_free(&all_processes, pid);
         return NULL;
     }
 
-    if (!idtable_init(&proc->channels)) {
+    if (table_init(&proc->channels) != OK) {
         kfree(&small_arena, proc);
-        idtable_free(&all_processes, pid);
+        table_free(&all_processes, pid);
         return NULL;
     }
 
@@ -36,7 +36,7 @@ struct process *process_create(const char *name) {
     list_init(&proc->threads);
     page_table_init(&proc->page_table);
 
-    idtable_set(&all_processes, pid, (void *) proc);
+    table_set(&all_processes, pid, (void *) proc);
 
     TRACE("new process: pid=%d, name=%s", pid, &proc->name);
     return proc;
@@ -47,7 +47,7 @@ void process_destroy(UNUSED struct process *process) {
     UNIMPLEMENTED();
 }
 
-// Adds a new vm area.
+/// Adds a new vm area.
 error_t vmarea_add(struct process *process, vaddr_t start, vaddr_t end,
                    pager_t pager, void *pager_arg, int flags) {
 
@@ -69,7 +69,7 @@ error_t vmarea_add(struct process *process, vaddr_t start, vaddr_t end,
 
 /// Initializes the process subsystem.
 void process_init(void) {
-    if (!idtable_init(&all_processes)) {
+    if (table_init(&all_processes) != OK) {
         PANIC("failed to initialize all_processes");
     }
 

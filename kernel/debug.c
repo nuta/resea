@@ -4,8 +4,7 @@
 #include <printk.h>
 #include <thread.h>
 
-// The symbol table will be embedded by tools/link.py during the build
-// process.
+/// The symbol table. This îs embedded by tools/link.py during the build.
 extern struct symbol_table __symtable;
 
 /// Resolves the symbol name and the offset from the beginning of symbol.
@@ -91,8 +90,10 @@ void init_boot_stack_canary(void) {
     init_stack_canary(get_current_stack_canary_address());
 }
 
-// Undefined behavior event handlers (UBSan).
+//
+// Undefined Behavior Sanitizer runtime (UBSan).
 // https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+//
 static void report_ubsan_event(const char *event) {
     PANIC("detected an undefined behavior: %s", event);
 }
@@ -134,7 +135,8 @@ void __ubsan_handle_builtin_unreachable() {
 }
 
 //
-//  Kernel Address Santizer (KASan) runtime library.
+//  Kernel Address Santizer (KASan) runtime.
+// (https://github.com/google/kasan/wiki)
 //
 //  The implementation is in the very early stage: redzones, stack overflow
 //  detection, shadow propagation, and other features are not yet supported.
@@ -164,6 +166,7 @@ static bool needs_asan_check(vaddr_t addr) {
            && addr < (vaddr_t) from_paddr(STRAIGHT_MAP_ADDR);
 }
 
+/// Checks whether the memory read is valid.
 static void check_load(vaddr_t addr, size_t size) {
     if (!needs_asan_check(addr)) {
         return;
@@ -198,6 +201,7 @@ static void check_load(vaddr_t addr, size_t size) {
     set_asan_enabled(true);
 }
 
+/// Checks whether the memory write is valid.
 static void check_store(vaddr_t addr, size_t size) {
     if (!needs_asan_check(addr)) {
         return;
@@ -254,6 +258,7 @@ void asan_init_area(enum asan_shadow_tag tag, void *ptr, size_t len) {
     set_asan_enabled(asan_state);
 }
 
+/// Initializes the ASan runtime.
 static void asan_init(void) {
     arch_asan_init();
 
@@ -267,6 +272,7 @@ static void asan_init(void) {
     set_asan_enabled(true);
 }
 
+/// Initializes the debug subsystem.
 void debug_init(void) {
     asan_init();
 }

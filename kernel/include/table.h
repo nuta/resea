@@ -5,21 +5,26 @@
 #include <printk.h>
 #include <types.h>
 
-// We don't allocate id == 0 to use it as a *null* value.
+/// We don't allocate id == 0 to use it as a *null* value.
 #define ID_START 1
-// Indicates that the entry is allocated but not yet set a value.
+/// Indicates that the entry is allocated but not yet set a value.
 #define RESERVED ((void *) 0xcafecafe)
 
-struct idtable {
+/// An array with safety equipments. It provides ID allocation (e.g. process
+/// ID) and safe (bounds-checked) set/get operations.
+struct table {
+    /// Entries in the table. Each entry is either NULL or value: if it's NULL,
+    /// the slot is not being used.
     void **entries;
+    /// The maximum number of entries.
     int num_entries;
 };
 
-// Returns 0 on failure.
-static inline int idtable_init(struct idtable *table) {
+/// Initializes the table.
+static inline error_t table_init(struct table *table) {
     void **entries = kmalloc(&page_arena);
     if (!entries) {
-        return 0;
+        return ERR_NO_MEMORY;
     }
 
     size_t num = PAGE_SIZE / sizeof(void *);
@@ -29,11 +34,16 @@ static inline int idtable_init(struct idtable *table) {
 
     table->entries = entries;
     table->num_entries = num;
-    return 1;
+    return OK;
 }
 
-// You don't have to use spinlock for this. The implementation is lock-free.
-static inline int idtable_alloc(struct idtable *table) {
+/// Search the table for an unused slot and mark it as reserved. It returnes
+/// the id (always greater than 0) for the reserved slot on success or 0 on
+/// failure.
+///
+/// Note that this operation is O(n).
+///
+static inline int table_alloc(struct table *table) {
     for (int i = ID_START; i < table->num_entries; i++) {
         if (atomic_compare_and_swap(&table->entries[i], NULL, RESERVED)) {
             // Successfully reserved the entry.
@@ -44,29 +54,28 @@ static inline int idtable_alloc(struct idtable *table) {
     return 0;
 }
 
-// You don't have to use spinlock for this. The implementation is lock-free.
-static inline void idtable_free(struct idtable *table, int id) {
+/// Frees a slot.
+static inline void table_free(struct table *table, int id) {
     __atomic_store_n(&table->entries[id], NULL, __ATOMIC_SEQ_CST);
 }
 
-// You don't have to use spinlock for this. The implementation is lock-free.
-static inline void idtable_set(struct idtable *table, int id, void *value) {
+/// Sets a slot value.
+static inline void table_set(struct table *table, int id, void *value) {
     if (table->entries[id] != RESERVED) {
         BUG("tried to use an allocated id, (id=%d)", id);
     }
 
     if (id == 0 || id >= table->num_entries) {
         // We keep `table->entries[0]` always equals NULL to avoid a conditional
-        // branching in `idtable_get()`.
+        // branching in `table_get()`.
         BUG("bad id (id=%d, num_entries=%d)", id, table->num_entries);
     }
 
     __atomic_store_n(&table->entries[id], value, __ATOMIC_SEQ_CST);
 }
 
-// Returns NULL if `id' equals to 0. You don't have to use spinlock for
-// this. The implementation is lock-free.
-static inline void *idtable_get(struct idtable *table, int id) {
+/// Returns the slot value or NULL if `id' is invalid.
+static inline void *table_get(struct table *table, int id) {
     // We don't have to check if id != 0 since `table->entries[0]` is always
     // NULL.
     if (id >= table->num_entries) {
