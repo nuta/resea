@@ -4,18 +4,24 @@
 #include <printk.h>
 #include <x64/x64.h>
 
-#define KERNEL_BASE_ADDR 0xffff800000000000
-#define CPU_VAR_ADDR 0xffff800000b00000
-#define SMALL_ARENA_ADDR 0xffff800001000000
-#define SMALL_ARENA_LEN 0x400000
-#define PAGE_ARENA_ADDR 0xffff800001400000
-#define PAGE_ARENA_LEN 0xc00000
-#define THREAD_INFO_ADDR 0x0000000000000f1b000
+#define KERNEL_BASE_ADDR        0xffff800000000000
+#define KERNEL_BOOT_STACKS_ADDR 0xffff800000a00000
+#define KERNEL_BOOT_STACKS_LEN  0x0000000000100000
+#define CPU_VAR_ADDR            0xffff800000b00000
+#define CPU_VAR_LEN             0x0000000000100000
+#define SMALL_ARENA_ADDR        0xffff800001000000
+#define SMALL_ARENA_LEN         0x0000000000400000
+#define PAGE_ARENA_ADDR         0xffff800001400000
+#define PAGE_ARENA_LEN          0x0000000000c00000
+
 #define INITFS_ADDR 0x0000000001000000
 #define INITFS_END \
     0x0000000002000000 // TODO: make sure that memmgr.bin is not too big
-#define STRAIGHT_MAP_ADDR 0x0000000002000000
-#define STRAIGHT_MAP_END 0xffffffffffffffff
+#define STRAIGHT_MAP_ADDR       0x0000000003000000
+#define STRAIGHT_MAP_END        0x0000000010000000
+
+#define THREAD_INFO_ADDR        0x0000000000f1b000
+#define ASAN_SHADOW_MEMORY 0xffff800010000000
 #define OBJ_MAX_SIZE 1024
 #define TICK_HZ 1000
 #define PAGE_SIZE 4096
@@ -100,7 +106,12 @@ NORETURN static inline void arch_poweroff(void) {
     for(;;);
 }
 
-static inline void *memcpy_unchecked(void *dst, void *src, size_t len) {
+static inline void *inlined_memset(void *dst, int ch, size_t len) {
+    __asm__ __volatile__("cld; rep stosb" ::"D"(dst), "a"(ch), "c"(len));
+    return dst;
+}
+
+static inline void *inlined_memcpy(void *dst, void *src, size_t len) {
     __asm__ __volatile__("cld; rep movsb" ::"D"(dst), "S"(src), "c"(len));
     return dst;
 }
@@ -111,22 +122,6 @@ static inline bool spin_try_lock(spinlock_t *lock) {
 
 static inline void spin_unlock(spinlock_t *lock) {
     __atomic_store_n(lock, 0, __ATOMIC_SEQ_CST);
-}
-
-static inline void *memset_unchecked(void *dst, char ch, size_t len) {
-    __asm__ __volatile__("cld; rep stosb" ::"D"(dst), "a"(ch), "c"(len));
-    return dst;
-}
-
-static inline void *memset(void *dst, size_t dst_len, char ch, size_t len) {
-    ASSERT(len <= dst_len && "bad memset");
-    return memset_unchecked(dst, ch, len);
-}
-
-static inline void *memcpy(
-    void *dst, size_t dst_len, void *src, size_t copy_len) {
-    ASSERT(copy_len <= dst_len && "bad memcpy");
-    return memcpy_unchecked(dst, src, copy_len);
 }
 
 static inline char *strcpy(char *dst, size_t dst_len, const char *src) {

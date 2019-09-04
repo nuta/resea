@@ -230,8 +230,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         dst_m->from = linked_to->cid;
 
         // Copy inline payloads.
-        memcpy(dst_m->data, INLINE_PAYLOAD_LEN_MAX, m->data,
-            INLINE_PAYLOAD_LEN(header));
+        inlined_memcpy(dst_m->data, m->data, INLINE_PAYLOAD_LEN(header));
 
         // Copy page payloads.
         struct page_table *page_table = &current->process->page_table;
@@ -369,7 +368,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     struct message *dst_m = receiver->ipc_buffer;
     dst_m->header = header;
     dst_m->from = linked_to->cid;
-    memcpy_unchecked(&dst_m->data, m->data, INLINE_PAYLOAD_LEN(header));
+    inlined_memcpy(&dst_m->data, m->data, INLINE_PAYLOAD_LEN(header));
 
     recv_on->receiver = current;
     current->state = THREAD_BLOCKED;

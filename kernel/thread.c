@@ -79,18 +79,11 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     }
 
     idtable_set(&all_processes, tid, (void *) thread);
+    asan_init_area(ASAN_VALID, thread_info, PAGE_SIZE);
+    asan_init_area(ASAN_VALID, (void *) kernel_stack, PAGE_SIZE);
+    asan_init_area(ASAN_VALID, (void *) kernel_ipc_buffer, PAGE_SIZE);
 
     TRACE("new thread: pid=%d, tid=%d", process->pid, tid);
-
-    if (!thread) {
-        idtable_free(&all_processes, tid);
-        kfree(&small_arena, thread);
-        kfree(&page_arena, (void *) kernel_stack);
-        kfree(&page_arena, thread_info);
-        kfree(&page_arena, kernel_ipc_buffer);
-        return NULL;
-    }
-
     return thread;
 }
 

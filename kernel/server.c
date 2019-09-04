@@ -199,6 +199,8 @@ static void kernel_server_main(void) {
 
 void kernel_server_init(void) {
     kernel_server_ch = channel_create(kernel_process);
+    INFO("kernel_server_ch1: %p", &kernel_server_ch);
+    INFO("kernel_server_ch: %p", kernel_server_ch);
     struct thread *thread = thread_create(kernel_process,
                                           (vaddr_t) kernel_server_main,
                                           0 /* stack */,

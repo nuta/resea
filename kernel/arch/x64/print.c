@@ -47,14 +47,14 @@ static inline void screen_putchar(char ch) {
         // Scroll lines.
         int diff = y - SCREEN_HEIGHT + 1;
         for (int from = diff; from < SCREEN_HEIGHT; from++) {
-            memcpy_unchecked(vram + (from - diff) * SCREEN_WIDTH,
-                             vram + from * SCREEN_WIDTH,
-                             SCREEN_WIDTH * sizeof(uint16_t));
+            inlined_memcpy(vram + (from - diff) * SCREEN_WIDTH,
+                           vram + from * SCREEN_WIDTH,
+                           SCREEN_WIDTH * sizeof(uint16_t));
         }
 
         // Clear the new lines.
-        memset_unchecked(vram + (SCREEN_HEIGHT - diff) * SCREEN_WIDTH, 0,
-                         SCREEN_WIDTH * sizeof(uint16_t) * diff);
+        inlined_memset(vram + (SCREEN_HEIGHT - diff) * SCREEN_WIDTH, 0,
+                       SCREEN_WIDTH * sizeof(uint16_t) * diff);
 
         y = SCREEN_HEIGHT - 1;
     }

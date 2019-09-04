@@ -1,16 +1,29 @@
-KERNEL_CFLAGS += --target=x86_64
+# Specify "linux" toolchain to use the KASan.
+KERNEL_CFLAGS += --target=x86_64-pc-linux-elf
 KERNEL_CFLAGS += -mcmodel=large -mno-red-zone
 KERNEL_CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 
+ifeq ($(BUILD), debug)
+KERNEL_CFLAGS += -fsanitize=undefined,kernel-address
+KERNEL_CFLAGS += -mllvm -asan-mapping-offset=0x02000000
+KERNEL_CFLAGS += -mllvm -asan-instrumentation-with-call-threshold=0
+KERNEL_CFLAGS += -mllvm -asan-globals=false
+KERNEL_CFLAGS += -mllvm -asan-stack=false 
+KERNEL_CFLAGS += -mllvm -asan-use-after-return=false
+KERNEL_CFLAGS += -mllvm -asan-use-after-scope=false
+endif
+
 BOCHS ?= bochs
 QEMU ?= qemu-system-x86_64
-QEMUFLAGS += -m 256 -cpu IvyBridge,rdtscp -rtc base=utc
+QEMUFLAGS += -m 512 -cpu IvyBridge,rdtscp -rtc base=utc
 QEMUFLAGS += -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04
 QEMUFLAGS += $(if $(GUI),, -nographic)
+
 
 objs += \
 	kernel/arch/x64/boot.o \
 	kernel/arch/x64/apic.o \
+	kernel/arch/x64/asan.o \
 	kernel/arch/x64/handler.o \
 	kernel/arch/x64/interrupt.o \
 	kernel/arch/x64/paging.o \

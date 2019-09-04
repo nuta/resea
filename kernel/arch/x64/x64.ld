@@ -18,6 +18,7 @@ SECTIONS {
     } :boot
 
     . = KERNEL_BASE_ADDR + SIZEOF(.boot);
+    __kernel_image_start = .;
     .text : AT(ADDR(.text) - LMA_OFFSET) ALIGN(8) {
         *(.text);
         *(.text.*);
@@ -39,6 +40,7 @@ SECTIONS {
         *(.bss.*);
         __bss_end = .;
     } :data
+    __kernel_image_end = .;
 
     /DISCARD/ :{
         *(*.eh_frame);

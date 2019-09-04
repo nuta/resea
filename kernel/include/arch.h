@@ -8,8 +8,9 @@
 
 void arch_init(void);
 void arch_idle(void);
-NORETURN void arch_panic(void);
 void arch_putchar(char ch);
+NORETURN void arch_panic(void);
+NORETURN void arch_poweroff(void);
 
 void page_table_init(struct page_table *pt);
 void page_table_destroy(struct page_table *pt);
@@ -22,7 +23,7 @@ struct thread;
 error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
                          vaddr_t kernel_stack, vaddr_t user_buffer,
                          bool is_kernel_thread);
-struct thread *get_current_thread(void);
+static inline struct thread *get_current_thread(void);
 void set_current_thread(struct thread *thread);
 void arch_thread_switch(struct thread *prev, struct thread *next);
 
@@ -33,11 +34,15 @@ static inline void spin_unlock(spinlock_t *lock);
 flags_t spin_lock_irqsave(spinlock_t *lock);
 void spin_unlock_irqrestore(spinlock_t *lock, flags_t flags);
 
-void *memset(void *dst, size_t dst_len, char ch, size_t len);
-void *memcpy(void *dst, size_t dst_len, void *src, size_t copy_len);
-void *memcpy_unchecked(void *dst, void *src, size_t len);
 char *strcpy(char *dst, size_t dst_len, const char *src);
 
-vaddr_t arch_get_stack_pointer(void);
+// ASan requries memset/memcpy to be compatible with the C standard library. We
+// prepend "inlined_" to avoid the issue.
+static inline void *inlined_memset(void *dst, int ch, size_t len);
+static inline void *inlined_memcpy(void *dst, void *src, size_t len);
+
+static inline vaddr_t arch_get_stack_pointer(void);
+bool arch_asan_is_kernel_address(vaddr_t addr);
+void arch_asan_init(void);
 
 #endif

@@ -23,7 +23,7 @@ static inline int idtable_init(struct idtable *table) {
     }
 
     size_t num = PAGE_SIZE / sizeof(void *);
-    for (int i = 0; i < table->num_entries; i++) {
+    for (size_t i = 0; i < num; i++) {
         entries[i] = NULL;
     }
 

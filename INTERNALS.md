@@ -148,7 +148,8 @@ Memory maps
 | `00d0_0000`              | Unused                                                                 | 3MiB                |
 | `0100_0000`              | Kernel Data (`struct arena` for small objects)                         | 4MiB                |
 | `0140_0000`              | Kernel Data (`struct arena` for page-sized objects)                    | 12MiB               |
-| `0200_0000`              | Available for userspace (managed by memmgr)                            |                     |
+| `0300_0000`              | Available for userspace (managed by memmgr)                            |                     |
+| `1000_0000`              | Kernel Address Sanitizer shadow memory (TODO: move to a better place)  | 256MiB              |
 | `fee0_0000`              | Local APIC                                                             |                     |
 | to the limit of RAM      | Available for userspace (managed by memmgr)                            |                     |
 
@@ -168,9 +169,9 @@ Memory maps
 | ------------------------ | ----------------------------------------------------- | ---------------- |
 | `0000_0000_00f1_b000`    | Thread Information Block                              | 4KiB             |
 | `0000_0000_0100_0000`    | initfs.bin (.text, .rodata, .data)                    | 16MiB            |
-| `0000_0000_0200_0000`    | memmgr stack                                          | 4MiB             |
-| `0000_0000_0240_0000`    | memmgr .bss (initfs.bin doesn't include .bss section) | 12MiB            |
-| `0000_0000_0300_0000`    | Mapped to physical pages (straight mapping)           | the limit of RAM |
+| `0000_0000_0300_0000`    | memmgr stack                                          | 4MiB             |
+| `0000_0000_0340_0000`    | memmgr .bss (initfs.bin doesn't include .bss section) | 12MiB            |
+| `0000_0000_0400_0000`    | Mapped to physical pages (straight mapping)           | the limit of RAM |
 
 ### Apps spawned by memmgr (x64)
 

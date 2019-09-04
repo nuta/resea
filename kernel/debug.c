@@ -133,5 +133,140 @@ void __ubsan_handle_builtin_unreachable() {
     report_ubsan_event("builtin unreachable");
 }
 
+//
+//  Kernel Address Santizer (KASan) runtime library.
+//
+//  The implementation is in the very early stage: redzones, stack overflow
+//  detection, shadow propagation, and other features are not yet supported.
+//
+//  Even though it is incomplete, it's able to detect some memory bugs: NULL
+//  pointer dereference, use of an uninitialized memory, etc.
+//
+// TODO: SMP support: asan_enabled should be a CPU-local variable.
+// TODO: SMP support: Shadow memory data are not atomic variables.
+//
+
+static bool asan_enabled = false;
+
+static inline uint8_t *get_asan_shadow_memory(vaddr_t addr) {
+    return (uint8_t *) ASAN_SHADOW_MEMORY + into_paddr((void *) addr);
+}
+
+static bool set_asan_enabled(bool state) {
+    bool prev_state = asan_enabled;
+    asan_enabled = state;
+    return prev_state;
+}
+
+static bool needs_asan_check(vaddr_t addr) {
+    return asan_enabled
+           && arch_asan_is_kernel_address(addr)
+           && addr < (vaddr_t) from_paddr(STRAIGHT_MAP_ADDR);
+}
+
+static void check_load(vaddr_t addr, size_t size) {
+    if (!needs_asan_check(addr)) {
+        return;
+    }
+
+    // Disable ASan temporarily to prevent infinte recursive errors.
+    set_asan_enabled(false);
+
+    if (!addr) {
+        PANIC("NULL pointer dereference (read) at %p", addr);
+    }
+
+    if (addr <= KERNEL_BASE_ADDR) {
+        PANIC("invalid memory read access at %p", addr);
+    }
+
+    for (size_t i = 0; i < size; i++) {
+        uint8_t *shadow = get_asan_shadow_memory(addr + i);
+        switch (*shadow) {
+        case ASAN_VALID:
+            break;
+        case ASAN_NOT_ALLOCATED:
+            PANIC("asan: detected an use of unallocated memory at %p", addr);
+        case ASAN_UNINITIALIZED:
+            PANIC("asan: detected an use of uninitialized memory at %p", addr);
+        default:
+            PANIC("asan: bad shadow memory state for %p (shadow=%p, value=%x)",
+                  addr, shadow, *shadow);
+        }
+    }
+
+    set_asan_enabled(true);
+}
+
+static void check_store(vaddr_t addr, size_t size) {
+    if (!needs_asan_check(addr)) {
+        return;
+    }
+
+    // Disable ASan temporarily to prevent infinte recursive errors.
+    set_asan_enabled(false);
+
+    if (!addr) {
+        PANIC("NULL pointer dereference (write) at %p", addr);
+    }
+
+    if (addr <= KERNEL_BASE_ADDR) {
+        PANIC("invalid memory write access at %p", addr);
+    }
+
+    for (size_t i = 0; i < size; i++) {
+        uint8_t *shadow = get_asan_shadow_memory(addr + i);
+        switch (*shadow) {
+        case ASAN_VALID:
+            break;
+        case ASAN_UNINITIALIZED:
+            // TODO: Propagate shadow memory.
+            *shadow = ASAN_VALID;
+            break;
+        case ASAN_NOT_ALLOCATED:
+            PANIC("asan: detected an use of unallocated memory at %p", addr);
+        default:
+            PANIC("asan: bad shadow memory state for %p (shadow=%p, value=%x)",
+                  addr, shadow, *shadow);
+        }
+    }
+
+    set_asan_enabled(true);
+}
+
+// ASan interfaces used by the compiler.
+void __asan_load1_noabort(vaddr_t addr)            { check_load(addr, 1); }
+void __asan_load2_noabort(vaddr_t addr)            { check_load(addr, 2); }
+void __asan_load4_noabort(vaddr_t addr)            { check_load(addr, 4); }
+void __asan_load8_noabort(vaddr_t addr)            { check_load(addr, 8); }
+void __asan_loadN_noabort(vaddr_t addr, size_t n)  { check_load(addr, n); }
+void __asan_store1_noabort(vaddr_t addr)           { check_store(addr, 1); }
+void __asan_store2_noabort(vaddr_t addr)           { check_store(addr, 2); }
+void __asan_store4_noabort(vaddr_t addr)           { check_store(addr, 4); }
+void __asan_store8_noabort(vaddr_t addr)           { check_store(addr, 8); }
+void __asan_storeN_noabort(vaddr_t addr, size_t n) { check_store(addr, n); }
+void __asan_handle_no_return(void) { OOPS("asan: handle_no_return"); }
+
+/// Fills the shadow memory of the given memory area with the tag.
+void asan_init_area(enum asan_shadow_tag tag, void *ptr, size_t len) {
+    bool asan_state = set_asan_enabled(false);
+    inlined_memset(get_asan_shadow_memory((vaddr_t) ptr), tag, len);
+    set_asan_enabled(asan_state);
+}
+
+static void asan_init(void) {
+    arch_asan_init();
+
+    // Kmalloc small objects.
+    asan_init_area(ASAN_NOT_ALLOCATED, (void *) SMALL_ARENA_ADDR,
+                  SMALL_ARENA_LEN);
+    // Kmalloc page objects.
+    asan_init_area(ASAN_NOT_ALLOCATED, (void *) PAGE_ARENA_ADDR,
+                  PAGE_ARENA_LEN);
+
+    set_asan_enabled(true);
+}
+
 void debug_init(void) {
+    asan_init();
 }

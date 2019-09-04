@@ -25,7 +25,7 @@ SECTIONS {
         *(.data.*);
     }
 
-    . = 0x02400000; /* TODO: */
+    . = 0x03400000; /* TODO: */
     .bss : ALIGN(8) {
         __bss = .;
         *(.bss);

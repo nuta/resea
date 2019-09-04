@@ -1,4 +1,5 @@
 #include <arch.h>
+#include <debug.h>
 #include <list.h>
 #include <memory.h>
 #include <printk.h>
@@ -52,11 +53,16 @@ void *kmalloc(struct arena *arena) {
         void *ptr = (void *) (arena->elements + arena->element_size * index);
         arena->elements_used++;
         spin_unlock_irqrestore(&arena->lock, flags);
+
+        asan_init_area(ASAN_UNINITIALIZED, ptr, arena->element_size);
         return ptr;
     }
 
+    void *ptr = list_pop_front(&arena->free_list);
     spin_unlock_irqrestore(&arena->lock, flags);
-    return list_pop_front(&arena->free_list);
+
+    asan_init_area(ASAN_UNINITIALIZED, ptr, arena->element_size);
+    return ptr;
 }
 
 /// Frees a memory.

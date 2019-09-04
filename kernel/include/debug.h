@@ -21,6 +21,16 @@ struct symbol_table {
     char *strbuf;
 } PACKED;
 
+// TODO: Clean up.
+enum asan_shadow_tag {
+    ASAN_VALID         = 0xc1,
+    ASAN_NOT_ALLOCATED = 0xe2,
+    ASAN_UNINITIALIZED = 0x77,
+};
+
+void asan_init_area(enum asan_shadow_tag tag, void *ptr, size_t len);
+
+
 void backtrace(void);
 void check_stack_canary(void);
 void init_stack_canary(vaddr_t stack_bottom);
