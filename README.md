@@ -2,13 +2,13 @@ Resea
 =====
 [![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
 
-Resea is a *pure* microkernel-based operating system written from scratch. It
-aims to be easy to learn the implementation and experience microkernel-style
-development. Resea consists of a microkernel and servers. The microkernel
-provides essential functionalities: process, thread, and message passing (IPC).
-Servers are userland programs that provide services such as memory allocation,
-device drivers, file system, and TCP/IP. See **[Documentation](#documentation)**
-for details.
+Resea *[ríːseə]* is a pure microkernel-based operating system written from
+scratch. It aims to be easy to learn the implementation and experience
+microkernel-style development. Resea consists of a microkernel and servers.
+The microkernel provides essential functionalities: process, thread, and
+message passing (IPC). Servers are userland programs that provide services
+such as memory allocation, device drivers, file system, and TCP/IP. See
+**[Documentation](#documentation)** for details.
 
 Road Map
 --------
