@@ -3,7 +3,7 @@ config_interface: textconfig
 display_library: nogui
 cpu: model=corei7_ivy_bridge_3770k, ips=50000000
 cpuid: xsave=1
-memory: guest=512, host=256
+memory: guest=512, host=512
 com1: enabled=1, mode=file, dev=bochs-serial.log
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
 ata0-slave: type=cdrom, path=build/resea.iso, status=inserted
