@@ -5,6 +5,7 @@
 #include <server.h>
 #include <table.h>
 #include <thread.h>
+#include <resea_idl.h>
 
 /// Creates a channel in the given process. Returns NULL if failed.
 struct channel *channel_create(struct process *process) {
@@ -197,7 +198,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct channel *dst = linked_to->transfer_to;
         struct thread *receiver;
 
-        if (INTERFACE_ID(header) != 4) {
+        if (MSG_LABEL(header) != PRINTCHAR_MSG) {
             TRACE("send: %pC -> %pC (header=%p)", ch, dst, header);
         }
 
