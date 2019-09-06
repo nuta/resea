@@ -5,7 +5,6 @@ KERNEL_CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 
 ifeq ($(BUILD), debug)
 KERNEL_CFLAGS += -fsanitize=undefined,kernel-address
-KERNEL_CFLAGS += -mllvm -asan-mapping-offset=0x02000000
 KERNEL_CFLAGS += -mllvm -asan-instrumentation-with-call-threshold=0
 KERNEL_CFLAGS += -mllvm -asan-globals=false
 KERNEL_CFLAGS += -mllvm -asan-stack=false 
