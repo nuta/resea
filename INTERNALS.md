@@ -72,17 +72,17 @@ Data structures
 ```
 |31                 16|15           14|13        12|11        11|10         0|
 +---------------------+---------------+------------+------------+------------+
-|         label       | # of channels | # of pages | (reserved) | inline len |
+|         type        | # of channels | # of pages | (reserved) | inline len |
 +---------------------+---------------+------------+------------+------------+
 ```
 
-- Label represents the message type (e.g. `spawn_thread`).
+- `type`: The message type (e.g. `spawn_thread`).
 
 ### Page Payload
 ```
 |63                                         12|11         7|6     5|4       0|
 +---------------------------------------------+------------+-------+---------+
-|             page address (vaddr >> 12)      | (reserved) |  type |   exp   |
+|             page address (vaddr >> 12)      | (reserved) | type  |   exp   |
 +---------------------------------------------+------------+-------+---------+
 ```
 

@@ -25,16 +25,16 @@ typedef uint32_t header_t;
 #define MSG_INLINE_LEN_OFFSET 0
 #define MSG_NUM_PAGES_OFFSET 12
 #define MSG_NUM_CHANNELS_OFFSET 14
-#define MSG_LABEL_OFFSET 16
+#define MSG_TYPE_OFFSET 16
 #define INLINE_PAYLOAD_LEN(header) (((header) >> MSG_INLINE_LEN_OFFSET) & 0x7ff)
 #define PAGE_PAYLOAD_NUM(header) (((header) >> MSG_NUM_PAGES_OFFSET) & 0x3)
 #define CHANNELS_PAYLOAD_NUM(header) \
     (((header) >> MSG_NUM_CHANNELS_OFFSET) & 0x3)
 #define PAGE_PAYLOAD_ADDR(page) ((page) &0xfffffffffffff000ull)
-#define MSG_LABEL(header) (((header) >> MSG_LABEL_OFFSET) & 0xffff)
-#define INTERFACE_ID(header) (MSG_LABEL(header) >> 8)
+#define MSG_TYPE(header) (((header) >> MSG_TYPE_OFFSET) & 0xffff)
+#define INTERFACE_ID(header) (MSG_TYPE(header) >> 8)
 #define INLINE_PAYLOAD_LEN_MAX 2047
-#define ERROR_TO_HEADER(error) ((uint32_t) (error) << MSG_LABEL_OFFSET)
+#define ERROR_TO_HEADER(error) ((uint32_t) (error) << MSG_TYPE_OFFSET)
 
 // A bit mask to determine if a message satisfies one of fastpath
 // prerequisites. This test checks if page/channel payloads are

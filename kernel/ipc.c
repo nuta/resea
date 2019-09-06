@@ -173,6 +173,12 @@ static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
     return page_fault_handler(vaddr, PF_USER);
 }
 
+/// Checks whether the message is worth tracing.
+static inline bool is_annoying_msg(uint16_t msg_type) {
+    return msg_type == PRINTCHAR_MSG
+           || msg_type == PRINTCHAR_REPLY_MSG;
+}
+
 /// The ipc system call: sends/receives messages.
 ///
 /// TODO: Can we replace spin_lock_irqsave with spin_lock?
@@ -198,7 +204,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct channel *dst = linked_to->transfer_to;
         struct thread *receiver;
 
-        if (MSG_LABEL(header) != PRINTCHAR_MSG) {
+        if (!is_annoying_msg(MSG_TYPE(header))) {
             TRACE("send: %pC -> %pC (header=%p)", ch, dst, header);
         }
 
@@ -290,8 +296,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         thread_switch();
 
         // Now `CURRENT->ipc_buffer` is filled by the sender thread.
-
-        if (INTERFACE_ID(current->ipc_buffer->header) != 4) {
+        if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header)) {
             TRACE("recv: %pC <- @%d (header=%p)", recv_on,
                 current->ipc_buffer->from, current->ipc_buffer->header);
         }

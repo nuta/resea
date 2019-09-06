@@ -74,7 +74,7 @@ void mainloop(cid_t server_ch) {
         struct message r;
         cid_t from = m.from;
         error_t err;
-        switch (MSG_LABEL(m.header)) {
+        switch (MSG_TYPE(m.header)) {
         case EXIT_CURRENT_MSG:
             UNIMPLEMENTED();
         case PRINTCHAR_MSG:
@@ -90,7 +90,7 @@ void mainloop(cid_t server_ch) {
             err = dispatch_benchmark_nop(handle_benchmark_nop, &m, &r);
             break;
         default:
-            WARN("invalid message type %x", MSG_LABEL(m.header));
+            WARN("invalid message type %x", MSG_TYPE(m.header));
             err = ERR_INVALID_MESSAGE;
             r.header = ERROR_TO_HEADER(err);
         }

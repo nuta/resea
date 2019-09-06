@@ -26,7 +26,7 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     sys_ipc(pager->cid, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
 
     // The user pager replied the message.
-    if (MSG_LABEL(ipc_buffer->header) < 0) {
+    if (MSG_TYPE(ipc_buffer->header) < 0) {
         WARN("user pager returned an error");
         return 0;
     }
@@ -152,7 +152,7 @@ NORETURN static void mainloop(cid_t server_ch) {
         struct process *sender = ch->linked_to->process;
 
         error_t err;
-        switch (MSG_LABEL(ipc_buffer->header)) {
+        switch (MSG_TYPE(ipc_buffer->header)) {
         case PRINTCHAR_MSG: {
             struct printchar_msg *m = (struct printchar_msg *) ipc_buffer;
             err = handle_printchar_msg(m->ch);
@@ -183,7 +183,7 @@ NORETURN static void mainloop(cid_t server_ch) {
             handle_exit_kernel_test_msg();
             break;
         default:
-            WARN("invalid message type %x", MSG_LABEL(ipc_buffer->header));
+            WARN("invalid message type %x", MSG_TYPE(ipc_buffer->header));
             err = ERR_INVALID_MESSAGE;
             ipc_buffer->header = ERROR_TO_HEADER(err);
         }

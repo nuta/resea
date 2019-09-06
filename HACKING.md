@@ -142,11 +142,11 @@ In the IDL stubs the following macros and functions are definied:
 - `<INTERFACE_NAME>_INTERFACE`
   - The interface ID.
 - `<MESSAGE_NAME>_MSG`
-  - The label for the message.
+  - The type for the message.
 - `<MESSAGE_NAME>_HEADER`
   - The header for the message.
 - `<MESSAGE_NAME>_REPLY_MSG`
-  - The label for the reply message (if exists).
+  - The type for the reply message (if exists).
 - `<MESSAGE_NAME>_REPLY_HEADER`
   -  The header for the reply message (if exists).
 - `struct <message_name>_msg`
@@ -204,7 +204,7 @@ void main(void) {
     while (1) {
         struct message r;
         error_t err;
-        switch (MSG_LABEL(m.header)) {
+        switch (MSG_TYPE(m.header)) {
         case PRINTCHAR_MSG:
             // `dispatch_*` calls the handler specified by the first argument
             // after verifying the message.

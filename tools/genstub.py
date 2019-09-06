@@ -110,7 +110,7 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
 #define {{ msg.name | upper }}_MSG (({{ interface.name | upper }}_INTERFACE << 8) | {{ msg.attrs.id }}ULL)
 #define {{ msg.name | upper }}_INLINE_LEN ({{ msg.args | inline_len }})
 #define {{ msg.name | upper }}_HEADER \
-    ( ({{ msg.name | upper }}_MSG        << MSG_LABEL_OFFSET) \
+    ( ({{ msg.name | upper }}_MSG        << MSG_TYPE_OFFSET) \
     | ({{ msg.args.pages | length }}     << MSG_NUM_PAGES_OFFSET) \
     | ({{ msg.name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
@@ -119,7 +119,7 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
 #define {{ msg.name | upper }}_REPLY_MSG (({{ interface.name | upper }}_INTERFACE << 8) | MSG_REPLY_FLAG | {{ msg.attrs.id }})
 #define {{ msg.name | upper }}_REPLY_INLINE_LEN ({{ msg.rets | inline_len }})
 #define {{ msg.name | upper }}_REPLY_HEADER \
-    ( ({{ msg.name | upper }}_REPLY_MSG        << MSG_LABEL_OFFSET) \
+    ( ({{ msg.name | upper }}_REPLY_MSG        << MSG_TYPE_OFFSET) \
     | ({{ msg.rets.pages | length }}           << MSG_NUM_PAGES_OFFSET) \
     | ({{ msg.name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
