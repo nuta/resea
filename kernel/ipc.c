@@ -181,7 +181,7 @@ static inline bool is_annoying_msg(uint16_t msg_type) {
 
 /// The ipc system call: sends/receives messages.
 ///
-/// TODO: Can we replace spin_lock_irqsave with spin_lock?
+/// TODO: Is it safe to replace spin_lock_irqsave with spin_lock?
 ///
 error_t sys_ipc(cid_t cid, uint32_t syscall) {
     struct thread *current = CURRENT;

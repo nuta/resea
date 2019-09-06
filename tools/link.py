@@ -94,8 +94,8 @@ def link(cc, cflags, ld, ldflags, nm, build_dir, outfile, mapfile, objs):
 	#               because symbol offsets may be changed by embedding the
 	#               symtable in the stage 2. Here we assume that the linker
 	#               behaves in a deterministic way, i.e., symbol offsets in
-	#               the re-generated symtable and in the $@.stage3.tmp are
-	#               identical.
+	#               the re-generated symtable and them in the $@.stage3.tmp
+    #               are identical.
     generate_symbol_table(f"{build_dir}/__symtable.S", *extract_symbols(nm, f"{outfile}.stage2.tmp"))
     subprocess.check_call([cc] + shlex.split(cflags) + \
         ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/__symtable.S"])
