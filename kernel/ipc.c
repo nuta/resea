@@ -296,7 +296,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         thread_switch();
 
         // Now `CURRENT->ipc_buffer` is filled by the sender thread.
-        if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header)) {
+        if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header))) {
             TRACE("recv: %pC <- @%d (header=%p)", recv_on,
                 current->ipc_buffer->from, current->ipc_buffer->header);
         }
