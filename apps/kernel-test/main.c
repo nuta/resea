@@ -15,8 +15,9 @@ void ipc_test(void) {
     }
 
     INFO(">>> IPC tests (w/ page payloads)");
-    page_t page;
-    err = alloc_pages(memmgr, 0, &page);
+    uintptr_t page;
+    size_t page_num;
+    err = alloc_pages(memmgr, 0, valloc(128), &page, &page_num);
     if (err != OK) {
         WARN("alloc_pages returned an error: %d", err);
     }

@@ -177,20 +177,23 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
     struct {{ msg.name }}_reply_msg r;
 
     m.header = {{ msg.name | upper }}_HEADER;
-{% for arg in msg.args.fields %}
+{% for arg in msg.args.inlines %}
     m.{{ arg.name }} = {{ arg.name }};
 {%- endfor %}
-#if !defined(KERNEL)
-{% if msg.rets.page %}
-    set_page_base(valloc(128), 128); // FIXME:
+{%- if msg.rets.page %}
+    set_page_base({{ msg.rets.page.name }}_base);
 {%- endif %}
-#endif
     error_t err;
     if ((err = ipc_call(__ch, (struct message *) &m, (struct message *) &r)) != OK)
         return err;
-{%- for ret in msg.rets.fields %}
+{%- for ret in msg.rets.inlines %}
     *{{ ret.name }} = r.{{ ret.name }};
 {%- endfor %}
+{%- if msg.rets.page %}
+    set_page_base(0);
+    *{{ msg.rets.page.name }} = PAGE_PAYLOAD_ADDR(r.{{ msg.rets.page.name }});
+    *{{ msg.rets.page.name }}_num = PAGE_EXP(r.{{ msg.rets.page.name }});
+{%- endif %}
     return OK;
 }
 
@@ -219,20 +222,21 @@ static inline header_t dispatch_{{ msg.name }}({{ msg.name }}_handler_t handler,
 """
 
 builtin_types = {
-    "int8":     { "size": "sizeof(int8_t)" },
-    "int16":    { "size": "sizeof(int16_t)" },
-    "int32":    { "size": "sizeof(int32_t)" },
-    "int64":    { "size": "sizeof(int64_t)" },
-    "uint8":    { "size": "sizeof(uint8_t)" },
-    "uint16":   { "size": "sizeof(uint16_t)" },
-    "uint32":   { "size": "sizeof(uint32_t)" },
-    "uint64":   { "size": "sizeof(uint64_t)" },
-    "pid":      { "size": "sizeof(pid_t)" },
-    "tid":      { "size": "sizeof(tid_t)" },
-    "cid":      { "size": "sizeof(cid_t)" },
-    "uintptr":  { "size": "sizeof(uintptr_t)" },
-    "size":     { "size": "sizeof(size_t)" },
-    "page":     { "size": "sizeof(page_t)" },
+    "int8":      { "size": "sizeof(int8_t)" },
+    "int16":     { "size": "sizeof(int16_t)" },
+    "int32":     { "size": "sizeof(int32_t)" },
+    "int64":     { "size": "sizeof(int64_t)" },
+    "uint8":     { "size": "sizeof(uint8_t)" },
+    "uint16":    { "size": "sizeof(uint16_t)" },
+    "uint32":    { "size": "sizeof(uint32_t)" },
+    "uint64":    { "size": "sizeof(uint64_t)" },
+    "pid":       { "size": "sizeof(pid_t)" },
+    "tid":       { "size": "sizeof(tid_t)" },
+    "cid":       { "size": "sizeof(cid_t)" },
+    "uintptr":   { "size": "sizeof(uintptr_t)" },
+    "size":      { "size": "sizeof(size_t)" },
+    "page":      { "size": "sizeof(page_t)" },
+    "page_base": { "size": "sizeof(page_base_t)" },
 }
 
 user_defined_types = {}
@@ -264,7 +268,14 @@ def call_params(m):
     for arg in m["args"]["fields"]:
         params.append(f"{rename_type(arg['type'])} {arg['name']}")
     for ret in m["rets"]["fields"]:
-        params.append(f"{rename_type(ret['type'])} *{ret['name']}")
+        if ret["type"] == "page":
+            params.append(f"{rename_type('page_base')} {ret['name']}_base")
+    for ret in m["rets"]["fields"]:
+        if ret["type"] == "page":
+            params.append(f"{rename_type('uintptr')} *{ret['name']}")
+            params.append(f"{rename_type('size')} *{ret['name']}_num")
+        else:
+            params.append(f"{rename_type(ret['type'])} *{ret['name']}")
     return ", ".join(params)
 
 def genstub(interfaces):

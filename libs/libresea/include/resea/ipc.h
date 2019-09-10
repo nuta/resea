@@ -20,6 +20,7 @@
 #define IPC_REPLY (1ull << 10)
 
 #define PAGE_PAYLOAD(addr, exp, type) (addr | (exp << 3) | (type << 5))
+#define PAGE_EXP(page) ((page) & 0x1f)
 #define PAGE_TYPE_MOVE   1
 #define PAGE_TYPE_SHARED 2
 
@@ -31,6 +32,7 @@
 
 typedef uint32_t header_t;
 typedef uintptr_t page_t;
+typedef uintptr_t page_base_t;
 
 struct message {
     uint32_t header;
@@ -47,9 +49,9 @@ struct thread_info {
     struct message ipc_buffer;
 } PACKED;
 
-vaddr_t valloc(size_t num_pages);
+page_base_t valloc(size_t num_pages);
 struct thread_info *get_thread_info(void);
-void set_page_base(uintptr_t base_addr, size_t num_pages);
+void set_page_base(page_base_t page_base);
 struct message *get_ipc_buffer(void);
 void copy_to_ipc_buffer(const struct message *m);
 void copy_from_ipc_buffer(struct message *buf);
