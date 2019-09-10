@@ -12,7 +12,7 @@ static void print_regs(struct interrupt_regs *regs) {
     TRACE("RDX = %p    RSI = %p    RDI = %p", regs->rdx, regs->rsi, regs->rdi);
     TRACE("R8  = %p    R9  = %p    R10 = %p", regs->r8, regs->r9, regs->r10);
     TRACE("R11 = %p    R12 = %p    R13 = %p", regs->r11, regs->r12, regs->r13);
-    TRACE("R14 = %p    R15 = %p", regs->r14, regs->r15);
+    TRACE("R14 = %p    R15 = %p    ERR = %p", regs->r14, regs->r15, regs->error);
 }
 
 void x64_handle_interrupt(uint8_t vec, struct interrupt_regs *regs) {
