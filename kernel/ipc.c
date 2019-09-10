@@ -113,7 +113,7 @@ error_t channel_notify(struct channel *ch, enum notify_op op, intmax_t arg0) {
     struct channel *dst = ch->linked_to->transfer_to;
     switch (op) {
     case NOTIFY_OP_SET:
-        dst->notification = (intmax_t) arg0;
+        dst->notification = arg0;
         break;
     case NOTIFY_OP_ADD:
         dst->notification += arg0;
