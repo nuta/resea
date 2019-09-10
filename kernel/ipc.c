@@ -392,6 +392,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
     recv_on->receiver = current;
     current->state = THREAD_BLOCKED;
+    current->recv_in_kernel = false;
     receiver->state = THREAD_RUNNABLE;
 
     dst_ch->receiver = NULL;
