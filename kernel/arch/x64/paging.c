@@ -70,8 +70,7 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
     }
 }
 
-paddr_t resolve_paddr_from_vaddr(
-    struct page_table *pt, vaddr_t vaddr) {
+paddr_t resolve_paddr_from_vaddr(struct page_table *pt, vaddr_t vaddr) {
     uint64_t *table = from_paddr(pt->pml4);
     int level = 4;
     while (level > 1) {
