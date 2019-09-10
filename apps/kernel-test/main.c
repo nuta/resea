@@ -3,13 +3,27 @@
 
 
 void ipc_test(void) {
-    INFO(">>> IPC tests");
+    error_t err;
+    cid_t memmgr = 1;
+
+    INFO(">>> IPC tests (inline only)");
     struct benchmark_nop_msg *m = (struct benchmark_nop_msg *) get_ipc_buffer();
     m->header = BENCHMARK_NOP_HEADER;
-    error_t err = sys_ipc(1 /* memmgr */, IPC_SEND | IPC_RECV);
+    err = sys_ipc(memmgr, IPC_SEND | IPC_RECV);
     if (err != OK) {
         WARN("sys_ipc returned an error: %d", err);
     }
+
+    INFO(">>> IPC tests (w/ page payloads)");
+    page_t page;
+    err = alloc_pages(memmgr, 0, &page);
+    if (err != OK) {
+        WARN("alloc_pages returned an error: %d", err);
+    }
+    uint32_t *p = (uint32_t *) PAGE_PAYLOAD_ADDR(page);
+    INFO("received a page: %p, addr=%p", page, p);
+    *p = 0xbeefbeef;
+    INFO("the received page is accessible");
 }
 
 void float_test(void) {
