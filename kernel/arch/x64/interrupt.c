@@ -20,7 +20,7 @@ void x64_handle_interrupt(uint8_t vec, struct interrupt_regs *regs) {
     case EXP_PAGE_FAULT: {
         vaddr_t addr = asm_read_cr2();
         TRACE("#PF: addr=%p, error=%d", addr, regs->error);
-        print_regs(regs);
+        // print_regs(regs);
 
         if ((regs->error >> 3) & 1) {
             PANIC("#PF: RSVD bit violation");
