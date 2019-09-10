@@ -55,7 +55,8 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
         while (remaining > 0 && index < PAGE_ENTRY_NUM) {
             TRACE("link: %p -> %p (flags=0x%x)", vaddr, paddr, attrs);
             table[index] = paddr | attrs;
-            asm_invlpg(vaddr + offset);
+            asm_invlpg(vaddr);
+            vaddr += PAGE_SIZE;
             paddr += PAGE_SIZE;
             offset += PAGE_SIZE;
             remaining--;
