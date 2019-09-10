@@ -162,6 +162,43 @@ static error_t handle_add_kernel_channel_msg(pid_t pid,
     return OK;
 }
 
+struct irq_listener {
+    uint8_t irq;
+    struct channel *ch;
+};
+
+#define IRQ_LISTENERS_MAX 32
+static struct irq_listener irq_listeners[IRQ_LISTENERS_MAX];
+
+void deliver_interrupt(uint8_t irq) {
+    for (int i = 0; i < IRQ_LISTENERS_MAX; i++) {
+        if (irq_listeners[i].irq == irq && irq_listeners[i].ch) {
+            channel_notify(irq_listeners[i].ch, NOTIFY_OP_ADD, 1);
+        }
+    }
+}
+
+static error_t handle_listen_irq_msg(cid_t cid, uint8_t irq,
+                                     struct listen_irq_reply_msg *r) {
+    INFO("kernel: listen_irq(cid=%d, %d)", cid, irq);
+    struct channel *ch = table_get(&CURRENT->process->channels, cid);
+    ASSERT(ch);
+
+    INFO("kernel: listen_irq(ch=%pC, irq=%d)", ch, irq);
+    r->header = LISTEN_IRQ_REPLY_HEADER;
+
+    for (int i = 0; i < IRQ_LISTENERS_MAX; i++) {
+        if (irq_listeners[i].ch == NULL) {
+            irq_listeners[i].irq = irq;
+            irq_listeners[i].ch = ch;
+            enable_irq(irq);
+            return OK;
+        }
+    }
+
+    return ERR_NO_MEMORY;
+}
+
 NORETURN static void handle_exit_kernel_test_msg(void) {
     INFO("Power off");
     arch_poweroff();
@@ -215,6 +252,12 @@ NORETURN static void mainloop(cid_t server_ch) {
                 m->flags, (struct add_pager_reply_msg *) ipc_buffer);
             break;
         }
+        case LISTEN_IRQ_MSG: {
+            struct listen_irq_msg *m = (struct listen_irq_msg *) ipc_buffer;
+            err = handle_listen_irq_msg(m->ch, m->irq,
+                 (struct listen_irq_reply_msg *) ipc_buffer);
+            break;
+        }
         case EXIT_KERNEL_TEST_MSG:
             handle_exit_kernel_test_msg();
             break;
@@ -235,6 +278,11 @@ NORETURN static void mainloop(cid_t server_ch) {
 /// The kernel server thread entrypoint.
 static void kernel_server_main(void) {
     ASSERT(CURRENT->process == kernel_process);
+
+    for (int i = 0; i < IRQ_LISTENERS_MAX; i++) {
+        irq_listeners[i].ch = NULL;
+    }
+
     mainloop(kernel_server_ch->cid);
 }
 

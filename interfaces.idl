@@ -20,6 +20,9 @@ interface kernel {
     [id(6), type(call)]
     add_pager(pid: pid, pager: cid, start: uintptr, size: size, flags: uint8)
         -> ()
+
+    [id(7), type(call)]
+    listen_irq(ch: channel, irq: uint8) -> ()
 }
 
 [id(2)]

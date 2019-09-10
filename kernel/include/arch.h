@@ -19,6 +19,7 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
                     int num_pages, uintmax_t flags);
 paddr_t resolve_paddr_from_vaddr(struct page_table *pt,
                                  vaddr_t vaddr);
+void enable_irq(uint8_t irq);
 
 struct thread;
 error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,

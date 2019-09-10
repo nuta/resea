@@ -1,5 +1,6 @@
 #include <printk.h>
 #include <timer.h>
+#include <server.h>
 #include <x64/apic.h>
 #include <x64/interrupt.h>
 #include <x64/x64.h>
@@ -43,8 +44,13 @@ void x64_handle_interrupt(uint8_t vec, struct interrupt_regs *regs) {
             WARN("Exception #%d", vec);
             print_regs(regs);
             PANIC("Unhandled exception #%d", vec);
-        } else {
+        } else if (vec >= VECTOR_IRQ_BASE) {
             TRACE("Interrupt #%d", vec);
+            deliver_interrupt(vec - VECTOR_IRQ_BASE);
+            x64_ack_interrupt();
+        } else {
+            print_regs(regs);
+            PANIC("Unexpected interrupt #%d", vec);
         }
     }
 }

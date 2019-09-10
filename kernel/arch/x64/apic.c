@@ -31,9 +31,13 @@ static void ioapic_write(uint8_t reg, uint32_t data) {
     *((uint32_t *) from_paddr(CPUVAR->ioapic + 0x10)) = data;
 }
 
-void x64_ioapic_enable_irq(uint8_t vector, uint8_t irq) {
+static void x64_ioapic_enable_irq(uint8_t vector, uint8_t irq) {
     ioapic_write(IOAPIC_REG_NTH_IOREDTBL_HIGH(irq), 0);
     ioapic_write(IOAPIC_REG_NTH_IOREDTBL_LOW(irq), vector);
+}
+
+void enable_irq(uint8_t irq) {
+    x64_ioapic_enable_irq(VECTOR_IRQ_BASE + irq, irq);
 }
 
 void x64_ioapic_init(paddr_t ioapic_addr) {
