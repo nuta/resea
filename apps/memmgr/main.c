@@ -114,7 +114,7 @@ void mainloop(cid_t server_ch) {
         }
 
         if (err == ERR_DONT_REPLY) {
-            TRY_OR_PANIC(ipc_recv(from, &m));
+            TRY_OR_PANIC(ipc_recv(server_ch, &m));
         } else {
             TRY_OR_PANIC(ipc_replyrecv(from, &r, &m));
         }
