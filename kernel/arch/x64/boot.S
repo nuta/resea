@@ -32,9 +32,9 @@ x64_boot:
     mov esp, 0x7c00
 
     /* Prepare for RETF. */
-    mov ax, 24
+    mov eax, 24
     lea edx, [protected_mode]
-    push ax
+    push eax
     push edx
 
     /* Copy GDTR and GDT to a lower address. */
@@ -114,9 +114,9 @@ enable_long_mode:
     wrmsr
 
     /* Prepare for RETF. */
-    mov ax, 8
+    mov eax, 8
     lea edx, [long_mode]
-    push ax
+    push eax
     push edx
 
     /* Enable paging. */
