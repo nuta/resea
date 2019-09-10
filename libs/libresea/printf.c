@@ -131,6 +131,8 @@ void vprintf(const char *fmt, va_list vargs) {
 }
 
 void putchar(char ch) {
+    // TODO: Implement buffering.
+
     // Assumes that @1 is connected to the server which suppports the runtime
     // interface.
     printchar(1, ch);
