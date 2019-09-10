@@ -139,9 +139,8 @@ static inline char *strcpy(char *dst, size_t dst_len, const char *src) {
 }
 
 static inline void arch_idle(void) {
-    // Wait for an interrupt. We don't need to execute STI since interrupts are
-    // enabled in an idle thread.
-    __asm__ __volatile__("hlt");
+    // Wait for an interrupt.
+    __asm__ __volatile__("sti;hlt");
 }
 
 static inline void spin_lock_init(spinlock_t *lock) {
