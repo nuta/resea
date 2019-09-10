@@ -37,7 +37,7 @@ x64_syscall_handler:
     // save the user RSP.
     mov gs:[ARCH_THREAD_RSP], rsp
     mov rsp, gs:[ARCH_THREAD_KERNEL_STACK]
-    
+
     // Save SYSRET context and callee-saved registers onto the kernel stack.
     push gs:[ARCH_THREAD_RSP] // User RSP.
     push r11 // User RFLAGS.
