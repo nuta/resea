@@ -71,10 +71,12 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
     }
 }
 
+// TODO: Rewrite this function. It looks too fragile :(
 paddr_t resolve_paddr_from_vaddr(struct page_table *pt, vaddr_t vaddr) {
     uint64_t *table = from_paddr(pt->pml4);
     int level = 4;
-    while (level > 1) {
+    int i = 4;
+    while (i > 1) {
         int index = NTH_LEVEL_INDEX(level, vaddr);
         if (!table[index]) {
             return 0;
@@ -82,14 +84,18 @@ paddr_t resolve_paddr_from_vaddr(struct page_table *pt, vaddr_t vaddr) {
 
         // Go into the next level paging table.
         table = (uint64_t *) from_paddr(ENTRY_PADDR(table[index]));
+        i -= (table[index] & 0x80 /* Is bigger page? */) ? 2 : 1;
         level--;
     }
 
-    // `table` now points to the PT.
-    uint64_t entry = table[NTH_LEVEL_INDEX(1, vaddr)];
+    // `table` now points to the PT (4KiB page) or PD (1MiB page).
+    uint64_t entry = table[NTH_LEVEL_INDEX(level, vaddr)];
     if (!entry) {
         return 0;
     }
 
-    return ENTRY_PADDR(entry);
+    uint64_t offset = (level == 2)
+        ? NTH_LEVEL_INDEX(level - 1, vaddr) << 12
+        : 0;
+    return ENTRY_PADDR(entry) + offset;
 }
