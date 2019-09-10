@@ -66,6 +66,8 @@ void channel_link(struct channel *ch1, struct channel *ch2) {
         flags_t flags = spin_lock_irqsave(&ch1->lock);
         spin_lock(&ch2->lock);
 
+        // TODO: decref old linked channels.
+
         ch1->linked_to = ch2;
         ch2->linked_to = ch1;
         ch1->ref_count++;
