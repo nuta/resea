@@ -7,7 +7,7 @@ ifeq ($(BUILD), debug)
 KERNEL_CFLAGS += -fsanitize=undefined,kernel-address
 KERNEL_CFLAGS += -mllvm -asan-instrumentation-with-call-threshold=0
 KERNEL_CFLAGS += -mllvm -asan-globals=false
-KERNEL_CFLAGS += -mllvm -asan-stack=false 
+KERNEL_CFLAGS += -mllvm -asan-stack=false
 KERNEL_CFLAGS += -mllvm -asan-use-after-return=false
 KERNEL_CFLAGS += -mllvm -asan-use-after-scope=false
 endif
