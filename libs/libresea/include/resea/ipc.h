@@ -21,7 +21,7 @@
 #define IPC_RECV (1ull << 9)
 #define IPC_REPLY (1ull << 10)
 
-#define PAGE_PAYLOAD(addr, exp, type) (addr | (exp << 3) | (type << 5))
+#define PAGE_PAYLOAD(addr, exp, type) (addr | (exp << 0) | (type << 5))
 #define PAGE_EXP(page) ((page) & 0x1f)
 #define PAGE_TYPE_MOVE   1
 #define PAGE_TYPE_SHARED 2
