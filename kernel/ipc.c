@@ -124,12 +124,12 @@ error_t channel_notify(struct channel *ch, enum notify_op op, intmax_t arg0) {
 
     TRACE("notify: %pC (data=%p)", ch, dst->notification);
     dst->notified = true;
-    dst->receiver = NULL;
 
     // Resume the receiver thread if exists.
     struct thread *receiver = dst->receiver;
     if (receiver) {
         thread_resume(receiver);
+        dst->receiver = NULL;
     }
 
     spin_unlock(&ch->lock);
@@ -369,6 +369,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             notify_m->from = 0;
             notify_m->data = recv_on->notification;
             recv_on->notified = false;
+            recv_on->notification = 0;
         }
 
         // Now `CURRENT->ipc_buffer` is filled by the sender thread.
