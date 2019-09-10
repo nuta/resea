@@ -33,8 +33,8 @@ error_t handle_fill_page_request(
                 continue;
             }
 
-            size_t copy_len = min(
-                min(4096, proc->file->len - fileoff), phdr->p_filesz - offset);
+            size_t copy_len = MIN(MIN(PAGE_SIZE, proc->file->len - fileoff),
+                                  phdr->p_filesz - offset);
             memcpy_s((void *) alloced_addr, 4096, &proc->file->content[fileoff],
                 copy_len);
             TRACE("Filling from initfs fault=%p, off_in_fs=%p, %d", m->addr,

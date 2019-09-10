@@ -28,19 +28,6 @@ static inline struct stack_frame *get_stack_frame(void) {
 //
 //  Misc.
 //
-#define max(a, b)          \
-    ({                     \
-        typeof(a) x = (a); \
-        typeof(b) y = (b); \
-        (x > y) ? x : y;   \
-    })
-#define min(a, b)              \
-    ({                         \
-        __typeof__(a) x = (a); \
-        __typeof__(b) y = (b); \
-        (x < y) ? x : y;       \
-    })
-
 void putchar(char ch);
 void puts(const char *s);
 void printf(const char *fmt, ...);
