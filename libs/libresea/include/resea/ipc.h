@@ -5,15 +5,11 @@
 
 /* header */
 #define MSG_INLINE_LEN_OFFSET 0
-#define MSG_NUM_PAGES_OFFSET 12
-#define MSG_NUM_CHANNELS_OFFSET 14
 #define MSG_TYPE_OFFSET 16
+#define MSG_PAGE_PAYLOAD (1ull << 11)
 #define INLINE_PAYLOAD_LEN(header) (((header) >> MSG_INLINE_LEN_OFFSET) & 0x7ff)
-#define PAGE_PAYLOAD_NUM(header) (((header) >> MSG_NUM_PAGES_OFFSET) & 0x3)
-#define PAGE_PAYLOAD_ADDR(page) ((page) &0xfffffffffffff000ull)
+#define PAGE_PAYLOAD_ADDR(page) ((page) & 0xfffffffffffff000ull)
 #define MSG_TYPE(header) (((header) >> MSG_TYPE_OFFSET) & 0xffff)
-#define CHANNELS_PAYLOAD_NUM(header) \
-    (((header) >> MSG_NUM_CHANNELS_OFFSET) & 0x3)
 #define INTERFACE_ID(header) (MSG_TYPE(header) >> 8)
 #define INLINE_PAYLOAD_LEN_MAX 2047
 #define ERROR_TO_HEADER(error) ((uint32_t)(error) << MSG_TYPE_OFFSET)
@@ -39,16 +35,21 @@ typedef uintptr_t page_t;
 struct message {
     uint32_t header;
     cid_t from;
-    cid_t channels[4];
-    page_t pages[4];
+    cid_t channel;
+    page_t page;
+    uint64_t _padding;
     uint8_t data[INLINE_PAYLOAD_LEN_MAX];
 } PACKED;
 
 struct thread_info {
     uintmax_t arg;
+    page_t page_base;
     struct message ipc_buffer;
 } PACKED;
 
+vaddr_t valloc(size_t num_pages);
+struct thread_info *get_thread_info(void);
+void set_page_base(uintptr_t base_addr, size_t num_pages);
 struct message *get_ipc_buffer(void);
 void copy_to_ipc_buffer(const struct message *m);
 void copy_from_ipc_buffer(struct message *buf);

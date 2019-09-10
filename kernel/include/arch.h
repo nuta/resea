@@ -28,6 +28,8 @@ static inline struct thread *get_current_thread(void);
 void set_current_thread(struct thread *thread);
 void arch_thread_switch(struct thread *prev, struct thread *next);
 
+static inline bool is_valid_page_base_addr(vaddr_t page_base);
+
 void spin_lock_init(spinlock_t *lock);
 void spin_lock(spinlock_t *lock);
 static inline bool spin_try_lock(spinlock_t *lock);

@@ -15,6 +15,7 @@
 /// WRITABLE from the user: don't put sensitive data in it.
 struct thread_info {
     vaddr_t arg;
+    vaddr_t page_base;
     struct message ipc_buffer;
 } PACKED;
 

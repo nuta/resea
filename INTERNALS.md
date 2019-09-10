@@ -29,7 +29,7 @@ The message buffer to send/receive a message is located in the thread-local
 buffer (see [Thread Information Block](#thread-information-block)).
 
 ### Notifications
-*The detailed design is under consideration and this feature is not yet implemented.* 
+*The detailed design is under consideration and this feature is not yet implemented.*
 
 While synchronous (blocking) IPC works pretty fine in most cases, sometimes you
 may want asynchronous (non-blocking) IPC. For example, the kernel converts
@@ -70,13 +70,14 @@ Data structures
 
 ### Message Header
 ```
-|31                 16|15           14|13        12|11        11|10         0|
-+---------------------+---------------+------------+------------+------------+
-|         type        | # of channels | # of pages | (reserved) | inline len |
-+---------------------+---------------+------------+------------+------------+
+|31                 16|15                                  12|11|10         0|
++---------------------+--------------------------------------+--+------------+
+|         type        |                (reserved)            |pg| inline len |
++---------------------+--------------------------------------+--+------------+
 ```
 
 - `type`: The message type (e.g. `spawn_thread`).
+- `pg`: If set, the page payload is contained.
 
 ### Page Payload
 ```
@@ -107,7 +108,9 @@ by the RDGSBASE instruction in the user mode.
 +----------------------------------------------------------------------------+
 |                               arg  (user-defined)                          |  0
 +----------------------------------------------------------------------------+
-|                                                                            |  8
+|                                Page Payload Base                           |  8
++----------------------------------------------------------------------------+
+|                                                                            |  16
 |                                                                            |
 |                                  IPC buffer                                |
 |                               (struct message)                             |

@@ -239,26 +239,40 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Copy inline payloads.
         inlined_memcpy(dst_m->data, m->data, INLINE_PAYLOAD_LEN(header));
 
-        // Copy page payloads.
-        struct page_table *page_table = &current->process->page_table;
-        for (size_t i = 0; i < PAGE_PAYLOAD_NUM(header); i++) {
-            page_t page = m->pages[i];
-            int page_type = PAGE_TYPE(page);
+        // Copy the page payload if exists.
+        if (header & MSG_PAGE_PAYLOAD) {
+            page_t page = m->page;
+            page_t page_base = receiver->info->page_base;
+            vaddr_t page_base_addr = PAGE_PAYLOAD_ADDR(page_base);
+            int num_pages = POW2(PAGE_EXP(page));
 
-            // TODO: Support multiple pages.
-            ASSERT(PAGE_EXP(page) == 0);
+            // Resolve the physical address referenced by the page payload.
+            paddr_t paddr = resolve_paddr(&current->process->page_table,
+                                          PAGE_PAYLOAD_ADDR(page));
+
             // TODO: Support PAGE_TYPE_MOVE.
-            ASSERT(page_type == PAGE_TYPE_SHARED);
+            ASSERT(PAGE_TYPE(page) == PAGE_TYPE_SHARED);
 
             if (receiver->recv_in_kernel) {
-                dst_m->pages[i] = resolve_paddr(page_table, page);
+                // Kernel (receiving a pager.fill_request reply, for example)
+                // links the page by itself only if necessary.
+                dst_m->page = paddr;
             } else {
-                UNIMPLEMENTED();
+                // Make sure that the receiver accepts a page payload and its
+                // base address is valid.
+                if (PAGE_EXP(page_base) < PAGE_EXP(page)
+                    || !is_valid_page_base_addr(page_base_addr)) {
+                    return ERR_UNACCEPTABLE_PAGE_PAYLOAD;
+                }
+
+                link_page(&receiver->process->page_table, page_base_addr, paddr,
+                          num_pages, PAGE_USER | PAGE_WRITABLE);
+                dst_m->page = page_base;
             }
         }
 
         // TODO: Handle channel payloads.
-        ASSERT(CHANNELS_PAYLOAD_NUM(header) == 0);
+        ASSERT(m->channel == 0);
 
         thread_resume(receiver);
     }

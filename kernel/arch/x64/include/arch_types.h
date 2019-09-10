@@ -176,4 +176,8 @@ static inline struct stack_frame *get_stack_frame(void) {
     return (struct stack_frame *) __builtin_frame_address(0);
 }
 
+static inline bool is_valid_page_base_addr(vaddr_t page_base) {
+    return page_base != 0 && page_base < KERNEL_BASE_ADDR;
+}
+
 #endif

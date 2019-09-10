@@ -2,21 +2,18 @@
 #include <resea/ipc.h>
 #include <resea/string.h>
 
-static struct thread_info *get_thread_info(void) {
+struct thread_info *get_thread_info(void) {
     struct thread_info *info;
     __asm__ __volatile__("rdgsbase %0" : "=a"(info));
     return info;
 }
 
-struct message *get_ipc_buffer(void) {
-    return &get_thread_info()->ipc_buffer;
-}
-
 static void copy_message(struct message *dst, const struct message *src) {
     uint32_t header = src->header;
+    // TODO: Use memcpy.
     dst->header = header;
     dst->from = src->from;
-    memcpy(dst->pages, src->pages, sizeof(page_t) * PAGE_PAYLOAD_NUM(header));
+    dst->page = src->page;
     memcpy(&dst->data, &src->data, INLINE_PAYLOAD_LEN(header));
 }
 

@@ -45,16 +45,19 @@ class IdlTransformer(Transformer):
             raise InvalidIDLError("The interface ID must be specified.")
 
         def visit_params(fields):
-            pages = []
+            page = None
             inlines = []
             new_fields = []
             for field in fields:
                 new_fields.append({ "name": field[0], "type": field[1] })
                 if field[1] == "page":
-                    pages.append({ "name": field[0], "type": field[1] })
+                    if page is not None:
+                        raise InvalidIDLError("Multiple page payloads in single"
+                        "message is not supported")
+                    page = { "name": field[0], "type": "page" }
                 else:
                     inlines.append({ "name": field[0], "type": field[1] })
-            return { "pages": pages, "inlines": inlines, "fields": new_fields }
+            return { "page": page, "inlines": inlines, "fields": new_fields }
 
         return {
             "attrs": attrs,
@@ -111,7 +114,9 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
 #define {{ msg.name | upper }}_INLINE_LEN ({{ msg.args | inline_len }})
 #define {{ msg.name | upper }}_HEADER \
     ( ({{ msg.name | upper }}_MSG        << MSG_TYPE_OFFSET) \
-    | ({{ msg.args.pages | length }}     << MSG_NUM_PAGES_OFFSET) \
+{%- if msg.args.page -%}
+    | MSG_PAGE_PAYLOAD  \
+{%- endif -%}
     | ({{ msg.name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
@@ -120,32 +125,46 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
 #define {{ msg.name | upper }}_REPLY_INLINE_LEN ({{ msg.rets | inline_len }})
 #define {{ msg.name | upper }}_REPLY_HEADER \
     ( ({{ msg.name | upper }}_REPLY_MSG        << MSG_TYPE_OFFSET) \
-    | ({{ msg.rets.pages | length }}           << MSG_NUM_PAGES_OFFSET) \
+{%- if msg.rets.page -%}
+    | MSG_PAGE_PAYLOAD  \
+{%- endif -%}
     | ({{ msg.name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
 struct {{ msg.name }}_msg {
     uint32_t header;
     cid_t from;
-    cid_t channels[4];
-{%- for field in msg.args.pages %}
-    page_t {{ field.name }};
-{%- endfor %}
-    page_t __unused_pages[4 - {{ msg.args.pages | length }}];
+{%- if msg.args.channel %}
+    cid_t {{ msg.args.channel.name }};
+{%- else %}
+    cid_t __unused_channel;
+{%- endif %}
+{%- if msg.args.page %}
+    page_t {{ msg.args.page.name }};
+{%- else %}
+    page_t __unused_page;
+{%- endif %}
+    uint64_t _padding;
 {%- for field in msg.args.inlines %}
     {{ field.type | rename_type }} {{ field.name }};
 {%- endfor %}
     uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.name | upper }}_INLINE_LEN];
-};
+} PACKED;
 
 struct {{ msg.name }}_reply_msg {
     uint32_t header;
     cid_t from;
-    cid_t __unused_channels[4];
-{%- for field in msg.rets.pages %}
-    page_t {{ field.name }};
-{%- endfor %}
-    page_t __unused_pages[4 - {{ msg.rets.pages | length }}];
+{%- if msg.rets.channel %}
+    cid_t {{ msg.rets.channel.name }};
+{%- else %}
+    cid_t __unused_channel;
+{%- endif %}
+{%- if msg.rets.page %}
+    page_t {{ msg.rets.page.name }};
+{%- else %}
+    page_t __unused_page;
+{%- endif %}
+    uint64_t _padding;
 {%- for field in msg.rets.inlines %}
     {{ field.type | rename_type }} {{ field.name }};
 {%- endfor %}
@@ -161,6 +180,11 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
 {% for arg in msg.args.fields %}
     m.{{ arg.name }} = {{ arg.name }};
 {%- endfor %}
+#if !defined(KERNEL)
+{% if msg.rets.page %}
+    set_page_base(valloc(128), 128); // FIXME:
+{%- endif %}
+#endif
     error_t err;
     if ((err = ipc_call(__ch, (struct message *) &m, (struct message *) &r)) != OK)
         return err;

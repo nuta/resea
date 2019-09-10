@@ -1,5 +1,24 @@
 #include <resea.h>
+#include <resea/math.h>
 #include <resea/ipc.h>
+
+// TODO: Support freeing pages.
+static vaddr_t valloc_next = 0xa0000000;
+vaddr_t valloc(size_t num_pages) {
+    vaddr_t addr = valloc_next;
+    valloc_next += num_pages * PAGE_SIZE;
+    return addr;
+}
+
+struct message *get_ipc_buffer(void) {
+    return &get_thread_info()->ipc_buffer;
+}
+
+void set_page_base(uintptr_t base_addr, size_t num_pages) {
+    struct thread_info *info = get_thread_info();
+    int order = ulllog2(num_pages);
+    info->page_base = PAGE_PAYLOAD(base_addr, order, 0 /* type (unused) */);
+}
 
 error_t open(cid_t *ch) {
     int cid_or_err = sys_open();
