@@ -29,19 +29,24 @@ The message buffer to send/receive a message is located in the thread-local
 buffer (see [Thread Information Block](#thread-information-block)).
 
 ### Notifications
-*The detailed design is under consideration and this feature is not yet implemented.*
-
 While synchronous (blocking) IPC works pretty fine in most cases, sometimes you
 may want asynchronous (non-blocking) IPC. For example, the kernel converts
 interrupts into messages but it should not block.
 
+When you receive a message, the kernel first checks the notification. If a
+notifcation exists, it returns the notification. Sender threads are blocked
+until the notification is received by teh `ipc` system call.
+
 Notifications is a simple solution just like *signal* in Unix:
 
-1. The `notify` system call sends a notification. It simply updates the
-   notification field in the destination channel and never blocks
-   (asynchronous).
-2. When you receive a message from the channel, the kernel first checks the
-   notification field. If a notifcation exists, it returns the notification.
+- `error_t sys_notify(cid_t ch, enum notify_op op, uintmax_t arg0)`
+  - Sends a notification. It simply updates the notification field in the
+    destination channel and never blocks (asynchronous).
+  - The notification field is an `intmax_t`.
+#### Notification Operations
+-  `op` specifies how the kernel updates the notification field in `ch`.
+  - `NOTIFY_OP_SET`: Atomically sets `arg0` to the notification field.
+  - `NOTIFY_OP_ADD`: Atomically adds `arg0` to the notification field.
 
 Kernel server
 -------------
@@ -70,14 +75,15 @@ Data structures
 
 ### Message Header
 ```
-|31                 16|15                                  12|11|10         0|
-+---------------------+--------------------------------------+--+------------+
-|         type        |                (reserved)            |pg| inline len |
-+---------------------+--------------------------------------+--+------------+
+|31                 16|15                                 |12|11|10         0|
++---------------------+-----------------------------------+--+--+------------+
+|         type        |                (reserved)         |ch|pg| inline len |
++---------------------+-----------------------------------+--+--+------------+
 ```
 
 - `type`: The message type (e.g. `spawn_thread`).
-- `pg`: If set, the page payload is contained.
+- `pg`: If set, a page payload is contained.
+- `ch`: If set, a channel payload is contained.
 
 ### Page Payload
 ```

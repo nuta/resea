@@ -107,7 +107,7 @@ apps
 
 2. Edit `app.mk`:
 ```makefile
-name := <name>   # The app name. 
+name := <name>   # The app name.
 objs := main.o   # Source files.
 libs := libresea # Dependent libraries.
 ```
@@ -199,7 +199,7 @@ void main(void) {
     // register_server(server_ch);
 
     // Receive the first message.
-    struct message m;    
+    struct message m;
     TRY_OR_PANIC(ipc_recv(server_ch, &m));
     while (1) {
         struct message r;
@@ -222,7 +222,7 @@ void main(void) {
             // when we need to call another servers to reply (for example,
             // a file system server would need to call a device driver
             // to read the disk before replying a "read a file" request).
-            TRY_OR_PANIC(ipc_recv(m.from, &m));
+            TRY_OR_PANIC(ipc_recv(server_ch, &m));
         } else {
             TRY_OR_PANIC(ipc_replyrecv(m.from, &r, &m));
         }
@@ -246,7 +246,7 @@ libs
 
 2. Edit `lib.mk`:
 ```makefile
-name := <name>   # The libs name. 
+name := <name>   # The libs name.
 objs := main.o   # Source files.
 ```
 
