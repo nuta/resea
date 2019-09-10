@@ -38,6 +38,13 @@ error_t spawn_process(
         return err;
     }
 
+    cid_t user_kernel_ch;
+    if ((err = add_kernel_channel(kernel_ch, pid, &user_kernel_ch))
+        != OK) {
+        return err;
+    }
+    assert(user_kernel_ch == 2);
+
     if ((err = transfer(pager_ch, server_ch)) != OK) {
         return err;
     }
