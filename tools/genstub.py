@@ -230,6 +230,8 @@ builtin_types = {
     "uint16":    { "size": "sizeof(uint16_t)" },
     "uint32":    { "size": "sizeof(uint32_t)" },
     "uint64":    { "size": "sizeof(uint64_t)" },
+    "intmax":    { "size": "sizeof(intmax_t)" },
+    "uintmax":   { "size": "sizeof(uintmax_t)" },
     "pid":       { "size": "sizeof(pid_t)" },
     "tid":       { "size": "sizeof(tid_t)" },
     "cid":       { "size": "sizeof(cid_t)" },
