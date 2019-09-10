@@ -505,8 +505,8 @@ error_t sys_notify(cid_t cid, enum notify_op op, intmax_t arg0) {
 }
 
 /// The system call handler to be called from the arch's handler.
-intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, UNUSED uintmax_t arg3,
-    uintmax_t syscall) {
+intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t arg2,
+                         uintmax_t syscall) {
 
     // Try IPC fastpath if possible.
     if (LIKELY(syscall == (SYSCALL_IPC | IPC_SEND | IPC_RECV))) {

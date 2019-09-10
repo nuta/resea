@@ -48,7 +48,8 @@ static NORETURN void handle_exit_current_msg(UNUSED int code) {
     UNIMPLEMENTED();
 }
 
-static error_t handle_create_process_msg(struct process *sender, struct create_process_reply_msg *r) {
+static error_t handle_create_process_msg(struct process *sender,
+                                         struct create_process_reply_msg *r) {
     TRACE("kernel: create_process()");
     struct process *proc = process_create("user" /* TODO: */);
     if (!proc) {
