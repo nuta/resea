@@ -7,6 +7,7 @@
 #define MSG_INLINE_LEN_OFFSET 0
 #define MSG_TYPE_OFFSET 16
 #define MSG_PAGE_PAYLOAD (1ull << 11)
+#define MSG_CHANNEL_PAYLOAD (1ull << 12)
 #define INLINE_PAYLOAD_LEN(header) (((header) >> MSG_INLINE_LEN_OFFSET) & 0x7ff)
 #define PAGE_PAYLOAD_ADDR(page) ((page) & 0xfffffffffffff000ull)
 #define MSG_TYPE(header) (((header) >> MSG_TYPE_OFFSET) & 0xffff)
@@ -33,13 +34,15 @@
 typedef uint32_t header_t;
 typedef uintptr_t page_t;
 typedef uintptr_t page_base_t;
+typedef intmax_t notification_t;
 
 struct message {
     uint32_t header;
     cid_t from;
+    uint32_t __padding1;
     cid_t channel;
     page_t page;
-    uint64_t _padding;
+    uint64_t __padding2;
     uint8_t data[INLINE_PAYLOAD_LEN_MAX];
 } PACKED;
 

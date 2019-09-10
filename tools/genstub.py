@@ -46,6 +46,7 @@ class IdlTransformer(Transformer):
 
         def visit_params(fields):
             page = None
+            channel = None
             inlines = []
             new_fields = []
             for field in fields:
@@ -55,9 +56,19 @@ class IdlTransformer(Transformer):
                         raise InvalidIDLError("Multiple page payloads in single"
                         "message is not supported")
                     page = { "name": field[0], "type": "page" }
+                elif field[1] == "channel":
+                    if page is not None:
+                        raise InvalidIDLError("Multiple channel payloads in "
+                        "single message is not supported")
+                    channel = { "name": field[0], "type": "channel" }
                 else:
                     inlines.append({ "name": field[0], "type": field[1] })
-            return { "page": page, "inlines": inlines, "fields": new_fields }
+            return {
+                "page": page,
+                "channel": channel,
+                "inlines": inlines,
+                "fields": new_fields,
+            }
 
         return {
             "attrs": attrs,
@@ -117,6 +128,9 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
 {%- if msg.args.page -%}
     | MSG_PAGE_PAYLOAD  \
 {%- endif -%}
+{%- if msg.args.channel -%}
+    | MSG_CHANNEL_PAYLOAD  \
+{%- endif -%}
     | ({{ msg.name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
@@ -128,12 +142,16 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
 {%- if msg.rets.page -%}
     | MSG_PAGE_PAYLOAD  \
 {%- endif -%}
+{%- if msg.rets.channel -%}
+    | MSG_CHANNEL_PAYLOAD  \
+{%- endif -%}
     | ({{ msg.name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
 struct {{ msg.name }}_msg {
     uint32_t header;
     cid_t from;
+    uint32_t __padding1;
 {%- if msg.args.channel %}
     cid_t {{ msg.args.channel.name }};
 {%- else %}
@@ -144,7 +162,7 @@ struct {{ msg.name }}_msg {
 {%- else %}
     page_t __unused_page;
 {%- endif %}
-    uint64_t _padding;
+    uint64_t __padding2;
 {%- for field in msg.args.inlines %}
     {{ field.type | rename_type }} {{ field.name }};
 {%- endfor %}
@@ -154,6 +172,7 @@ struct {{ msg.name }}_msg {
 struct {{ msg.name }}_reply_msg {
     uint32_t header;
     cid_t from;
+    uint32_t __padding1;
 {%- if msg.rets.channel %}
     cid_t {{ msg.rets.channel.name }};
 {%- else %}
@@ -164,7 +183,7 @@ struct {{ msg.name }}_reply_msg {
 {%- else %}
     page_t __unused_page;
 {%- endif %}
-    uint64_t _padding;
+    uint64_t __padding2;
 {%- for field in msg.rets.inlines %}
     {{ field.type | rename_type }} {{ field.name }};
 {%- endfor %}
@@ -177,7 +196,7 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
     struct {{ msg.name }}_reply_msg r;
 
     m.header = {{ msg.name | upper }}_HEADER;
-{% for arg in msg.args.inlines %}
+{% for arg in msg.args.fields %}
     m.{{ arg.name }} = {{ arg.name }};
 {%- endfor %}
 {%- if msg.rets.page %}
@@ -189,6 +208,9 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
 {%- for ret in msg.rets.inlines %}
     *{{ ret.name }} = r.{{ ret.name }};
 {%- endfor %}
+{%- if msg.rets.channel %}
+    {{ msg.rets.channel.name }} = r.channel;
+{%- endif %}
 {%- if msg.rets.page %}
     set_page_base(0);
     *{{ msg.rets.page.name }} = PAGE_PAYLOAD_ADDR(r.{{ msg.rets.page.name }});
@@ -222,31 +244,32 @@ static inline header_t dispatch_{{ msg.name }}({{ msg.name }}_handler_t handler,
 """
 
 builtin_types = {
-    "int8":      { "size": "sizeof(int8_t)" },
-    "int16":     { "size": "sizeof(int16_t)" },
-    "int32":     { "size": "sizeof(int32_t)" },
-    "int64":     { "size": "sizeof(int64_t)" },
-    "uint8":     { "size": "sizeof(uint8_t)" },
-    "uint16":    { "size": "sizeof(uint16_t)" },
-    "uint32":    { "size": "sizeof(uint32_t)" },
-    "uint64":    { "size": "sizeof(uint64_t)" },
-    "intmax":    { "size": "sizeof(intmax_t)" },
-    "uintmax":   { "size": "sizeof(uintmax_t)" },
-    "pid":       { "size": "sizeof(pid_t)" },
-    "tid":       { "size": "sizeof(tid_t)" },
-    "cid":       { "size": "sizeof(cid_t)" },
-    "uintptr":   { "size": "sizeof(uintptr_t)" },
-    "size":      { "size": "sizeof(size_t)" },
-    "page":      { "size": "sizeof(page_t)" },
-    "page_base": { "size": "sizeof(page_base_t)" },
+    "int8":      { "name": "int8",      "size": "sizeof(int8_t)" },
+    "int16":     { "name": "int16",     "size": "sizeof(int16_t)" },
+    "int32":     { "name": "int32",     "size": "sizeof(int32_t)" },
+    "int64":     { "name": "int64",     "size": "sizeof(int64_t)" },
+    "uint8":     { "name": "uint8",     "size": "sizeof(uint8_t)" },
+    "uint16":    { "name": "uint16",    "size": "sizeof(uint16_t)" },
+    "uint32":    { "name": "uint32",    "size": "sizeof(uint32_t)" },
+    "uint64":    { "name": "uint64",    "size": "sizeof(uint64_t)" },
+    "intmax":    { "name": "intmax",    "size": "sizeof(intmax_t)" },
+    "uintmax":   { "name": "uintmax",   "size": "sizeof(uintmax_t)" },
+    "pid":       { "name": "pid",       "size": "sizeof(pid_t)" },
+    "tid":       { "name": "tid",       "size": "sizeof(tid_t)" },
+    "cid":       { "name": "cid",       "size": "sizeof(cid_t)" },
+    "channel":   { "name": "cid",       "size": "sizeof(cid_t)" },
+    "uintptr":   { "name": "uintptr",   "size": "sizeof(uintptr_t)" },
+    "size":      { "name": "size",      "size": "sizeof(size_t)" },
+    "page":      { "name": "page",      "size": "sizeof(page_t)" },
+    "page_base": { "name": "page_base", "size": "sizeof(page_base_t)" },
 }
 
 user_defined_types = {}
 
 # Resolves a type name to a corresponding builtin type.
 def resolve_type(type_name):
-    if type_name in builtin_types.keys():
-        return type_name
+    if type_name in builtin_types:
+        return builtin_types[type_name]["name"]
     if type_name not in user_defined_types:
         raise InvalidIDLError(f"Invalid type name: '{type_name}'")
     return user_defined_types[type_name]

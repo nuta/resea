@@ -273,8 +273,19 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             }
         }
 
-        // TODO: Handle channel payloads.
-        ASSERT(m->channel == 0);
+        // Handle the channel payload.
+        if (header & MSG_CHANNEL_PAYLOAD) {
+            struct channel *ch = table_get(&current->process->channels,
+                                           m->channel);
+            struct channel *dst_ch = channel_create(receiver->process);
+            // FIXME: Clean up and return an error instead.
+            ASSERT(ch);
+            ASSERT(dst_ch);
+
+            channel_link(ch->linked_to, dst_ch);
+            channel_decref(ch);
+            dst_m->channel = dst_ch->cid;
+        }
 
         thread_resume(receiver);
     }
