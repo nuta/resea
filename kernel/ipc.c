@@ -28,6 +28,8 @@ struct channel *channel_create(struct process *process) {
     channel->linked_to = channel;
     channel->transfer_to = channel;
     channel->receiver = NULL;
+    channel->notified = false;
+    channel->notification = 0;
     spin_lock_init(&channel->lock);
     list_init(&channel->queue);
 
@@ -101,6 +103,37 @@ void channel_transfer(struct channel *src, struct channel *dst) {
         spin_unlock(&dst->lock);
         spin_unlock_irqrestore(&src->lock, flags);
     }
+}
+
+/// Sends a notification.
+error_t channel_notify(struct channel *ch, enum notify_op op, intmax_t arg0) {
+    spin_lock(&ch->lock);
+
+    // Update the notification data.
+    struct channel *dst = ch->linked_to->transfer_to;
+    switch (op) {
+    case NOTIFY_OP_SET:
+        dst->notification = (intmax_t) arg0;
+        break;
+    case NOTIFY_OP_ADD:
+        dst->notification += arg0;
+        break;
+    default:
+        return ERR_INVALID_NOTIFY_OP;
+    }
+
+    TRACE("notify: %pC (data=%p)", ch, dst->notification);
+    dst->notified = true;
+    dst->receiver = NULL;
+
+    // Resume the receiver thread if exists.
+    struct thread *receiver = dst->receiver;
+    if (receiver) {
+        thread_resume(receiver);
+    }
+
+    spin_unlock(&ch->lock);
+    return OK;
 }
 
 /// The open system call: creates a new channel.
@@ -216,7 +249,10 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         while (1) {
             flags_t flags = spin_lock_irqsave(&dst->lock);
             receiver = dst->receiver;
-            if (receiver != NULL) {
+            // Check if there's a thread waiting for a message on the
+            // destination channel and there're no pending notification in the
+            // channel.
+            if (receiver != NULL && !dst->notified) {
                 dst->receiver = NULL;
                 spin_unlock_irqrestore(&dst->lock, flags);
                 break;
@@ -322,6 +358,19 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         spin_unlock_irqrestore(&recv_on->lock, flags);
         thread_switch();
 
+        // Received a message or a notification.
+        if (recv_on->notified) {
+            // Convert the received notification into a message.
+            TRACE("recv (notification): %pC (data=%p)",
+                  recv_on, recv_on->notification);
+            struct notification_msg *notify_m =
+                (struct notification_msg *) current->ipc_buffer;
+            notify_m->header = NOTIFICATION_HEADER;
+            notify_m->from = 0;
+            notify_m->data = recv_on->notification;
+            recv_on->notified = false;
+        }
+
         // Now `CURRENT->ipc_buffer` is filled by the sender thread.
         if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header))) {
             TRACE("recv: %pC <- @%d (header=%p)", recv_on,
@@ -419,6 +468,15 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // is now blocked and will be resumed by another IPC call.
     arch_thread_switch(current, receiver);
 
+    // Received a message or a notification.
+    if (recv_on->notified) {
+        // Convert the received notification into a message.
+        struct notification_msg *notify_m = (struct notification_msg *) m;
+        notify_m->header = NOTIFICATION_HEADER;
+        notify_m->data = recv_on->notification;
+        recv_on->notified = false;
+    }
+
     // Resumed by a sender thread.
     return OK;
 
@@ -432,6 +490,18 @@ slowpath2:
     spin_unlock(&ch->lock);
 slowpath1:
     return sys_ipc(cid, IPC_SEND | IPC_RECV);
+}
+
+/// The notify system call: sends a notification. This system call MUST be
+/// asynchronous: return an error instead of blocking the current thread!
+error_t sys_notify(cid_t cid, enum notify_op op, intmax_t arg0) {
+    struct thread *current = CURRENT;
+    struct channel *ch = table_get(&current->process->channels, cid);
+    if (UNLIKELY(!ch)) {
+        return ERR_INVALID_CID;
+    }
+
+    return channel_notify(ch, op, arg0);
 }
 
 /// The system call handler to be called from the arch's handler.
@@ -460,6 +530,8 @@ intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, UNUSED uintmax_t arg3,
         return sys_link(arg0, arg1);
     case SYSCALL_TRANSFER:
         return sys_transfer(arg0, arg1);
+    case SYSCALL_NOTIFY:
+        return sys_notify(arg0, arg1, arg2);
     default:
         return ERR_INVALID_SYSCALL;
     }

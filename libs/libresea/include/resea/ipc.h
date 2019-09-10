@@ -8,6 +8,7 @@
 #define MSG_TYPE_OFFSET 16
 #define MSG_PAGE_PAYLOAD (1ull << 11)
 #define MSG_CHANNEL_PAYLOAD (1ull << 12)
+#define MSG_NOTIFICAITON (1ull << 13)
 #define INLINE_PAYLOAD_LEN(header) (((header) >> MSG_INLINE_LEN_OFFSET) & 0x7ff)
 #define PAGE_PAYLOAD_ADDR(page) ((page) & 0xfffffffffffff000ull)
 #define MSG_TYPE(header) (((header) >> MSG_TYPE_OFFSET) & 0xffff)

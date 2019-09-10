@@ -67,6 +67,10 @@ struct channel {
     /// some of its channels must be alive to prevent dangling pointers until
     /// no one references them.
     int ref_count;
+    /// If set, `notification` contains a noitification data.
+    bool notified;
+    /// The received notification data.
+    intmax_t notification;
     /// The channel linked with this channel. The messages sent from this
     /// channel will be sent to this channel. The destination channel can be
     /// channels in another process.

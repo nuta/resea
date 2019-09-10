@@ -45,3 +45,9 @@ interface kernel_test {
     [id(1), type(call)]
     exit_kernel_test() -> ()
 }
+
+[id(127)]
+interface notification {
+    [id(1), type(call)]
+    notification(data: intmax) -> ()
+}

@@ -11,6 +11,7 @@
 #define SYSCALL_CLOSE 2
 #define SYSCALL_LINK 3
 #define SYSCALL_TRANSFER 4
+#define SYSCALL_NOTIFY 5
 
 #define IPC_SEND (1ull << 8)
 #define IPC_RECV (1ull << 9)
@@ -39,6 +40,15 @@ typedef uint32_t header_t;
 #define SYSCALL_FASTPATH_TEST(header) ((header) & 0x1800ull)
 
 //
+//  Notification.
+//
+typedef intmax_t notification_t;
+enum notify_op {
+    NOTIFY_OP_SET = 1,
+    NOTIFY_OP_ADD = 2,
+};
+
+//
 //  Page Payload.
 //
 typedef uintmax_t page_t;
@@ -65,9 +75,11 @@ void channel_incref(struct channel *ch);
 void channel_decref(struct channel *ch);
 void channel_link(struct channel *ch1, struct channel *ch2);
 void channel_transfer(struct channel *src, struct channel *dst);
+error_t channel_notify(struct channel *ch, enum notify_op op, intmax_t arg0);
 cid_t sys_open(void);
 error_t sys_close(cid_t cid);
 error_t sys_ipc(cid_t cid, uint32_t ops);
+error_t sys_notify(cid_t ch, enum notify_op op, intmax_t arg0);
 intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t arg3,
                          uintmax_t syscall);
 #endif
