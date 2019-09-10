@@ -205,7 +205,6 @@ error_t handle_allow_io_msg(struct process *sender,
     LIST_FOR_EACH(node, &sender->threads) {
         struct thread *thread = LIST_CONTAINER(thread, next, node);
         thread_allow_io(thread);
-        INFO("  RFL = %d %p", thread->tid, thread->arch.rflags_ormask);
     }
 
     r->header = ALLOW_IO_REPLY_HEADER;
