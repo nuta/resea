@@ -181,7 +181,6 @@ void deliver_interrupt(uint8_t irq) {
 
 static error_t handle_listen_irq_msg(cid_t cid, uint8_t irq,
                                      struct listen_irq_reply_msg *r) {
-    INFO("kernel: listen_irq(cid=%d, %d)", cid, irq);
     struct channel *ch = table_get(&CURRENT->process->channels, cid);
     ASSERT(ch);
 
