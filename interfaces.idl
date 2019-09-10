@@ -28,6 +28,8 @@ interface pager {
 interface memmgr {
     [id(1), type(call)]
     benchmark_nop() -> ()
+    [id(2), type(call)]
+    alloc_pages(order: size) -> (page: page)
 }
 
 [id(4)]

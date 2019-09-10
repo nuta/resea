@@ -2,10 +2,11 @@
 #include "elf.h"
 #include "initfs.h"
 #include "process.h"
-
+#include "init_args.h"
 #include <resea.h>
 #include <resea/ipc.h>
 #include <resea/string.h>
+#include <resea/math.h>
 #include <resea_idl.h>
 
 static cid_t kernel_ch = 1;
@@ -14,7 +15,7 @@ extern char __initfs;
 error_t handle_fill_page_request(
     struct fill_page_request_msg *m, struct fill_page_request_reply_msg *r) {
     uintptr_t alloced_addr;
-    if ((alloced_addr = alloc_pages(1)) == 0)
+    if ((alloced_addr = do_alloc_pages(0)) == 0)
         return ERR_NO_MEMORY;
 
     struct process *proc = get_process_by_pid(m->pid);
@@ -67,6 +68,20 @@ static error_t handle_benchmark_nop(UNUSED struct benchmark_nop_msg *m,
     return OK;
 }
 
+static error_t handle_alloc_pages(
+    struct alloc_pages_msg *m,
+    struct alloc_pages_reply_msg *r
+) {
+
+    paddr_t paddr = do_alloc_pages(m->order);
+    if (!paddr) {
+        return ERR_NO_MEMORY;
+    }
+
+    r->page = PAGE_PAYLOAD(paddr, m->order, PAGE_TYPE_SHARED);
+    return OK;
+}
+
 void mainloop(cid_t server_ch) {
     struct message m;
     TRY_OR_PANIC(ipc_recv(server_ch, &m));
@@ -89,6 +104,9 @@ void mainloop(cid_t server_ch) {
         case BENCHMARK_NOP_MSG:
             err = dispatch_benchmark_nop(handle_benchmark_nop, &m, &r);
             break;
+        case ALLOC_PAGES_MSG:
+            err = dispatch_alloc_pages(handle_alloc_pages, &m, &r);
+            break;
         default:
             WARN("invalid message type %x", MSG_TYPE(m.header));
             err = ERR_INVALID_MESSAGE;
@@ -105,6 +123,7 @@ void mainloop(cid_t server_ch) {
 
 void main(void) {
     INFO("starting...");
+    init_alloc_pages();
     initfs_init();
     process_init();
 
