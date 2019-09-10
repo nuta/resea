@@ -133,6 +133,35 @@ static error_t handle_add_pager_msg(pid_t pid, cid_t pager, vaddr_t start,
     return OK;
 }
 
+static error_t handle_add_kernel_channel_msg(pid_t pid,
+    struct add_kernel_channel_reply_msg *r) {
+    TRACE("kernel: add_kernel_channel(pid=%d)", pid);
+
+    struct process *proc = table_get(&all_processes, pid);
+    if (!proc) {
+        WARN("invalid pid");
+        return ERR_INVALID_MESSAGE;
+    }
+
+
+    struct channel *kernel_ch = channel_create(kernel_process);
+    if (!kernel_ch) {
+        PANIC("failed to create a channel");
+    }
+
+    struct channel *user_ch = channel_create(proc);
+    if (!user_ch) {
+        PANIC("failed to create a channel");
+    }
+
+    channel_transfer(kernel_ch, kernel_server_ch);
+    channel_link(kernel_ch, user_ch);
+
+    r->header = ADD_KERNEL_CHANNEL_HEADER;
+    r->kernel_ch = user_ch->cid;
+    return OK;
+}
+
 NORETURN static void handle_exit_kernel_test_msg(void) {
     INFO("Power off");
     arch_poweroff();
@@ -165,6 +194,13 @@ NORETURN static void mainloop(cid_t server_ch) {
         case CREATE_PROCESS_MSG: {
             err = handle_create_process_msg(sender,
                 (struct create_process_reply_msg *) ipc_buffer);
+            break;
+        }
+        case ADD_KERNEL_CHANNEL_MSG: {
+            struct add_kernel_channel_msg *m =
+                (struct add_kernel_channel_msg *) ipc_buffer;
+            err = handle_add_kernel_channel_msg(m->pid,
+                (struct add_kernel_channel_reply_msg *) ipc_buffer);
             break;
         }
         case SPAWN_THREAD_MSG: {

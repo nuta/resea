@@ -4,16 +4,20 @@ interface kernel {
     create_process() -> (pid: pid, pager_ch: cid)
 
     [id(2), type(call)]
-    destroy_process(pid: pid) -> ()
+    add_kernel_channel(pid: pid) -> (kernel_ch: cid)
 
     [id(3), type(call)]
+    destroy_process(pid: pid) -> ()
+
+    [id(4), type(call)]
     spawn_thread(pid: pid, start: uintptr, stack: uintptr, buffer: uintptr,
                  arg: uintptr) -> (tid: tid)
 
-    [id(4), type(call)]
+    [id(5), type(call)]
     destroy_thread(tid: tid) -> ()
 
-    [id(5), type(call)]
+    // TODO: Use channel payload.
+    [id(6), type(call)]
     add_pager(pid: pid, pager: cid, start: uintptr, size: size, flags: uint8)
         -> ()
 }
