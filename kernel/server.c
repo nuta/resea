@@ -199,6 +199,19 @@ static error_t handle_listen_irq_msg(cid_t cid, uint8_t irq,
     return ERR_NO_MEMORY;
 }
 
+error_t handle_allow_io_msg(struct process *sender,
+                            struct allow_io_reply_msg *r) {
+    INFO("kernel: allow_io(proc=%s)", sender->name);
+    LIST_FOR_EACH(node, &sender->threads) {
+        struct thread *thread = LIST_CONTAINER(thread, next, node);
+        thread_allow_io(thread);
+        INFO("  RFL = %d %p", thread->tid, thread->arch.rflags_ormask);
+    }
+
+    r->header = ALLOW_IO_REPLY_HEADER;
+    return OK;
+}
+
 NORETURN static void handle_exit_kernel_test_msg(void) {
     INFO("Power off");
     arch_poweroff();
@@ -258,6 +271,10 @@ NORETURN static void mainloop(cid_t server_ch) {
                  (struct listen_irq_reply_msg *) ipc_buffer);
             break;
         }
+        case ALLOW_IO_MSG:
+            err = handle_allow_io_msg(sender,
+                                      (struct allow_io_reply_msg *) ipc_buffer);
+            break;
         case EXIT_KERNEL_TEST_MSG:
             handle_exit_kernel_test_msg();
             break;

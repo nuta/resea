@@ -46,7 +46,13 @@ error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
     thread->arch.rsp = (uint64_t) rsp;
     thread->arch.kernel_stack = kernel_stack + KERNEL_STACK_SIZE;
     thread->arch.cr3 = thread->process->page_table.pml4;
+    thread->arch.rflags_ormask = 0;
     return OK;
+}
+
+void thread_allow_io(struct thread *thread) {
+    // Set IOPL.
+    thread->arch.rflags_ormask = (3 << 12);
 }
 
 void set_current_thread(struct thread *thread) {

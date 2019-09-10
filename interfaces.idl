@@ -23,6 +23,9 @@ interface kernel {
 
     [id(7), type(call)]
     listen_irq(ch: channel, irq: uint8) -> ()
+
+    [id(8), type(call)]
+    allow_io() -> ()
 }
 
 [id(2)]

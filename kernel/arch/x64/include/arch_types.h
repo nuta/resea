@@ -57,6 +57,7 @@ struct arch_thread {
     uint64_t cr3;
     uint64_t info;
     uint64_t xsave_area;
+    uint64_t rflags_ormask;
 } PACKED;
 
 struct page_table {

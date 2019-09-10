@@ -1,6 +1,7 @@
 .intel_syntax noprefix
 .set ARCH_THREAD_RSP, 0
 .set ARCH_THREAD_KERNEL_STACK, 8
+.set ARCH_RFLAGS_ORMASK, 40
 
 .extern syscall_handler
 .globl x64_syscall_handler
@@ -190,6 +191,13 @@ handle_interrupt:
      * occur in the userspace. If so, do swapgs. */
     test qword ptr [rsp + 8], 3
     jz 1f
+
+    /* Update RFLAGS. */
+    push rax
+    mov rax, gs:[ARCH_RFLAGS_ORMASK]
+    or [rsp + 24], rax
+    pop rax
+
     cli
     swapgs
 1:
