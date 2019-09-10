@@ -39,10 +39,9 @@ bochs: $(BUILD_DIR)/resea.iso
 	$(PROGRESS) BOCHS $<
 	$(BOCHS) -qf misc/bochsrc
 
-run: build
-	$(PROGRESS) QEMU $(BUILD_DIR)/kernel.elf
-	$(PYTHON3) ./tools/make-bootable-on-qemu.py $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/kernel.qemu.elf
-	$(QEMU) $(QEMUFLAGS) -kernel $(BUILD_DIR)/kernel.qemu.elf
+run: $(BUILD_DIR)/resea.iso
+	$(PROGRESS) QEMU $(BUILD_DIR)/kernel.iso
+	$(QEMU) $(QEMUFLAGS) $<
 
 iso: $(BUILD_DIR)/resea.iso
 
