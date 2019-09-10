@@ -18,6 +18,8 @@
 
 #define NULL ((void *) 0)
 
+#define PAGE_SIZE 4096
+
 // error_t values
 #define OK (0)
 #define ERR_INVALID_CID (-1)

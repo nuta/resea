@@ -25,7 +25,6 @@
 #define ASAN_SHADOW_MEMORY 0xffff800010000000
 #define OBJ_MAX_SIZE 1024
 #define TICK_HZ 1000
-#define PAGE_SIZE 4096
 #define PAGE_PRESENT (1 << 0)
 #define PAGE_WRITABLE (1 << 1)
 #define PAGE_USER (1 << 2)
