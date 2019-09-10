@@ -61,3 +61,12 @@ interface notification {
     [id(1), type(call)]
     notification(data: intmax) -> ()
 }
+
+[id(10)]
+interface keyboard_driver {
+    [id(1), type(call)]
+    listen_keyboard(ch: channel) -> ()
+
+    [id(2), type(call)]
+    on_keyinput(keycode: uint8) -> ()
+}
