@@ -478,6 +478,12 @@ error_t sys_ipc_fastpath(cid_t cid) {
         recv_on->notified = false;
     }
 
+    if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header))) {
+        TRACE("recv: %pC <- @%d (header=%p)", recv_on,
+            current->ipc_buffer->from, current->ipc_buffer->header);
+        INFO("receive page: %p", current->ipc_buffer->page);
+    }
+
     // Resumed by a sender thread.
     return OK;
 
