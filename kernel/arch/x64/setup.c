@@ -1,8 +1,10 @@
 #include <arch.h>
+#include <init_args.h>
 #include <boot.h>
 #include <printk.h>
 #include <x64/apic.h>
 #include <x64/handler.h>
+#include <x64/multiboot.h>
 #include <x64/print.h>
 #include <x64/smp.h>
 #include <x64/x64.h>
@@ -18,6 +20,68 @@
 #define CPUID_VENDOR_INTEL_EDX 0x49656e69
 #define CPUID_FEATURES_ECX_XSAVE (1ul << 26)
 #define CPUID_EXT_FEATURES_EBX_FSGSBASE (1ul << 0)
+
+/// Defined in boot.S
+extern paddr_t multiboot_info_addr;
+
+static struct multiboot_info *multiboot_info = NULL;
+
+static void parse_multiboot_info(struct init_args *init_args) {
+    TRACE("multiboot info is located at %p", multiboot_info);
+    TRACE("multiboot flags = %x", multiboot_info->flags);
+
+    struct multiboot_mmap *memory_maps =
+        (struct multiboot_mmap *) from_paddr(multiboot_info->mmap_paddr);
+    int num_mmaps = multiboot_info->mmap_len / sizeof(struct multiboot_mmap);
+    TRACE("Memory map:");
+    int j = 0;
+    for (int i = 0; i < num_mmaps; i++) {
+        enum memory_map_type type;
+        const char *type_name;
+        switch (memory_maps[i].type) {
+        case MULTIBOOT_MMAP_FREE:
+            type = INITARGS_MEMORY_MAP_FREE;
+            type_name = "free";
+            break;
+        case MULTIBOOT_MMAP_RESERVED:
+            type = INITARGS_MEMORY_MAP_RESERVED;
+            type_name = "reserved";
+            break;
+        case MULTIBOOT_MMAP_ACPI:
+            type = INITARGS_MEMORY_MAP_RESERVED;
+            type_name = "ACPI";
+            break;
+        case MULTIBOOT_MMAP_NVS:
+            type = INITARGS_MEMORY_MAP_RESERVED;
+            type_name = "NVS";
+            break;
+        case MULTIBOOT_MMAP_BAD_RAM:
+            type = INITARGS_MEMORY_MAP_RESERVED;
+            type_name = "bad RAM";
+            break;
+        default:
+            type = INITARGS_MEMORY_MAP_RESERVED;
+            type_name = "unknown";
+            break;
+        }
+
+        paddr_t start = memory_maps[i].addr;
+        paddr_t end = memory_maps[i].addr + memory_maps[i].len;
+        TRACE("    %p-%p: %s", start, end, type_name);
+
+        // Ignore memory ranges outside of the straight mapping.
+        if (end < STRAIGHT_MAP_ADDR) {
+            continue;
+        }
+
+        init_args->memory_maps[j].start = MAX(start, STRAIGHT_MAP_ADDR);
+        init_args->memory_maps[j].end = end;
+        init_args->memory_maps[j].type = type;
+        j++;
+    }
+
+    init_args->num_memory_maps = j;
+}
 
 // Checks if a bit in the specified CPUID field is set. If not, do panic.
 #define CHECK_CPUID_BIT(leaf, subleaf, reg, mask)                              \
@@ -153,12 +217,14 @@ static void syscall_init(void) {
     asm_wrmsr(MSR_EFER, asm_rdmsr(MSR_EFER) | EFER_SCE);
 }
 
-void x64_setup(void) {
+void x64_setup(paddr_t multiboot_info_addr) {
+    multiboot_info = (struct multiboot_info *) from_paddr(multiboot_info_addr);
     x64_print_init();
     boot();
 }
 
-void arch_init(void) {
+void arch_init(struct init_args *init_args) {
+    parse_multiboot_info(init_args);
     cpu_features_init();
     fpu_init();
     pic_init();

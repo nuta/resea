@@ -14,6 +14,7 @@
 #define PAGE_ARENA_ADDR         0xffff800001400000
 #define PAGE_ARENA_LEN          0x0000000000c00000
 
+#define INIT_ARGS_OFFSET 256
 #define INITFS_ADDR 0x0000000001000000
 #define INITFS_END \
     0x0000000002000000 // TODO: make sure that memmgr.bin is not too big

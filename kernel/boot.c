@@ -1,4 +1,5 @@
 #include <arch.h>
+#include <init_args.h>
 #include <debug.h>
 #include <ipc.h>
 #include <memory.h>
@@ -24,7 +25,7 @@ static paddr_t straight_map_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
 }
 
 // Spawns the first user process from the initfs.
-static void userland(void) {
+static void userland(struct init_args *args) {
     // Create the very first user process and thread.
     struct process *user_process = process_create("memmgr");
     if (!user_process) {
@@ -64,23 +65,27 @@ static void userland(void) {
         PANIC("failed to add a vmarea");
     }
 
+    // Fill init_args.
+    inlined_memcpy(__initfs + INIT_ARGS_OFFSET, args, sizeof(*args));
+
     // Enqueue the thread into the run queue.
     thread_resume(thread);
 }
 
 /// Initializes the kernel and starts the first userland process.
 void boot(void) {
+    struct init_args init_args;
     init_boot_stack_canary();
 
     INFO("Booting Resea...");
     debug_init();
     memory_init();
-    arch_init();
+    arch_init(&init_args);
     process_init();
     thread_init();
     kernel_server_init();
 
-    userland();
+    userland(&init_args);
 
     // Perform the very first context switch. The current context will become a
     // CPU-local idle thread.

@@ -3,24 +3,10 @@
 
 .code32
 .align 8
-multiboot2:
-    .long 0xe85250d6    /* magic */
-    .long 0             /* arch (i386) */
-    .long multiboot2_end - multiboot2
-    .long   -(0xe85250d6 + 0 + (multiboot2_end - multiboot2))  /* checksum */
-
-    /* terminator */
-    .word 0
-    .word 0
-    .word 0
-multiboot2_end:
-
-/* Old fashion multiboot header for QEMU. */
-.align 8
 old_multiboot:
-    .long 0x1badb002        /* magic */
-    .long 0                 /* flags */
-    .long -(0x1badb002 + 0) /* checksum */
+    .long 0x1badb002          // magic
+    .long 0x00000002          // flags: include the memory map
+    .long -(0x1badb002 + 0x2) // checksum
 old_multiboot_end:
 
 /* The entry point jumped from the bootloader. */
@@ -29,7 +15,23 @@ old_multiboot_end:
 x64_boot:
     cli
     cld
-    mov esp, 0x7c00
+
+    /*
+     * Set the boot (later reused for the cpu-local idle thread) stack. It is
+     * statically allocated as follows (see INTERNALS.md):
+     *
+     *     address = 0xffff800000a00000 + (cpu_id * PAGE_SIZE)
+     *     length  = PAGE_SIZE
+     *
+     *  Here we assume that the current processor is BSP, its APIC ID is 0,
+     *  and PAGE_SIZE is 4096.
+     */
+    mov esp, 0xa00000 + 4096
+
+    /* Save the 64-bit physical address of struct multiboot_info. */
+    xor eax, eax
+    push eax // Upper 32-bits.
+    push ebx
 
     /* Prepare for RETF. */
     mov eax, 24
@@ -143,24 +145,29 @@ long_mode:
     cld
     rep stosb
 
-    /*
-     * Set the boot (later reused for the cpu-local idle thread) stack. It is
-     * statically allocated as follows (refer docs/x64/memory-map.md):
-     *
-     *     address = 0xffff800000a00000 + (cpu_id * PAGE_SIZE)
-     *     length  = PAGE_SIZE
-     *
-     *  Here we assume that the current processor is BSP, its APIC ID is 0,
-     *  and PAGE_SIZE is 4096.
-     */
-    mov rsp, 0xffff800000a00000 + 4096
+    // Update RSP/RIP to use the virtual address.
+    mov rbx, 0xffff800000000000
+    or rsp, rbx
 
-    /* The kernel no longer access a virtual address around 0x00000000_00000000. */
+    lea rax, [long_mode2]
+    or rax, rbx
+    jmp rax
+
+long_mode2:
+    // Read the address of the x64_setup. Due to a linker error, we cannot use
+    // LEA instruction here. Note that x64_setup_addr points to its physical
+    // address, not virtual access so we must do this before unmapping the
+    // virtual address around 0x0000_0000.
+    mov rax, x64_setup_addr
+
+    // The kernel no longer access a virtual address around 0x0000_0000. Unmap
+    // the area to catch bugs (especially NULL pointer dereferences in the
+    // kernel).
     mov rdi, 0x0700000
     mov qword ptr [edi], 0 /* unmap */
 
     /* call x64_setup() */
-    mov rax, x64_setup_addr
+    pop rdi
     call rax
 
     /* In case main() returns. */

@@ -13,7 +13,12 @@ __initfs:
     .long 0      // number of files
 
     // The initfs_file entry for "memmgr.bin".
-    .space 256
+    .align 256
+
+    // struct init_args
+.globl __init_args
+__init_args:
+    .space 1024
 
 .section .text
 start_memmgr:

@@ -6,7 +6,8 @@
 
 #define CPUVAR (x64_get_cpuvar())
 
-void arch_init(void);
+struct init_args;
+void arch_init(struct init_args *args);
 void arch_idle(void);
 void arch_putchar(char ch);
 NORETURN void arch_panic(void);

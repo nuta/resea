@@ -35,8 +35,8 @@ libresea provides some useful printf format specifiers:
 
 ### Math
 ```c
-#define min(a, b) // Supports arbitrary integer types.
-#define max(a, b) // Supports arbitrary integer types.
+#define MIN(a, b) // Supports arbitrary integer types.
+#define MAX(a, b) // Supports arbitrary integer types.
 ```
 
 ### Exit the program

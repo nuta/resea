@@ -13,6 +13,10 @@ void arch_asan_init(void) {
 
     // Kernel image.
     asan_init_area(ASAN_VALID, (void *) __kernel_image_start, image_len);
+    // QEMU multiboot info.
+    asan_init_area(ASAN_VALID, from_paddr(0x9000), 0x1000);
+    // GRUB multiboot info.
+    asan_init_area(ASAN_VALID, from_paddr(0x10000), 0x1000);
     // Text-mode VGA.
     asan_init_area(ASAN_VALID, from_paddr(0xb8000), 0x1000);
     // MP table.
