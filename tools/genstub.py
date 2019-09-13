@@ -236,7 +236,7 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
     *{{ ret.name }} = r.{{ ret.name }};
 {%- endfor %}
 {%- if msg.rets.channel %}
-    {{ msg.rets.channel.name }} = r.channel;
+    *{{ msg.rets.channel.name }} = r.{{ msg.rets.channel.name }};
 {%- endif %}
 {%- if msg.rets.page %}
     set_page_base(0);
