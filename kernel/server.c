@@ -13,7 +13,7 @@ struct channel *kernel_server_ch = NULL;
 static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     struct message *ipc_buffer = CURRENT->kernel_ipc_buffer;
     struct channel *pager = vma->arg;
-    TRACE("user pager=%d, addr=%p", pager->cid, vaddr);
+    // TRACE("user pager=%d, addr=%p", pager->cid, vaddr);
 
     // Construct a full_page_request message.
     struct fill_page_request_msg *m =
@@ -34,7 +34,7 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     struct fill_page_request_reply_msg *r =
         (struct fill_page_request_reply_msg *) ipc_buffer;
     paddr_t paddr = PAGE_PAYLOAD_ADDR(r->page);
-    TRACE("received a page from the pager: addr=%p", paddr);
+    // TRACE("received a page from the pager: addr=%p", paddr);
     return paddr;
 }
 

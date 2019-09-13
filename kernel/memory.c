@@ -93,7 +93,7 @@ static int is_valid_page_fault_for(
 /// page fault is invalid (e.g., segfault and NULL pointer dereference), kill
 /// the current thread.
 paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
-    TRACE("page_fault_handler: addr=%p", addr);
+    // TRACE("page_fault_handler: addr=%p", addr);
 
     if (!(flags & PF_USER)) {
         // This will never occur. NEVER!
@@ -114,8 +114,8 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
         struct vmarea *vma = LIST_CONTAINER(vmarea, next, entry);
         if (is_valid_page_fault_for(vma, aligned_vaddr, flags)) {
             // Ask the associated pager to fill a physical page.
-            TRACE(
-                "calling pager: pager=%p, vaddr=%p", vma->pager, aligned_vaddr);
+            // TRACE(
+            //     "calling pager: pager=%p, vaddr=%p", vma->pager, aligned_vaddr);
             paddr_t paddr = vma->pager(vma, aligned_vaddr);
 
             if (!paddr) {
@@ -124,7 +124,7 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
             }
 
             // Register the filled page with the page table.
-            TRACE("#PF: link vaddr %p to %p", aligned_vaddr, paddr);
+            // TRACE("#PF: link vaddr %p to %p", aligned_vaddr, paddr);
             link_page(
                 &process->page_table, aligned_vaddr, paddr, 1, vma->flags);
 

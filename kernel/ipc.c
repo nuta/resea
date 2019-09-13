@@ -204,14 +204,16 @@ static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
     // since perhaps it is just not filled by the pager (i.e., not yet accessed
     // by the user). Note that page_fault_handler always returns a valid paddr;
     // if the vaddr is invalid, it kills the current thread and won't return.
-    TRACE("page payload %p does not exist, trying the pager...", vaddr);
+    // TRACE("page payload %p does not exist, trying the pager...", vaddr);
     return page_fault_handler(vaddr, PF_USER);
 }
 
 /// Checks whether the message is worth tracing.
 static inline bool is_annoying_msg(uint16_t msg_type) {
     return msg_type == PRINTCHAR_MSG
-           || msg_type == PRINTCHAR_REPLY_MSG;
+           || msg_type == PRINTCHAR_REPLY_MSG
+           || msg_type == FILL_PAGE_REQUEST_MSG
+           || msg_type == FILL_PAGE_REQUEST_REPLY_MSG;
 }
 
 /// The ipc system call: sends/receives messages.
@@ -481,7 +483,6 @@ error_t sys_ipc_fastpath(cid_t cid) {
     if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header))) {
         TRACE("recv: %pC <- @%d (header=%p)", recv_on,
             current->ipc_buffer->from, current->ipc_buffer->header);
-        INFO("receive page: %p", current->ipc_buffer->page);
     }
 
     // Resumed by a sender thread.
