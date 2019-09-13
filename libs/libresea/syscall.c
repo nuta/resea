@@ -43,6 +43,11 @@ error_t ipc_recv(cid_t ch, struct message *r) {
     return err;
 }
 
+error_t ipc_send(cid_t ch, struct message *m) {
+    copy_to_ipc_buffer(m);
+    return sys_ipc(ch, IPC_SEND);
+}
+
 error_t ipc_call(cid_t ch, struct message *m, struct message *r) {
     copy_to_ipc_buffer(m);
     error_t err = sys_ipc(ch, IPC_SEND | IPC_RECV);
