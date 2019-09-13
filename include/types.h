@@ -17,17 +17,17 @@
 #define POW2(order) (1 << (order))
 #define ALIGN_DOWN(value, align) ((value) & ~((align) - 1))
 #define ALIGN_UP(value, align) ALIGN_DOWN(value + align - 1, align)
-#define MAX(a, b)              \
-    ({                         \
-        __typeof__(a) x = (a); \
-        __typeof__(b) y = (b); \
-        (x > y) ? x : y;       \
+#define MAX(a, b)                \
+    ({                           \
+        __typeof__(a) __a = (a); \
+        __typeof__(b) __b = (b); \
+        (__a > __b) ? __a : __b; \
     })
-#define MIN(a, b)              \
-    ({                         \
-        __typeof__(a) x = (a); \
-        __typeof__(b) y = (b); \
-        (x < y) ? x : y;       \
+#define MIN(a, b)                \
+    ({                           \
+        __typeof__(a) __a = (a); \
+        __typeof__(b) __b = (b); \
+        (__a < __b) ? __a : __b; \
     })
 
 #define NULL ((void *) 0)
