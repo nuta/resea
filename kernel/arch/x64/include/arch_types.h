@@ -19,7 +19,7 @@
 #define INITFS_END \
     0x0000000002000000 // TODO: make sure that memmgr.bin is not too big
 #define STRAIGHT_MAP_ADDR       0x0000000003000000
-#define STRAIGHT_MAP_END        0x0000000010000000
+#define STRAIGHT_MAP_END        0xffff800000000000
 
 #define THREAD_INFO_ADDR        0x0000000000f1b000
 #define ASAN_SHADOW_MEMORY 0xffff800010000000
