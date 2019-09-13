@@ -12,21 +12,21 @@
 static cid_t kernel_ch = 1;
 
 extern char __initfs;
-error_t handle_fill_page_request(
-    struct fill_page_request_msg *m, struct fill_page_request_reply_msg *r) {
+error_t handle_fill_page_request(UNUSED cid_t from, pid_t pid, uintptr_t addr,
+                                 UNUSED size_t size, page_t *page) {
     uintptr_t alloced_addr;
     if ((alloced_addr = do_alloc_pages(0)) == 0)
         return ERR_NO_MEMORY;
 
-    struct process *proc = get_process_by_pid(m->pid);
+    struct process *proc = get_process_by_pid(pid);
     assert(proc);
 
-    TRACE("page fault addr: %p", m->addr);
+    // TRACE("page fault addr: %p", addr);
     for (int i = 0; i < proc->elf.num_phdrs; i++) {
         struct elf64_phdr *phdr = &proc->elf.phdrs[i];
-        if (phdr->p_vaddr <= m->addr &&
-            m->addr < phdr->p_vaddr + phdr->p_memsz) {
-            size_t offset = m->addr - phdr->p_vaddr;
+        if (phdr->p_vaddr <= addr &&
+            addr < phdr->p_vaddr + phdr->p_memsz) {
+            size_t offset = addr - phdr->p_vaddr;
             size_t fileoff = phdr->p_offset + offset;
             if (fileoff >= proc->file->len) {
                 // Invalid file offset (perhaps p_offset is invalid). Just
@@ -38,56 +38,49 @@ error_t handle_fill_page_request(
                                   phdr->p_filesz - offset);
             memcpy_s((void *) alloced_addr, 4096, &proc->file->content[fileoff],
                 copy_len);
-            TRACE("Filling from initfs fault=%p, off_in_fs=%p, %d", m->addr,
-                (uintptr_t) &proc->file->content[fileoff] -
-                    (uintptr_t) &__initfs,
-                copy_len);
+            // TRACE("Filling from initfs fault=%p, off_in_fs=%p, %d", addr,
+            //     (uintptr_t) &proc->file->content[fileoff] -
+            //         (uintptr_t) &__initfs,
+            //     copy_len);
             break;
         }
     }
 
-    r->header = FILL_PAGE_REQUEST_REPLY_HEADER;
-    r->page = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
+    *page = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
     return OK;
 }
 
-static error_t handle_printchar(
-    struct printchar_msg *m, UNUSED struct printchar_reply_msg *r) {
+static error_t handle_printchar(UNUSED cid_t from, uint8_t ch) {
     // Forward to the kernel sever.
-    return printchar(kernel_ch, m->ch);
+    return printchar(kernel_ch, ch);
 }
 
-static error_t handle_exit_kernel_test(UNUSED struct exit_kernel_test_msg *m,
-    UNUSED struct exit_kernel_test_reply_msg *r) {
+static error_t handle_exit_kernel_test(UNUSED cid_t from) {
     // Forward to the kernel sever.
     return exit_kernel_test(kernel_ch);
 }
 
-static error_t handle_benchmark_nop(UNUSED struct benchmark_nop_msg *m,
-    UNUSED struct benchmark_nop_reply_msg *r) {
+static error_t handle_benchmark_nop(UNUSED cid_t from) {
     return OK;
 }
 
-static error_t handle_alloc_pages(
-    struct alloc_pages_msg *m,
-    struct alloc_pages_reply_msg *r
-) {
-
-    paddr_t paddr = do_alloc_pages(m->order);
+static error_t handle_alloc_pages(UNUSED cid_t from, size_t order,
+                                  page_t *page) {
+    paddr_t paddr = do_alloc_pages(order);
     if (!paddr) {
         return ERR_NO_MEMORY;
     }
 
-    r->page = PAGE_PAYLOAD(paddr, m->order, PAGE_TYPE_SHARED);
+    *page = PAGE_PAYLOAD(paddr, order, PAGE_TYPE_SHARED);
     return OK;
 }
 
 void mainloop(cid_t server_ch) {
-    struct message m;
-    TRY_OR_PANIC(ipc_recv(server_ch, &m));
     while (1) {
+        struct message m;
+        TRY_OR_PANIC(ipc_recv(server_ch, &m));
+
         struct message r;
-        cid_t from = m.from;
         error_t err;
         switch (MSG_TYPE(m.header)) {
         case EXIT_CURRENT_MSG:
@@ -142,6 +135,6 @@ void main(void) {
         }
     }
 
-    INFO("enterinng main loop ");
+    INFO("enterinng main loop");
     mainloop(server_ch);
 }

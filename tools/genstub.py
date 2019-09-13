@@ -108,6 +108,7 @@ typedef vaddr_t uintptr_t;
 #pragma clang diagnostic push
 // FIXME: Support padding in the message structs.
 #pragma clang diagnostic ignored "-Waddress-of-packed-member"
+#pragma clang diagnostic ignored "-Wunused-variable"
 
 #define MSG_REPLY_FLAG (1ULL << 7)
 
@@ -219,14 +220,23 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
     return OK;
 }
 
-typedef error_t (*{{ msg.name }}_handler_t)(struct {{ msg.name }}_msg *m, struct {{ msg.name }}_reply_msg *r);
+typedef error_t (*{{ msg.name }}_handler_t)({{ msg | handler_params }});
 
 static inline header_t dispatch_{{ msg.name }}({{ msg.name }}_handler_t handler, struct message *m, struct message *r) {
     if (m->header != {{ msg.name | upper }}_HEADER) {
         return ERR_INVALID_HEADER;
     }
 
-    error_t err = handler((struct {{ msg.name }}_msg *) m, (struct {{ msg.name }}_reply_msg *) r);
+    struct {{ msg.name }}_msg *m2 = (struct {{ msg.name }}_msg *) m;
+    struct {{ msg.name }}_reply_msg *r2 = (struct {{ msg.name }}_reply_msg *) r;
+    error_t err = handler(m->from
+{%- for field in msg.args.fields -%}
+        , m2->{{ field.name }}
+{%- endfor -%}
+{%- for field in msg.rets.fields -%}
+        , &r2->{{ field.name }}
+{%- endfor -%}
+    );
     if (err != ERR_DONT_REPLY) {
         r->header = (err == OK) ? {{ msg.name | upper }}_REPLY_HEADER : ERROR_TO_HEADER(err);
     }
@@ -234,7 +244,7 @@ static inline header_t dispatch_{{ msg.name }}({{ msg.name }}_handler_t handler,
 }
 #endif
 
-{%- endif %}
+{%- endif %} {# msg.attrs.type == "call" #}
 {%- endfor %}
 {%- endfor %}
 
@@ -303,6 +313,14 @@ def call_params(m):
             params.append(f"{rename_type(ret['type'])} *{ret['name']}")
     return ", ".join(params)
 
+def handler_params(m):
+    params = ["cid_t from"]
+    for arg in m["args"]["fields"]:
+        params.append(f"{rename_type(arg['type'])} {arg['name']}")
+    for ret in m["rets"]["fields"]:
+        params.append(f"{rename_type(ret['type'])} *{ret['name']}")
+    return ", ".join(params)
+
 def genstub(interfaces):
     global types
     for interface in interfaces:
@@ -312,6 +330,7 @@ def genstub(interfaces):
     renderer.filters["rename_type"] = rename_type
     renderer.filters["inline_len"] = inline_len
     renderer.filters["call_params"] = call_params
+    renderer.filters["handler_params"] = handler_params
     print(renderer.from_string(TEMPLATE).render(interfaces=interfaces))
 
 def main():

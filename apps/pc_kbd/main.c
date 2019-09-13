@@ -62,9 +62,8 @@ static void on_interrupt(intmax_t intr_count) {
     }
 }
 
-static error_t do_listen_keyboard(struct listen_keyboard_msg *m,
-                                  UNUSED struct listen_keyboard_reply_msg *r) {
-    listener = m->ch;
+static error_t do_listen_keyboard(UNUSED cid_t from, cid_t ch) {
+    listener = ch;
     return OK;
 }
 
