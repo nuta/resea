@@ -134,11 +134,11 @@ $(app_objs): CFLAGS := -DAPP_NAME='"$(1)"' $(APP_CFLAGS) \
 	$(foreach lib, $(libs), -Ilibs/$(lib)/include)
 $(BUILD_DIR)/apps/$(1).elf: $(app_objs) $(lib_objs) apps/$(1)/app.mk
 $(BUILD_DIR)/apps/$(1).elf: app_name := $(1)
-ifeq ($(1), $(INIT))
-$(BUILD_DIR)/apps/$(1).elf: ldflags := --script=apps/$(1)/$(1)_$(ARCH).ld
-else
-$(BUILD_DIR)/apps/$(1).elf: ldflags := --script=libs/libresea/arch/$(ARCH)/app_$(ARCH).ld
-endif
+# Use app's own linker script if exists.
+$(BUILD_DIR)/apps/$(1).elf: ldflags := \
+	$(if $(wildcard apps/$(1)/$(1)_$(ARCH).ld), \
+		--script=apps/$(1)/$(1)_$(ARCH).ld, \
+		--script=libs/libresea/arch/$(ARCH)/app_$(ARCH).ld)
 $(BUILD_DIR)/apps/$(1).elf: objs := $(app_objs) $(lib_objs)
 lib_deps += $(filter-out $(lib_deps), $(libs))
 endef
