@@ -59,6 +59,17 @@ interface kernel_test {
     exit_kernel_test() -> ()
 }
 
+[id(6)]
+interface discovery {
+    [id(1), type(call)]
+    connect_server(interface: uint8) -> (ch: channel)
+    [id(2), type(call)]
+    register_server(interface: uint8, ch: channel) -> ()
+
+    [id(3), type(call)]
+    connect_request(interface: uint8) -> (ch: channel)
+}
+
 [id(127)]
 interface notification {
     [id(1), type(call)]
