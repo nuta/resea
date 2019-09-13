@@ -10,6 +10,7 @@
 #include <resea_idl.h>
 
 static cid_t kernel_ch = 1;
+extern struct init_args __init_args;
 
 extern char __initfs;
 error_t handle_fill_page_request(UNUSED cid_t from, pid_t pid, uintptr_t addr,
@@ -97,6 +98,9 @@ void mainloop(cid_t server_ch) {
         case BENCHMARK_NOP_MSG:
             err = dispatch_benchmark_nop(handle_benchmark_nop, &m, &r);
             break;
+        case GET_FRAMEBUFFER_MSG:
+            err = dispatch_get_framebuffer(handle_get_framebuffer, &m, &r);
+            break;
         case ALLOC_PAGES_MSG:
             err = dispatch_alloc_pages(handle_alloc_pages, &m, &r);
             break;
@@ -116,7 +120,8 @@ void mainloop(cid_t server_ch) {
 
 void main(void) {
     INFO("starting...");
-    init_alloc_pages();
+    init_alloc_pages((struct memory_map *) &__init_args.memory_maps,
+                     __init_args.num_memory_maps);
     initfs_init();
     process_init();
 

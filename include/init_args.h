@@ -14,8 +14,16 @@ struct memory_map {
     uint64_t end;
 };
 
+struct framebuffer_info {
+    uint64_t paddr;
+    uint32_t width;
+    uint32_t height;
+    uint8_t bpp;
+};
+
 struct init_args {
     struct memory_map memory_maps[16];
+    struct framebuffer_info framebuffer;
     int num_memory_maps;
 };
 

@@ -13,6 +13,7 @@ struct zone {
 };
 
 uintptr_t do_alloc_pages(int order);
-void init_alloc_pages(void);
+struct memory_map;
+void init_alloc_pages(struct memory_map *memory_maps, int num_memory_maps);
 
 #endif

@@ -81,6 +81,17 @@ static void parse_multiboot_info(struct init_args *init_args) {
     }
 
     init_args->num_memory_maps = j;
+
+    TRACE("Framebuffer:");
+    TRACE("    %dx%d, addr = %p, bpp = %d",
+          multiboot_info->framebuffer_width,
+          multiboot_info->framebuffer_height,
+          multiboot_info->framebuffer_paddr,
+          multiboot_info->framebuffer_bpp);
+    init_args->framebuffer.width = multiboot_info->framebuffer_width;
+    init_args->framebuffer.height = multiboot_info->framebuffer_height;
+    init_args->framebuffer.paddr = multiboot_info->framebuffer_paddr;
+    init_args->framebuffer.bpp = multiboot_info->framebuffer_bpp;
 }
 
 // Checks if a bit in the specified CPUID field is set. If not, do panic.

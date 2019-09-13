@@ -40,6 +40,9 @@ interface memmgr {
     benchmark_nop() -> ()
     [id(2), type(call)]
     alloc_pages(order: size) -> (page: page)
+    [id(3), type(call)]
+    get_framebuffer()
+        -> (framebuffer: page, width: int32, height: int32, bpp: uint8)
 }
 
 [id(4)]

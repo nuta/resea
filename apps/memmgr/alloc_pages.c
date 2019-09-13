@@ -4,7 +4,6 @@
 #include "alloc_pages.h"
 #include "memory_map.h"
 
-extern struct init_args __init_args;
 static struct zone zones[MAX_NUM_ZONES];
 static int num_zones;
 
@@ -25,11 +24,11 @@ uintptr_t do_alloc_pages(int order) {
     return 0;
 }
 
-void init_alloc_pages(void) {
+void init_alloc_pages(struct memory_map *memory_maps, int num_memory_maps) {
     INFO("Memory Map:");
     int j = 0;
-    for (int i = 0; i < __init_args.num_memory_maps; i++) {
-        struct memory_map *mmap = &__init_args.memory_maps[i];
+    for (int i = 0; i < num_memory_maps; i++) {
+        struct memory_map *mmap = &memory_maps[i];
         INFO("    %p-%p: (%s, %dMiB)", mmap->start, mmap->end,
             (mmap->type == INITARGS_MEMORY_MAP_FREE) ? "free" : "reserved",
             (mmap->end - mmap->start) / 1024 / 1024);
