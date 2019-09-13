@@ -41,7 +41,7 @@ bochs: $(BUILD_DIR)/resea.iso
 
 run: $(BUILD_DIR)/resea.iso
 	$(PROGRESS) QEMU $(BUILD_DIR)/kernel.iso
-	$(QEMU) $(QEMUFLAGS) $<
+	$(QEMU) $(QEMUFLAGS) -cdrom $<
 
 iso: $(BUILD_DIR)/resea.iso
 
