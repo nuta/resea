@@ -135,20 +135,6 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
     | ({{ msg.name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
-{%- if msg.attrs.type == "call" %}
-#define {{ msg.name | upper }}_REPLY_MSG (({{ interface.name | upper }}_INTERFACE << 8) | MSG_REPLY_FLAG | {{ msg.attrs.id }})
-#define {{ msg.name | upper }}_REPLY_INLINE_LEN ({{ msg.rets | inline_len }})
-#define {{ msg.name | upper }}_REPLY_HEADER \
-    ( ({{ msg.name | upper }}_REPLY_MSG        << MSG_TYPE_OFFSET) \
-{%- if msg.rets.page -%}
-    | MSG_PAGE_PAYLOAD  \
-{%- endif -%}
-{%- if msg.rets.channel -%}
-    | MSG_CHANNEL_PAYLOAD  \
-{%- endif -%}
-    | ({{ msg.name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
-    )
-
 struct {{ msg.name }}_msg {
     uint32_t header;
     cid_t from;
@@ -169,6 +155,34 @@ struct {{ msg.name }}_msg {
 {%- endfor %}
     uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.name | upper }}_INLINE_LEN];
 } PACKED;
+
+#if !defined(KERNEL)
+static inline error_t send_{{ msg.name }}({{ msg.args | send_params }}) {
+    struct {{ msg.name }}_msg m;
+    m.header = {{ msg.name | upper }}_HEADER;
+{% for field in msg.args.fields %}
+    m.{{ field.name }} = {{ field.name }};
+{%- endfor %}
+    error_t err;
+    if ((err = ipc_send(__ch, (struct message *) &m)) != OK)
+        return err;
+    return OK;
+}
+#endif
+
+{%- if msg.attrs.type == "call" %}
+#define {{ msg.name | upper }}_REPLY_MSG (({{ interface.name | upper }}_INTERFACE << 8) | MSG_REPLY_FLAG | {{ msg.attrs.id }})
+#define {{ msg.name | upper }}_REPLY_INLINE_LEN ({{ msg.rets | inline_len }})
+#define {{ msg.name | upper }}_REPLY_HEADER \
+    ( ({{ msg.name | upper }}_REPLY_MSG        << MSG_TYPE_OFFSET) \
+{%- if msg.rets.page -%}
+    | MSG_PAGE_PAYLOAD  \
+{%- endif -%}
+{%- if msg.rets.channel -%}
+    | MSG_CHANNEL_PAYLOAD  \
+{%- endif -%}
+    | ({{ msg.name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
+    )
 
 struct {{ msg.name }}_reply_msg {
     uint32_t header;
@@ -192,6 +206,18 @@ struct {{ msg.name }}_reply_msg {
 } PACKED;
 
 #if !defined(KERNEL)
+static inline error_t send_{{ msg.name }}_reply({{ msg.rets | send_params }}) {
+    struct {{ msg.name }}_reply_msg m;
+    m.header = {{ msg.name | upper }}_REPLY_HEADER;
+{% for field in msg.rets.fields %}
+    m.{{ field.name }} = {{ field.name }};
+{%- endfor %}
+    error_t err;
+    if ((err = ipc_send(__ch, (struct message *) &m)) != OK)
+        return err;
+    return OK;
+}
+
 static inline error_t {{ msg.name }}({{ msg | call_params }}) {
     struct {{ msg.name }}_msg m;
     struct {{ msg.name }}_reply_msg r;
@@ -321,6 +347,12 @@ def handler_params(m):
         params.append(f"{rename_type(ret['type'])} *{ret['name']}")
     return ", ".join(params)
 
+def send_params(fields):
+    params = ["cid_t __ch"]
+    for field in fields["fields"]:
+        params.append(f"{rename_type(field['type'])} {field['name']}")
+    return ", ".join(params)
+
 def genstub(interfaces):
     global types
     for interface in interfaces:
@@ -330,6 +362,7 @@ def genstub(interfaces):
     renderer.filters["rename_type"] = rename_type
     renderer.filters["inline_len"] = inline_len
     renderer.filters["call_params"] = call_params
+    renderer.filters["send_params"] = send_params
     renderer.filters["handler_params"] = handler_params
     print(renderer.from_string(TEMPLATE).render(interfaces=interfaces))
 
