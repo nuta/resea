@@ -76,6 +76,109 @@ static error_t handle_alloc_pages(UNUSED cid_t from, size_t order,
     return OK;
 }
 
+static error_t handle_get_framebuffer(UNUSED cid_t from, page_t *framebuffer,
+                                      int32_t *width, int32_t *height,
+                                      uint8_t *bpp) {
+    struct framebuffer_info *info = &__init_args.framebuffer;
+    paddr_t paddr = info->paddr;
+    int order = ulllog2(
+        (info->height * info->width * (info->bpp / 8)) / PAGE_SIZE);
+    *framebuffer = PAGE_PAYLOAD(paddr, order, PAGE_TYPE_SHARED);
+    *width  = (int) info->width;
+    *height = (int) info->height;
+    *bpp    = info->bpp;
+    return OK;
+}
+
+#define INTERFACE_ID_MAX 0xff
+cid_t servers[INTERFACE_ID_MAX + 1];
+
+struct waiter {
+    uint8_t interface;
+    cid_t reply_to;
+    bool sent_request;
+};
+#define WAITERS_MAX 32
+static struct waiter waiters[WAITERS_MAX];
+
+static void discovery_init(void) {
+    for (int i = 0; i <= INTERFACE_ID_MAX; i++) {
+        servers[i] = 0;
+    }
+
+    for (int i = 0; i < WAITERS_MAX; i++) {
+        waiters[i].reply_to = 0;
+    }
+}
+
+static cid_t server_ch;
+
+static error_t handle_register_server(UNUSED cid_t from, uint8_t interface,
+                                      cid_t ch) {
+    // TODO: Support multiple servers with the same interface ID.
+    assert(servers[interface] == 0);
+    TRACE("register_server: interface=%d", interface);
+
+    servers[interface] = ch;
+    TRY_OR_PANIC(transfer(servers[interface], server_ch));
+    return OK;
+}
+
+static error_t handle_connect_server(UNUSED cid_t from, uint8_t interface,
+                                     UNUSED cid_t *ch) {
+    TRACE("connect_server(interface=%d)", interface);
+    struct waiter *waiter = NULL;
+    for (int i = 0; i < WAITERS_MAX; i++) {
+        if (waiters[i].reply_to == 0) {
+            waiter = &waiters[i];
+            break;
+        }
+    }
+
+    if (!waiter) {
+        return ERR_NO_MEMORY;
+    }
+
+    waiter->reply_to = from;
+    waiter->interface = interface;
+    waiter->sent_request = false;
+    return ERR_DONT_REPLY;
+}
+
+static error_t handle_connect_request_reply(struct connect_request_reply_msg *m) {
+    struct waiter *waiter = NULL;
+    for (int i = 0; i < WAITERS_MAX; i++) {
+        if (waiters[i].reply_to) {
+            waiter = &waiters[i];
+            break;
+        }
+    }
+
+    assert(waiter);
+    send_connect_server_reply(waiter->reply_to, m->ch);
+    waiter->reply_to = 0;
+    return ERR_DONT_REPLY;
+}
+
+static void post_work() {
+    for (int interface = 0; interface <= INTERFACE_ID_MAX; interface++) {
+        if (!servers[interface]) {
+            continue;
+        }
+
+        for (int i = 0; i < WAITERS_MAX; i++) {
+            if (waiters[i].reply_to && waiters[i].interface == interface
+                && !waiters[i].sent_request) {
+                TRACE("sending discovery.connect_request(to=%d, interface=%d)",
+                    servers[interface], interface);
+                send_connect_request(servers[interface], interface);
+                TRACE("sent connect_request");
+                waiters[i].sent_request = true;
+            }
+        }
+    }
+}
+
 void mainloop(cid_t server_ch) {
     while (1) {
         struct message m;
@@ -89,6 +192,20 @@ void mainloop(cid_t server_ch) {
         case PRINTCHAR_MSG:
             err = dispatch_printchar(handle_printchar, &m, &r);
             break;
+
+        //
+        //  Discovery
+        //
+        case REGISTER_SERVER_MSG:
+            err = dispatch_register_server(handle_register_server, &m, &r);
+            break;
+        case CONNECT_SERVER_MSG:
+            err = dispatch_connect_server(handle_connect_server, &m, &r);
+            break;
+        case CONNECT_REQUEST_REPLY_MSG:
+            err = handle_connect_request_reply((struct connect_request_reply_msg *) &m);
+            break;
+
         case EXIT_KERNEL_TEST_MSG:
             err = dispatch_exit_kernel_test(handle_exit_kernel_test, &m, &r);
             break;
@@ -110,11 +227,11 @@ void mainloop(cid_t server_ch) {
             r.header = ERROR_TO_HEADER(err);
         }
 
-        if (err == ERR_DONT_REPLY) {
-            TRY_OR_PANIC(ipc_recv(server_ch, &m));
-        } else {
-            TRY_OR_PANIC(ipc_replyrecv(from, &r, &m));
+        if (err != ERR_DONT_REPLY) {
+            TRY_OR_PANIC(ipc_send(m.from, &r));
         }
+
+        post_work();
     }
 }
 
@@ -124,8 +241,8 @@ void main(void) {
                      __init_args.num_memory_maps);
     initfs_init();
     process_init();
+    discovery_init();
 
-    cid_t server_ch;
     TRY_OR_PANIC(open(&server_ch));
 
     struct initfs_dir dir;
