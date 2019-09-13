@@ -242,7 +242,13 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct thread *receiver;
 
         if (!is_annoying_msg(MSG_TYPE(header))) {
-            TRACE("send: %pC -> %pC (header=%p)", ch, dst, header);
+            if (linked_to == dst) {
+                TRACE("send: %pC -> %pC (header=%p)",
+                      ch, dst, header);
+            } else {
+                TRACE("send: %pC -> %pC => %pC (header=%p)",
+                      ch, linked_to, dst, header);
+            }
         }
 
         spin_unlock_irqrestore(&ch->lock, flags);
@@ -447,7 +453,13 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // Now all prerequisites are met. Copy the message and wait on the our
     // channel.
     if (INTERFACE_ID(header) != 4) {
-        TRACE("send (fastpath): %pC -> %pC (header=%p)", ch, dst_ch, header);
+        if (linked_to == dst_ch) {
+            TRACE("send (fastpath): %pC -> %pC (header=%p)",
+                  ch, dst_ch, header);
+        } else {
+            TRACE("send (fastpath): %pC -> %pC => %pC (header=%p)",
+                  ch, linked_to, dst_ch, header);
+        }
     }
 
     struct message *dst_m = receiver->ipc_buffer;
