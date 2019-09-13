@@ -31,6 +31,14 @@ int memcmp(const void *s1, const void *s2, size_t len) {
     return (len == 0) ? 0 : (*p - *q);
 }
 
+void *memset(void *dst, int ch, size_t len) {
+    assert(dst != NULL && "copy to NULL");
+    for (size_t i = 0; i < len; i++) {
+        *((uint8_t *) dst + i) =  ch;
+    }
+    return dst;
+}
+
 void *memcpy(void *dst, const void *src, size_t len) {
     assert(dst != NULL && "copy to NULL");
     assert(src != NULL && "copy from NULL");
