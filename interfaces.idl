@@ -70,6 +70,12 @@ interface discovery {
     connect_request(interface: uint8) -> (ch: channel)
 }
 
+[id(7)]
+interface gui {
+    [id(1), type(call)]
+    console_write(ch: uint8) -> ()
+}
+
 [id(127)]
 interface notification {
     [id(1), type(call)]
