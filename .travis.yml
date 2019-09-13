@@ -14,12 +14,18 @@ addons:
     packages:
       - llvm
       - qemu
+      - xorriso
+      - mtools
+      - i386-elf-grub
   apt:
     packages:
       - llvm
       - lld
       - clang
       - qemu
+      - mtools
+      - grub-common
+      - xorriso
 
 install:
   - "if [[ $TRAVIS_OS_NAME == linux ]]; then pyenv global 3.7.1; fi"
