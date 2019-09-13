@@ -1,13 +1,20 @@
 .section ".boot", "ax"
 .intel_syntax noprefix
 
+.set MULTIBOOT_MAGIC,    0x1badb002
+.set MULTIBOOT_FLAGS,    0x00000006 // memory map and video info
+.set MULTIBOOT_CHECKSUM, -(MULTIBOOT_MAGIC + MULTIBOOT_FLAGS)
+
 .code32
+
+// The multiboot header.
 .align 8
-old_multiboot:
-    .long 0x1badb002          // magic
-    .long 0x00000002          // flags: include the memory map
-    .long -(0x1badb002 + 0x2) // checksum
-old_multiboot_end:
+.long MULTIBOOT_MAGIC
+.long MULTIBOOT_FLAGS
+.long MULTIBOOT_CHECKSUM
+.long 0, 0, 0, 0, 0  // Unused values.
+.long 0              // Set graphics mode.
+.long 640, 480, 32   // Width, height, and depth.
 
 /* The entry point jumped from the bootloader. */
 .code32
