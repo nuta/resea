@@ -33,30 +33,31 @@ While synchronous (blocking) IPC works pretty fine in most cases, sometimes you
 may want asynchronous (non-blocking) IPC. For example, the kernel converts
 interrupts into messages but it should not block.
 
-When you receive a message, the kernel first checks the notification. If a
-notifcation exists, it returns the notification. Sender threads are blocked
-until the notification is received by teh `ipc` system call.
-
 Notifications is a simple solution just like *signal* in Unix:
 
 - `error_t sys_notify(cid_t ch, enum notify_op op, uintmax_t arg0)`
-  - Sends a notification. It simply updates the notification field in the
-    destination channel and never blocks (asynchronous).
+  - Sends a notification to the channel. It simply updates the notification
+    field in the destination channel and never blocks (asynchronous).
   - The notification field is an `intmax_t`.
+
+When you receive a message, the kernel first checks the notification. If a
+notifcation exists, it returns the notification. Sender threads are blocked
+until the notification is received.
+
 #### Notification Operations
--  `op` specifies how the kernel updates the notification field in `ch`.
-  - `NOTIFY_OP_SET`: Atomically sets `arg0` to the notification field.
-  - `NOTIFY_OP_ADD`: Atomically adds `arg0` to the notification field.
+`op` specifies how the kernel updates the notification field in `ch`:
+- `NOTIFY_OP_SET`: Atomically sets `arg0` to the notification field.
+- `NOTIFY_OP_ADD`: Atomically adds `arg0` to the notification field.
 
 Kernel server
 -------------
 Kernel server is a kernel thread which provdes features that only the kernel can
-provide: kernel-level thread (do't get confused with kernel thread!), virtual
+provide: kernel-level thread (don't get confused with kernel thread!), virtual
 memory pager management, interrupts, etc.
 
 Only memmgr and startup servers (apps spawned by memmgr) has a channel
-connected to the kernel server at cid 1. There're no differences between the
-kernel server and other servers. Use `sys_ipc` to communicate with the kernel
+connected to the kernel server. There're no differences between the kernel
+server and other servers. Use `sys_ipc` to communicate with the kernel
 server as if it is a normal userland server.
 
 Data structures
@@ -179,7 +180,7 @@ Memory maps
 | `0000_0000_00f1_b000`    | Thread Information Block                              | 4KiB             |
 | `0000_0000_0100_0000`    | initfs.bin (.text, .rodata, .data)                    | 16MiB            |
 | `0000_0000_0300_0000`    | memmgr stack                                          | 4MiB             |
-| `0000_0000_0340_0000`    | memmgr .bss (initfs.bin doesn't include .bss section) | 12MiB            |
+| `0000_0000_0340_0000`    | memmgr .bss (initfs.bin doesn't contain .bss section) | 12MiB            |
 | `0000_0000_0400_0000`    | Mapped to physical pages (straight mapping)           | the limit of RAM |
 
 ### Apps spawned by memmgr (x64)
