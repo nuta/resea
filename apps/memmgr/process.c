@@ -69,8 +69,8 @@ invalid_path:
     strcpy_s(buf, buf_len, "(invalid path)");
 }
 
-error_t spawn_process(
-    cid_t kernel_ch, cid_t server_ch, const struct initfs_file *file) {
+error_t spawn_process(cid_t kernel_ch, cid_t server_ch,
+                      const struct initfs_file *file) {
     TRACE("spawning '%s'", file->path);
     error_t err;
 
