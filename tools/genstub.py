@@ -103,6 +103,7 @@ TEMPLATE = """\
 typedef vaddr_t uintptr_t;
 #else
 #include <resea.h>
+#include <resea/string.h>
 #endif
 
 #pragma clang diagnostic push
@@ -111,6 +112,9 @@ typedef vaddr_t uintptr_t;
 #pragma clang diagnostic ignored "-Wunused-variable"
 
 #define MSG_REPLY_FLAG (1ULL << 7)
+
+#define SMALLSTRING_LEN_MAX 128
+typedef char smallstring_t[SMALLSTRING_LEN_MAX];
 
 {%- for interface in interfaces %}
 //
@@ -151,7 +155,7 @@ struct {{ msg.name }}_msg {
 {%- endif %}
     uint64_t __padding2;
 {%- for field in msg.args.inlines %}
-    {{ field.type | rename_type }} {{ field.name }};
+    {{ field.type | resolve_type }} {{ field.name }};
 {%- endfor %}
     uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.name | upper }}_INLINE_LEN];
 } PACKED;
@@ -161,7 +165,11 @@ static inline error_t send_{{ msg.name }}({{ msg.args | send_params }}) {
     struct {{ msg.name }}_msg m;
     m.header = {{ msg.name | upper }}_HEADER;
 {% for field in msg.args.fields %}
+{%- if field.type == "smallstring" %}
+    strcpy_s((char *) &m.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
+{%- else %}
     m.{{ field.name }} = {{ field.name }};
+{%- endif %}
 {%- endfor %}
     error_t err;
     if ((err = ipc_send(__ch, (struct message *) &m)) != OK)
@@ -200,7 +208,7 @@ struct {{ msg.name }}_reply_msg {
 {%- endif %}
     uint64_t __padding2;
 {%- for field in msg.rets.inlines %}
-    {{ field.type | rename_type }} {{ field.name }};
+    {{ field.type | resolve_type }} {{ field.name }};
 {%- endfor %}
     uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.name | upper }}_INLINE_LEN];
 } PACKED;
@@ -210,7 +218,11 @@ static inline error_t send_{{ msg.name }}_reply({{ msg.rets | send_params }}) {
     struct {{ msg.name }}_reply_msg m;
     m.header = {{ msg.name | upper }}_REPLY_HEADER;
 {% for field in msg.rets.fields %}
+{%- if field.type == "smallstring" %}
+    strcpy_s((char *) &m.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
+{%- else %}
     m.{{ field.name }} = {{ field.name }};
+{%- endif %}
 {%- endfor %}
     error_t err;
     if ((err = ipc_send(__ch, (struct message *) &m)) != OK)
@@ -223,8 +235,12 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
     struct {{ msg.name }}_reply_msg r;
 
     m.header = {{ msg.name | upper }}_HEADER;
-{% for arg in msg.args.fields %}
-    m.{{ arg.name }} = {{ arg.name }};
+{% for field in msg.args.fields %}
+{%- if field.type == "smallstring" %}
+    strcpy_s((char *) &m.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
+{%- else %}
+    m.{{ field.name }} = {{ field.name }};
+{%- endif %}
 {%- endfor %}
 {%- if msg.rets.page %}
     set_page_base({{ msg.rets.page.name }}_base);
@@ -232,8 +248,12 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
     error_t err;
     if ((err = ipc_call(__ch, (struct message *) &m, (struct message *) &r)) != OK)
         return err;
-{%- for ret in msg.rets.inlines %}
-    *{{ ret.name }} = r.{{ ret.name }};
+{%- for field in msg.rets.inlines %}
+{%- if field.type == "smallstring" %}
+    strcpy_s((char *) {{ field.name }}, SMALLSTRING_LEN_MAX, &r.{{ field.name }});
+{%- else %}
+    *{{ field.name }} = r.{{ field.name }};
+{%- endif %}
 {%- endfor %}
 {%- if msg.rets.channel %}
     *{{ msg.rets.channel.name }} = r.{{ msg.rets.channel.name }};
@@ -280,24 +300,26 @@ static inline header_t dispatch_{{ msg.name }}({{ msg.name }}_handler_t handler,
 """
 
 builtin_types = {
-    "int8":      { "name": "int8",      "size": "sizeof(int8_t)" },
-    "int16":     { "name": "int16",     "size": "sizeof(int16_t)" },
-    "int32":     { "name": "int32",     "size": "sizeof(int32_t)" },
-    "int64":     { "name": "int64",     "size": "sizeof(int64_t)" },
-    "uint8":     { "name": "uint8",     "size": "sizeof(uint8_t)" },
-    "uint16":    { "name": "uint16",    "size": "sizeof(uint16_t)" },
-    "uint32":    { "name": "uint32",    "size": "sizeof(uint32_t)" },
-    "uint64":    { "name": "uint64",    "size": "sizeof(uint64_t)" },
-    "intmax":    { "name": "intmax",    "size": "sizeof(intmax_t)" },
-    "uintmax":   { "name": "uintmax",   "size": "sizeof(uintmax_t)" },
-    "pid":       { "name": "pid",       "size": "sizeof(pid_t)" },
-    "tid":       { "name": "tid",       "size": "sizeof(tid_t)" },
-    "cid":       { "name": "cid",       "size": "sizeof(cid_t)" },
-    "channel":   { "name": "cid",       "size": "sizeof(cid_t)" },
-    "uintptr":   { "name": "uintptr",   "size": "sizeof(uintptr_t)" },
-    "size":      { "name": "size",      "size": "sizeof(size_t)" },
-    "page":      { "name": "page",      "size": "sizeof(page_t)" },
-    "page_base": { "name": "page_base", "size": "sizeof(page_base_t)" },
+    "int8":        { "name": "int8_t",        "size": "sizeof(int8_t)" },
+    "int16":       { "name": "int16_t",       "size": "sizeof(int16_t)" },
+    "int32":       { "name": "int32_t",       "size": "sizeof(int32_t)" },
+    "int64":       { "name": "int64_t",       "size": "sizeof(int64_t)" },
+    "uint8":       { "name": "uint8_t",       "size": "sizeof(uint8_t)" },
+    "uint16":      { "name": "uint16_t",      "size": "sizeof(uint16_t)" },
+    "uint32":      { "name": "uint32_t",      "size": "sizeof(uint32_t)" },
+    "uint64":      { "name": "uint64_t",      "size": "sizeof(uint64_t)" },
+    "intmax":      { "name": "intmax_t",      "size": "sizeof(intmax_t)" },
+    "uintmax":     { "name": "uintmax_t",     "size": "sizeof(uintmax_t)" },
+    "pid":         { "name": "pid_t",         "size": "sizeof(pid_t)" },
+    "tid":         { "name": "tid_t",         "size": "sizeof(tid_t)" },
+    "cid":         { "name": "cid_t",         "size": "sizeof(cid_t)" },
+    "channel":     { "name": "cid_t",         "size": "sizeof(cid_t)" },
+    "uintptr":     { "name": "uintptr_t",     "size": "sizeof(uintptr_t)" },
+    "size":        { "name": "size_t",        "size": "sizeof(size_t)" },
+    "page":        { "name": "page_t",        "size": "sizeof(page_t)" },
+    "page_base":   { "name": "page_base_t",   "size": "sizeof(page_base_t)" },
+    "char":        { "name": "char",          "size": "sizeof(char)" },
+    "smallstring": { "name": "smallstring_t", "size": "SMALLSTRING_LEN_MAX" },
 }
 
 user_defined_types = {}
@@ -308,17 +330,15 @@ def resolve_type(type_name):
         return builtin_types[type_name]["name"]
     if type_name not in user_defined_types:
         raise InvalidIDLError(f"Invalid type name: '{type_name}'")
-    return user_defined_types[type_name]
-
-# Returns the type name in C.
-def rename_type(type_name):
-    return resolve_type(type_name) + "_t"
+    return user_defined_types[type_name] + "_t"
 
 def inline_len(params):
     sizes = []
     for field in params["inlines"]:
-        type_ = builtin_types[resolve_type(field["type"])]
-        sizes.append(type_["size"])
+        typename = field["type"]
+        while typename in user_defined_types:
+            typename = user_defined_types[typename]
+        sizes.append(builtin_types[typename]["size"])
     if len(sizes) == 0:
         return "0"
     else:
@@ -327,30 +347,39 @@ def inline_len(params):
 def call_params(m):
     params = ["cid_t __ch"]
     for arg in m["args"]["fields"]:
-        params.append(f"{rename_type(arg['type'])} {arg['name']}")
-    for ret in m["rets"]["fields"]:
-        if ret["type"] == "page":
-            params.append(f"{rename_type('page_base')} {ret['name']}_base")
-    for ret in m["rets"]["fields"]:
-        if ret["type"] == "page":
-            params.append(f"{rename_type('uintptr')} *{ret['name']}")
-            params.append(f"{rename_type('size')} *{ret['name']}_num")
+        if arg["type"] == "smallstring":
+            params.append(f"const {resolve_type('char')}* {arg['name']}")
         else:
-            params.append(f"{rename_type(ret['type'])} *{ret['name']}")
+            params.append(f"{resolve_type(arg['type'])} {arg['name']}")
+    for ret in m["rets"]["fields"]:
+        if ret["type"] == "page":
+            params.append(f"{resolve_type('page_base')} {ret['name']}_base")
+    for ret in m["rets"]["fields"]:
+        if ret["type"] == "page":
+            params.append(f"{resolve_type('uintptr')} *{ret['name']}")
+            params.append(f"{resolve_type('size')} *{ret['name']}_num")
+        else:
+            params.append(f"{resolve_type(ret['type'])} *{ret['name']}")
     return ", ".join(params)
 
 def handler_params(m):
     params = ["cid_t from"]
     for arg in m["args"]["fields"]:
-        params.append(f"{rename_type(arg['type'])} {arg['name']}")
+        if arg["type"] == "smallstring":
+            params.append(f"const {resolve_type('char')}* {arg['name']}")
+        else:
+            params.append(f"{resolve_type(arg['type'])} {arg['name']}")
     for ret in m["rets"]["fields"]:
-        params.append(f"{rename_type(ret['type'])} *{ret['name']}")
+        params.append(f"{resolve_type(ret['type'])} *{ret['name']}")
     return ", ".join(params)
 
 def send_params(fields):
     params = ["cid_t __ch"]
     for field in fields["fields"]:
-        params.append(f"{rename_type(field['type'])} {field['name']}")
+        if field["type"] == "smallstring":
+            params.append(f"const {resolve_type('char')}* {field['name']}")
+        else:
+            params.append(f"{resolve_type(field['type'])} {field['name']}")
     return ", ".join(params)
 
 def genstub(interfaces):
@@ -359,7 +388,7 @@ def genstub(interfaces):
         user_defined_types.update(interface["types"])
 
     renderer = jinja2.Environment()
-    renderer.filters["rename_type"] = rename_type
+    renderer.filters["resolve_type"] = resolve_type
     renderer.filters["inline_len"] = inline_len
     renderer.filters["call_params"] = call_params
     renderer.filters["send_params"] = send_params
