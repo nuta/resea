@@ -49,9 +49,10 @@ static NORETURN void handle_exit_current_msg(UNUSED int code) {
 }
 
 static error_t handle_create_process_msg(struct process *sender,
+                                         const char *name,
                                          struct create_process_reply_msg *r) {
     TRACE("kernel: create_process()");
-    struct process *proc = process_create("user" /* TODO: */);
+    struct process *proc = process_create(name);
     if (!proc) {
         return ERR_OUT_OF_RESOURCE;
     }
@@ -241,7 +242,9 @@ NORETURN static void mainloop(cid_t server_ch) {
             handle_exit_current_msg(m->code);
         }
         case CREATE_PROCESS_MSG: {
-            err = handle_create_process_msg(sender,
+            struct create_process_msg *m =
+                (struct create_process_msg *) ipc_buffer;
+            err = handle_create_process_msg(sender, (const char *) &m->path,
                 (struct create_process_reply_msg *) ipc_buffer);
             break;
         }

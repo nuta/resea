@@ -22,6 +22,53 @@ struct process *get_process_by_pid(pid_t pid) {
     return NULL;
 }
 
+// Extracts the file name without the extension. E.g., "startups/gui.elf"
+// -> "elf".
+static void copy_process_name_from_path(char *buf, size_t buf_len,
+                                        const char *path) {
+    if (strlen(path) == 0) {
+        goto invalid_path;
+    }
+
+    int pos = strlen(path) - 1;
+    // Find the last '.'.
+    int dot_pos = 0;
+    while (pos > 0) {
+        if (path[pos] == '.') {
+            dot_pos = pos;
+            break;
+        }
+
+        pos--;
+    }
+
+    if (pos < 0) {
+        goto invalid_path;
+    }
+
+    // Find the last '/'.
+    int slash_pos = dot_pos;
+    while (pos > 0) {
+        if (path[pos] == '/') {
+            slash_pos = pos;
+            break;
+        }
+
+        pos--;
+    }
+
+    if (pos < 0) {
+        goto invalid_path;
+    }
+
+    // Copy the name.
+    strncpy_s(buf, buf_len, &path[slash_pos + 1], dot_pos - slash_pos - 1);
+    return;
+
+invalid_path:
+    strcpy_s(buf, buf_len, "(invalid path)");
+}
+
 error_t spawn_process(
     cid_t kernel_ch, cid_t server_ch, const struct initfs_file *file) {
     TRACE("spawning '%s'", file->path);
@@ -32,9 +79,13 @@ error_t spawn_process(
         return err;
     }
 
+    char name[32];
+    copy_process_name_from_path((char *) &name, 32, file->path);
+
     pid_t pid;
     cid_t pager_ch;
-    if ((err = create_process(kernel_ch, &pid, &pager_ch)) != OK) {
+    if ((err = create_process(kernel_ch, (const char *) &name, &pid,
+                              &pager_ch)) != OK) {
         return err;
     }
 

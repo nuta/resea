@@ -1,7 +1,7 @@
 [id(1)]
 interface kernel {
     [id(1), type(call)]
-    create_process() -> (pid: pid, pager_ch: cid)
+    create_process(path: smallstring) -> (pid: pid, pager_ch: cid)
 
     [id(2), type(call)]
     add_kernel_channel(pid: pid) -> (kernel_ch: cid)
