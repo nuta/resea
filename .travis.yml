@@ -24,7 +24,7 @@ addons:
       - clang
       - qemu
       - mtools
-      - grub-common
+      - grub2
       - xorriso
 
 install:

@@ -37,7 +37,7 @@ $ pip3 install -r tools/requirements.txt
 **Ubuntu:**
 ```
 $ sudo apt install llvm lld clang make git python3 python3-pip \
-                   qemu bochs grub-common xorriso mtools \
+                   qemu bochs grub2 xorriso mtools \
                    doxygen graphviz
 $ pip3 install -r tools/requirements.txt
 ```
