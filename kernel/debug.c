@@ -4,12 +4,12 @@
 #include <printk.h>
 #include <thread.h>
 
-/// The symbol table. This îs embedded by tools/link.py during the build.
+/// The symbol table. tools/link.py embeds it during the build.
 extern struct symbol_table __symtable;
 
 /// Resolves the symbol name and the offset from the beginning of symbol.
-/// This function always returns "(invalid address)" if the symbol does not
-/// exist in the kernel executable.
+/// This function returns "(invalid address)" if the symbol does not
+/// exist in the symbol table.
 static const char *find_symbol(vaddr_t vaddr, size_t *offset) {
     ASSERT(
         __symtable.magic == SYMBOL_TABLE_MAGIC && "invalid symbol table magic");
