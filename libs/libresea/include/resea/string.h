@@ -5,6 +5,8 @@
 
 size_t strlen(const char *s);
 int strcmp(const char *s1, const char *s2);
+char *strcpy_s(char *dst, size_t dst_len, const char *src);
+char *strncpy_s(char *dst, size_t dst_len, const char *src, size_t copy_len);
 int strncmp(const char *s1, const char *s2, size_t len);
 int memcmp(const void *s1, const void *s2, size_t len);
 void *memset(void *dst, int ch, size_t len);

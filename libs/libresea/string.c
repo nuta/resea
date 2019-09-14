@@ -28,6 +28,35 @@ int strncmp(const char *s1, const char *s2, size_t len) {
     return (len == 0) ? 0 : (*s1 - *s2);
 }
 
+char *strcpy_s(char *dst, size_t dst_len, const char *src) {
+    assert(dst != NULL && "copy to NULL");
+    assert(src != NULL && "copy from NULL");
+
+    size_t i = 0;
+    while (i < dst_len - 1 && src[i] != '\0') {
+        dst[i] = src[i];
+        i++;
+    }
+
+    dst[i] = '\0';
+    return dst;
+}
+
+char *strncpy_s(char *dst, size_t dst_len, const char *src, size_t copy_len) {
+    assert(dst != NULL && "copy to NULL");
+    assert(src != NULL && "copy from NULL");
+
+    size_t i = 0;
+    while (i < dst_len - 1 && src[i] != '\0' && copy_len > 0) {
+        dst[i] = src[i];
+        i++;
+        copy_len--;
+    }
+
+    dst[i] = '\0';
+    return dst;
+}
+
 int memcmp(const void *s1, const void *s2, size_t len) {
     uint8_t *p = (uint8_t *) s1;
     uint8_t *q = (uint8_t *) s2;
