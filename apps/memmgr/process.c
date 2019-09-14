@@ -1,13 +1,11 @@
-#include "process.h"
-
-#include "elf.h"
-#include "initfs.h"
-#include "memory_map.h"
-
 #include <resea.h>
 #include <resea/ipc.h>
 #include <resea/string.h>
 #include <resea_idl.h>
+#include <elf.h>
+#include "process.h"
+#include "initfs.h"
+#include "memory_map.h"
 
 // TODO: Use hash table.
 static struct process processes[NUM_PROCESSES_MAX];
@@ -76,6 +74,7 @@ error_t spawn_process(cid_t kernel_ch, cid_t server_ch,
 
     struct elf_file elf;
     if ((err = elf_parse(&elf, file->content, file->len)) != OK) {
+        WARN("Invalid ELF file: %d", err);
         return err;
     }
 

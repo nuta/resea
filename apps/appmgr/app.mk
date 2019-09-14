@@ -1,3 +1,3 @@
 name := putchar
 objs := main.o
-libs := libresea
+libs := libresea libelf
