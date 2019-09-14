@@ -25,6 +25,7 @@ def generate_default(args):
         "BUILD_DIR": "build",
         "INIT": "memmgr",
         "STARTUPS": "benchmark",
+        "APPS": "",
         "PYTHON3": "python3",
         "LLVM_PREFIX": llvm_prefix,
         "GRUB_PREFIX": grub_prefix,
