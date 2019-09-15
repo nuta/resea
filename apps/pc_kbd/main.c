@@ -62,12 +62,25 @@ static void on_interrupt(intmax_t intr_count) {
     }
 }
 
+static cid_t server_ch;
+
+static error_t handle_connect_request(UNUSED cid_t from,
+                                      UNUSED uint8_t interface,
+                                      cid_t *ch) {
+    TRACE("connect_request()");
+    cid_t new_ch;
+    TRY_OR_PANIC(open(&new_ch));
+    transfer(new_ch, server_ch);
+    *ch = new_ch;
+    return OK;
+}
+
 static error_t do_listen_keyboard(UNUSED cid_t from, cid_t ch) {
     listener = ch;
     return OK;
 }
 
-void mainloop(cid_t server_ch) {
+void mainloop(void) {
     struct message m;
     TRY_OR_PANIC(ipc_recv(server_ch, &m));
     while (1) {
@@ -78,6 +91,9 @@ void mainloop(cid_t server_ch) {
         case NOTIFICATION_MSG:
             on_interrupt(((struct notification_msg *) &m)->data);
             err = ERR_DONT_REPLY;
+            break;
+        case CONNECT_REQUEST_MSG:
+            err = dispatch_connect_request(handle_connect_request, &m, &r);
             break;
         case LISTEN_KEYBOARD_MSG:
             err = dispatch_listen_keyboard(do_listen_keyboard, &m, &r);
@@ -98,11 +114,12 @@ void mainloop(cid_t server_ch) {
 
 void main(void) {
     INFO("starting...");
-    cid_t server_ch;
     TRY_OR_PANIC(open(&server_ch));
 
-    // Enable IO instructions.
+    cid_t memmgr_ch = 1;
     cid_t kernel_ch = 2;
+
+    // Enable IO instructions.
     TRY_OR_PANIC(allow_io(kernel_ch));
 
     // Create and connect a channel to receive keyboard interrupts.
@@ -110,6 +127,12 @@ void main(void) {
     TRY_OR_PANIC(transfer(kbd_irq_ch, server_ch));
     TRY_OR_PANIC(listen_irq(kernel_ch, kbd_irq_ch, 1 /* keyboard irq */));
 
-    INFO("entering the mainloop...");
-    mainloop(server_ch);
+    cid_t discovery_ch;
+    TRY_OR_PANIC(open(&discovery_ch));
+    TRY_OR_PANIC(transfer(discovery_ch, server_ch));
+    TRY_OR_PANIC(register_server(memmgr_ch, KEYBOARD_DRIVER_INTERFACE, discovery_ch));
+
+    // FIXME: memmgr waits for us due to connect_request.
+    // INFO("entering the mainloop...");
+    mainloop();
 }
