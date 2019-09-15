@@ -122,7 +122,8 @@ error_t channel_notify(struct channel *ch, enum notify_op op, intmax_t arg0) {
         return ERR_INVALID_NOTIFY_OP;
     }
 
-    TRACE("notify: %pC (data=%p)", ch, dst->notification);
+    TRACE("notify: %pC -> %pC => %pC (data=%p)",
+          ch, ch->linked_to, dst, dst->notification);
     dst->notified = true;
 
     // Resume the receiver thread if exists.
