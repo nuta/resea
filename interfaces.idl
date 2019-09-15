@@ -78,6 +78,12 @@ interface discovery {
 interface gui {
     [id(1), type(call)]
     console_write(ch: uint8) -> ()
+    [id(2), type(call)]
+    activate() -> ()
+    [id(3), type(call)]
+    key_event(ch: uint8) -> ()
+}
+
 [id(8)]
 interface fs {
     type fd = int32

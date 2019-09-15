@@ -111,6 +111,7 @@ static void console_init(void) {
 }
 
 static cid_t server_ch;
+static cid_t active_ch = 0;
 
 static error_t handle_connect_request(UNUSED cid_t from,
                                       UNUSED uint8_t interface,
@@ -124,7 +125,20 @@ static error_t handle_connect_request(UNUSED cid_t from,
 }
 
 static error_t handle_console_write(UNUSED cid_t from, uint8_t ch) {
+    TRACE("console_write: '%c'", ch);
     console_write_char(ch, CONSOLE_NORMAL_COLOR);
+    return OK;
+}
+
+static error_t handle_activate(UNUSED cid_t from) {
+    active_ch = from;
+    return OK;
+}
+
+static error_t handle_on_keyinput(UNUSED cid_t from, uint8_t ch) {
+    TRACE("on_keyinput: '%c'", ch);
+    if (active_ch)
+        send_key_event(active_ch, ch);
     return OK;
 }
 
@@ -139,8 +153,14 @@ static void mainloop(cid_t server_ch) {
         case CONNECT_REQUEST_MSG:
             err = dispatch_connect_request(handle_connect_request, &m, &r);
             break;
+        case ON_KEYINPUT_MSG:
+            err = dispatch_on_keyinput(handle_on_keyinput, &m, &r);
+            break;
         case CONSOLE_WRITE_MSG:
             err = dispatch_console_write(handle_console_write, &m, &r);
+            break;
+        case ACTIVATE_MSG:
+            err = dispatch_activate(handle_activate, &m, &r);
             break;
         default:
             WARN("invalid message type %x", MSG_TYPE(m.header));
@@ -171,10 +191,16 @@ void main(void) {
                                  &framebuffer.bpp));
     console_init();
 
+    cid_t kbd_ch;
+    TRY_OR_PANIC(connect_server(memmgr_ch, KEYBOARD_DRIVER_INTERFACE, &kbd_ch));
+    cid_t kbd_listener_ch;
+    TRY_OR_PANIC(open(&kbd_listener_ch));
+    TRY_OR_PANIC(transfer(kbd_listener_ch, server_ch));
+    TRY_OR_PANIC(listen_keyboard(kbd_ch, kbd_listener_ch));
+
     cid_t discovery_ch;
     TRY_OR_PANIC(open(&discovery_ch));
     TRY_OR_PANIC(transfer(discovery_ch, server_ch));
-
     TRY_OR_PANIC(register_server(memmgr_ch, GUI_INTERFACE, discovery_ch));
 
     mainloop(server_ch);
