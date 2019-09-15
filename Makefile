@@ -120,7 +120,7 @@ $(BUILD_DIR)/kernel.elf: $(kernel_objs) kernel/arch/$(ARCH)/$(ARCH).ld tools/lin
 		$(kernel_objs)
 
 # IDL stub.
-$(BUILD_DIR)/include/resea_idl.h: interfaces.idl tools/genstub.py
+$(BUILD_DIR)/include/resea_idl.h: misc/interfaces.idl tools/genstub.py
 	$(PROGRESS) "GENSTUB" $@
 	mkdir -p $(@D)
 	$(PYTHON3) tools/genstub.py $< > $@
