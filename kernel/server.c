@@ -212,6 +212,30 @@ error_t handle_allow_io_msg(struct process *sender,
     return OK;
 }
 
+error_t handle_send_channel_to_process_msg(pid_t pid, cid_t cid,
+        struct send_channel_to_process_reply_msg *r) {
+    TRACE("kernel: send_channel_to_pid(pid=%d)", pid);
+
+    struct process *proc = table_get(&all_processes, pid);
+    if (!proc) {
+        WARN("invalid proc");
+        return ERR_INVALID_MESSAGE;
+    }
+
+    struct channel *ch = table_get(&CURRENT->process->channels, cid);
+    struct channel *dst_ch = channel_create(proc);
+    // FIXME: Clean up and return an error instead.
+    ASSERT(ch);
+    ASSERT(dst_ch);
+
+    channel_link(ch->linked_to, dst_ch);
+    channel_decref(ch);
+
+    TRACE("kernel: send_channel_to_pid: created %pC", dst_ch);
+    r->header = SEND_CHANNEL_TO_PROCESS_REPLY_HEADER;
+    return OK;
+}
+
 NORETURN static void handle_exit_kernel_test_msg(void) {
     INFO("Power off");
     arch_poweroff();
@@ -277,6 +301,12 @@ NORETURN static void mainloop(cid_t server_ch) {
             err = handle_allow_io_msg(sender,
                                       (struct allow_io_reply_msg *) ipc_buffer);
             break;
+        case SEND_CHANNEL_TO_PROCESS_MSG: {
+            struct send_channel_to_process_msg *m = (struct send_channel_to_process_msg *) ipc_buffer;
+            err = handle_send_channel_to_process_msg(m->pid, m->ch,
+                 (struct send_channel_to_process_reply_msg *) ipc_buffer);
+            break;
+        }
         case EXIT_KERNEL_TEST_MSG:
             handle_exit_kernel_test_msg();
             break;

@@ -26,6 +26,10 @@ interface kernel {
 
     [id(8), type(call)]
     allow_io() -> ()
+
+    [id(9), type(call)]
+    send_channel_to_process(pid: pid, ch: channel)
+        -> ()
 }
 
 [id(2)]
