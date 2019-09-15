@@ -161,6 +161,64 @@ static error_t handle_connect_request_reply(struct connect_request_reply_msg *m)
     return ERR_DONT_REPLY;
 }
 
+#define FD_TABLE_MAX 64
+struct fd_table_entry {
+    const struct initfs_file *file;
+};
+
+// TODO: use hash table
+// TODO: process-local fd numbers
+static struct fd_table_entry fd_table[FD_TABLE_MAX];
+
+static error_t do_open_file(UNUSED cid_t from, const char* path, UNUSED uint8_t mode,
+                            fd_t *handle) {
+    struct fd_table_entry *entry = NULL;
+    fd_t fd;
+    for (fd = 0; fd < FD_TABLE_MAX; fd++) {
+        if (!fd_table[fd].file) {
+            entry = &fd_table[fd];
+            break;
+        }
+    }
+
+    assert(entry);
+
+    struct initfs_dir dir;
+    initfs_opendir(&dir);
+    const struct initfs_file *file;
+    while ((file = initfs_readdir(&dir)) != NULL) {
+        if (strcmp(path, file->path) == 0) {
+            entry->file = file;
+            *handle = fd;
+            return OK;
+        }
+    }
+
+    WARN("no such a file: '%s'", path);
+    return ERR_NOT_FOUND;
+}
+
+static error_t do_read_file(UNUSED cid_t from, fd_t handle, size_t offset, size_t len,
+                            page_t *data) {
+    assert(handle < FD_TABLE_MAX);
+    assert(fd_table[handle].file != NULL);
+
+    const struct initfs_file *file = fd_table[handle].file;
+
+    uintptr_t alloced_addr;
+    if ((alloced_addr = do_alloc_pages(0)) == 0)
+        return ERR_NO_MEMORY;
+
+    assert(len <= PAGE_SIZE);
+    assert(offset < file->len);
+    size_t copy_len = MIN(len, file->len - offset);
+    memcpy_s((void *) alloced_addr, PAGE_SIZE, &file->content[offset],
+             copy_len);
+
+    *data = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
+    return OK;
+}
+
 static void post_work() {
     for (int interface = 0; interface <= INTERFACE_ID_MAX; interface++) {
         if (!servers[interface]) {
@@ -206,6 +264,16 @@ void mainloop(cid_t server_ch) {
             break;
         case CONNECT_REQUEST_REPLY_MSG:
             err = handle_connect_request_reply((struct connect_request_reply_msg *) &m);
+            break;
+
+        //
+        //  FS
+        //
+        case OPEN_FILE_MSG:
+            err = dispatch_open_file(do_open_file, &m, &r);
+            break;
+        case READ_FILE_MSG:
+            err = dispatch_read_file(do_read_file, &m, &r);
             break;
 
         case EXIT_KERNEL_TEST_MSG:
