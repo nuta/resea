@@ -97,7 +97,16 @@ interface fs {
     read_file(handle: fd, offset: size, len: size) -> (data: page)
 }
 
+[id(8)]
+interface api {
+    [id(1), type(call)]
+    api_create_app(path: smallstring) -> (pid: pid)
+    [id(2), type(call)]
+    api_start_app(pid: pid) -> ()
     [id(3), type(call)]
+    api_join_app(pid: pid) -> (code: int8)
+    [id(4), type(call)]
+    api_exit_app(code: int8) -> ()
 }
 
 [id(127)]
