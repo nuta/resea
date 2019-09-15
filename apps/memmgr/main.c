@@ -96,6 +96,7 @@ cid_t servers[INTERFACE_ID_MAX + 1];
 struct waiter {
     uint8_t interface;
     cid_t reply_to;
+    cid_t server_ch;
     bool sent_request;
 };
 #define WAITERS_MAX 32
@@ -148,7 +149,7 @@ static error_t handle_connect_server(UNUSED cid_t from, uint8_t interface,
 static error_t handle_connect_request_reply(struct connect_request_reply_msg *m) {
     struct waiter *waiter = NULL;
     for (int i = 0; i < WAITERS_MAX; i++) {
-        if (waiters[i].reply_to) {
+        if (waiters[i].reply_to && waiters[i].server_ch == m->from) {
             waiter = &waiters[i];
             break;
         }
@@ -173,6 +174,7 @@ static void post_work() {
                     servers[interface], interface);
                 send_connect_request(servers[interface], interface);
                 TRACE("sent connect_request");
+                waiters[i].server_ch = servers[interface];
                 waiters[i].sent_request = true;
             }
         }
