@@ -1,6 +1,5 @@
 #
-# A build environment in Docker. This may be useful when you need to work on
-# improving the build system or you're tidy.
+# A build environment in Docker for those who are tidy.
 #
 # Usage:
 #
@@ -18,7 +17,7 @@ RUN    echo "deb mirror://mirrors.ubuntu.com/mirrors.txt disco main restricted u
     && apt-get install -qy --no-install-recommends \
         llvm lld clang make git \
         python3 python3-pip python3-setuptools python3-wheel python3-dev \
-        grub-common xorriso qemu-system-x86 \
+        grub xorriso mtools qemu-system-x86 \
     && apt-get clean
 
 COPY . /resea
