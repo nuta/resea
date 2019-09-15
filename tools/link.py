@@ -5,6 +5,7 @@ import os
 import sys
 import shlex
 import shutil
+from pathlib import Path
 
 def extract_symbols(nm, file):
     stdout = subprocess.check_output([nm, "--defined-only", "--demangle", file],
@@ -73,22 +74,27 @@ def verify_symtable(nm, old_file, new_file):
                 f"expected={symbols[name]}, actual={new_symbols[name]}")
 
 def link(cc, cflags, ld, ldflags, nm, build_dir, outfile, mapfile, objs):
+    outfile = Path(outfile)
+    stage1 = outfile.parent / ("." + outfile.name + ".stage1.tmp")
+    stage2 = outfile.parent / ("." + outfile.name + ".stage2.tmp")
+    stage3 = outfile.parent / ("." + outfile.name + ".stage3.tmp")
+
     # Link stage 1: Embed an empty symtable into the executable.
     generate_symbol_table(f"{build_dir}/__symtable.S", {}, 0)
     subprocess.check_call([cc] + shlex.split(cflags) + \
         ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/__symtable.S"])
     subprocess.check_call([ld] + shlex.split(ldflags) + \
-        ["-o", f"{outfile}.stage1.tmp", f"{build_dir}/__symtable.o"] + objs)
+        ["-o", stage1, f"{build_dir}/__symtable.o"] + objs)
     
 	# Link stage 2: Embed the generated symtable into the executable.
 	#               Symbol offsets may be changed (that is, the symtable is
 	#               not correct) in this stage since the size of the
 	#               symtable is no longer empty.
-    generate_symbol_table(f"{build_dir}/__symtable.S", *extract_symbols(nm, f"{outfile}.stage1.tmp"))
+    generate_symbol_table(f"{build_dir}/__symtable.S", *extract_symbols(nm, stage1))
     subprocess.check_call([cc] + shlex.split(cflags) + \
         ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/__symtable.S"])
     subprocess.check_call([ld] + shlex.split(ldflags) + \
-        ["-o", f"{outfile}.stage2.tmp", f"{build_dir}/__symtable.o"] + objs)
+        ["-o", stage2, f"{build_dir}/__symtable.o"] + objs)
     
 	# Link stage 3: Embed re-generated symtable into the executable again
 	#               because symbol offsets may be changed by embedding the
@@ -96,14 +102,14 @@ def link(cc, cflags, ld, ldflags, nm, build_dir, outfile, mapfile, objs):
 	#               behaves in a deterministic way, i.e., symbol offsets in
 	#               the re-generated symtable and them in the $@.stage3.tmp
     #               are identical.
-    generate_symbol_table(f"{build_dir}/__symtable.S", *extract_symbols(nm, f"{outfile}.stage2.tmp"))
+    generate_symbol_table(f"{build_dir}/__symtable.S", *extract_symbols(nm, stage2))
     subprocess.check_call([cc] + shlex.split(cflags) + \
         ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/__symtable.S"])
-    subprocess.check_call([ld, "--Map", mapfile, "-o", f"{outfile}.stage3.tmp"] \
+    subprocess.check_call([ld, "--Map", mapfile, "-o", stage3] \
         + shlex.split(ldflags) + [f"{build_dir}/__symtable.o"] + objs)
 
-    verify_symtable(nm, f"{outfile}.stage2.tmp", f"{outfile}.stage3.tmp")
-    shutil.move(f"{outfile}.stage3.tmp", outfile)
+    verify_symtable(nm, stage2, stage3)
+    shutil.move(stage3, outfile)
 
 def main():
     parser = argparse.ArgumentParser(
