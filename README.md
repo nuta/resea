@@ -58,8 +58,8 @@ $ make docs                 # Generate a source code reference.
 
 Documentation
 -------------
-- **[Design and Internals](https://github.com/seiyanuta/resea/blob/master/INTERNALS.md)**
-- **[Developer's Guide](https://github.com/seiyanuta/resea/blob/master/HACKING.md)**
+- **[Design and Internals](https://github.com/seiyanuta/resea/blob/master/docs/internals.md)**
+- **[Developer's Guide](https://github.com/seiyanuta/resea/blob/master/docs/hacking.md)**
 
 Contributing
 ------------
