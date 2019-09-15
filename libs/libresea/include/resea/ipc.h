@@ -13,7 +13,7 @@
 #define PAGE_PAYLOAD_ADDR(page) ((page) & 0xfffffffffffff000ull)
 #define MSG_TYPE(header) (((header) >> MSG_TYPE_OFFSET) & 0xffff)
 #define INTERFACE_ID(header) (MSG_TYPE(header) >> 8)
-#define INLINE_PAYLOAD_LEN_MAX 2047
+#define INLINE_PAYLOAD_LEN_MAX 480
 #define ERROR_TO_HEADER(error) ((uint32_t)(error) << MSG_TYPE_OFFSET)
 
 // Syscall ops.

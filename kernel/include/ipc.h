@@ -31,7 +31,7 @@ typedef uint32_t header_t;
 #define PAGE_PAYLOAD_ADDR(page) ((page) & 0xfffffffffffff000ull)
 #define MSG_TYPE(header) (((header) >> MSG_TYPE_OFFSET) & 0xffff)
 #define INTERFACE_ID(header) (MSG_TYPE(header) >> 8)
-#define INLINE_PAYLOAD_LEN_MAX 2047
+#define INLINE_PAYLOAD_LEN_MAX 480
 #define ERROR_TO_HEADER(error) ((uint32_t) (error) << MSG_TYPE_OFFSET)
 
 // A bit mask to determine if a message satisfies one of fastpath
@@ -64,7 +64,7 @@ struct message {
     uint32_t __padding1;
     cid_t channel;
     page_t page;
-    uint64_t __padding2;
+    uint64_t __padding2; // FIXME: consider 32-bit envrionment
     uint8_t data[INLINE_PAYLOAD_LEN_MAX];
 } PACKED;
 
