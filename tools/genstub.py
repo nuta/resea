@@ -437,9 +437,10 @@ def send_params(fields):
     return ", ".join(params)
 
 def genstub(interfaces):
-    global types
+    global user_defined_types
     for interface in interfaces:
-        user_defined_types.update(interface["types"])
+        for typedef in interface["types"]:
+            user_defined_types[typedef["name"]] = typedef["alias_of"]
 
     renderer = jinja2.Environment()
     renderer.filters["resolve_type"] = resolve_type
