@@ -95,22 +95,7 @@ class IdlTransformer(Transformer):
             "messages": messages,
         }
 
-TEMPLATE = """\
-#ifndef __RESEA_IDL_H__
-#define __RESEA_IDL_H__
-#ifdef KERNEL
-#include <ipc.h>
-typedef vaddr_t uintptr_t;
-#else
-#include <resea.h>
-#include <resea/string.h>
-#endif
-
-#pragma clang diagnostic push
-// FIXME: Support padding in the message structs.
-#pragma clang diagnostic ignored "-Waddress-of-packed-member"
-#pragma clang diagnostic ignored "-Wunused-variable"
-
+CLIENT_STUBS = """
 #define MSG_REPLY_FLAG (1ULL << 7)
 
 #define SMALLSTRING_LEN_MAX 128
@@ -289,13 +274,82 @@ static inline header_t dispatch_{{ msg.name }}({{ msg.name }}_handler_t handler,
     return err;
 }
 #endif
-
 {%- endif %} {# msg.attrs.type == "call" #}
-{%- endfor %}
-{%- endfor %}
+{%- endfor %} {# for msg in interface.messages #}
+{%- endfor %} {# for interface in interfaces #}
+"""
+
+SERVER_STUBS = """\
+{%- for interface in interfaces %}
+{%- for msg in interface.messages %}
+{%- if msg.attrs.type == "call" %}
+
+static inline error_t do_{{ msg.name }}({{ msg | handler_params }}) {
+    // TODO:
+    return OK;
+}
+{%- endif %} {# msg.attrs.type == "call" #}
+{%- endfor %} {# for msg in interface.messages #}
+
+static void error_t mainloop(cid_t server_ch) {
+    while (1) {
+        struct message m;
+        TRY_OR_PANIC(ipc_recv(server_ch, &m));
+
+        struct message r;
+        error_t err;
+        switch (MSG_TYPE(m.header)) {
+        {%- for msg in interface.messages %}
+        {%- if msg.attrs.type == "call" %}
+        case {{ msg.name | upper }}_MSG:
+            err = dispatch_{{ msg.name }}(handle_{{ msg.name }}, &m, &r);
+            break;
+        {%- endif %} {# msg.attrs.type == "call" #}
+        {%- endfor %} {# for msg in interface.messages #}
+        default:
+            WARN("invalid message type %x", MSG_TYPE(m.header));
+            err = ERR_INVALID_MESSAGE;
+            r.header = ERROR_TO_HEADER(err);
+        }
+
+        if (err != ERR_DONT_REPLY) {
+            TRY_OR_PANIC(ipc_send(m.from, &r));
+        }
+    }
+}
+
+{%- endfor %} {# for interface in interfaces #}
+"""
+
+TEMPLATE = f"""\
+#ifndef __RESEA_IDL_H__
+#define __RESEA_IDL_H__
+#ifdef KERNEL
+#include <ipc.h>
+typedef vaddr_t uintptr_t;
+#else
+#include <resea.h>
+#include <resea/string.h>
+#endif
+
+#pragma clang diagnostic push
+// FIXME: Support padding in the message structs.
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
+#pragma clang diagnostic ignored "-Wunused-variable"
+
+//
+//  Client-side stubs.
+//
+{CLIENT_STUBS}
+
+#if 0
+//
+//  Server-side stubs: copy and paste into the your server!
+//
+{SERVER_STUBS}
+#endif
 
 #pragma clang diagnostic pop
-
 #endif
 """
 
