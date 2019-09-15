@@ -50,4 +50,4 @@ $(BUILD_DIR)/resea.iso: build
 	cp misc/grub.cfg $(BUILD_DIR)/isofiles/boot/grub/grub.cfg
 	cp $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/isofiles/kernel.elf
 	$(PROGRESS) GRUB $@
-	$(GRUB_PREFIX)grub-mkrescue -o $@ $(BUILD_DIR)/isofiles
+	$(GRUB_PREFIX)grub-mkrescue --xorriso=$(PWD)/misc/xorriso-wrapper -o $@ $(BUILD_DIR)/isofiles
