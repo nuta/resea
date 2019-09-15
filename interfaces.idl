@@ -78,6 +78,20 @@ interface discovery {
 interface gui {
     [id(1), type(call)]
     console_write(ch: uint8) -> ()
+[id(8)]
+interface fs {
+    type fd = int32
+    type file_mode = uint8
+
+    [id(1), type(call)]
+    open_file(path: smallstring, mode: file_mode) -> (handle: fd)
+    // [id(2), type(call)]
+    // TODO: close_file(handle: fd) -> ()
+    [id(3), type(call)]
+    read_file(handle: fd, offset: size, len: size) -> (data: page)
+}
+
+    [id(3), type(call)]
 }
 
 [id(127)]
