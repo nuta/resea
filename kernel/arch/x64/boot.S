@@ -42,19 +42,11 @@ x64_boot:
 
     /* Prepare for RETF. */
     mov eax, 24
-    lea edx, [protected_mode]
     push eax
+    lea edx, [protected_mode]
     push edx
 
-    /* Copy GDTR and GDT to a lower address. */
-    mov ecx, 0x100
-    mov edi, 0x7e00
-    lea esi, [gdtr]
-    and si, 0xffff
-    cld
-    rep movsb
-
-    lgdt [0x7e00]
+    lgdt [gdtr]
     retf
 
 protected_mode:
@@ -124,8 +116,8 @@ enable_long_mode:
 
     /* Prepare for RETF. */
     mov eax, 8
-    lea edx, [long_mode]
     push eax
+    lea edx, [long_mode_in_low_address]
     push edx
 
     /* Enable paging. */
@@ -135,8 +127,21 @@ enable_long_mode:
 
     retf
 
+.align 8
+gdtr:
+    .word gdt_end - gdt - 1
+    .quad gdt
+
+.align 8
+gdt:
+    .quad 0x0000000000000000 /* 0:  null descriptor */
+    .quad 0x00af9a000000ffff /* 8:  64-bit code segment (kernel): 0x0000000000000000 - 0xffffffffffffffff */
+    .quad 0x00cf92000000ffff /* 16: 64-bit data segment (kernel): 0x0000000000000000 - 0xffffffffffffffff */
+    .quad 0x00cf9a000000ffff /* 24: 32-bit code segment (kernel): 0x00000000         - 0xffffffff */
+gdt_end:
+
 .code64
-long_mode:
+long_mode_in_low_address:
     mov ax, 0
     mov ds, ax
     mov ss, ax
@@ -144,66 +149,37 @@ long_mode:
     mov fs, ax
     mov gs, ax
 
-    /* Clear .bss section */
-    mov al, 0x00
-    mov rdi, bss_addr
-    mov rcx, bss_end_addr
-    sub rcx, rdi
-    cld
-    rep stosb
-
     // Update RSP/RIP to use the virtual address.
     mov rbx, 0xffff800000000000
     or rsp, rbx
-
-    lea rax, [long_mode2]
+    lea rax, [long_mode - 0xffff800000000000]
     or rax, rbx
     jmp rax
 
-long_mode2:
-    // Read the address of the x64_setup. Due to a linker error, we cannot use
-    // LEA instruction here. Note that x64_setup_addr points to its physical
-    // address, not virtual access so we must do this before unmapping the
-    // virtual address around 0x0000_0000.
-    mov rax, x64_setup_addr
-
+// From here, we're in the .text section: we no longer use physical address.
+.text
+long_mode:
     // The kernel no longer access a virtual address around 0x0000_0000. Unmap
     // the area to catch bugs (especially NULL pointer dereferences in the
     // kernel).
     mov rdi, 0x0700000
-    mov qword ptr [edi], 0 /* unmap */
+    mov qword ptr [edi], 0 /* Clear the PML4 entry to unmap. */
+
+    // Clear .bss section
+    mov al, 0x00
+    lea rdi, [rip + __bss]
+    lea rcx, [rip + __bss_end]
+    sub rcx, rdi
+    cld
+    rep stosb
 
     /* call x64_setup() */
     pop rdi
+    lea rax, [rip + x64_setup]
     call rax
 
     /* In case main() returns. */
-    jmp halt
-
-/* Halt the computer. */
-halt:
+1:
     cli
     hlt
-    jmp halt
-
-.align 8
-
-bss_addr:
-    .quad __bss
-
-bss_end_addr:
-    .quad __bss_end
-
-x64_setup_addr:
-    .quad x64_setup
-
-gdtr:
-    .word gdt_end - gdt - 1
-    .quad 0x7e0a
-
-gdt:
-    .quad 0x0000000000000000 /* 0:  null descriptor */
-    .quad 0x00af9a000000ffff /* 8:  64-bit code segment (kernel): 0x0000000000000000 - 0xffffffffffffffff */
-    .quad 0x00cf92000000ffff /* 16: 64-bit data segment (kernel): 0x0000000000000000 - 0xffffffffffffffff */
-    .quad 0x00cf9a000000ffff /* 24: 32-bit code segment (kernel): 0x00000000         - 0xffffffff */
-gdt_end:
+    jmp 1b
