@@ -16,31 +16,29 @@
 .long 0              // Set graphics mode.
 .long 640, 480, 32   // Width, height, and depth.
 
-/* The entry point jumped from the bootloader. */
+// The entry point jumped from the bootloader.
 .code32
 .globl x64_boot
 x64_boot:
     cli
     cld
 
-    /*
-     * Set the boot (later reused for the cpu-local idle thread) stack. It is
-     * statically allocated as follows (see INTERNALS.md):
-     *
-     *     address = 0xffff800000a00000 + (cpu_id * PAGE_SIZE)
-     *     length  = PAGE_SIZE
-     *
-     *  Here we assume that the current processor is BSP, its APIC ID is 0,
-     *  and PAGE_SIZE is 4096.
-     */
+    // Set the boot (later reused for the cpu-local idle thread) stack. It is
+    // statically allocated as follows (see INTERNALS.md):
+    //
+    //     address = 0xffff800000a00000 + (cpu_id * PAGE_SIZE)
+    //     length  = PAGE_SIZE
+    //
+    //  Here we assume that the current processor is BSP, its APIC ID is 0,
+    //  and PAGE_SIZE is 4096.    
     mov esp, 0xa00000 + 4096
 
-    /* Save the 64-bit physical address of struct multiboot_info. */
+    // Save the 64-bit physical address of struct multiboot_info.
     xor eax, eax
     push eax // Upper 32-bits.
     push ebx
 
-    /* Prepare for RETF. */
+    // Prepare for RETF.
     mov eax, 24
     push eax
     lea edx, [protected_mode]
@@ -57,26 +55,24 @@ protected_mode:
     mov fs, ax
     mov gs, ax
 
-/*
- * Each PDPT table maps 1GiB space. We map 4GiB for kernel to access
- * the memory-mapped Local APIC registers.
- */
+// Each PDPT table maps 1GiB space. We map 4GiB for kernel to access
+// the memory-mapped Local APIC registers.
 #define NUM_PDPT_ENTRIES 4
 
 construct_page_table:
-    /* PML4: 0x00000000_00000000 (temporarily used in protected mode) */
+    // PML4: 0x00000000_00000000 (temporarily used in protected mode)
     mov edi, 0x0700000
-    mov dword ptr [edi], 0x0701003 /* Present, writable. */
+    mov dword ptr [edi], 0x0701003 // Present, writable.
     mov dword ptr [edi + 4], 0
 
-    /* PML4: 0xffff8000_00000000 */
+    // PML4: 0xffff8000_00000000
     mov edi, 0x0700000 + 256 * 8
-    mov dword ptr [edi], 0x0701003 /* Present, writable. */
+    mov dword ptr [edi], 0x0701003 // Present, writable.
     mov dword ptr [edi + 4], 0
 
-    /* PDPT */
+    // PDPT
     mov edi, 0x0701000
-    mov eax, 0x0702003 /* Present, writable */
+    mov eax, 0x0702003 // Present, writable
     mov ecx, NUM_PDPT_ENTRIES
 
 write_pdpt_entry:
@@ -86,47 +82,50 @@ write_pdpt_entry:
     add edi, 8
     loop write_pdpt_entry
 
-    /* Page Directory */
+    // Page Directory
     mov edi, 0x0702000
-    mov eax, 0x0083 /* Present, writable, page size is 2MB. */
-    mov ecx, NUM_PDPT_ENTRIES * 512 /* (# of PDPT entries) * (# of entries in PD) */
+    mov eax, 0x0083 // Present, writable, page size is 2MB.
+    mov ecx, NUM_PDPT_ENTRIES * 512 // (# of PDPT entries) * (# of entries in PD)
 
 write_pd_entry:
     mov dword ptr [edi], eax
     mov dword ptr [edi + 4], 0
-    add eax, 0x200000 /* 2MB */
+    add eax, 0x200000 // 2MB
     add edi, 8
     loop write_pd_entry
 
 enable_long_mode:
-    /* Enable PAE and PGE. */
+    // Enable PAE and PGE.
     mov eax, cr4
     or eax, 0xa0
     mov cr4, eax
 
-    /* Set the page table address. */
+    // Set the page table address.
     mov eax, 0x0700000
     mov cr3, eax
 
-    /* Enable long mode. */
+    // Enable long mode.
     mov ecx, 0xc0000080
     rdmsr
     or eax, 0x0100
     wrmsr
 
-    /* Prepare for RETF. */
+    // Prepare for RETF.
     mov eax, 8
     push eax
     lea edx, [long_mode_in_low_address]
     push edx
 
-    /* Enable paging. */
+    // Enable paging.
     mov eax, cr0
     or  eax, 0x80000000
     mov cr0, eax
 
     retf
 
+// Temporary GDTR/GDT entries. They are located in the .boot section as theier
+// symbol addresses must be physical to load. (in the protected mode, we are not
+// yet able to handle addresses above 0xffff800000000000).
 .align 8
 gdtr:
     .word gdt_end - gdt - 1
@@ -134,10 +133,10 @@ gdtr:
 
 .align 8
 gdt:
-    .quad 0x0000000000000000 /* 0:  null descriptor */
-    .quad 0x00af9a000000ffff /* 8:  64-bit code segment (kernel): 0x0000000000000000 - 0xffffffffffffffff */
-    .quad 0x00cf92000000ffff /* 16: 64-bit data segment (kernel): 0x0000000000000000 - 0xffffffffffffffff */
-    .quad 0x00cf9a000000ffff /* 24: 32-bit code segment (kernel): 0x00000000         - 0xffffffff */
+    .quad 0x0000000000000000 // 0:  null descriptor
+    .quad 0x00af9a000000ffff // 8:  64-bit code segment (kernel)
+    .quad 0x00cf92000000ffff // 16: 64-bit data segment (kernel)
+    .quad 0x00cf9a000000ffff // 24: 32-bit code segment (kernel)
 gdt_end:
 
 .code64
@@ -163,7 +162,7 @@ long_mode:
     // the area to catch bugs (especially NULL pointer dereferences in the
     // kernel).
     mov rdi, 0x0700000
-    mov qword ptr [edi], 0 /* Clear the PML4 entry to unmap. */
+    mov qword ptr [edi], 0 // Clear the PML4 entry to unmap.
 
     // Clear .bss section
     mov al, 0x00
@@ -173,12 +172,12 @@ long_mode:
     cld
     rep stosb
 
-    /* call x64_setup() */
+    // Enter x64_setup()
     pop rdi
     lea rax, [rip + x64_setup]
     call rax
 
-    /* In case main() returns. */
+    // In case x64_setup() returns. I believe it NEVER happen.
 1:
     cli
     hlt
