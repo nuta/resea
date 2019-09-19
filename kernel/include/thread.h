@@ -34,7 +34,7 @@ struct thread {
     /// The current state of the thread.
     int state;
     /// True if this thread is waiting for a message and the sys_ipc() is
-    /// invoked from the kernel (e.g. calling fill_request from tge page fault
+    /// invoked from the kernel (e.g. calling fill_request from the page fault
     /// handler). If the receiver is kernel, we copy page payloads in physical
     /// addresses.
     bool recv_in_kernel;
@@ -44,7 +44,7 @@ struct thread {
     /// info->ipc_buffer or kernel_ipc_buffer.
     struct message *ipc_buffer;
     /// The thread-local kernel IPC buffer. The kernel use this buffer when it
-    /// sends a message on behalf of the thread (e.g. pager.fill_message).
+    /// sends a message on behalf of the thread (e.g. pager.fill_request).
     ///
     /// Consider the following example:
     ///

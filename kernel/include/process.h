@@ -75,11 +75,10 @@ struct channel {
     /// channel will be sent to this channel. The destination channel can be
     /// channels in another process.
     ///
-    /// By default, this points to the itself (i.e. `ch->linked_to== ch`).
+    /// By default, this points to the itself (i.e. `ch->linked_to == ch`).
     struct channel *linked_to;
-    /// The transfer channel (FIXME: we need more appropriate name). The
-    /// messages sent from the channel linked with this channel will be
-    /// transferred to the transfer channel.
+    /// The transfer channel (FIXME: we need more appropriate name). Messages
+    /// sent to this channel are transferred to the transfer channel.
     ///
     /// By default, this points to the itself (i.e. `ch->transfer_to == ch`).
     struct channel *transfer_to;
