@@ -32,7 +32,7 @@ objs :=
 include kernel/arch/$(ARCH)/arch.mk
 include kernel/kernel.mk
 kernel_objs := $(addprefix $(BUILD_DIR)/, $(objs)) $(BUILD_DIR)/initfs.o
-include libs/libresea/arch/$(ARCH)/user_$(ARCH).mk
+include libs/libruntime/user_$(ARCH).mk
 endif
 
 # Disable builtin implicit rules and variables.
@@ -129,18 +129,19 @@ $(BUILD_DIR)/include/resea_idl.h: misc/interfaces.idl tools/genstub.py
 define server-make-rule
 $(eval include servers/$(1)/server.mk)
 $(eval server_objs := $(addprefix $(BUILD_DIR)/servers/$(1)/, $(objs)))
-$(eval lib_objs := $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(lib).lib.o))
+$(eval server_libs := libruntime $(libs))
+$(eval lib_objs := $(foreach lib, $(server_libs), $(BUILD_DIR)/libs/$(lib).lib.o))
 $(server_objs): CFLAGS := -DPROGRAM_NAME='"$(1)"' $(APP_CFLAGS) \
-	$(foreach lib, $(libs), -Ilibs/$(lib)/include)
+	$(foreach lib, $(server_libs), -Ilibs/$(lib)/include)
 $(BUILD_DIR)/servers/$(1).elf: $(server_objs) $(lib_objs) servers/$(1)/server.mk
 $(BUILD_DIR)/servers/$(1).elf: server_name := $(1)
 # Use server's own linker script if exists.
 $(BUILD_DIR)/servers/$(1).elf: ldflags := \
 	$(if $(wildcard servers/$(1)/$(1)_$(ARCH).ld), \
 		--script=servers/$(1)/$(1)_$(ARCH).ld, \
-		--script=libs/libresea/arch/$(ARCH)/user_$(ARCH).ld)
+		--script=libs/libruntime/user_$(ARCH).ld)
 $(BUILD_DIR)/servers/$(1).elf: objs := $(server_objs) $(lib_objs)
-lib_deps += $(filter-out $(lib_deps), $(libs))
+lib_deps += $(filter-out $(lib_deps), $(server_libs))
 endef
 $(foreach server, $(INIT) $(STARTUPS), $(eval $(call server-make-rule,$(server))))
 initfs_files += $(foreach server, $(STARTUPS), $(BUILD_DIR)/initfs/startups/$(server).elf)
@@ -149,18 +150,19 @@ initfs_files += $(foreach server, $(STARTUPS), $(BUILD_DIR)/initfs/startups/$(se
 define app-make-rule
 $(eval include apps/$(1)/app.mk)
 $(eval app_objs := $(addprefix $(BUILD_DIR)/apps/$(1)/, $(objs)))
-$(eval lib_objs := $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(lib).lib.o))
+$(eval app_libs := libruntime $(libs))
+$(eval lib_objs := $(foreach lib, $(app_libs), $(BUILD_DIR)/libs/$(lib).lib.o))
 $(app_objs): CFLAGS := -DPROGRAM_NAME='"$(1)"' $(APP_CFLAGS) \
-	$(foreach lib, $(libs), -Ilibs/$(lib)/include)
+	$(foreach lib, $(app_libs), -Ilibs/$(lib)/include)
 $(BUILD_DIR)/apps/$(1).elf: $(app_objs) $(lib_objs) apps/$(1)/app.mk
 $(BUILD_DIR)/apps/$(1).elf: app_name := $(1)
 # Use app's own linker script if exists.
 $(BUILD_DIR)/apps/$(1).elf: ldflags := \
 	$(if $(wildcard apps/$(1)/$(1)_$(ARCH).ld), \
 		--script=apps/$(1)/$(1)_$(ARCH).ld, \
-		--script=libs/libresea/arch/$(ARCH)/user_$(ARCH).ld)
+		--script=libs/libruntime/user_$(ARCH).ld)
 $(BUILD_DIR)/apps/$(1).elf: objs := $(app_objs) $(lib_objs)
-lib_deps += $(filter-out $(lib_deps), $(libs))
+lib_deps += $(filter-out $(lib_deps), $(app_libs))
 endef
 $(foreach app, $(APPS), $(eval $(call app-make-rule,$(app))))
 initfs_files += $(foreach app, $(APPS), $(BUILD_DIR)/initfs/apps/$(app).elf)
