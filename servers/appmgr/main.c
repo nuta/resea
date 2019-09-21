@@ -78,7 +78,7 @@ static error_t handle_api_create_app(UNUSED cid_t from, const char* path, pid_t 
 }
 
 static error_t handle_api_start_app(UNUSED cid_t from, pid_t pid) {
-    TRY_OR_PANIC(start_app(kernel_ch, memmgr_ch, pid));
+    TRY_OR_PANIC(start_app(kernel_ch, pid));
     return OK;
 }
 
@@ -194,7 +194,7 @@ int main(void) {
     pid_t app_pid;
     TRACE("starting shell app");
     TRY_OR_PANIC(create_app(kernel_ch, memmgr_ch, server_ch, &shell_file, &app_pid));
-    TRY_OR_PANIC(start_app(kernel_ch, memmgr_ch, app_pid));
+    TRY_OR_PANIC(start_app(kernel_ch, app_pid));
     TRACE("started shell app");
 
     INFO("entering the mainloop...");

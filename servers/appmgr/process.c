@@ -100,7 +100,7 @@ struct process *get_process_by_cid(cid_t cid) {
     return NULL;
 }
 
-error_t start_app(cid_t kernel_ch, cid_t memmgr_ch, pid_t app_pid) {
+error_t start_app(cid_t kernel_ch, pid_t app_pid) {
     struct process *proc = get_process_by_pid(app_pid);
     assert(proc);
 
