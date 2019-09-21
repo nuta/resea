@@ -1,2 +1,2 @@
 name := libserver
-objs := mainloop.o
+objs := server.o

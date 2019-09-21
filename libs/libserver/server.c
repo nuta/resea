@@ -1,4 +1,5 @@
 #include <resea.h>
+#include <resea_idl.h>
 #include <server.h>
 
 error_t server_mainloop(cid_t ch, error_t (*process)(struct message *m)) {
@@ -24,4 +25,14 @@ error_t server_mainloop(cid_t ch, error_t (*process)(struct message *m)) {
         // Send the reply message.
         TRY(ipc_send(m.from, &m));
     }
+}
+
+error_t server_register(cid_t discovery_server, cid_t receive_at,
+                        uint16_t interface, cid_t *new_ch) {
+    cid_t ch;
+    TRY(open(&ch));
+    TRY(transfer(ch, receive_at));
+    TRY(register_server(discovery_server, interface, ch));
+    *new_ch = ch;
+    return OK;
 }
