@@ -36,7 +36,7 @@ void x64_handle_interrupt(uint8_t vec, struct interrupt_regs *regs) {
         x64_lazy_fpu_switch();
         break;
     case APIC_TIMER_VECTOR:
-        timer_interrupt_handler();
+        timer_interrupt_handler(1);
         x64_ack_interrupt();
         break;
     default:

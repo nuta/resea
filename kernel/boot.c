@@ -7,6 +7,7 @@
 #include <process.h>
 #include <server.h>
 #include <thread.h>
+#include <timer.h>
 
 extern char __initfs[];
 
@@ -81,6 +82,7 @@ void boot(void) {
     debug_init();
     memory_init();
     arch_init(&init_args);
+    timer_init();
     process_init();
     thread_init();
     kernel_server_init();

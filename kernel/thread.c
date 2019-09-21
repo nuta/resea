@@ -5,6 +5,7 @@
 #include <process.h>
 #include <table.h>
 #include <thread.h>
+#include <timer.h>
 
 /// Creates a new thread. If `process` is `kernel_process`, it creates a kernel
 /// thread, which is a special thread which runs only in the kernel land. In
@@ -155,10 +156,16 @@ void thread_switch(void) {
     check_stack_canary();
 }
 
+static void thread_switch_by_timeout(UNUSED struct timer *timer) {
+    thread_switch();
+}
+
 /// Initializes the thread subsystem.
 void thread_init(void) {
     list_init(&runqueue);
     struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0, 0);
     set_current_thread(idle_thread);
     CPUVAR->idle_thread = idle_thread;
+    timer_create(TIMER_INTERVAL, THREAD_SWITCH_INTERVAL,
+                 thread_switch_by_timeout, NULL);
 }
