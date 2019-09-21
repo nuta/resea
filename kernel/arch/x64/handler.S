@@ -12,7 +12,7 @@ x64_syscall_handler:
     //   RAX: syscall number
     //   RDI: 1st argument
     //   RSI: 2nd argument
-    //   RDX: 3rd argument
+    //   RDX: (unused)
     //   RCX: user RIP (set by SYSCALL)
     //   R8:  (unused)
     //   R9:  (unused)
@@ -50,7 +50,7 @@ x64_syscall_handler:
     push r14
     push r15
 
-    mov rcx, rax
+    mov rdx, rax
     call syscall_handler
 
     // Restore callee-saved registers.
