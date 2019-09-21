@@ -49,7 +49,6 @@ PROGRESS     := printf "  \\033[1;35m%8s  \\033[1;m%s\\033[m\\n"
 
 # LLD options.
 KERNEL_LDFLAGS += --script=kernel/arch/$(ARCH)/$(ARCH).ld
-APP_LDFLAGS +=
 
 ifeq ($(BUILD), debug)
 COMMON_CFLAGS += -O1 -fsanitize=undefined -DDEBUG_BUILD
