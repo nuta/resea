@@ -1,40 +1,36 @@
 #include <resea.h>
 #include <resea_idl.h>
+#include <server.h>
+#include <driver/io.h>
 #include "keymap.h"
+#include "pc_kbd.h"
 
-#define IOPORT_KEYBOARD_DATA 0x60
-
-static cid_t listener;
+// Channels connected by memmgr.
+static cid_t memmgr_ch = 1;
+static cid_t kernel_ch = 2;
+// The channel at which we receive messages.
+static cid_t server_ch;
+// The channel to receive interrupt notifications. Transfers to server_ch.
 static cid_t kbd_irq_ch;
+// The channel to receive discovery.connect_request. Transfers to server_ch.
+static cid_t discovery_ch;
+// The channel to send keyboard events.
+static cid_t listener_ch = 0;
 
-static inline uint8_t asm_in8(uint16_t port) {
-    uint8_t value;
-    __asm__ __volatile__("inb %1, %0" : "=a"(value) : "Nd"(port));
-    return value;
-}
-
-bool ctrl_left_pressed   = false;
-bool ctrl_right_pressed  = false;
-bool alt_left_pressed    = false;
-bool alt_right_pressed   = false;
-bool shift_left_pressed  = false;
-bool shift_right_pressed = false;
-bool super_left_pressed  = false;
-bool super_right_pressed = false;
-bool fn_pressed          = false;
-bool caps_lock_pressed   = false;
+static io_handle_t io_handle;
+static struct modifiers_state modifiers;
 
 static void read_keyboard_input(void) {
-    uint8_t scan_code = asm_in8(IOPORT_KEYBOARD_DATA);
-    bool shift = shift_left_pressed || shift_right_pressed;
+    uint8_t scan_code = io_read8(&io_handle, IOPORT_OFFSET_DATA);
+    bool shift = modifiers.shift_left || modifiers.shift_right;
     uint8_t key_code = scan_code2key_code(scan_code, shift);
     char ascii = '_';
     switch (key_code & ~KEY_RELEASE) {
     case KEY_SHIFT_LEFT:
-        shift_left_pressed = (key_code & KEY_RELEASE) == 0;
+        modifiers.shift_left = (key_code & KEY_RELEASE) == 0;
         break;
     case KEY_SHIFT_RIGHT:
-        shift_right_pressed = (key_code & KEY_RELEASE) == 0;
+        modifiers.shift_right = (key_code & KEY_RELEASE) == 0;
         break;
     default:
         ascii = key_code & ~KEY_RELEASE;
@@ -43,96 +39,73 @@ static void read_keyboard_input(void) {
     TRACE("keyboard: scan_code=%x, key_code=%x, ascii='%c'%s%s%s%s%s%s%s",
           scan_code, key_code, ascii,
           (key_code & KEY_RELEASE) ? " [release]"     : "",
-          ctrl_left_pressed        ? " [ctrl-left]"   : "",
-          ctrl_right_pressed       ? " [ctrl-right]"  : "",
-          alt_left_pressed         ? " [alt-left]"    : "",
-          alt_right_pressed        ? " [alt-right]"   : "",
-          shift_left_pressed       ? " [shift-left]"  : "",
-          shift_right_pressed      ? " [shift-right]" : ""
+          modifiers.ctrl_left      ? " [ctrl-left]"   : "",
+          modifiers.ctrl_right     ? " [ctrl-right]"  : "",
+          modifiers.alt_left       ? " [alt-left]"    : "",
+          modifiers.alt_right      ? " [alt-right]"   : "",
+          modifiers.shift_left     ? " [shift-left]"  : "",
+          modifiers.shift_right    ? " [shift-right]" : ""
          );
 
-    if (listener) {
-        on_keyinput(listener, key_code);
+    if (listener_ch) {
+        on_keyinput(listener_ch, key_code);
     }
 }
 
-static void on_interrupt(intmax_t intr_count) {
+static error_t handle_notification(struct message *m) {
+    intmax_t intr_count = m->payloads.notification.notification.data;
     while (intr_count-- > 0) {
         read_keyboard_input();
     }
+    return ERR_DONT_REPLY;
 }
 
-static cid_t server_ch;
-
-static error_t handle_connect_request(UNUSED cid_t from,
-                                      UNUSED uint8_t interface,
-                                      cid_t *ch) {
+static error_t handle_connect_request(struct message *m) {
     TRACE("connect_request()");
     cid_t new_ch;
-    TRY_OR_PANIC(open(&new_ch));
+    TRY(open(&new_ch));
     transfer(new_ch, server_ch);
-    *ch = new_ch;
+
+    m->header = CONNECT_REQUEST_REPLY_HEADER;
+    m->payloads.discovery.connect_request_reply.ch = new_ch;
     return OK;
 }
 
-static error_t do_listen_keyboard(UNUSED cid_t from, cid_t ch) {
-    listener = ch;
+static error_t handle_listen_keyboard(struct message *m) {
+    listener_ch = m->payloads.keyboard_driver.listen_keyboard.ch;
+
+    m->header = LISTEN_KEYBOARD_REPLY_HEADER;
     return OK;
 }
 
-void mainloop(void) {
-    struct message m;
-    TRY_OR_PANIC(ipc_recv(server_ch, &m));
-    while (1) {
-        struct message r;
-        error_t err;
-        cid_t from = m.from;
-        switch (MSG_TYPE(m.header)) {
-        case NOTIFICATION_MSG:
-            on_interrupt(((struct notification_msg *) &m)->data);
-            err = ERR_DONT_REPLY;
-            break;
-        case CONNECT_REQUEST_MSG:
-            err = dispatch_connect_request(handle_connect_request, &m, &r);
-            break;
-        case LISTEN_KEYBOARD_MSG:
-            err = dispatch_listen_keyboard(do_listen_keyboard, &m, &r);
-            break;
-        default:
-            WARN("invalid message type %x", MSG_TYPE(m.header));
-            err = ERR_INVALID_MESSAGE;
-            r.header = ERROR_TO_HEADER(err);
-        }
-
-        if (err == ERR_DONT_REPLY) {
-            TRY_OR_PANIC(ipc_recv(server_ch, &m));
-        } else {
-            TRY_OR_PANIC(ipc_replyrecv(from, &r, &m));
-        }
+/// Does work for the message `m` and fills a reply message into it`.
+static error_t process_message(struct message *m) {
+    switch (MSG_TYPE(m->header)) {
+    case NOTIFICATION_MSG:    return handle_notification(m);
+    case CONNECT_REQUEST_MSG: return handle_connect_request(m);
+    case LISTEN_KEYBOARD_MSG: return handle_listen_keyboard(m);
     }
+    return ERR_INVALID_MESSAGE;
 }
 
 void main(void) {
     INFO("starting...");
     TRY_OR_PANIC(open(&server_ch));
 
-    cid_t memmgr_ch = 1;
-    cid_t kernel_ch = 2;
-
-    // Enable IO instructions.
-    TRY_OR_PANIC(allow_io(kernel_ch));
+    TRY_OR_PANIC(io_open(&io_handle, kernel_ch, IO_SPACE_IOPORT,
+                         IOPORT_ADDR, IOPORT_SIZE));
 
     // Create and connect a channel to receive keyboard interrupts.
     TRY_OR_PANIC(open(&kbd_irq_ch));
     TRY_OR_PANIC(transfer(kbd_irq_ch, server_ch));
     TRY_OR_PANIC(listen_irq(kernel_ch, kbd_irq_ch, 1 /* keyboard irq */));
 
-    cid_t discovery_ch;
     TRY_OR_PANIC(open(&discovery_ch));
     TRY_OR_PANIC(transfer(discovery_ch, server_ch));
-    TRY_OR_PANIC(register_server(memmgr_ch, KEYBOARD_DRIVER_INTERFACE, discovery_ch));
+    TRY_OR_PANIC(register_server(memmgr_ch, KEYBOARD_DRIVER_INTERFACE,
+                                 discovery_ch));
 
     // FIXME: memmgr waits for us due to connect_request.
     // INFO("entering the mainloop...");
-    mainloop();
+    server_mainloop(server_ch, process_message);
 }
