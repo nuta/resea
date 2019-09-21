@@ -78,7 +78,6 @@ static error_t handle_listen_keyboard(struct message *m) {
     return OK;
 }
 
-/// Does work for the message `m` and fills a reply message into it`.
 static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
     case NOTIFICATION_MSG:    return handle_notification(m);
