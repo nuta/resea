@@ -55,11 +55,6 @@ static void read_keyboard_input(void) {
 static error_t handle_notification(struct message *m) {
     intmax_t intr_count = m->payloads.notification.data;
 
-    WARN("copy_message: %d // %d %d", INLINE_PAYLOAD_LEN(get_ipc_buffer()->header),
-        offsetof(struct message, payloads.data),
-        offsetof(struct message, payloads.notification.data));
-
-    INFO("intr! %x %d", get_ipc_buffer()->header, intr_count);
     while (intr_count-- > 0) {
         read_keyboard_input();
     }
