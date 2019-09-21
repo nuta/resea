@@ -37,6 +37,13 @@ typedef uint32_t header_t;
 //
 //  Notification.
 //
+#define NOTIFICATION_INTERFACE  100ULL
+#define NOTIFICATION_MSG        ((NOTIFICATION_INTERFACE << 8) | 1)
+#define NOTIFICATION_INLINE_LEN (sizeof(intmax_t))
+#define NOTIFICATION_HEADER \
+    ((NOTIFICATION_MSG << MSG_TYPE_OFFSET) | \
+     (NOTIFICATION_INLINE_LEN << MSG_INLINE_LEN_OFFSET))
+
 typedef intmax_t notification_t;
 enum notify_op {
     NOTIFY_OP_SET = 1,
@@ -72,8 +79,21 @@ struct message {
             uint8_t data[INLINE_PAYLOAD_LEN_MAX];
         } PACKED;
 
+        // Notification message payloads.
+        struct {
+            page_t __page;
+            cid_t __channel;
+            uint8_t __padding[12];
+            intmax_t data;
+        } notification PACKED;
+
+
         IDL_MESSAGE_PAYLOADS
     } payloads;
 } PACKED;
+
+STATIC_ASSERT(sizeof(struct message) == 512);
+STATIC_ASSERT(offsetof(struct message, payloads.data) ==
+              offsetof(struct message, payloads.notification.data));
 
 #endif

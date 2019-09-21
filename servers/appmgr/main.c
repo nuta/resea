@@ -1,5 +1,6 @@
 #include <resea.h>
 #include <resea_idl.h>
+#include <server.h>
 #include "process.h"
 #include "fs.h"
 
@@ -7,8 +8,10 @@ static cid_t memmgr_ch = 1;
 static cid_t kernel_ch = 2;
 static cid_t server_ch;
 
-error_t handle_fill_page_request(UNUSED cid_t from, pid_t pid, uintptr_t addr,
-                                 UNUSED size_t size, page_t *page) {
+static error_t handle_pager_fill_page(struct message *m) {
+    pid_t pid      = m->payloads.pager.fill_page.pid;
+    uintptr_t addr = m->payloads.pager.fill_page.addr;
+
     struct process *proc = get_process_by_pid(pid);
     assert(proc);
 
@@ -21,10 +24,11 @@ error_t handle_fill_page_request(UNUSED cid_t from, pid_t pid, uintptr_t addr,
             page_base_t page_base = valloc(4096);
             uint8_t *data;
             size_t num_pages;
-            TRY_OR_PANIC(read_file(proc->file->fs_server, proc->file->fd,
+            TRY_OR_PANIC(call_fs_read(proc->file->fs_server, proc->file->fd,
                 fileoff, PAGE_SIZE, page_base, (uintptr_t *) &data, &num_pages));
 
-            *page = PAGE_PAYLOAD((uintptr_t) data, 0, PAGE_TYPE_SHARED);
+            m->header = PAGER_FILL_PAGE_REPLY_HEADER;
+            m->payloads.pager.fill_page_reply.page = PAGE_PAYLOAD((uintptr_t) data, 0, PAGE_TYPE_SHARED);
             return OK;
         }
     }
@@ -33,14 +37,17 @@ error_t handle_fill_page_request(UNUSED cid_t from, pid_t pid, uintptr_t addr,
     page_base_t page_base = valloc(4096);
     uint8_t *ptr;
     size_t num_pages;
-    TRY_OR_PANIC(alloc_pages(memmgr_ch, 0, page_base, (uintptr_t *) &ptr, &num_pages));
-    *page = PAGE_PAYLOAD((uintptr_t) ptr, 0, PAGE_TYPE_SHARED);
+    TRY_OR_PANIC(call_memmgr_alloc_pages(memmgr_ch, 0, page_base, (uintptr_t *) &ptr, &num_pages));
+
+    m->header = PAGER_FILL_PAGE_REPLY_HEADER;
+    m->payloads.pager.fill_page_reply.page = PAGE_PAYLOAD((uintptr_t) ptr, 0, PAGE_TYPE_SHARED);
     return OK;
 }
 
-static error_t handle_printchar(UNUSED cid_t from, uint8_t ch) {
+static error_t handle_runtime_printchar(struct message *m) {
     // Forward to the kernel sever.
-    return printchar(kernel_ch, ch);
+    uint8_t ch = m->payloads.runtime.printchar.ch;
+    return call_runtime_printchar(kernel_ch, ch);
 }
 
 #define FILES_MAX 32
@@ -57,7 +64,7 @@ static struct file *open_app_file(const char *path) {
     assert(f);
 
     fd_t handle;
-    if (open_file(memmgr_ch, path, 0, &handle) != OK) {
+    if (call_fs_open(memmgr_ch, path, 0, &handle) != OK) {
         return NULL;
     }
 
@@ -67,18 +74,26 @@ static struct file *open_app_file(const char *path) {
     return f;
 }
 
-static error_t handle_api_create_app(UNUSED cid_t from, const char* path, pid_t *pid) {
+static error_t handle_api_create_app(struct message *m) {
+    const char *path = m->payloads.api.create_app.path;
+
     struct file *f = open_app_file(path);
     if (!f) {
         return ERR_INVALID_MESSAGE;
     }
 
-    TRY_OR_PANIC(create_app(kernel_ch, memmgr_ch, server_ch, f, pid));
+    pid_t pid;
+    TRY_OR_PANIC(create_app(kernel_ch, memmgr_ch, server_ch, f, &pid));
+
+    m->header = API_CREATE_APP_REPLY_HEADER;
+    m->payloads.api.create_app_reply.pid = pid;
     return OK;
 }
 
-static error_t handle_api_start_app(UNUSED cid_t from, pid_t pid) {
+static error_t handle_api_start_app(struct message *m) {
+    pid_t pid = m->payloads.api.start_app.pid;
     TRY_OR_PANIC(start_app(kernel_ch, pid));
+    m->header = API_START_APP_REPLY_HEADER;
     return OK;
 }
 
@@ -91,7 +106,9 @@ struct join_request {
 #define JOINS_MAX 16
 static struct join_request joins[JOINS_MAX];
 
-static error_t handle_api_join_app(UNUSED cid_t from, pid_t pid, UNUSED int8_t *code) {
+static error_t handle_api_join_app(struct message *m) {
+    pid_t pid = m->payloads.api.join_app.pid;
+
     struct join_request *j = NULL;
     for (int i = 0; i < JOINS_MAX; i++) {
         if (!joins[i].using) {
@@ -104,12 +121,14 @@ static error_t handle_api_join_app(UNUSED cid_t from, pid_t pid, UNUSED int8_t *
 
     j->using = true;
     j->target = pid;
-    j->waiter = from;
+    j->waiter = m->from;
     return ERR_DONT_REPLY;
 }
 
-static error_t handle_api_exit_app(UNUSED cid_t from, int8_t code) {
-    struct process *proc = get_process_by_cid(from);
+static error_t handle_api_exit_app(struct message *m) {
+    int8_t code = m->payloads.api.exit_app.code;
+
+    struct process *proc = get_process_by_cid(m->from);
     assert(proc);
 
     struct join_request *j = NULL;
@@ -127,44 +146,18 @@ static error_t handle_api_exit_app(UNUSED cid_t from, int8_t code) {
     return ERR_DONT_REPLY;
 }
 
-static void mainloop(void) {
-    struct message m;
-    TRY_OR_PANIC(ipc_recv(server_ch, &m));
-    while (1) {
-        struct message r;
-        error_t err;
-        cid_t from = m.from;
-        switch (MSG_TYPE(m.header)) {
-        case PRINTCHAR_MSG:
-            err = dispatch_printchar(handle_printchar, &m, &r);
-            break;
-        case FILL_PAGE_REQUEST_MSG:
-            err = dispatch_fill_page_request(handle_fill_page_request, &m, &r);
-            break;
-        case API_CREATE_APP_MSG:
-            err = dispatch_api_create_app(handle_api_create_app, &m, &r);
-            break;
-        case API_START_APP_MSG:
-            err = dispatch_api_start_app(handle_api_start_app, &m, &r);
-            break;
-        case API_JOIN_APP_MSG:
-            err = dispatch_api_join_app(handle_api_join_app, &m, &r);
-            break;
-        case API_EXIT_APP_MSG:
-            err = dispatch_api_exit_app(handle_api_exit_app, &m, &r);
-            break;
-        default:
-            WARN("invalid message type %x", MSG_TYPE(m.header));
-            err = ERR_INVALID_MESSAGE;
-            r.header = ERROR_TO_HEADER(err);
-        }
-
-        if (err == ERR_DONT_REPLY) {
-            TRY_OR_PANIC(ipc_recv(server_ch, &m));
-        } else {
-            TRY_OR_PANIC(ipc_replyrecv(from, &r, &m));
-        }
+static error_t process_message(struct message *m) {
+    switch (MSG_TYPE(m->header)) {
+    // TODO:
+    // case RUNTIME_EXIT_CURRENT_MSG: return handle_runtime_exit_current(m);
+    case RUNTIME_PRINTCHAR_MSG: return handle_runtime_printchar(m);
+    case PAGER_FILL_PAGE_MSG:   return handle_pager_fill_page(m);
+    case API_CREATE_APP_MSG:    return handle_api_create_app(m);
+    case API_START_APP_MSG:     return handle_api_start_app(m);
+    case API_JOIN_APP_MSG:      return handle_api_join_app(m);
+    case API_EXIT_APP_MSG:      return handle_api_exit_app(m);
     }
+    return ERR_INVALID_MESSAGE;
 }
 
 int main(void) {
@@ -172,7 +165,7 @@ int main(void) {
     TRY_OR_PANIC(open(&server_ch));
 
     cid_t gui_ch;
-    TRY_OR_PANIC(connect_server(memmgr_ch, GUI_INTERFACE, &gui_ch));
+    TRY_OR_PANIC(call_discovery_connect(memmgr_ch, GUI_INTERFACE, &gui_ch));
 
     process_init();
 
@@ -185,7 +178,7 @@ int main(void) {
     }
 
     fd_t handle;
-    TRY_OR_PANIC(open_file(memmgr_ch, "apps/shell.elf", 0, &handle));
+    TRY_OR_PANIC(call_fs_open(memmgr_ch, "apps/shell.elf", 0, &handle));
 
     static struct file shell_file;
     shell_file.fs_server = memmgr_ch;
@@ -198,6 +191,6 @@ int main(void) {
     TRACE("started shell app");
 
     INFO("entering the mainloop...");
-    mainloop();
+    server_mainloop(server_ch, process_message);
     return 0;
 }

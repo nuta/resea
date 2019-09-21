@@ -6,7 +6,7 @@ error_t io_open(io_handle_t *handle, cid_t io_server, enum io_space_type type,
                 uintptr_t addr, size_t size) {
     switch (type) {
     case IO_SPACE_IOPORT:
-        TRY(allow_io(io_server));
+        TRY(call_io_allow_iomapped_io(io_server));
         break;
     case IO_SPACE_MEMORY:
         // TODO: Support memory-mapped IO (IO_SPACE_MEMORY).
@@ -65,7 +65,7 @@ error_t io_listen_interrupt(cid_t io_server, cid_t receive_at, int irq,
     cid_t ch;
     TRY(open(&ch));
     TRY(transfer(ch, receive_at));
-    TRY(listen_irq(io_server, ch, irq));
+    TRY(call_io_listen_irq(io_server, ch, irq));
     *new_ch = ch;
     return OK;
 }

@@ -4,7 +4,7 @@
 
 void api_console_write(UNUSED const char *s) {
     while (*s) {
-        TRY_OR_PANIC(console_write(2 /* gui_ch */, *s));
+        TRY_OR_PANIC(call_gui_console_write(2 /* gui_ch */, *s));
         s++;
     }
 }

@@ -89,6 +89,8 @@ class IdlTransformer(Transformer):
         attrs, name, types, messages = child
         if "id" not in attrs:
             raise InvalidIDLError("The interface ID must be specified.")
+        for message in messages:
+            message["canon_name"] = f"{name}_{message['name']}"
         return {
             "name": str(name),
             "attrs": attrs,
@@ -109,20 +111,20 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
 {%- endfor %}
 
 {%- for msg in interface.messages %}
-#define {{ msg.name | upper }}_MSG (({{ interface.name | upper }}_INTERFACE << 8) | {{ msg.attrs.id }}ULL)
-#define {{ msg.name | upper }}_INLINE_LEN ({{ msg.args | inline_len }})
-#define {{ msg.name | upper }}_HEADER \
-    ( ({{ msg.name | upper }}_MSG        << MSG_TYPE_OFFSET) \
+#define {{ msg.canon_name | upper }}_MSG (({{ interface.name | upper }}_INTERFACE << 8) | {{ msg.attrs.id }}ULL)
+#define {{ msg.canon_name | upper }}_INLINE_LEN ({{ msg.args | inline_len }})
+#define {{ msg.canon_name | upper }}_HEADER \
+    ( ({{ msg.canon_name | upper }}_MSG        << MSG_TYPE_OFFSET) \
 {%- if msg.args.page -%}
     | MSG_PAGE_PAYLOAD  \
 {%- endif -%}
 {%- if msg.args.channel -%}
     | MSG_CHANNEL_PAYLOAD  \
 {%- endif -%}
-    | ({{ msg.name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
+    | ({{ msg.canon_name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
-struct {{ msg.name }}_msg {
+struct {{ msg.canon_name }}_msg {
     uint32_t header;
     cid_t from;
 {%- if msg.args.page %}
@@ -139,13 +141,13 @@ struct {{ msg.name }}_msg {
 {%- for field in msg.args.inlines %}
     {{ field.type | resolve_type }} {{ field.name }};
 {%- endfor %}
-    uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.name | upper }}_INLINE_LEN];
+    uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.canon_name | upper }}_INLINE_LEN];
 } PACKED;
 
 #if !defined(KERNEL)
-static inline error_t send_{{ msg.name }}({{ msg.args | send_params }}) {
-    struct {{ msg.name }}_msg m;
-    m.header = {{ msg.name | upper }}_HEADER;
+static inline error_t send_{{ msg.canon_name }}({{ msg.args | send_params }}) {
+    struct {{ msg.canon_name }}_msg m;
+    m.header = {{ msg.canon_name | upper }}_HEADER;
 {% for field in msg.args.fields %}
 {%- if field.type == "smallstring" %}
     strcpy_s((char *) &m.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
@@ -161,20 +163,20 @@ static inline error_t send_{{ msg.name }}({{ msg.args | send_params }}) {
 #endif
 
 {%- if msg.attrs.type == "call" %}
-#define {{ msg.name | upper }}_REPLY_MSG (({{ interface.name | upper }}_INTERFACE << 8) | MSG_REPLY_FLAG | {{ msg.attrs.id }})
-#define {{ msg.name | upper }}_REPLY_INLINE_LEN ({{ msg.rets | inline_len }})
-#define {{ msg.name | upper }}_REPLY_HEADER \
-    ( ({{ msg.name | upper }}_REPLY_MSG        << MSG_TYPE_OFFSET) \
+#define {{ msg.canon_name | upper }}_REPLY_MSG (({{ interface.name | upper }}_INTERFACE << 8) | MSG_REPLY_FLAG | {{ msg.attrs.id }})
+#define {{ msg.canon_name | upper }}_REPLY_INLINE_LEN ({{ msg.rets | inline_len }})
+#define {{ msg.canon_name | upper }}_REPLY_HEADER \
+    ( ({{ msg.canon_name | upper }}_REPLY_MSG        << MSG_TYPE_OFFSET) \
 {%- if msg.rets.page -%}
     | MSG_PAGE_PAYLOAD  \
 {%- endif -%}
 {%- if msg.rets.channel -%}
     | MSG_CHANNEL_PAYLOAD  \
 {%- endif -%}
-    | ({{ msg.name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
+    | ({{ msg.canon_name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
-struct {{ msg.name }}_reply_msg {
+struct {{ msg.canon_name }}_reply_msg {
     uint32_t header;
     cid_t from;
 {%- if msg.rets.page %}
@@ -191,13 +193,13 @@ struct {{ msg.name }}_reply_msg {
 {%- for field in msg.rets.inlines %}
     {{ field.type | resolve_type }} {{ field.name }};
 {%- endfor %}
-    uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.name | upper }}_INLINE_LEN];
+    uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.canon_name | upper }}_INLINE_LEN];
 } PACKED;
 
 #if !defined(KERNEL)
-static inline error_t send_{{ msg.name }}_reply({{ msg.rets | send_params }}) {
-    struct {{ msg.name }}_reply_msg m;
-    m.header = {{ msg.name | upper }}_REPLY_HEADER;
+static inline error_t send_{{ msg.canon_name }}_reply({{ msg.rets | send_params }}) {
+    struct {{ msg.canon_name }}_reply_msg m;
+    m.header = {{ msg.canon_name | upper }}_REPLY_HEADER;
 {% for field in msg.rets.fields %}
 {%- if field.type == "smallstring" %}
     strcpy_s((char *) &m.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
@@ -211,11 +213,11 @@ static inline error_t send_{{ msg.name }}_reply({{ msg.rets | send_params }}) {
     return OK;
 }
 
-static inline error_t {{ msg.name }}({{ msg | call_params }}) {
-    struct {{ msg.name }}_msg m;
-    struct {{ msg.name }}_reply_msg r;
+static inline error_t call_{{ msg.canon_name }}({{ msg | call_params }}) {
+    struct {{ msg.canon_name }}_msg m;
+    struct {{ msg.canon_name }}_reply_msg r;
 
-    m.header = {{ msg.name | upper }}_HEADER;
+    m.header = {{ msg.canon_name | upper }}_HEADER;
 {% for field in msg.args.fields %}
 {%- if field.type == "smallstring" %}
     strcpy_s((char *) &m.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
@@ -246,29 +248,6 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
 {%- endif %}
     return OK;
 }
-
-typedef error_t (*{{ msg.name }}_handler_t)({{ msg | handler_params }});
-
-static inline header_t dispatch_{{ msg.name }}({{ msg.name }}_handler_t handler, struct message *m, struct message *r) {
-    struct {{ msg.name }}_msg *m2 = (struct {{ msg.name }}_msg *) m;
-    if (m->header != {{ msg.name | upper }}_HEADER) {
-        return ERR_INVALID_HEADER;
-    }
-
-    struct {{ msg.name }}_reply_msg *r2 = (struct {{ msg.name }}_reply_msg *) r;
-    error_t err = handler(m->from
-{%- for field in msg.args.fields -%}
-        , m2->{{ field.name }}
-{%- endfor -%}
-{%- for field in msg.rets.fields -%}
-        , &r2->{{ field.name }}
-{%- endfor -%}
-    );
-    if (err != ERR_DONT_REPLY) {
-        r->header = (err == OK) ? {{ msg.name | upper }}_REPLY_HEADER : ERROR_TO_HEADER(err);
-    }
-    return err;
-}
 #endif
 {%- endif %} {# msg.attrs.type == "call" #}
 {%- endfor %} {# for msg in interface.messages #}
@@ -281,7 +260,7 @@ PAYLOAD_TEMPLATE = """\
 
 {%- for interface in interfaces %}
 {%- for msg in interface.messages %}
-struct {{ interface.name }}_{{ msg.name }}_payload {
+struct {{ msg.canon_name }}_payload {
 {%- if msg.args.page %}
     page_t {{ msg.args.page.name }};
 {%- else %}
@@ -299,7 +278,7 @@ struct {{ interface.name }}_{{ msg.name }}_payload {
 } PACKED;
 
 {%- if msg.attrs.type == "call" %}
-struct {{ interface.name }}_{{ msg.name }}_reply_payload {
+struct {{ msg.canon_name }}_reply_payload {
 {%- if msg.rets.page %}
     page_t {{ msg.rets.page.name }};
 {%- else %}
@@ -323,9 +302,9 @@ struct {{ interface.name }}_{{ msg.name }}_reply_payload {
 {%- for interface in interfaces %}
     union { \\
 {%- for msg in interface.messages %}
-    struct {{ interface.name }}_{{ msg.name }}_payload {{ msg.name }}; \\
+    struct {{ msg.canon_name }}_payload {{ msg.name }}; \\
 {%- if msg.attrs.type == "call" %}
-    struct {{ interface.name }}_{{ msg.name }}_reply_payload {{ msg.name }}_reply; \\
+    struct {{ msg.canon_name }}_reply_payload {{ msg.name }}_reply; \\
 {%- endif %}
 {%- endfor %}
     } {{ interface.name }}; \\
@@ -334,46 +313,33 @@ struct {{ interface.name }}_{{ msg.name }}_reply_payload {
 #endif
 """
 
+# TODO:
 SERVER_STUBS = """\
 {%- for interface in interfaces %}
 {%- for msg in interface.messages %}
-{%- if msg.attrs.type == "call" %}
-
-static inline error_t do_{{ msg.name }}({{ msg | handler_params }}) {
-    // TODO:
-    return OK;
+static error_t handle_{{ msg.canon_name }}(struct message *m) {
+{%- for field in msg.args.fields %}
+    // TODO: {{ field.type | resolve_type }} {{ field.name }} = m->payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }};
+{%- endfor %}
+    UNIMPLEMENTED();
+    m->header = {{ msg.canon_name | upper }}_REPLY_HEADER;
+{%- for field in msg.rets.fields %}
+    // TODO: m->payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ field.name }} = ;
+{%- endfor %}
 }
-{%- endif %} {# msg.attrs.type == "call" #}
-{%- endfor %} {# for msg in interface.messages #}
+{% endfor %}
+{%- endfor %}
 
-static void error_t mainloop(cid_t server_ch) {
-    while (1) {
-        struct message m;
-        TRY_OR_PANIC(ipc_recv(server_ch, &m));
-
-        struct message r;
-        error_t err;
-        switch (MSG_TYPE(m.header)) {
-        {%- for msg in interface.messages %}
-        {%- if msg.attrs.type == "call" %}
-        case {{ msg.name | upper }}_MSG:
-            err = dispatch_{{ msg.name }}(handle_{{ msg.name }}, &m, &r);
-            break;
-        {%- endif %} {# msg.attrs.type == "call" #}
-        {%- endfor %} {# for msg in interface.messages #}
-        default:
-            WARN("invalid message type %x", MSG_TYPE(m.header));
-            err = ERR_INVALID_MESSAGE;
-            r.header = ERROR_TO_HEADER(err);
-        }
-
-        if (err != ERR_DONT_REPLY) {
-            TRY_OR_PANIC(ipc_send(m.from, &r));
-        }
+static error_t process_message(struct message *m) {
+    switch (MSG_TYPE(m->header)) {
+{%- for interface in interfaces %}
+{%- for msg in interface.messages %}
+    case {{ msg.canon_name | upper }}_MSG: return handle_{{ msg.canon_name }}(m);
+{%- endfor %}
+{%- endfor %}
     }
+    return ERR_INVALID_MESSAGE;
 }
-
-{%- endfor %} {# for interface in interfaces #}
 """
 
 TEMPLATE = f"""\
@@ -473,17 +439,6 @@ def call_params(m):
             params.append(f"{resolve_type(ret['type'])} *{ret['name']}")
     return ", ".join(params)
 
-def handler_params(m):
-    params = ["cid_t from"]
-    for arg in m["args"]["fields"]:
-        if arg["type"] == "smallstring":
-            params.append(f"const {resolve_type('char')}* {arg['name']}")
-        else:
-            params.append(f"{resolve_type(arg['type'])} {arg['name']}")
-    for ret in m["rets"]["fields"]:
-        params.append(f"{resolve_type(ret['type'])} *{ret['name']}")
-    return ", ".join(params)
-
 def send_params(fields):
     params = ["cid_t __ch"]
     for field in fields["fields"]:
@@ -504,7 +459,6 @@ def genstub(interfaces):
     renderer.filters["inline_len"] = inline_len
     renderer.filters["call_params"] = call_params
     renderer.filters["send_params"] = send_params
-    renderer.filters["handler_params"] = handler_params
     return {
         "stubs": renderer.from_string(TEMPLATE).render(interfaces=interfaces),
         "payloads": renderer.from_string(PAYLOAD_TEMPLATE)

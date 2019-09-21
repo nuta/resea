@@ -3,6 +3,6 @@
 
 int main(void) {
     api_console_write("Hello World!\n");
-    api_exit_app(1 /* appmgr */, 0);
+    call_api_exit_app(1 /* appmgr */, 0);
     return 0;
 }

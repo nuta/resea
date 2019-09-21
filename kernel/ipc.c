@@ -211,10 +211,10 @@ static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
 
 /// Checks whether the message is worth tracing.
 static inline bool is_annoying_msg(uint16_t msg_type) {
-    return msg_type == PRINTCHAR_MSG
-           || msg_type == PRINTCHAR_REPLY_MSG
-           || msg_type == FILL_PAGE_REQUEST_MSG
-           || msg_type == FILL_PAGE_REQUEST_REPLY_MSG;
+    return msg_type == RUNTIME_PRINTCHAR_MSG
+           || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
+           || msg_type == PAGER_FILL_PAGE_MSG
+           || msg_type == PAGER_FILL_PAGE_REPLY_MSG;
 }
 
 /// The ipc system call: sends/receives messages.
@@ -369,17 +369,16 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         thread_switch();
 
         // Received a message or a notification.
+        struct message *m = current->ipc_buffer;
+
+        // Convert the received notification into a message.
         if (recv_on->notified) {
-            // Convert the received notification into a message.
             TRACE("recv (notification): %pC (data=%p)",
                   recv_on, recv_on->notification);
-            struct notification_msg *notify_m =
-                (struct notification_msg *) current->ipc_buffer;
-            notify_m->header = NOTIFICATION_HEADER;
-            notify_m->from = 0;
-            notify_m->data = recv_on->notification;
+            m->header = NOTIFICATION_HEADER;
+            m->from = 0;
+            m->payloads.notification.data = recv_on->notification;
             recv_on->notified = false;
-            recv_on->notification = 0;
         }
 
         // Now `CURRENT->ipc_buffer` is filled by the sender thread.
@@ -454,7 +453,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
     // Now all prerequisites are met. Copy the message and wait on the our
     // channel.
-    if (INTERFACE_ID(header) != 4) {
+    if (!is_annoying_msg(MSG_TYPE(header))) {
         if (linked_to == dst_ch) {
             TRACE("send (fastpath): %pC -> %pC (header=%p)",
                   ch, dst_ch, header);
@@ -489,9 +488,9 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // Received a message or a notification.
     if (recv_on->notified) {
         // Convert the received notification into a message.
-        struct notification_msg *notify_m = (struct notification_msg *) m;
-        notify_m->header = NOTIFICATION_HEADER;
-        notify_m->data = recv_on->notification;
+        m->header = NOTIFICATION_HEADER;
+        m->from = 0;
+        m->payloads.notification.data = recv_on->notification;
         recv_on->notified = false;
     }
 

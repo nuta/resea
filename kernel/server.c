@@ -8,50 +8,53 @@
 
 struct channel *kernel_server_ch = NULL;
 
+static struct process *get_sender_process(cid_t from) {
+    // Resolves the sender thread.
+    struct channel *ch = table_get(&kernel_process->channels, from);
+    ASSERT(ch != NULL);
+    return ch->linked_to->process;
+}
+
 /// The user pager. When a page fault occurred in vm areas that are registered
 /// with this function, the kernel invokes this function to fill the page.
 static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
-    struct message *ipc_buffer = CURRENT->kernel_ipc_buffer;
+    struct message *m = CURRENT->kernel_ipc_buffer;
     struct channel *pager = vma->arg;
     // TRACE("user pager=%d, addr=%p", pager->cid, vaddr);
 
-    // Construct a full_page_request message.
-    struct fill_page_request_msg *m =
-        (struct fill_page_request_msg *) ipc_buffer;
-    m->header = FILL_PAGE_REQUEST_HEADER;
-    m->pid = CURRENT->process->pid;
-    m->addr = vaddr;
+    // Construct a pager.fill_page message.
+    m->header = PAGER_FILL_PAGE_HEADER;
+    m->payloads.pager.fill_page.pid = CURRENT->process->pid;
+    m->payloads.pager.fill_page.addr = vaddr;
 
     // Invoke the user pager. This would blocks the current thread.
     sys_ipc(pager->cid, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
 
     // The user pager replied the message.
-    if (MSG_TYPE(ipc_buffer->header) < 0) {
+    if (MSG_TYPE(m->header) < 0) {
         WARN("user pager returned an error");
         return 0;
     }
 
-    struct fill_page_request_reply_msg *r =
-        (struct fill_page_request_reply_msg *) ipc_buffer;
-    paddr_t paddr = PAGE_PAYLOAD_ADDR(r->page);
+    paddr_t paddr = PAGE_PAYLOAD_ADDR(m->payloads.pager.fill_page_reply.page);
     // TRACE("received a page from the pager: addr=%p", paddr);
     return paddr;
 }
 
-static error_t handle_printchar_msg(uint8_t ch) {
-    arch_putchar(ch);
+static error_t handle_runtime_printchar(struct message *m) {
+    arch_putchar(m->payloads.runtime.printchar.ch);
     return OK;
 }
 
-static NORETURN void handle_exit_current_msg(UNUSED int code) {
+static error_t handle_runtime_exit_current(UNUSED struct message *m) {
     // TODO: Kill the sender process.
     UNIMPLEMENTED();
 }
 
-static error_t handle_create_process_msg(struct process *sender,
-                                         const char *name,
-                                         struct create_process_reply_msg *r) {
-    TRACE("kernel: create_process()");
+static error_t handle_process_create(struct message *m) {
+    const char *name = m->payloads.process.create.name;
+    TRACE("kernel: create_process(name=%s)", name);
+
     struct process *proc = process_create(name);
     if (!proc) {
         return ERR_OUT_OF_RESOURCE;
@@ -63,7 +66,7 @@ static error_t handle_create_process_msg(struct process *sender,
         return ERR_OUT_OF_RESOURCE;
     }
 
-    struct channel *pager_ch = channel_create(sender);
+    struct channel *pager_ch = channel_create(get_sender_process(m->from));
     if (!pager_ch) {
         channel_decref(pager_ch);
         process_destroy(proc);
@@ -72,25 +75,30 @@ static error_t handle_create_process_msg(struct process *sender,
 
     channel_link(user_ch, pager_ch);
 
-    r->header = CREATE_PROCESS_REPLY_HEADER;
-    r->pid = proc->pid;
-    r->pager_ch = pager_ch->cid;
-    TRACE("kernel: create_process_response(pid=%d, pager_ch=%d)", r->pid,
-        r->pager_ch);
+    m->header = PROCESS_CREATE_REPLY_HEADER;
+    m->payloads.process.create_reply.pid = proc->pid;
+    m->payloads.process.create_reply.pager_ch = pager_ch->cid;
     return OK;
 }
 
-static error_t handle_spawn_thread_msg(pid_t pid, vaddr_t start, vaddr_t stack,
-    vaddr_t buffer, vaddr_t arg, struct spawn_thread_reply_msg *r) {
-    TRACE("kernel: spawn_thread(pid=%d, start=%p)", pid, start);
+static error_t handle_process_destroy(UNUSED struct message *m) {
+    UNIMPLEMENTED();
+}
+
+static error_t handle_thread_spawn(struct message *m) {
+    pid_t pid        = m->payloads.thread.spawn.pid;
+    uintptr_t start  = m->payloads.thread.spawn.start;
+    uintptr_t stack  = m->payloads.thread.spawn.stack;
+    uintptr_t buffer = m->payloads.thread.spawn.buffer;
+    uintptr_t arg    = m->payloads.thread.spawn.arg;
 
     struct process *proc = table_get(&all_processes, pid);
     if (!proc) {
         return ERR_INVALID_MESSAGE;
     }
 
-    struct thread *thread = thread_create(proc, start, stack, buffer,
-                                          (void *) arg);
+    struct thread *thread;
+    thread = thread_create(proc, start, stack, buffer, (void *) arg);
     if (!thread) {
         return ERR_OUT_OF_RESOURCE;
     }
@@ -98,15 +106,21 @@ static error_t handle_spawn_thread_msg(pid_t pid, vaddr_t start, vaddr_t stack,
     thread_resume(thread);
 
     TRACE("kernel: spawn_thread_response(tid=%d)", thread->tid);
-    r->header = SPAWN_THREAD_REPLY_HEADER;
-    r->tid = thread->tid;
+    m->header = THREAD_SPAWN_REPLY_HEADER;
+    m->payloads.thread.spawn_reply.tid = thread->tid;
     return OK;
 }
 
-static error_t handle_add_pager_msg(pid_t pid, cid_t pager, vaddr_t start,
-    vaddr_t size, uint8_t flags, struct add_pager_reply_msg *r) {
-    TRACE("kernel: add_pager(pid=%d, pager=%d, range=%p-%p)", pid, pager, start,
-        start + size);
+static error_t handle_thread_destroy(UNUSED struct message *m) {
+    UNIMPLEMENTED();
+}
+
+static error_t handle_process_add_pager(struct message *m) {
+    pid_t pid       = m->payloads.process.add_pager.pid;
+    cid_t pager     = m->payloads.process.add_pager.pager;
+    uintptr_t start = m->payloads.process.add_pager.start;
+    size_t size     = m->payloads.process.add_pager.size;
+    uint8_t flags   = m->payloads.process.add_pager.flags;
 
     struct process *proc = table_get(&all_processes, pid);
     if (!proc) {
@@ -131,12 +145,12 @@ static error_t handle_add_pager_msg(pid_t pid, cid_t pager, vaddr_t start,
     channel_incref(pager_ch);
 
     TRACE("kernel: add_pager_response()");
-    r->header = ADD_PAGER_REPLY_HEADER;
+    m->header = PROCESS_ADD_PAGER_REPLY_HEADER;
     return OK;
 }
 
-static error_t handle_add_kernel_channel_msg(pid_t pid,
-    struct add_kernel_channel_reply_msg *r) {
+static error_t handle_process_add_kernel_channel(struct message *m) {
+    pid_t pid = m->payloads.process.add_kernel_channel.pid;
     TRACE("kernel: add_kernel_channel(pid=%d)", pid);
 
     struct process *proc = table_get(&all_processes, pid);
@@ -159,8 +173,8 @@ static error_t handle_add_kernel_channel_msg(pid_t pid,
     channel_transfer(kernel_ch, kernel_server_ch);
     channel_link(kernel_ch, user_ch);
 
-    r->header = ADD_KERNEL_CHANNEL_HEADER;
-    r->kernel_ch = user_ch->cid;
+    m->header = PROCESS_ADD_KERNEL_CHANNEL_HEADER;
+    m->payloads.process.add_kernel_channel_reply.kernel_ch = user_ch->cid;
     return OK;
 }
 
@@ -180,13 +194,14 @@ void deliver_interrupt(uint8_t irq) {
     }
 }
 
-static error_t handle_listen_irq_msg(cid_t cid, uint8_t irq,
-                                     struct listen_irq_reply_msg *r) {
+static error_t handle_io_listen_irq(struct message *m) {
+    cid_t cid   = m->payloads.io.listen_irq.ch;
+    uint8_t irq = m->payloads.io.listen_irq.irq;
+
     struct channel *ch = table_get(&CURRENT->process->channels, cid);
     ASSERT(ch);
 
-    INFO("kernel: listen_irq(ch=%pC, irq=%d)", ch, irq);
-    r->header = LISTEN_IRQ_REPLY_HEADER;
+    TRACE("kernel: listen_irq(ch=%pC, irq=%d)", ch, irq);
 
     for (int i = 0; i < IRQ_LISTENERS_MAX; i++) {
         if (irq_listeners[i].ch == NULL) {
@@ -197,23 +212,26 @@ static error_t handle_listen_irq_msg(cid_t cid, uint8_t irq,
         }
     }
 
+    m->header = IO_LISTEN_IRQ_REPLY_HEADER;
     return ERR_NO_MEMORY;
 }
 
-error_t handle_allow_io_msg(struct process *sender,
-                            struct allow_io_reply_msg *r) {
-    INFO("kernel: allow_io(proc=%s)", sender->name);
+static error_t handle_io_allow_iomapped_io(struct message *m) {
+    struct process *sender = get_sender_process(m->from);
+    TRACE("kernel: allow_io(proc=%s)", sender->name);
+    
     LIST_FOR_EACH(node, &sender->threads) {
         struct thread *thread = LIST_CONTAINER(thread, next, node);
         thread_allow_io(thread);
     }
 
-    r->header = ALLOW_IO_REPLY_HEADER;
+    m->header = IO_ALLOW_IOMAPPED_IO_REPLY_HEADER;
     return OK;
 }
 
-error_t handle_send_channel_to_process_msg(pid_t pid, cid_t cid,
-        struct send_channel_to_process_reply_msg *r) {
+static error_t handle_process_send_channel_to_process(struct message *m) {
+    pid_t pid = m->payloads.process.send_channel_to_process.pid;
+    cid_t cid = m->payloads.process.send_channel_to_process.ch;
     TRACE("kernel: send_channel_to_pid(pid=%d)", pid);
 
     struct process *proc = table_get(&all_processes, pid);
@@ -232,94 +250,49 @@ error_t handle_send_channel_to_process_msg(pid_t pid, cid_t cid,
     channel_decref(ch);
 
     TRACE("kernel: send_channel_to_pid: created %pC", dst_ch);
-    r->header = SEND_CHANNEL_TO_PROCESS_REPLY_HEADER;
+    m->header = PROCESS_SEND_CHANNEL_TO_PROCESS_REPLY_HEADER;
     return OK;
 }
 
-NORETURN static void handle_exit_kernel_test_msg(void) {
+NORETURN static void handle_kernel_exit_kernel_test(UNUSED struct message *m) {
     INFO("Power off");
     arch_poweroff();
 }
 
+static error_t process_message(struct message *m) {
+    switch (MSG_TYPE(m->header)) {
+    case RUNTIME_EXIT_CURRENT_MSG:       return handle_runtime_exit_current(m);
+    case RUNTIME_PRINTCHAR_MSG:          return handle_runtime_printchar(m);
+    case PROCESS_CREATE_MSG:             return handle_process_create(m);
+    case PROCESS_DESTROY_MSG:            return handle_process_destroy(m);
+    case PROCESS_ADD_PAGER_MSG:          return handle_process_add_pager(m);
+    case PROCESS_SEND_CHANNEL_TO_PROCESS_MSG: return handle_process_send_channel_to_process(m);
+    case PROCESS_ADD_KERNEL_CHANNEL_MSG: return handle_process_add_kernel_channel(m);
+    case THREAD_SPAWN_MSG:               return handle_thread_spawn(m);
+    case THREAD_DESTROY_MSG:             return handle_thread_destroy(m);
+    case IO_ALLOW_IOMAPPED_IO_MSG:       return handle_io_allow_iomapped_io(m);
+    case IO_LISTEN_IRQ_MSG:              return handle_io_listen_irq(m);
+    case KERNEL_EXIT_KERNEL_TEST_MSG:
+        handle_kernel_exit_kernel_test(m);
+    }
+    return ERR_INVALID_MESSAGE;
+}
+
 /// The kernel server mainloop.
 NORETURN static void mainloop(cid_t server_ch) {
-    struct message *ipc_buffer = CURRENT->kernel_ipc_buffer;
+    struct message *m = CURRENT->kernel_ipc_buffer;
     sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
 
     while (1) {
-        cid_t from = ipc_buffer->from;
-
-        // Resolves the sender thread.
-        struct channel *ch = table_get(&kernel_process->channels, from);
-        ASSERT(ch != NULL);
-        struct process *sender = ch->linked_to->process;
-
-        error_t err;
-        switch (MSG_TYPE(ipc_buffer->header)) {
-        case PRINTCHAR_MSG: {
-            struct printchar_msg *m = (struct printchar_msg *) ipc_buffer;
-            err = handle_printchar_msg(m->ch);
-            break;
-        }
-        case EXIT_CURRENT_MSG: {
-            struct exit_current_msg *m = (struct exit_current_msg *) ipc_buffer;
-            handle_exit_current_msg(m->code);
-        }
-        case CREATE_PROCESS_MSG: {
-            struct create_process_msg *m =
-                (struct create_process_msg *) ipc_buffer;
-            err = handle_create_process_msg(sender, (const char *) &m->path,
-                (struct create_process_reply_msg *) ipc_buffer);
-            break;
-        }
-        case ADD_KERNEL_CHANNEL_MSG: {
-            struct add_kernel_channel_msg *m =
-                (struct add_kernel_channel_msg *) ipc_buffer;
-            err = handle_add_kernel_channel_msg(m->pid,
-                (struct add_kernel_channel_reply_msg *) ipc_buffer);
-            break;
-        }
-        case SPAWN_THREAD_MSG: {
-            struct spawn_thread_msg *m = (struct spawn_thread_msg *) ipc_buffer;
-            err = handle_spawn_thread_msg(m->pid, m->start, m->stack, m->buffer,
-                m->arg, (struct spawn_thread_reply_msg *) ipc_buffer);
-            break;
-        }
-        case ADD_PAGER_MSG: {
-            struct add_pager_msg *m = (struct add_pager_msg *) ipc_buffer;
-            err = handle_add_pager_msg(m->pid, m->pager, m->start, m->size,
-                m->flags, (struct add_pager_reply_msg *) ipc_buffer);
-            break;
-        }
-        case LISTEN_IRQ_MSG: {
-            struct listen_irq_msg *m = (struct listen_irq_msg *) ipc_buffer;
-            err = handle_listen_irq_msg(m->ch, m->irq,
-                 (struct listen_irq_reply_msg *) ipc_buffer);
-            break;
-        }
-        case ALLOW_IO_MSG:
-            err = handle_allow_io_msg(sender,
-                                      (struct allow_io_reply_msg *) ipc_buffer);
-            break;
-        case SEND_CHANNEL_TO_PROCESS_MSG: {
-            struct send_channel_to_process_msg *m = (struct send_channel_to_process_msg *) ipc_buffer;
-            err = handle_send_channel_to_process_msg(m->pid, m->ch,
-                 (struct send_channel_to_process_reply_msg *) ipc_buffer);
-            break;
-        }
-        case EXIT_KERNEL_TEST_MSG:
-            handle_exit_kernel_test_msg();
-            break;
-        default:
-            WARN("invalid message type %x", MSG_TYPE(ipc_buffer->header));
-            err = ERR_INVALID_MESSAGE;
-            ipc_buffer->header = ERROR_TO_HEADER(err);
+        error_t err = process_message(m);
+        if (err != OK) {
+            m->header = ERROR_TO_HEADER(err);
         }
 
         if (err == ERR_DONT_REPLY) {
             sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
         } else {
-            sys_ipc(from, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
+            sys_ipc(m->from, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
         }
     }
 }

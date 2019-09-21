@@ -135,7 +135,7 @@ void putchar(char ch) {
 
     // Assumes that @1 is connected to the server which suppports the runtime
     // interface.
-    printchar(1, ch);
+    call_runtime_printchar(1, ch);
 }
 
 void puts(const char *s) {

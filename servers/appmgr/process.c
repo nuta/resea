@@ -15,15 +15,16 @@
 #define NUM_PROCESSES_MAX 128
 static struct process processes[NUM_PROCESSES_MAX];
 
+// TODO: Free acquired resources on failure.
 error_t create_app(cid_t kernel_ch, cid_t memmgr_ch, cid_t appmgr_ch,
                    const struct file *file, pid_t *app_pid) {
     error_t err;
-
+    
     page_base_t page_base = valloc(4096);
     uint8_t *file_header;
     size_t num_pages;
     size_t header_size = 0x1000;
-    TRY_OR_PANIC(read_file(file->fs_server, file->fd, 0, header_size,
+    TRY_OR_PANIC(call_fs_read(file->fs_server, file->fd, 0, header_size,
         page_base, (uintptr_t *) &file_header, &num_pages));
 
     struct elf_file elf;
@@ -34,8 +35,7 @@ error_t create_app(cid_t kernel_ch, cid_t memmgr_ch, cid_t appmgr_ch,
 
     pid_t pid;
     cid_t pager_ch;
-    if ((err = create_process(kernel_ch, "app", &pid,
-                              &pager_ch)) != OK) {
+    if ((err = call_process_create(kernel_ch, "app", &pid, &pager_ch)) != OK) {
         return err;
     }
 
@@ -44,18 +44,18 @@ error_t create_app(cid_t kernel_ch, cid_t memmgr_ch, cid_t appmgr_ch,
     }
 
     cid_t gui_ch;
-    TRY_OR_PANIC(connect_server(memmgr_ch, GUI_INTERFACE, &gui_ch));
-    TRY_OR_PANIC(send_channel_to_process(kernel_ch, pid, gui_ch));
+    TRY_OR_PANIC(call_discovery_connect(memmgr_ch, GUI_INTERFACE, &gui_ch));
+    TRY_OR_PANIC(call_process_send_channel_to_process(kernel_ch, pid, gui_ch));
 
     // The executable image.
-    if ((err = add_pager(
-             kernel_ch, pid, 1, APP_IMAGE_START, APP_IMAGE_SIZE, 0x06)) != OK) {
+    if ((err = call_process_add_pager(kernel_ch, pid, 1, APP_IMAGE_START,
+                                      APP_IMAGE_SIZE, 0x06)) != OK) {
         return err;
     }
 
     // The zeroed pages (stack and heap).
-    if ((err = add_pager(kernel_ch, pid, 1, APP_ZEROED_PAGES_START,
-             APP_ZEROED_PAGES_SIZE, 0x06)) != OK) {
+    if ((err = call_process_add_pager(kernel_ch, pid, 1, APP_ZEROED_PAGES_START,
+                                      APP_ZEROED_PAGES_SIZE, 0x06)) != OK) {
         return err;
     }
 
@@ -104,13 +104,9 @@ error_t start_app(cid_t kernel_ch, pid_t app_pid) {
     struct process *proc = get_process_by_pid(app_pid);
     assert(proc);
 
-    error_t err;
     tid_t tid;
-    if ((err = spawn_thread(kernel_ch, app_pid, proc->elf.entry,
-             APP_INITIAL_STACK_POINTER, 0x1000, 0, &tid)) != OK) {
-        return err;
-    }
-
+    TRY(call_thread_spawn(kernel_ch, app_pid, proc->elf.entry,
+                          APP_INITIAL_STACK_POINTER, 0x1000, 0, &tid));
     return OK;
 }
 

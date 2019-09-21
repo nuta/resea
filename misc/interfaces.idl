@@ -1,44 +1,65 @@
+//
+// Reserved interface IDs are:
+//
+//   - 100: Notification
+//
+//
+
 [id(1)]
-interface kernel {
+interface runtime {
     [id(1), type(call)]
-    create_process(path: smallstring) -> (pid: pid, pager_ch: cid)
-
+    exit_current(code: int32) -> ()
     [id(2), type(call)]
-    add_kernel_channel(pid: pid) -> (kernel_ch: cid)
-
-    [id(3), type(call)]
-    destroy_process(pid: pid) -> ()
-
-    [id(4), type(call)]
-    spawn_thread(pid: pid, start: uintptr, stack: uintptr, buffer: uintptr,
-                 arg: uintptr) -> (tid: tid)
-
-    [id(5), type(call)]
-    destroy_thread(tid: tid) -> ()
-
-    // TODO: Use channel payload.
-    [id(6), type(call)]
-    add_pager(pid: pid, pager: cid, start: uintptr, size: size, flags: uint8)
-        -> ()
-
-    [id(7), type(call)]
-    listen_irq(ch: channel, irq: uint8) -> ()
-
-    [id(8), type(call)]
-    allow_io() -> ()
-
-    [id(9), type(call)]
-    send_channel_to_process(pid: pid, ch: channel)
-        -> ()
+    printchar(ch: uint8) -> ()
 }
 
 [id(2)]
-interface pager {
+interface process {
     [id(1), type(call)]
-    fill_page_request(pid: pid, addr: uintptr, size: size) -> (page: page)
+    create(name: smallstring) -> (pid: pid, pager_ch: cid)
+    [id(2), type(call)]
+    destroy(pid: pid) -> ()
+    // TODO: Use channel payload.
+    [id(3), type(call)]
+    add_pager(pid: pid, pager: cid, start: uintptr, size: size, flags: uint8)
+        -> ()
+    [id(4), type(call)]
+    send_channel_to_process(pid: pid, ch: channel)
+        -> ()
+    // FIXME: Use server.connect_request instead.
+    [id(5), type(call)]
+    add_kernel_channel(pid: pid) -> (kernel_ch: cid)
 }
 
 [id(3)]
+interface thread {
+    [id(1), type(call)]
+    spawn(pid: pid, start: uintptr, stack: uintptr, buffer: uintptr,
+          arg: uintptr) -> (tid: tid)
+
+    [id(2), type(call)]
+    destroy(tid: tid) -> ()
+}
+
+[id(4)]
+interface kernel {
+    [id(1), type(call)]
+    exit_kernel_test() -> ()
+}
+
+[id(10)]
+interface server {
+    [id(1), type(call)]
+    connect(interface: uint8) -> (ch: channel)
+}
+
+[id(11)]
+interface pager {
+    [id(1), type(call)]
+    fill_page(pid: pid, addr: uintptr, size: size) -> (page: page)
+}
+
+[id(12)]
 interface memmgr {
     [id(1), type(call)]
     benchmark_nop() -> ()
@@ -49,32 +70,42 @@ interface memmgr {
         -> (framebuffer: page, width: int32, height: int32, bpp: uint8)
 }
 
-[id(4)]
-interface runtime {
-    [id(1), type(call)]
-    exit_current(code: int32) -> ()
-    [id(2), type(call)]
-    printchar(ch: uint8) -> ()
-}
-
-[id(5)]
-interface kernel_test {
-    [id(1), type(call)]
-    exit_kernel_test() -> ()
-}
-
-[id(6)]
+[id(13)]
 interface discovery {
     [id(1), type(call)]
-    connect_server(interface: uint8) -> (ch: channel)
+    publicize(interface: uint8, ch: channel) -> ()
     [id(2), type(call)]
-    register_server(interface: uint8, ch: channel) -> ()
-
-    [id(3), type(call)]
-    connect_request(interface: uint8) -> (ch: channel)
+    connect(interface: uint8) -> (ch: channel)
 }
 
-[id(7)]
+[id(14)]
+interface io {
+    [id(1), type(call)]
+    allow_iomapped_io() -> ()
+
+    [id(2), type(call)]
+    listen_irq(ch: channel, irq: uint8) -> ()
+}
+
+[id(15)]
+interface fs {
+    type fd = int32
+    type file_mode = uint8
+
+    [id(1), type(call)]
+    open(path: smallstring, mode: file_mode) -> (handle: fd)
+    [id(2), type(call)]
+    close(handle: fd) -> ()
+    [id(3), type(call)]
+    read(handle: fd, offset: size, len: size) -> (data: page)
+}
+
+// TODO:
+// [id(16)]
+// interface network {
+// }
+
+[id(17)]
 interface gui {
     [id(1), type(call)]
     console_write(ch: uint8) -> ()
@@ -84,38 +115,19 @@ interface gui {
     key_event(ch: uint8) -> ()
 }
 
-[id(8)]
-interface fs {
-    type fd = int32
-    type file_mode = uint8
-
-    [id(1), type(call)]
-    open_file(path: smallstring, mode: file_mode) -> (handle: fd)
-    // [id(2), type(call)]
-    // TODO: close_file(handle: fd) -> ()
-    [id(3), type(call)]
-    read_file(handle: fd, offset: size, len: size) -> (data: page)
-}
-
-[id(8)]
+[id(20)]
 interface api {
     [id(1), type(call)]
-    api_create_app(path: smallstring) -> (pid: pid)
+    create_app(path: smallstring) -> (pid: pid)
     [id(2), type(call)]
-    api_start_app(pid: pid) -> ()
+    start_app(pid: pid) -> ()
     [id(3), type(call)]
-    api_join_app(pid: pid) -> (code: int8)
+    join_app(pid: pid) -> (code: int8)
     [id(4), type(call)]
-    api_exit_app(code: int8) -> ()
+    exit_app(code: int8) -> ()
 }
 
-[id(127)]
-interface notification {
-    [id(1), type(call)]
-    notification(data: intmax) -> ()
-}
-
-[id(10)]
+[id(30)]
 interface keyboard_driver {
     [id(1), type(call)]
     listen_keyboard(ch: channel) -> ()

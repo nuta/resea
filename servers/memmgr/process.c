@@ -67,6 +67,7 @@ invalid_path:
     strcpy_s(buf, buf_len, "(invalid path)");
 }
 
+// TODO: Free acquired resources on failure.
 error_t spawn_process(cid_t kernel_ch, cid_t server_ch,
                       const struct initfs_file *file) {
     TRACE("spawning '%s'", file->path);
@@ -83,39 +84,25 @@ error_t spawn_process(cid_t kernel_ch, cid_t server_ch,
 
     pid_t pid;
     cid_t pager_ch;
-    if ((err = create_process(kernel_ch, (const char *) &name, &pid,
-                              &pager_ch)) != OK) {
-        return err;
-    }
+    TRY(call_process_create(kernel_ch, (const char *) &name, &pid, &pager_ch));
 
     cid_t user_kernel_ch;
-    if ((err = add_kernel_channel(kernel_ch, pid, &user_kernel_ch))
-        != OK) {
-        return err;
-    }
+    TRY(call_process_add_kernel_channel(kernel_ch, pid, &user_kernel_ch));
     assert(user_kernel_ch == 2);
 
-    if ((err = transfer(pager_ch, server_ch)) != OK) {
-        return err;
-    }
+    TRY(transfer(pager_ch, server_ch));
 
     // The executable image.
-    if ((err = add_pager(
-             kernel_ch, pid, 1, APP_IMAGE_START, APP_IMAGE_SIZE, 0x06)) != OK) {
-        return err;
-    }
+    TRY(call_process_add_pager(kernel_ch, pid, 1, APP_IMAGE_START,
+                               APP_IMAGE_SIZE, 0x06));
 
     // The zeroed pages (stack and heap).
-    if ((err = add_pager(kernel_ch, pid, 1, APP_ZEROED_PAGES_START,
-             APP_ZEROED_PAGES_SIZE, 0x06)) != OK) {
-        return err;
-    }
+    TRY(call_process_add_pager(kernel_ch, pid, 1, APP_ZEROED_PAGES_START,
+                               APP_ZEROED_PAGES_SIZE, 0x06));
 
     tid_t tid;
-    if ((err = spawn_thread(kernel_ch, pid, elf.entry,
-             APP_INITIAL_STACK_POINTER, 0x1000, 0 /* arg */, &tid)) != OK) {
-        return err;
-    }
+    TRY(call_thread_spawn(kernel_ch, pid, elf.entry, APP_INITIAL_STACK_POINTER,
+                          0x1000, 0 /* arg */, &tid));
 
     struct process *proc = NULL;
     for (int i = 0; i < NUM_PROCESSES_MAX; i++) {

@@ -15,6 +15,7 @@ static void copy_message(struct message *dst, const struct message *src) {
     dst->from = src->from;
     dst->payloads.channel = src->payloads.channel;
     dst->payloads.page = src->payloads.page;
+
     memcpy(&dst->payloads.data, &src->payloads.data,
            INLINE_PAYLOAD_LEN(header));
 }

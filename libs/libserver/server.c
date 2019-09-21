@@ -2,7 +2,9 @@
 #include <resea_idl.h>
 #include <server.h>
 
-error_t server_mainloop(cid_t ch, error_t (*process)(struct message *m)) {
+error_t server_mainloop_with_deferred(cid_t ch,
+                                      error_t (*process)(struct message *m),
+                                      void (*deferred_work)(void)) {
     struct message m;
     while (1) {
         // Receive a message from a client.
@@ -15,16 +17,23 @@ error_t server_mainloop(cid_t ch, error_t (*process)(struct message *m)) {
             OOPS("invalid message type: %x", MSG_TYPE(m.header));
         }
         // If the handler returned ERR_DONT_REPLY, we don't reply.
-        if (err == ERR_DONT_REPLY) {
-            continue;
+        if (err != ERR_DONT_REPLY) {
+            // If the handler returned an error, reply an error message.
+            if (err != OK) {
+                m.header = ERROR_TO_HEADER(err);
+            }
+            // Send the reply message.
+            TRY(ipc_send(m.from, &m));
         }
-        // If the handler returned an error, reply an error message.
-        if (err != OK) {
-            m.header = ERROR_TO_HEADER(err);
+        // Do the deferred work if specified.
+        if (deferred_work) {
+            deferred_work();
         }
-        // Send the reply message.
-        TRY(ipc_send(m.from, &m));
     }
+}
+
+error_t server_mainloop(cid_t ch, error_t (*process)(struct message *m)) {
+    return server_mainloop_with_deferred(ch, process, NULL);
 }
 
 error_t server_register(cid_t discovery_server, cid_t receive_at,
@@ -32,7 +41,7 @@ error_t server_register(cid_t discovery_server, cid_t receive_at,
     cid_t ch;
     TRY(open(&ch));
     TRY(transfer(ch, receive_at));
-    TRY(register_server(discovery_server, interface, ch));
+    TRY(call_discovery_publicize(discovery_server, interface, ch));
     *new_ch = ch;
     return OK;
 }

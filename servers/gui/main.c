@@ -1,6 +1,7 @@
 #include <resea.h>
 #include <resea/string.h>
 #include <resea_idl.h>
+#include <server.h>
 #include "font.h"
 
 struct framebuffer_info {
@@ -113,65 +114,50 @@ static void console_init(void) {
 static cid_t server_ch;
 static cid_t active_ch = 0;
 
-static error_t handle_connect_request(UNUSED cid_t from,
-                                      UNUSED uint8_t interface,
-                                      cid_t *ch) {
-    TRACE("connect_request()");
+static error_t handle_server_connect(struct message *m) {
     cid_t new_ch;
-    TRY_OR_PANIC(open(&new_ch));
+    TRY(open(&new_ch));
     transfer(new_ch, server_ch);
-    *ch = new_ch;
+
+    m->header = SERVER_CONNECT_REPLY_HEADER;
+    m->payloads.server.connect_reply.ch = new_ch;
     return OK;
 }
 
-static error_t handle_console_write(UNUSED cid_t from, uint8_t ch) {
+static error_t handle_gui_console_write(struct message *m) {
+    uint8_t ch = m->payloads.gui.console_write.ch;
     TRACE("console_write: '%c'", ch);
     console_write_char(ch, CONSOLE_NORMAL_COLOR);
+    m->header = GUI_CONSOLE_WRITE_REPLY_HEADER;
     return OK;
 }
 
-static error_t handle_activate(UNUSED cid_t from) {
-    active_ch = from;
+static error_t handle_gui_activate(struct message *m) {
+    active_ch = m->from;
+    m->header = GUI_ACTIVATE_REPLY_HEADER;
     return OK;
 }
 
-static error_t handle_on_keyinput(UNUSED cid_t from, uint8_t ch) {
-    TRACE("on_keyinput: '%c'", ch);
-    if (active_ch)
-        send_key_event(active_ch, ch);
-    return OK;
-}
+static error_t handle_on_keyinput(struct message *m) {
+    uint8_t keycode = m->payloads.keyboard_driver.on_keyinput.keycode;
+    TRACE("on_keyinput: keycode='%c' (%x)", keycode, keycode);
 
-static void mainloop(cid_t server_ch) {
-    while (1) {
-        struct message m;
-        TRY_OR_PANIC(ipc_recv(server_ch, &m));
-
-        struct message r;
-        error_t err;
-        switch (MSG_TYPE(m.header)) {
-        case CONNECT_REQUEST_MSG:
-            err = dispatch_connect_request(handle_connect_request, &m, &r);
-            break;
-        case ON_KEYINPUT_MSG:
-            err = dispatch_on_keyinput(handle_on_keyinput, &m, &r);
-            break;
-        case CONSOLE_WRITE_MSG:
-            err = dispatch_console_write(handle_console_write, &m, &r);
-            break;
-        case ACTIVATE_MSG:
-            err = dispatch_activate(handle_activate, &m, &r);
-            break;
-        default:
-            WARN("invalid message type %x", MSG_TYPE(m.header));
-            err = ERR_INVALID_MESSAGE;
-            r.header = ERROR_TO_HEADER(err);
-        }
-
-        if (err != ERR_DONT_REPLY) {
-            TRY_OR_PANIC(ipc_send(m.from, &r));
-        }
+    if (active_ch) {
+        send_gui_key_event(active_ch, keycode);
     }
+
+    m->header = KEYBOARD_DRIVER_ON_KEYINPUT_REPLY_HEADER;
+    return OK;
+}
+
+static error_t process_message(struct message *m) {
+    switch (MSG_TYPE(m->header)) {
+    case SERVER_CONNECT_MSG:    return handle_server_connect(m);
+    case GUI_CONSOLE_WRITE_MSG: return handle_gui_console_write(m);
+    case GUI_ACTIVATE_MSG:      return handle_gui_activate(m);
+    case KEYBOARD_DRIVER_ON_KEYINPUT_MSG: return handle_on_keyinput(m);
+    }
+    return ERR_INVALID_MESSAGE;
 }
 
 void main(void) {
@@ -182,26 +168,26 @@ void main(void) {
 
     page_base_t page_base = valloc(4096);
     size_t num_pages;
-    TRY_OR_PANIC(get_framebuffer(memmgr_ch,
-                                 page_base,
-                                 (uintptr_t *) &framebuffer.vram,
-                                 &num_pages,
-                                 &framebuffer.width,
-                                 &framebuffer.height,
-                                 &framebuffer.bpp));
+    TRY_OR_PANIC(call_memmgr_get_framebuffer(memmgr_ch,
+                                             page_base,
+                                             (uintptr_t *) &framebuffer.vram,
+                                             &num_pages,
+                                             &framebuffer.width,
+                                             &framebuffer.height,
+                                             &framebuffer.bpp));
     console_init();
 
     cid_t kbd_ch;
-    TRY_OR_PANIC(connect_server(memmgr_ch, KEYBOARD_DRIVER_INTERFACE, &kbd_ch));
+    TRY_OR_PANIC(call_discovery_connect(memmgr_ch, KEYBOARD_DRIVER_INTERFACE, &kbd_ch));
     cid_t kbd_listener_ch;
     TRY_OR_PANIC(open(&kbd_listener_ch));
     TRY_OR_PANIC(transfer(kbd_listener_ch, server_ch));
-    TRY_OR_PANIC(listen_keyboard(kbd_ch, kbd_listener_ch));
+    TRY_OR_PANIC(call_keyboard_driver_listen_keyboard(kbd_ch, kbd_listener_ch));
 
     cid_t discovery_ch;
     TRY_OR_PANIC(open(&discovery_ch));
     TRY_OR_PANIC(transfer(discovery_ch, server_ch));
-    TRY_OR_PANIC(register_server(memmgr_ch, GUI_INTERFACE, discovery_ch));
+    TRY_OR_PANIC(call_discovery_publicize(memmgr_ch, GUI_INTERFACE, discovery_ch));
 
-    mainloop(server_ch);
+    server_mainloop(server_ch, process_message);
 }

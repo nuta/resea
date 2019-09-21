@@ -7,14 +7,17 @@
 #include <resea/ipc.h>
 #include <resea/string.h>
 #include <resea/math.h>
+#include <server.h>
 #include <resea_idl.h>
 
 static cid_t kernel_ch = 1;
 extern struct init_args __init_args;
-
 extern char __initfs;
-error_t handle_fill_page_request(UNUSED cid_t from, pid_t pid, uintptr_t addr,
-                                 UNUSED size_t size, page_t *page) {
+
+static error_t handle_pager_fill_page(struct message *m) {
+    pid_t pid      = m->payloads.pager.fill_page.pid;
+    uintptr_t addr = m->payloads.pager.fill_page.addr;
+
     uintptr_t alloced_addr;
     if ((alloced_addr = do_alloc_pages(0)) == 0)
         return ERR_NO_MEMORY;
@@ -47,46 +50,58 @@ error_t handle_fill_page_request(UNUSED cid_t from, pid_t pid, uintptr_t addr,
         }
     }
 
-    *page = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
+    m->header = PAGER_FILL_PAGE_REPLY_HEADER;
+    m->payloads.pager.fill_page_reply.page = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
     return OK;
 }
 
-static error_t handle_printchar(UNUSED cid_t from, uint8_t ch) {
-    // Forward to the kernel sever.
-    return printchar(kernel_ch, ch);
+static error_t handle_runtime_exit_current(UNUSED struct message *m) {
+    UNIMPLEMENTED();
+    return ERR_DONT_REPLY;
 }
 
-static error_t handle_exit_kernel_test(UNUSED cid_t from) {
+static error_t handle_runtime_printchar(struct message *m) {
     // Forward to the kernel sever.
-    return exit_kernel_test(kernel_ch);
-}
-
-static error_t handle_benchmark_nop(UNUSED cid_t from) {
+    uint8_t ch = m->payloads.runtime.printchar.ch;
+    TRY(call_runtime_printchar(kernel_ch, ch));
+    m->header = RUNTIME_PRINTCHAR_REPLY_HEADER;
     return OK;
 }
 
-static error_t handle_alloc_pages(UNUSED cid_t from, size_t order,
-                                  page_t *page) {
+static void handle_kernel_exit_kernel_test(UNUSED struct message *m) {
+    // Forward to the kernel sever.
+    call_kernel_exit_kernel_test(kernel_ch);
+    UNREACHABLE;
+}
+
+static error_t handle_memmgr_benchmark_nop(struct message *m) {
+    m->header = MEMMGR_BENCHMARK_NOP_REPLY_HEADER;
+    return OK;
+}
+
+static error_t handle_memmgr_alloc_pages(struct message *m) {
+    size_t order = m->payloads.memmgr.alloc_pages.order;
     paddr_t paddr = do_alloc_pages(order);
     if (!paddr) {
         return ERR_NO_MEMORY;
     }
 
-    *page = PAGE_PAYLOAD(paddr, order, PAGE_TYPE_SHARED);
+    m->header = MEMMGR_ALLOC_PAGES_REPLY_HEADER;
+    m->payloads.memmgr.alloc_pages_reply.page = PAGE_PAYLOAD(paddr, order, PAGE_TYPE_SHARED);
     return OK;
 }
 
-static error_t handle_get_framebuffer(UNUSED cid_t from, page_t *framebuffer,
-                                      int32_t *width, int32_t *height,
-                                      uint8_t *bpp) {
+static error_t handle_memmgr_get_framebuffer(struct message *m) {
     struct framebuffer_info *info = &__init_args.framebuffer;
     paddr_t paddr = info->paddr;
     int order = ulllog2(
         (info->height * info->width * (info->bpp / 8)) / PAGE_SIZE);
-    *framebuffer = PAGE_PAYLOAD(paddr, order, PAGE_TYPE_SHARED);
-    *width  = (int) info->width;
-    *height = (int) info->height;
-    *bpp    = info->bpp;
+
+    m->header = MEMMGR_GET_FRAMEBUFFER_REPLY_HEADER;
+    m->payloads.memmgr.get_framebuffer_reply.framebuffer = PAGE_PAYLOAD(paddr, order, PAGE_TYPE_SHARED);
+    m->payloads.memmgr.get_framebuffer_reply.width = (int) info->width;
+    m->payloads.memmgr.get_framebuffer_reply.height = (int) info->height;
+    m->payloads.memmgr.get_framebuffer_reply.bpp = info->bpp;
     return OK;
 }
 
@@ -114,20 +129,25 @@ static void discovery_init(void) {
 
 static cid_t server_ch;
 
-static error_t handle_register_server(UNUSED cid_t from, uint8_t interface,
-                                      cid_t ch) {
+static error_t handle_discovery_publicize(struct message *m) {
     // TODO: Support multiple servers with the same interface ID.
+    uint8_t interface = m->payloads.discovery.publicize.interface;
+    cid_t ch = m->payloads.discovery.publicize.ch;
+
     assert(servers[interface] == 0);
     TRACE("register_server: interface=%d", interface);
 
     servers[interface] = ch;
     TRY_OR_PANIC(transfer(servers[interface], server_ch));
+
+    m->header = DISCOVERY_PUBLICIZE_REPLY_HEADER;
     return OK;
 }
 
-static error_t handle_connect_server(UNUSED cid_t from, uint8_t interface,
-                                     UNUSED cid_t *ch) {
-    TRACE("connect_server(interface=%d)", interface);
+static error_t handle_discovery_connect(struct message *m) {
+    uint8_t interface = m->payloads.discovery.connect.interface;
+    TRACE("discovery_connect(interface=%d)", interface);
+
     struct waiter *waiter = NULL;
     for (int i = 0; i < WAITERS_MAX; i++) {
         if (waiters[i].reply_to == 0) {
@@ -140,13 +160,15 @@ static error_t handle_connect_server(UNUSED cid_t from, uint8_t interface,
         return ERR_NO_MEMORY;
     }
 
-    waiter->reply_to = from;
+    waiter->reply_to = m->from;
     waiter->interface = interface;
     waiter->sent_request = false;
     return ERR_DONT_REPLY;
 }
 
-static error_t handle_connect_request_reply(struct connect_request_reply_msg *m) {
+static error_t handle_server_connect_reply(struct message *m) {
+    cid_t ch = m->payloads.server.connect_reply.ch;
+
     struct waiter *waiter = NULL;
     for (int i = 0; i < WAITERS_MAX; i++) {
         if (waiters[i].reply_to && waiters[i].server_ch == m->from) {
@@ -156,7 +178,7 @@ static error_t handle_connect_request_reply(struct connect_request_reply_msg *m)
     }
 
     assert(waiter);
-    send_connect_server_reply(waiter->reply_to, m->ch);
+    send_discovery_connect_reply(waiter->reply_to, ch);
     waiter->reply_to = 0;
     return ERR_DONT_REPLY;
 }
@@ -170,8 +192,9 @@ struct fd_table_entry {
 // TODO: process-local fd numbers
 static struct fd_table_entry fd_table[FD_TABLE_MAX];
 
-static error_t do_open_file(UNUSED cid_t from, const char* path, UNUSED uint8_t mode,
-                            fd_t *handle) {
+static error_t handle_fs_open(struct message *m) {
+    const char *path = m->payloads.fs.open.path;
+
     struct fd_table_entry *entry = NULL;
     fd_t fd;
     for (fd = 0; fd < FD_TABLE_MAX; fd++) {
@@ -189,7 +212,8 @@ static error_t do_open_file(UNUSED cid_t from, const char* path, UNUSED uint8_t 
     while ((file = initfs_readdir(&dir)) != NULL) {
         if (strcmp(path, file->path) == 0) {
             entry->file = file;
-            *handle = fd;
+            m->header = FS_OPEN_REPLY_HEADER;
+            m->payloads.fs.open_reply.handle = fd;
             return OK;
         }
     }
@@ -198,16 +222,20 @@ static error_t do_open_file(UNUSED cid_t from, const char* path, UNUSED uint8_t 
     return ERR_NOT_FOUND;
 }
 
-static error_t do_read_file(UNUSED cid_t from, fd_t handle, size_t offset, size_t len,
-                            page_t *data) {
+static error_t handle_fs_read(struct message *m) {
+    int32_t handle = m->payloads.fs.read.handle;
+    size_t offset  = m->payloads.fs.read.offset;
+    size_t len     = m->payloads.fs.read.len;
+
     assert(handle < FD_TABLE_MAX);
     assert(fd_table[handle].file != NULL);
 
     const struct initfs_file *file = fd_table[handle].file;
 
     uintptr_t alloced_addr;
-    if ((alloced_addr = do_alloc_pages(0)) == 0)
+    if ((alloced_addr = do_alloc_pages(0)) == 0) {
         return ERR_NO_MEMORY;
+    }
 
     assert(len <= PAGE_SIZE);
     assert(offset < file->len);
@@ -215,11 +243,12 @@ static error_t do_read_file(UNUSED cid_t from, fd_t handle, size_t offset, size_
     memcpy_s((void *) alloced_addr, PAGE_SIZE, &file->content[offset],
              copy_len);
 
-    *data = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
+    m->header = FS_READ_REPLY_HEADER;
+    m->payloads.fs.read_reply.data = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
     return OK;
 }
 
-static void post_work() {
+static void deferred_work(void) {
     for (int interface = 0; interface <= INTERFACE_ID_MAX; interface++) {
         if (!servers[interface]) {
             continue;
@@ -230,7 +259,7 @@ static void post_work() {
                 && !waiters[i].sent_request) {
                 TRACE("sending discovery.connect_request(to=%d, interface=%d)",
                     servers[interface], interface);
-                send_connect_request(servers[interface], interface);
+                send_server_connect(servers[interface], interface);
                 TRACE("sent connect_request");
                 waiters[i].server_ch = servers[interface];
                 waiters[i].sent_request = true;
@@ -239,82 +268,44 @@ static void post_work() {
     }
 }
 
-void mainloop(cid_t server_ch) {
-    while (1) {
-        struct message m;
-        TRY_OR_PANIC(ipc_recv(server_ch, &m));
+static error_t process_message(struct message *m) {
+    switch (MSG_TYPE(m->header)) {
+    case RUNTIME_EXIT_CURRENT_MSG: return handle_runtime_exit_current(m);
+    case RUNTIME_PRINTCHAR_MSG: return handle_runtime_printchar(m);
 
-        struct message r;
-        error_t err;
-        switch (MSG_TYPE(m.header)) {
-        case EXIT_CURRENT_MSG:
-            UNIMPLEMENTED();
-        case PRINTCHAR_MSG:
-            err = dispatch_printchar(handle_printchar, &m, &r);
-            break;
+    // FIXME: Remove from memmgr.
+    case KERNEL_EXIT_KERNEL_TEST_MSG:
+        handle_kernel_exit_kernel_test(m);
+        break;
 
-        //
-        //  Discovery
-        //
-        case REGISTER_SERVER_MSG:
-            err = dispatch_register_server(handle_register_server, &m, &r);
-            break;
-        case CONNECT_SERVER_MSG:
-            err = dispatch_connect_server(handle_connect_server, &m, &r);
-            break;
-        case CONNECT_REQUEST_REPLY_MSG:
-            err = handle_connect_request_reply((struct connect_request_reply_msg *) &m);
-            break;
+    //
+    //  Discovery
+    //
+    case DISCOVERY_PUBLICIZE_MSG: return handle_discovery_publicize(m);
+    case DISCOVERY_CONNECT_MSG: return handle_discovery_connect(m);
+    case SERVER_CONNECT_REPLY_MSG: return handle_server_connect_reply(m);
 
-        //
-        //  FS
-        //
-        case OPEN_FILE_MSG:
-            err = dispatch_open_file(do_open_file, &m, &r);
-            break;
-        case READ_FILE_MSG:
-            err = dispatch_read_file(do_read_file, &m, &r);
-            break;
+    //
+    //  FS server for initfs
+    //
+    case FS_OPEN_MSG: return handle_fs_open(m);
+    // TODO: case FS_CLOSE_MSG: return handle_fs_close(m);
+    case FS_READ_MSG: return handle_fs_read(m);
 
-        case EXIT_KERNEL_TEST_MSG:
-            err = dispatch_exit_kernel_test(handle_exit_kernel_test, &m, &r);
-            break;
-        case FILL_PAGE_REQUEST_MSG:
-            err = dispatch_fill_page_request(handle_fill_page_request, &m, &r);
-            break;
-        case BENCHMARK_NOP_MSG:
-            err = dispatch_benchmark_nop(handle_benchmark_nop, &m, &r);
-            break;
-        case GET_FRAMEBUFFER_MSG:
-            err = dispatch_get_framebuffer(handle_get_framebuffer, &m, &r);
-            break;
-        case ALLOC_PAGES_MSG:
-            err = dispatch_alloc_pages(handle_alloc_pages, &m, &r);
-            break;
-        default:
-            WARN("invalid message type %x", MSG_TYPE(m.header));
-            err = ERR_INVALID_MESSAGE;
-            r.header = ERROR_TO_HEADER(err);
-        }
+    case PAGER_FILL_PAGE_MSG: return handle_pager_fill_page(m);
 
-        if (err != ERR_DONT_REPLY) {
-            TRY_OR_PANIC(ipc_send(m.from, &r));
-        }
-
-        post_work();
+    //
+    //  Memmgr
+    //
+    case MEMMGR_BENCHMARK_NOP_MSG: return handle_memmgr_benchmark_nop(m);
+    case MEMMGR_ALLOC_PAGES_MSG: return handle_memmgr_alloc_pages(m);
+    case MEMMGR_GET_FRAMEBUFFER_MSG: return handle_memmgr_get_framebuffer(m);
     }
+
+    return ERR_INVALID_MESSAGE;
 }
 
-void main(void) {
-    INFO("starting...");
-    init_alloc_pages((struct memory_map *) &__init_args.memory_maps,
-                     __init_args.num_memory_maps);
-    initfs_init();
-    process_init();
-    discovery_init();
-
-    TRY_OR_PANIC(open(&server_ch));
-
+static void launch_startup_servers(void) {
     struct initfs_dir dir;
     initfs_opendir(&dir);
     const struct initfs_file *file;
@@ -326,7 +317,19 @@ void main(void) {
             }
         }
     }
+}
+
+void main(void) {
+    INFO("starting...");
+
+    TRY_OR_PANIC(open(&server_ch));
+    init_alloc_pages((struct memory_map *) &__init_args.memory_maps,
+                     __init_args.num_memory_maps);
+    initfs_init();
+    process_init();
+    discovery_init();
+    launch_startup_servers();
 
     INFO("enterinng main loop");
-    mainloop(server_ch);
+    server_mainloop_with_deferred(server_ch, process_message, deferred_work);
 }

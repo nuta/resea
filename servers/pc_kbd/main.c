@@ -48,41 +48,46 @@ static void read_keyboard_input(void) {
          );
 
     if (listener_ch) {
-        on_keyinput(listener_ch, key_code);
+        call_keyboard_driver_on_keyinput(listener_ch, key_code);
     }
 }
 
 static error_t handle_notification(struct message *m) {
-    intmax_t intr_count = m->payloads.notification.notification.data;
+    intmax_t intr_count = m->payloads.notification.data;
+
+    WARN("copy_message: %d // %d %d", INLINE_PAYLOAD_LEN(get_ipc_buffer()->header),
+        offsetof(struct message, payloads.data),
+        offsetof(struct message, payloads.notification.data));
+
+    INFO("intr! %x %d", get_ipc_buffer()->header, intr_count);
     while (intr_count-- > 0) {
         read_keyboard_input();
     }
     return ERR_DONT_REPLY;
 }
 
-static error_t handle_connect_request(struct message *m) {
-    TRACE("connect_request()");
+static error_t handle_server_connect(struct message *m) {
     cid_t new_ch;
     TRY(open(&new_ch));
     transfer(new_ch, server_ch);
 
-    m->header = CONNECT_REQUEST_REPLY_HEADER;
-    m->payloads.discovery.connect_request_reply.ch = new_ch;
+    m->header = SERVER_CONNECT_REPLY_HEADER;
+    m->payloads.server.connect_reply.ch = new_ch;
     return OK;
 }
 
 static error_t handle_listen_keyboard(struct message *m) {
     listener_ch = m->payloads.keyboard_driver.listen_keyboard.ch;
 
-    m->header = LISTEN_KEYBOARD_REPLY_HEADER;
+    m->header = KEYBOARD_DRIVER_LISTEN_KEYBOARD_REPLY_HEADER;
     return OK;
 }
 
 static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
     case NOTIFICATION_MSG:    return handle_notification(m);
-    case CONNECT_REQUEST_MSG: return handle_connect_request(m);
-    case LISTEN_KEYBOARD_MSG: return handle_listen_keyboard(m);
+    case SERVER_CONNECT_MSG:  return handle_server_connect(m);
+    case KEYBOARD_DRIVER_LISTEN_KEYBOARD_MSG: return handle_listen_keyboard(m);
     }
     return ERR_INVALID_MESSAGE;
 }
