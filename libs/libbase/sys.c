@@ -21,12 +21,12 @@ page_base_t valloc2(int order) {
     vaddr_t addr = valloc_area_bottom;
     valloc_area_bottom += POW2(order) * PAGE_SIZE;
     assert(valloc_area_bottom < VALLOC_AREA_END);
-    return PAGE_PAYLOAD(addr, order, 0);
+    return PAGE_BASE(addr, order);
 }
 
 void *sys_alloc_pages(int order) {
     cid_t memmgr_ch = 1;
-    page_base_t page_base = PAGE_PAYLOAD(grow_heap_area(order), order, 0);
+    page_base_t page_base = PAGE_BASE(grow_heap_area(order), order, 0);
     size_t num_pages;
     uintptr_t page;
     error_t err = alloc_pages(memmgr_ch, 0, page_base, &page, &num_pages);
