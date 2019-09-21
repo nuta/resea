@@ -6,7 +6,7 @@
 #include <x64/x64.h>
 #include <x64/thread.h>
 
-static void print_regs(struct interrupt_regs *regs) {
+static void print_regs(MAYBE_UNUSED struct interrupt_regs *regs) {
     TRACE("RIP = %p    CS  = %p    RFL = %p", regs->rip, regs->cs, regs->rflags);
     TRACE("SS  = %p    RSP = %p    RBP = %p", regs->ss, regs->rsp, regs->rbp);
     TRACE("RAX = %p    RBX = %p    RCX = %p", regs->rax, regs->rbx, regs->rcx);

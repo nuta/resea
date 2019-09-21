@@ -8,6 +8,7 @@
 #define va_arg(ap, type) __builtin_va_arg(ap, type)
 #define STATIC_ASSERT(expr) _Static_assert(expr, #expr)
 #define UNUSED __attribute__((unused))
+#define MAYBE_UNUSED __attribute__((unused))
 #define PACKED __attribute__((packed))
 #define NORETURN __attribute__((noreturn))
 #define UNREACHABLE __builtin_unreachable()
