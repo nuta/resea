@@ -21,43 +21,45 @@ static io_handle_t io_handle;
 static struct modifiers_state modifiers;
 
 static void read_keyboard_input(void) {
-    uint8_t scan_code = io_read8(&io_handle, IOPORT_OFFSET_DATA);
-    bool shift = modifiers.shift_left || modifiers.shift_right;
-    uint8_t key_code = scan_code2key_code(scan_code, shift);
-    char ascii = '_';
-    switch (key_code & ~KEY_RELEASE) {
-    case KEY_SHIFT_LEFT:
-        modifiers.shift_left = (key_code & KEY_RELEASE) == 0;
-        break;
-    case KEY_SHIFT_RIGHT:
-        modifiers.shift_right = (key_code & KEY_RELEASE) == 0;
-        break;
-    default:
-        ascii = key_code & ~KEY_RELEASE;
-    }
+    while (io_read8(&io_handle, IOPORT_OFFSET_STATUS) & STATUS_OUTBUF_FULL) {
+        uint8_t scan_code = io_read8(&io_handle, IOPORT_OFFSET_DATA);
+        bool shift = modifiers.shift_left || modifiers.shift_right;
+        uint8_t key_code = scan_code2key_code(scan_code, shift);
+        char ascii = '_';
+        switch (key_code & ~KEY_RELEASE) {
+        case KEY_SHIFT_LEFT:
+            modifiers.shift_left = (key_code & KEY_RELEASE) == 0;
+            break;
+        case KEY_SHIFT_RIGHT:
+            modifiers.shift_right = (key_code & KEY_RELEASE) == 0;
+            break;
+        default:
+            ascii = key_code & ~KEY_RELEASE;
+        }
 
-    TRACE("keyboard: scan_code=%x, key_code=%x, ascii='%c'%s%s%s%s%s%s%s",
-          scan_code, key_code, ascii,
-          (key_code & KEY_RELEASE) ? " [release]"     : "",
-          modifiers.ctrl_left      ? " [ctrl-left]"   : "",
-          modifiers.ctrl_right     ? " [ctrl-right]"  : "",
-          modifiers.alt_left       ? " [alt-left]"    : "",
-          modifiers.alt_right      ? " [alt-right]"   : "",
-          modifiers.shift_left     ? " [shift-left]"  : "",
-          modifiers.shift_right    ? " [shift-right]" : ""
-         );
+        TRACE("keyboard: scan_code=%x, key_code=%x, ascii='%c'%s%s%s%s%s%s%s",
+              scan_code, key_code, ascii,
+              (key_code & KEY_RELEASE) ? " [release]"     : "",
+              modifiers.ctrl_left      ? " [ctrl-left]"   : "",
+              modifiers.ctrl_right     ? " [ctrl-right]"  : "",
+              modifiers.alt_left       ? " [alt-left]"    : "",
+              modifiers.alt_right      ? " [alt-right]"   : "",
+              modifiers.shift_left     ? " [shift-left]"  : "",
+              modifiers.shift_right    ? " [shift-right]" : ""
+             );
 
-    if (listener_ch) {
-        call_keyboard_driver_keyinput_event(listener_ch, key_code);
+        if (listener_ch) {
+            call_keyboard_driver_keyinput_event(listener_ch, key_code);
+        }
     }
 }
 
 static error_t handle_notification(struct message *m) {
-    intmax_t intr_count = m->payloads.notification.data;
-
-    while (intr_count-- > 0) {
+    notification_t notification = m->payloads.notification.data;
+    if (notification & NOTIFY_INTERRUPT) {
         read_keyboard_input();
     }
+
     return ERR_DONT_REPLY;
 }
 
