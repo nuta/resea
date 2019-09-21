@@ -312,7 +312,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
                 link_page(&receiver->process->page_table, page_base_addr, paddr,
                           num_pages, PAGE_USER | PAGE_WRITABLE);
-                dst_m->payloads.page = PAGE_PAYLOAD(page_base_addr, PAGE_EXP(page), 0);
+                dst_m->payloads.page = PAGE_PAYLOAD(page_base_addr, PAGE_EXP(page));
             }
 
             // Unlink the pages from the current (sender) process.

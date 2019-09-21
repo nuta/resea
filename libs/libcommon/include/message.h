@@ -55,11 +55,8 @@ enum notify_op {
 //
 typedef uintmax_t page_t;
 typedef uintmax_t page_base_t;
-#define PAGE_PAYLOAD(addr, exp, type) (addr | (exp << 0) | (type << 5))
+#define PAGE_PAYLOAD(addr, order) ((addr) | ((order) << 0))
 #define PAGE_EXP(page) ((page) & 0x1f)
-#define PAGE_TYPE(page) (((page) >> 5) & 0x3)
-#define PAGE_TYPE_MOVE   1
-#define PAGE_TYPE_SHARED 2
 
 #define SMALLSTRING_LEN_MAX 128
 typedef char smallstring_t[SMALLSTRING_LEN_MAX];

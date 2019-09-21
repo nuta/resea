@@ -51,7 +51,7 @@ static error_t handle_pager_fill(struct message *m) {
     }
 
     m->header = PAGER_FILL_REPLY_HEADER;
-    m->payloads.pager.fill_reply.page = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
+    m->payloads.pager.fill_reply.page = PAGE_PAYLOAD(alloced_addr, 0);
     return OK;
 }
 
@@ -87,7 +87,7 @@ static error_t handle_memmgr_alloc_pages(struct message *m) {
     }
 
     m->header = MEMMGR_ALLOC_PAGES_REPLY_HEADER;
-    m->payloads.memmgr.alloc_pages_reply.page = PAGE_PAYLOAD(paddr, order, PAGE_TYPE_SHARED);
+    m->payloads.memmgr.alloc_pages_reply.page = PAGE_PAYLOAD(paddr, order);
     return OK;
 }
 
@@ -98,7 +98,7 @@ static error_t handle_memmgr_get_framebuffer(struct message *m) {
         (info->height * info->width * (info->bpp / 8)) / PAGE_SIZE);
 
     m->header = MEMMGR_GET_FRAMEBUFFER_REPLY_HEADER;
-    m->payloads.memmgr.get_framebuffer_reply.framebuffer = PAGE_PAYLOAD(paddr, order, PAGE_TYPE_SHARED);
+    m->payloads.memmgr.get_framebuffer_reply.framebuffer = PAGE_PAYLOAD(paddr, order);
     m->payloads.memmgr.get_framebuffer_reply.width = (int) info->width;
     m->payloads.memmgr.get_framebuffer_reply.height = (int) info->height;
     m->payloads.memmgr.get_framebuffer_reply.bpp = info->bpp;
@@ -244,7 +244,7 @@ static error_t handle_fs_read(struct message *m) {
              copy_len);
 
     m->header = FS_READ_REPLY_HEADER;
-    m->payloads.fs.read_reply.data = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
+    m->payloads.fs.read_reply.data = PAGE_PAYLOAD(alloced_addr, 0);
     return OK;
 }
 

@@ -28,7 +28,7 @@ static error_t handle_pager_fill(struct message *m) {
                 fileoff, PAGE_SIZE, page_base, (uintptr_t *) &data, &num_pages));
 
             m->header = PAGER_FILL_REPLY_HEADER;
-            m->payloads.pager.fill_reply.page = PAGE_PAYLOAD((uintptr_t) data, 0, PAGE_TYPE_SHARED);
+            m->payloads.pager.fill_reply.page = PAGE_PAYLOAD((uintptr_t) data, 0);
             return OK;
         }
     }
@@ -40,7 +40,7 @@ static error_t handle_pager_fill(struct message *m) {
     TRY_OR_PANIC(call_memmgr_alloc_pages(memmgr_ch, 0, page_base, (uintptr_t *) &ptr, &num_pages));
 
     m->header = PAGER_FILL_REPLY_HEADER;
-    m->payloads.pager.fill_reply.page = PAGE_PAYLOAD((uintptr_t) ptr, 0, PAGE_TYPE_SHARED);
+    m->payloads.pager.fill_reply.page = PAGE_PAYLOAD((uintptr_t) ptr, 0);
     return OK;
 }
 
