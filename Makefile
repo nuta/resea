@@ -172,7 +172,7 @@ $(eval include libs/$(1)/lib.mk)
 $(eval lib_objs := $(addprefix $(BUILD_DIR)/libs/$(1)/, $(objs)))
 $(BUILD_DIR)/libs/$(1).lib.o: $(lib_objs) libs/$(1)/lib.mk
 $(BUILD_DIR)/libs/$(1).lib.o: objs := $(lib_objs)
-$(lib_objs): CFLAGS := $(APP_CFLAGS) \
+$(lib_objs): CFLAGS := -DPROGRAM_NAME='"$(1)"' $(APP_CFLAGS) \
 	$(foreach lib, $(1) $(libs), -Ilibs/$(lib)/include)
 endef
 $(foreach lib, $(lib_deps), $(eval $(call lib-make-rule,$(lib))))
