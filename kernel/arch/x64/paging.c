@@ -71,6 +71,32 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
     }
 }
 
+void unlink_page(struct page_table *pt, vaddr_t vaddr, int num_pages) {
+    ASSERT(vaddr < KERNEL_BASE_ADDR && "tried to link a kernel page");
+    int remaining = num_pages;
+    while (remaining > 0) {
+        uint64_t *table = from_paddr(pt->pml4);
+        int level = 4;
+        while (level > 1) {
+            int index = NTH_LEVEL_INDEX(level, vaddr);
+            ASSERT(table[index]);
+            table = (uint64_t *) from_paddr(ENTRY_PADDR(table[index]));
+            level--;
+        }
+
+        // `table` now points to the PT.
+        int index = NTH_LEVEL_INDEX(1, vaddr);
+        while (remaining > 0 && index < PAGE_ENTRY_NUM) {
+            // TRACE("unlink: %p", vaddr);
+            table[index] = 0;
+            asm_invlpg(vaddr);
+            vaddr += PAGE_SIZE;
+            remaining--;
+            index++;
+        }
+    }
+}
+
 // TODO: Rewrite this function. It looks too fragile :(
 paddr_t resolve_paddr_from_vaddr(struct page_table *pt, vaddr_t vaddr) {
     uint64_t *table = from_paddr(pt->pml4);
