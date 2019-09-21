@@ -138,15 +138,15 @@ static error_t handle_gui_activate(struct message *m) {
     return OK;
 }
 
-static error_t handle_on_keyinput(struct message *m) {
-    uint8_t keycode = m->payloads.keyboard_driver.on_keyinput.keycode;
-    TRACE("on_keyinput: keycode='%c' (%x)", keycode, keycode);
+static error_t handle_keyinput_event(struct message *m) {
+    uint8_t keycode = m->payloads.keyboard_driver.keyinput_event.keycode;
+    TRACE("keyinput_event: keycode='%c' (%x)", keycode, keycode);
 
     if (active_ch) {
         send_gui_key_event(active_ch, keycode);
     }
 
-    m->header = KEYBOARD_DRIVER_ON_KEYINPUT_REPLY_HEADER;
+    m->header = KEYBOARD_DRIVER_KEYINPUT_EVENT_REPLY_HEADER;
     return OK;
 }
 
@@ -155,7 +155,7 @@ static error_t process_message(struct message *m) {
     case SERVER_CONNECT_MSG:    return handle_server_connect(m);
     case GUI_CONSOLE_WRITE_MSG: return handle_gui_console_write(m);
     case GUI_ACTIVATE_MSG:      return handle_gui_activate(m);
-    case KEYBOARD_DRIVER_ON_KEYINPUT_MSG: return handle_on_keyinput(m);
+    case KEYBOARD_DRIVER_KEYINPUT_EVENT_MSG: return handle_keyinput_event(m);
     }
     return ERR_INVALID_MESSAGE;
 }

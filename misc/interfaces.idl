@@ -133,5 +133,5 @@ interface keyboard_driver {
     listen(ch: channel) -> ()
 
     [id(2), type(call)]
-    on_keyinput(keycode: uint8) -> ()
+    keyinput_event(keycode: uint8) -> ()
 }

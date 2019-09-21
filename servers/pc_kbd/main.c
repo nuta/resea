@@ -48,7 +48,7 @@ static void read_keyboard_input(void) {
          );
 
     if (listener_ch) {
-        call_keyboard_driver_on_keyinput(listener_ch, key_code);
+        call_keyboard_driver_keyinput_event(listener_ch, key_code);
     }
 }
 
