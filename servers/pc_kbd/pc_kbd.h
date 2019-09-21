@@ -6,6 +6,7 @@
 #define IOPORT_ADDR 0x60
 #define IOPORT_SIZE 5     /* 0x60 and 0x64 */
 #define IOPORT_OFFSET_DATA 0x00
+#define KEYBOARD_IRQ 1
 
 struct modifiers_state {
     bool ctrl_left;

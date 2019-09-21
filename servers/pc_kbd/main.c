@@ -96,9 +96,8 @@ void main(void) {
                          IOPORT_ADDR, IOPORT_SIZE));
 
     // Create and connect a channel to receive keyboard interrupts.
-    TRY_OR_PANIC(open(&kbd_irq_ch));
-    TRY_OR_PANIC(transfer(kbd_irq_ch, server_ch));
-    TRY_OR_PANIC(listen_irq(kernel_ch, kbd_irq_ch, 1 /* keyboard irq */));
+    TRY_OR_PANIC(io_listen_interrupt(kernel_ch, server_ch, KEYBOARD_IRQ,
+                                     &kbd_irq_ch));
 
     TRY_OR_PANIC(open(&discovery_ch));
     TRY_OR_PANIC(transfer(discovery_ch, server_ch));
