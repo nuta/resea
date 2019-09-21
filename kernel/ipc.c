@@ -292,7 +292,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             page_t page = m->payloads.page;
             page_t page_base = receiver->info->page_base;
             vaddr_t page_base_addr = PAGE_PAYLOAD_ADDR(page_base);
-            int num_pages = POW2(PAGE_EXP(page));
+            int num_pages = POW2(PAGE_ORDER(page));
 
             // Resolve the physical address referenced by the page payload.
             paddr_t paddr = resolve_paddr(&current->process->page_table,
@@ -305,14 +305,14 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             } else {
                 // Make sure that the receiver accepts a page payload and its
                 // base address is valid.
-                if (PAGE_EXP(page_base) < PAGE_EXP(page)
+                if (PAGE_ORDER(page_base) < PAGE_ORDER(page)
                     || !is_valid_page_base_addr(page_base_addr)) {
                     return ERR_UNACCEPTABLE_PAGE_PAYLOAD;
                 }
 
                 link_page(&receiver->process->page_table, page_base_addr, paddr,
                           num_pages, PAGE_USER | PAGE_WRITABLE);
-                dst_m->payloads.page = PAGE_PAYLOAD(page_base_addr, PAGE_EXP(page));
+                dst_m->payloads.page = PAGE_PAYLOAD(page_base_addr, PAGE_ORDER(page));
             }
 
             // Unlink the pages from the current (sender) process.

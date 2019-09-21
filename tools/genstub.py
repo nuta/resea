@@ -202,7 +202,7 @@ static inline error_t call_{{ msg.canon_name }}({{ msg | call_params }}) {
 {%- if msg.rets.page %}
     set_page_base(0);
     *{{ msg.rets.page.name }} = PAGE_PAYLOAD_ADDR(m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ msg.rets.page.name }});
-    *{{ msg.rets.page.name }}_num = PAGE_EXP(m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ msg.rets.page.name }});
+    *{{ msg.rets.page.name }}_num = PAGE_ORDER(m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ msg.rets.page.name }});
 {%- endif %}
     return OK;
 }
