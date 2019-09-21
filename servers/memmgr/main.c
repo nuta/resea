@@ -302,7 +302,7 @@ static error_t process_message(struct message *m) {
     case MEMMGR_GET_FRAMEBUFFER_MSG: return handle_memmgr_get_framebuffer(m);
     }
 
-    return ERR_INVALID_MESSAGE;
+    return ERR_UNEXPECTED_MESSAGE;
 }
 
 static void launch_startup_servers(void) {

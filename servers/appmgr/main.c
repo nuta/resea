@@ -157,7 +157,7 @@ static error_t process_message(struct message *m) {
     case API_JOIN_APP_MSG:      return handle_api_join_app(m);
     case API_EXIT_APP_MSG:      return handle_api_exit_app(m);
     }
-    return ERR_INVALID_MESSAGE;
+    return ERR_UNEXPECTED_MESSAGE;
 }
 
 int main(void) {

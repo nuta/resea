@@ -275,7 +275,7 @@ static error_t process_message(struct message *m) {
     case KERNEL_EXIT_KERNEL_TEST_MSG:
         handle_kernel_exit_kernel_test(m);
     }
-    return ERR_INVALID_MESSAGE;
+    return ERR_UNEXPECTED_MESSAGE;
 }
 
 /// The kernel server mainloop.

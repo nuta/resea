@@ -157,7 +157,7 @@ static error_t process_message(struct message *m) {
     case GUI_ACTIVATE_MSG:      return handle_gui_activate(m);
     case KEYBOARD_DRIVER_KEYINPUT_EVENT_MSG: return handle_keyinput_event(m);
     }
-    return ERR_INVALID_MESSAGE;
+    return ERR_UNEXPECTED_MESSAGE;
 }
 
 void main(void) {

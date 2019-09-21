@@ -11,10 +11,10 @@ error_t server_mainloop_with_deferred(cid_t ch,
         TRY(ipc_recv(ch, &m));
         // Do work and fill a reply message into `m`.
         error_t err = process(&m);
-        // Warn if the handler returned ERR_INVALID_MESSAGE since it is likely
-        // that the handler simply does not yet implement it.
-        if (err == ERR_INVALID_MESSAGE) {
-            OOPS("invalid message type: %x", MSG_TYPE(m.header));
+        // Warn if the handler returned ERR_UNEXPECTED_MESSAGE since it is
+        // likely that the handler simply does not yet implement it.
+        if (err == ERR_UNEXPECTED_MESSAGE) {
+            WARN("unexpected message type: %x", MSG_TYPE(m.header));
         }
         // If the handler returned ERR_DONT_REPLY, we don't reply.
         if (err != ERR_DONT_REPLY) {

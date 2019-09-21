@@ -86,7 +86,7 @@ static error_t process_message(struct message *m) {
     case SERVER_CONNECT_MSG:  return handle_server_connect(m);
     case KEYBOARD_DRIVER_LISTEN_MSG: return handle_listen(m);
     }
-    return ERR_INVALID_MESSAGE;
+    return ERR_UNEXPECTED_MESSAGE;
 }
 
 void main(void) {

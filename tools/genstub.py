@@ -295,7 +295,7 @@ static error_t process_message(struct message *m) {
 {%- endfor %}
 {%- endfor %}
     }
-    return ERR_INVALID_MESSAGE;
+    return ERR_UNEXPECTED_MESSAGE;
 }
 """
 
