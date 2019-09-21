@@ -378,6 +378,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             m->header = NOTIFICATION_HEADER;
             m->from = 0;
             m->payloads.notification.data = recv_on->notification;
+            // Reset the notification field.
+            recv_on->notification = 0;
             recv_on->notified = false;
         }
 
@@ -491,6 +493,8 @@ error_t sys_ipc_fastpath(cid_t cid) {
         m->header = NOTIFICATION_HEADER;
         m->from = 0;
         m->payloads.notification.data = recv_on->notification;
+        // Reset the notification field.
+        recv_on->notification = 0;
         recv_on->notified = false;
     }
 
