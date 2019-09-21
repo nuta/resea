@@ -271,7 +271,6 @@ struct {{ msg.canon_name }}_reply_payload {
 #endif
 """
 
-# TODO:
 SERVER_STUBS = """\
 {%- for interface in interfaces %}
 {%- for msg in interface.messages %}
@@ -306,7 +305,8 @@ TEMPLATE = f"""\
 
 #include <message.h>
 
-// FIXME:
+// Declare internally-used functions instead of including somewhat large header
+// fies.
 void set_page_base(page_base_t page_base);
 error_t ipc_send(cid_t ch, struct message *m);
 error_t ipc_call(cid_t ch, struct message *m, struct message *r);
