@@ -355,11 +355,6 @@ error_t ipc_call(cid_t ch, struct message *m, struct message *r);
 char *strcpy_s(char *dst, size_t dst_len, const char *src);
 void *memcpy(void *dst, const void *src, size_t len);
 
-#pragma clang diagnostic push
-// FIXME: Support padding in the message structs.
-#pragma clang diagnostic ignored "-Waddress-of-packed-member"
-#pragma clang diagnostic ignored "-Wunused-variable"
-
 //
 //  Client-side stubs.
 //
