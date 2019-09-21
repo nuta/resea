@@ -2,50 +2,7 @@
 #define __RESEA_IPC_H__
 
 #include <types.h>
-
-/* header */
-#define MSG_INLINE_LEN_OFFSET 0
-#define MSG_TYPE_OFFSET 16
-#define MSG_PAGE_PAYLOAD (1ull << 11)
-#define MSG_CHANNEL_PAYLOAD (1ull << 12)
-#define MSG_NOTIFICAITON (1ull << 13)
-#define INLINE_PAYLOAD_LEN(header) (((header) >> MSG_INLINE_LEN_OFFSET) & 0x7ff)
-#define PAGE_PAYLOAD_ADDR(page) ((page) & 0xfffffffffffff000ull)
-#define MSG_TYPE(header) (((header) >> MSG_TYPE_OFFSET) & 0xffff)
-#define INTERFACE_ID(header) (MSG_TYPE(header) >> 8)
-#define INLINE_PAYLOAD_LEN_MAX 480
-#define ERROR_TO_HEADER(error) ((uint32_t)(error) << MSG_TYPE_OFFSET)
-
-// Syscall ops.
-#define IPC_SEND (1ull << 8)
-#define IPC_RECV (1ull << 9)
-#define IPC_REPLY (1ull << 10)
-
-#define PAGE_PAYLOAD(addr, exp, type) (addr | (exp << 0) | (type << 5))
-#define PAGE_EXP(page) ((page) & 0x1f)
-#define PAGE_TYPE_MOVE   1
-#define PAGE_TYPE_SHARED 2
-
-#define SYSCALL_IPC 0
-#define SYSCALL_OPEN 1
-#define SYSCALL_CLOSE 2
-#define SYSCALL_LINK 3
-#define SYSCALL_TRANSFER 4
-
-typedef uint32_t header_t;
-typedef uintptr_t page_t;
-typedef uintptr_t page_base_t;
-typedef intmax_t notification_t;
-
-struct message {
-    uint32_t header;
-    cid_t from;
-    uint32_t __padding1;
-    cid_t channel;
-    page_t page;
-    uint64_t __padding2;
-    uint8_t data[INLINE_PAYLOAD_LEN_MAX];
-} PACKED;
+#include <message.h>
 
 struct thread_info {
     uintmax_t arg;

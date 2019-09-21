@@ -13,9 +13,10 @@ static void copy_message(struct message *dst, const struct message *src) {
     // TODO: Use memcpy.
     dst->header = header;
     dst->from = src->from;
-    dst->channel = src->channel;
-    dst->page = src->page;
-    memcpy(&dst->data, &src->data, INLINE_PAYLOAD_LEN(header));
+    dst->payloads.channel = src->payloads.channel;
+    dst->payloads.page = src->payloads.page;
+    memcpy(&dst->payloads.data, &src->payloads.data,
+           INLINE_PAYLOAD_LEN(header));
 }
 
 void copy_to_ipc_buffer(const struct message *m) {

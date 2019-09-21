@@ -70,6 +70,7 @@ typedef unsigned long long uint64_t;
 #if __LP64__
 typedef uint64_t paddr_t;
 typedef uint64_t vaddr_t;
+typedef uint64_t uintptr_t;
 typedef uint64_t size_t;
 typedef uint64_t uintmax_t;
 typedef int64_t intmax_t;

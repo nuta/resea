@@ -122,7 +122,7 @@ $(BUILD_DIR)/kernel.elf: $(kernel_objs) kernel/arch/$(ARCH)/$(ARCH).ld tools/lin
 $(BUILD_DIR)/include/resea_idl.h: misc/interfaces.idl tools/genstub.py
 	$(PROGRESS) "GENSTUB" $@
 	mkdir -p $(@D)
-	$(PYTHON3) tools/genstub.py $< > $@
+	$(PYTHON3) tools/genstub.py -o $@ $<
 
 # Define server build rules.
 define server-make-rule

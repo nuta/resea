@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from pathlib import Path
 import jinja2
 import re
 from lark import Lark, Transformer
@@ -98,9 +99,6 @@ class IdlTransformer(Transformer):
 CLIENT_STUBS = """
 #define MSG_REPLY_FLAG (1ULL << 7)
 
-#define SMALLSTRING_LEN_MAX 128
-typedef char smallstring_t[SMALLSTRING_LEN_MAX];
-
 {%- for interface in interfaces %}
 //
 //  {{ interface.name }}
@@ -127,18 +125,17 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
 struct {{ msg.name }}_msg {
     uint32_t header;
     cid_t from;
-    uint32_t __padding1;
-{%- if msg.args.channel %}
-    cid_t {{ msg.args.channel.name }};
-{%- else %}
-    cid_t __unused_channel;
-{%- endif %}
 {%- if msg.args.page %}
     page_t {{ msg.args.page.name }};
 {%- else %}
     page_t __unused_page;
 {%- endif %}
-    uint64_t __padding2;
+{%- if msg.args.channel %}
+    cid_t {{ msg.args.channel.name }};
+{%- else %}
+    cid_t __unused_channel;
+{%- endif %}
+    uint8_t _padding[12];
 {%- for field in msg.args.inlines %}
     {{ field.type | resolve_type }} {{ field.name }};
 {%- endfor %}
@@ -180,18 +177,17 @@ static inline error_t send_{{ msg.name }}({{ msg.args | send_params }}) {
 struct {{ msg.name }}_reply_msg {
     uint32_t header;
     cid_t from;
-    uint32_t __padding1;
-{%- if msg.rets.channel %}
-    cid_t {{ msg.rets.channel.name }};
-{%- else %}
-    cid_t __unused_channel;
-{%- endif %}
 {%- if msg.rets.page %}
     page_t {{ msg.rets.page.name }};
 {%- else %}
     page_t __unused_page;
 {%- endif %}
-    uint64_t __padding2;
+{%- if msg.rets.channel %}
+    cid_t {{ msg.rets.channel.name }};
+{%- else %}
+    cid_t __unused_channel;
+{%- endif %}
+    uint8_t _padding[12];
 {%- for field in msg.rets.inlines %}
     {{ field.type | resolve_type }} {{ field.name }};
 {%- endfor %}
@@ -254,11 +250,11 @@ static inline error_t {{ msg.name }}({{ msg | call_params }}) {
 typedef error_t (*{{ msg.name }}_handler_t)({{ msg | handler_params }});
 
 static inline header_t dispatch_{{ msg.name }}({{ msg.name }}_handler_t handler, struct message *m, struct message *r) {
+    struct {{ msg.name }}_msg *m2 = (struct {{ msg.name }}_msg *) m;
     if (m->header != {{ msg.name | upper }}_HEADER) {
         return ERR_INVALID_HEADER;
     }
 
-    struct {{ msg.name }}_msg *m2 = (struct {{ msg.name }}_msg *) m;
     struct {{ msg.name }}_reply_msg *r2 = (struct {{ msg.name }}_reply_msg *) r;
     error_t err = handler(m->from
 {%- for field in msg.args.fields -%}
@@ -277,6 +273,65 @@ static inline header_t dispatch_{{ msg.name }}({{ msg.name }}_handler_t handler,
 {%- endif %} {# msg.attrs.type == "call" #}
 {%- endfor %} {# for msg in interface.messages #}
 {%- endfor %} {# for interface in interfaces #}
+"""
+
+PAYLOAD_TEMPLATE = """\
+#ifndef __RESEA_IDL_PAYLOADS_H__
+#define __RESEA_IDL_PAYLOADS_H__
+
+{%- for interface in interfaces %}
+{%- for msg in interface.messages %}
+struct {{ interface.name }}_{{ msg.name }}_payload {
+{%- if msg.args.page %}
+    page_t {{ msg.args.page.name }};
+{%- else %}
+    page_t __unused_page;
+{%- endif %}
+{%- if msg.args.channel %}
+    cid_t {{ msg.args.channel.name }};
+{%- else %}
+    cid_t __unused_channel;
+{%- endif %}
+    uint8_t _padding[12];
+{%- for field in msg.args.inlines %}
+    {{ field.type | resolve_type }} {{ field.name }};
+{%- endfor %}
+} PACKED;
+
+{%- if msg.attrs.type == "call" %}
+struct {{ interface.name }}_{{ msg.name }}_reply_payload {
+{%- if msg.rets.page %}
+    page_t {{ msg.rets.page.name }};
+{%- else %}
+    page_t __unused_page;
+{%- endif %}
+{%- if msg.rets.channel %}
+    cid_t {{ msg.rets.channel.name }};
+{%- else %}
+    cid_t __unused_channel;
+{%- endif %}
+    uint8_t _padding[12];
+{%- for field in msg.rets.inlines %}
+    {{ field.type | resolve_type }} {{ field.name }};
+{%- endfor %}
+} PACKED;
+{%- endif %}
+{%- endfor %}
+{%- endfor %}
+
+#define IDL_MESSAGE_PAYLOADS \\
+{%- for interface in interfaces %}
+    union { \\
+{%- for msg in interface.messages %}
+    struct {{ interface.name }}_{{ msg.name }}_payload {{ msg.name }}; \\
+{%- if msg.attrs.type == "call" %}
+    struct {{ interface.name }}_{{ msg.name }}_reply_payload {{ msg.name }}_reply; \\
+{%- endif %}
+{%- endfor %}
+    } {{ interface.name }}; \\
+{%- endfor %}
+
+#endif
 """
 
 SERVER_STUBS = """\
@@ -324,13 +379,15 @@ static void error_t mainloop(cid_t server_ch) {
 TEMPLATE = f"""\
 #ifndef __RESEA_IDL_H__
 #define __RESEA_IDL_H__
-#ifdef KERNEL
-#include <ipc.h>
-typedef vaddr_t uintptr_t;
-#else
-#include <resea.h>
-#include <resea/string.h>
-#endif
+
+#include <message.h>
+
+// FIXME:
+void set_page_base(page_base_t page_base);
+error_t ipc_send(cid_t ch, struct message *m);
+error_t ipc_call(cid_t ch, struct message *m, struct message *r);
+char *strcpy_s(char *dst, size_t dst_len, const char *src);
+void *memcpy(void *dst, const void *src, size_t len);
 
 #pragma clang diagnostic push
 // FIXME: Support padding in the message structs.
@@ -448,16 +505,26 @@ def genstub(interfaces):
     renderer.filters["call_params"] = call_params
     renderer.filters["send_params"] = send_params
     renderer.filters["handler_params"] = handler_params
-    print(renderer.from_string(TEMPLATE).render(interfaces=interfaces))
+    return {
+        "stubs": renderer.from_string(TEMPLATE).render(interfaces=interfaces),
+        "payloads": renderer.from_string(PAYLOAD_TEMPLATE)
+            .render(interfaces=interfaces)
+    }
 
 def main():
     parser = argparse.ArgumentParser(description="The C stub generator.")
     parser.add_argument("idl_file", help="The IDL file.")
+    parser.add_argument("-o", dest="out_file", help="The output file.")
     args = parser.parse_args()
 
     ast = Lark(GRAMMAR, start="idl").parse(open(args.idl_file).read())
     idl = IdlTransformer().transform(ast)
-    genstub(idl)
+    stub = genstub(idl)
+
+    with open(Path(args.out_file), "w") as f:
+        f.write(stub["stubs"])
+    with open(Path(args.out_file).parent / "resea_idl_payloads.h", "w") as f:
+        f.write(stub["payloads"])
 
 if __name__ == "__main__":
     main()

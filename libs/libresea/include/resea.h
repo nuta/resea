@@ -3,7 +3,6 @@
 
 #include <types.h>
 #include <color.h>
-typedef uint64_t uintptr_t;
 
 #include <resea/ipc.h>
 

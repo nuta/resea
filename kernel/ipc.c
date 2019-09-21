@@ -284,11 +284,12 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         dst_m->from = linked_to->cid;
 
         // Copy inline payloads.
-        inlined_memcpy(dst_m->data, m->data, INLINE_PAYLOAD_LEN(header));
+        inlined_memcpy(dst_m->payloads.data, m->payloads.data,
+                       INLINE_PAYLOAD_LEN(header));
 
         // Copy the page payload if exists.
         if (header & MSG_PAGE_PAYLOAD) {
-            page_t page = m->page;
+            page_t page = m->payloads.page;
             page_t page_base = receiver->info->page_base;
             vaddr_t page_base_addr = PAGE_PAYLOAD_ADDR(page_base);
             int num_pages = POW2(PAGE_EXP(page));
@@ -303,7 +304,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             if (receiver->recv_in_kernel) {
                 // Kernel (receiving a pager.fill_request reply, for example)
                 // links the page by itself only if necessary.
-                dst_m->page = paddr;
+                dst_m->payloads.page = paddr;
             } else {
                 // Make sure that the receiver accepts a page payload and its
                 // base address is valid.
@@ -314,14 +315,14 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
                 link_page(&receiver->process->page_table, page_base_addr, paddr,
                           num_pages, PAGE_USER | PAGE_WRITABLE);
-                dst_m->page = PAGE_PAYLOAD(page_base_addr, PAGE_EXP(page), 0);
+                dst_m->payloads.page = PAGE_PAYLOAD(page_base_addr, PAGE_EXP(page), 0);
             }
         }
 
         // Handle the channel payload.
         if (header & MSG_CHANNEL_PAYLOAD) {
             struct channel *ch = table_get(&current->process->channels,
-                                           m->channel);
+                                           m->payloads.channel);
             struct channel *dst_ch = channel_create(receiver->process);
             // FIXME: Clean up and return an error instead.
             ASSERT(ch);
@@ -329,7 +330,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
             channel_link(ch->linked_to, dst_ch);
             channel_decref(ch);
-            dst_m->channel = dst_ch->cid;
+            dst_m->payloads.channel = dst_ch->cid;
         }
 
         thread_resume(receiver);
@@ -466,7 +467,8 @@ error_t sys_ipc_fastpath(cid_t cid) {
     struct message *dst_m = receiver->ipc_buffer;
     dst_m->header = header;
     dst_m->from = linked_to->cid;
-    inlined_memcpy(&dst_m->data, m->data, INLINE_PAYLOAD_LEN(header));
+    inlined_memcpy(&dst_m->payloads.data, m->payloads.data,
+                   INLINE_PAYLOAD_LEN(header));
 
     recv_on->receiver = current;
     current->state = THREAD_BLOCKED;
