@@ -76,10 +76,10 @@ static error_t handle_server_connect(struct message *m) {
     return OK;
 }
 
-static error_t handle_listen_keyboard(struct message *m) {
-    listener_ch = m->payloads.keyboard_driver.listen_keyboard.ch;
+static error_t handle_listen(struct message *m) {
+    listener_ch = m->payloads.keyboard_driver.listen.ch;
 
-    m->header = KEYBOARD_DRIVER_LISTEN_KEYBOARD_REPLY_HEADER;
+    m->header = KEYBOARD_DRIVER_LISTEN_REPLY_HEADER;
     return OK;
 }
 
@@ -87,7 +87,7 @@ static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
     case NOTIFICATION_MSG:    return handle_notification(m);
     case SERVER_CONNECT_MSG:  return handle_server_connect(m);
-    case KEYBOARD_DRIVER_LISTEN_KEYBOARD_MSG: return handle_listen_keyboard(m);
+    case KEYBOARD_DRIVER_LISTEN_MSG: return handle_listen(m);
     }
     return ERR_INVALID_MESSAGE;
 }

@@ -130,7 +130,7 @@ interface api {
 [id(30)]
 interface keyboard_driver {
     [id(1), type(call)]
-    listen_keyboard(ch: channel) -> ()
+    listen(ch: channel) -> ()
 
     [id(2), type(call)]
     on_keyinput(keycode: uint8) -> ()

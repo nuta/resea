@@ -182,7 +182,7 @@ void main(void) {
     cid_t kbd_listener_ch;
     TRY_OR_PANIC(open(&kbd_listener_ch));
     TRY_OR_PANIC(transfer(kbd_listener_ch, server_ch));
-    TRY_OR_PANIC(call_keyboard_driver_listen_keyboard(kbd_ch, kbd_listener_ch));
+    TRY_OR_PANIC(call_keyboard_driver_listen(kbd_ch, kbd_listener_ch));
 
     cid_t discovery_ch;
     TRY_OR_PANIC(open(&discovery_ch));
