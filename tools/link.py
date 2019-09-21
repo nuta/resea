@@ -125,8 +125,11 @@ def main():
     parser.add_argument("objs", help="The object files.", nargs="+")
     args = parser.parse_args()
 
-    link(args.cc, args.cflags, args.ld, args.ldflags, args.nm, args.build_dir,
-        args.outfile, args.mapfile, args.objs)
+    try:
+        link(args.cc, args.cflags, args.ld, args.ldflags, args.nm, args.build_dir,
+            args.outfile, args.mapfile, args.objs)
+    except subprocess.CalledProcessError as e:
+        sys.exit("link.py: A subprocess returned an error, aborting.")
 
 if __name__ == "__main__":
     main()
