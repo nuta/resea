@@ -32,4 +32,7 @@ void io_write8(io_handle_t *handle, size_t offset, uint8_t value);
 void io_write16(io_handle_t *handle, size_t offset, uint16_t value);
 void io_write32(io_handle_t *handle, size_t offset, uint32_t value);
 
+error_t io_listen_interrupt(cid_t io_server, cid_t receive_at, int irq,
+                            cid_t *new_ch);
+
 #endif

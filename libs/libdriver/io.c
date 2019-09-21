@@ -60,3 +60,12 @@ void io_write32(io_handle_t *handle, size_t offset, uint32_t value) {
 
 }
 
+error_t io_listen_interrupt(cid_t io_server, cid_t receive_at, int irq,
+                            cid_t *new_ch) {
+    cid_t ch;
+    TRY(open(&ch));
+    TRY(transfer(ch, receive_at));
+    TRY(listen_irq(io_server, ch, irq));
+    *new_ch = ch;
+    return OK;
+}
