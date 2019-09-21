@@ -90,19 +90,14 @@ static error_t process_message(struct message *m) {
 
 void main(void) {
     INFO("starting...");
-    TRY_OR_PANIC(open(&server_ch));
 
+    TRY_OR_PANIC(open(&server_ch));
     TRY_OR_PANIC(io_open(&io_handle, kernel_ch, IO_SPACE_IOPORT,
                          IOPORT_ADDR, IOPORT_SIZE));
-
-    // Create and connect a channel to receive keyboard interrupts.
     TRY_OR_PANIC(io_listen_interrupt(kernel_ch, server_ch, KEYBOARD_IRQ,
                                      &kbd_irq_ch));
-
-    TRY_OR_PANIC(open(&discovery_ch));
-    TRY_OR_PANIC(transfer(discovery_ch, server_ch));
-    TRY_OR_PANIC(register_server(memmgr_ch, KEYBOARD_DRIVER_INTERFACE,
-                                 discovery_ch));
+    TRY_OR_PANIC(server_register(memmgr_ch, server_ch,
+                                 KEYBOARD_DRIVER_INTERFACE, &discovery_ch));
 
     // FIXME: memmgr waits for us due to connect_request.
     // INFO("entering the mainloop...");
