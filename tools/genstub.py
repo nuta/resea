@@ -124,35 +124,15 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
     | ({{ msg.canon_name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
-struct {{ msg.canon_name }}_msg {
-    uint32_t header;
-    cid_t from;
-{%- if msg.args.page %}
-    page_t {{ msg.args.page.name }};
-{%- else %}
-    page_t __unused_page;
-{%- endif %}
-{%- if msg.args.channel %}
-    cid_t {{ msg.args.channel.name }};
-{%- else %}
-    cid_t __unused_channel;
-{%- endif %}
-    uint8_t _padding[12];
-{%- for field in msg.args.inlines %}
-    {{ field.type | resolve_type }} {{ field.name }};
-{%- endfor %}
-    uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.canon_name | upper }}_INLINE_LEN];
-} PACKED;
-
 #if !defined(KERNEL)
 static inline error_t send_{{ msg.canon_name }}({{ msg.args | send_params }}) {
-    struct {{ msg.canon_name }}_msg m;
+    struct message m;
     m.header = {{ msg.canon_name | upper }}_HEADER;
 {% for field in msg.args.fields %}
 {%- if field.type == "smallstring" %}
-    strcpy_s((char *) &m.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
+    strcpy_s((char *) &m.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
 {%- else %}
-    m.{{ field.name }} = {{ field.name }};
+    m.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }} = {{ field.name }};
 {%- endif %}
 {%- endfor %}
     error_t err;
@@ -176,35 +156,15 @@ static inline error_t send_{{ msg.canon_name }}({{ msg.args | send_params }}) {
     | ({{ msg.canon_name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
-struct {{ msg.canon_name }}_reply_msg {
-    uint32_t header;
-    cid_t from;
-{%- if msg.rets.page %}
-    page_t {{ msg.rets.page.name }};
-{%- else %}
-    page_t __unused_page;
-{%- endif %}
-{%- if msg.rets.channel %}
-    cid_t {{ msg.rets.channel.name }};
-{%- else %}
-    cid_t __unused_channel;
-{%- endif %}
-    uint8_t _padding[12];
-{%- for field in msg.rets.inlines %}
-    {{ field.type | resolve_type }} {{ field.name }};
-{%- endfor %}
-    uint8_t __unused[INLINE_PAYLOAD_LEN_MAX - {{ msg.canon_name | upper }}_INLINE_LEN];
-} PACKED;
-
 #if !defined(KERNEL)
 static inline error_t send_{{ msg.canon_name }}_reply({{ msg.rets | send_params }}) {
-    struct {{ msg.canon_name }}_reply_msg m;
+    struct message m;
     m.header = {{ msg.canon_name | upper }}_REPLY_HEADER;
 {% for field in msg.rets.fields %}
 {%- if field.type == "smallstring" %}
-    strcpy_s((char *) &m.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
+    strcpy_s((char *) &m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
 {%- else %}
-    m.{{ field.name }} = {{ field.name }};
+    m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ field.name }} = {{ field.name }};
 {%- endif %}
 {%- endfor %}
     error_t err;
@@ -214,37 +174,35 @@ static inline error_t send_{{ msg.canon_name }}_reply({{ msg.rets | send_params 
 }
 
 static inline error_t call_{{ msg.canon_name }}({{ msg | call_params }}) {
-    struct {{ msg.canon_name }}_msg m;
-    struct {{ msg.canon_name }}_reply_msg r;
-
+    struct message m;
     m.header = {{ msg.canon_name | upper }}_HEADER;
 {% for field in msg.args.fields %}
 {%- if field.type == "smallstring" %}
-    strcpy_s((char *) &m.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
+    strcpy_s((char *) &m.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
 {%- else %}
-    m.{{ field.name }} = {{ field.name }};
+    m.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }} = {{ field.name }};
 {%- endif %}
 {%- endfor %}
 {%- if msg.rets.page %}
     set_page_base({{ msg.rets.page.name }}_base);
 {%- endif %}
     error_t err;
-    if ((err = ipc_call(__ch, (struct message *) &m, (struct message *) &r)) != OK)
+    if ((err = ipc_call(__ch, &m, &m)) != OK)
         return err;
 {%- for field in msg.rets.inlines %}
 {%- if field.type == "smallstring" %}
-    strcpy_s((char *) {{ field.name }}, SMALLSTRING_LEN_MAX, &r.{{ field.name }});
+    strcpy_s((char *) {{ field.name }}, SMALLSTRING_LEN_MAX, &m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ field.name }});
 {%- else %}
-    *{{ field.name }} = r.{{ field.name }};
+    *{{ field.name }} = m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ field.name }};
 {%- endif %}
 {%- endfor %}
 {%- if msg.rets.channel %}
-    *{{ msg.rets.channel.name }} = r.{{ msg.rets.channel.name }};
+    *{{ msg.rets.channel.name }} = m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ msg.rets.channel.name }};
 {%- endif %}
 {%- if msg.rets.page %}
     set_page_base(0);
-    *{{ msg.rets.page.name }} = PAGE_PAYLOAD_ADDR(r.{{ msg.rets.page.name }});
-    *{{ msg.rets.page.name }}_num = PAGE_EXP(r.{{ msg.rets.page.name }});
+    *{{ msg.rets.page.name }} = PAGE_PAYLOAD_ADDR(m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ msg.rets.page.name }});
+    *{{ msg.rets.page.name }}_num = PAGE_EXP(m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ msg.rets.page.name }});
 {%- endif %}
     return OK;
 }
