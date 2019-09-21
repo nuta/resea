@@ -7,8 +7,8 @@ void ipc_test(void) {
     cid_t memmgr = 1;
 
     INFO(">>> IPC tests (inline only)");
-    struct benchmark_nop_msg *m = (struct benchmark_nop_msg *) get_ipc_buffer();
-    m->header = BENCHMARK_NOP_HEADER;
+    struct message *m = get_ipc_buffer();
+    m->header = MEMMGR_BENCHMARK_NOP_HEADER;
     err = sys_ipc(memmgr, IPC_SEND | IPC_RECV);
     if (err != OK) {
         WARN("sys_ipc returned an error: %d", err);
@@ -17,10 +17,8 @@ void ipc_test(void) {
     INFO(">>> IPC tests (w/ page payloads)");
     uintptr_t page;
     size_t page_num;
-    err = alloc_pages(memmgr, 0, valloc(128), &page, &page_num);
-    if (err != OK) {
-        WARN("alloc_pages returned an error: %d", err);
-    }
+    TRY_OR_PANIC(call_memmgr_alloc_pages(memmgr, 0, valloc(128), &page,
+                                         &page_num));
     uint32_t *p = (uint32_t *) PAGE_PAYLOAD_ADDR(page);
     INFO("received a page: %p, addr=%p", page, p);
     *p = 0xbeefbeef;
@@ -53,7 +51,7 @@ int main(void) {
     float_test();
 
     INFO("Finished all tests!");
-    exit_kernel_test(1 /* memmgr */);
+    call_kernel_exit_kernel_test(1 /* memmgr */);
 
     return 0;
 }
