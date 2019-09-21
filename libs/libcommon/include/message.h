@@ -39,16 +39,13 @@ typedef uint32_t header_t;
 //
 #define NOTIFICATION_INTERFACE  100ULL
 #define NOTIFICATION_MSG        ((NOTIFICATION_INTERFACE << 8) | 1)
-#define NOTIFICATION_INLINE_LEN (sizeof(intmax_t))
+#define NOTIFICATION_INLINE_LEN (sizeof(notification_t))
 #define NOTIFICATION_HEADER \
     ((NOTIFICATION_MSG << MSG_TYPE_OFFSET) | \
      (NOTIFICATION_INLINE_LEN << MSG_INLINE_LEN_OFFSET))
 
-typedef intmax_t notification_t;
-enum notify_op {
-    NOTIFY_OP_SET = 1,
-    NOTIFY_OP_ADD = 2,
-};
+typedef uint32_t notification_t;
+#define NOTIFY_INTERRUPT (1UL << 0)
 
 //
 //  Page Payload.

@@ -189,7 +189,7 @@ static struct irq_listener irq_listeners[IRQ_LISTENERS_MAX];
 void deliver_interrupt(uint8_t irq) {
     for (int i = 0; i < IRQ_LISTENERS_MAX; i++) {
         if (irq_listeners[i].irq == irq && irq_listeners[i].ch) {
-            channel_notify(irq_listeners[i].ch, NOTIFY_OP_ADD, 1);
+            channel_notify(irq_listeners[i].ch, NOTIFY_INTERRUPT);
         }
     }
 }

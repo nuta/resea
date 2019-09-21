@@ -106,25 +106,16 @@ void channel_transfer(struct channel *src, struct channel *dst) {
 }
 
 /// Sends a notification.
-error_t channel_notify(struct channel *ch, enum notify_op op, intmax_t arg0) {
+error_t channel_notify(struct channel *ch, notification_t notification) {
     spin_lock(&ch->lock);
 
     // Update the notification data.
     struct channel *dst = ch->linked_to->transfer_to;
-    switch (op) {
-    case NOTIFY_OP_SET:
-        dst->notification = arg0;
-        break;
-    case NOTIFY_OP_ADD:
-        dst->notification += arg0;
-        break;
-    default:
-        return ERR_INVALID_NOTIFY_OP;
-    }
+    dst->notification |= notification;
+    dst->notified = true;
 
     TRACE("notify: %pC -> %pC => %pC (data=%p)",
           ch, ch->linked_to, dst, dst->notification);
-    dst->notified = true;
 
     // Resume the receiver thread if exists.
     struct thread *receiver = dst->receiver;
@@ -521,14 +512,14 @@ slowpath1:
 
 /// The notify system call: sends a notification. This system call MUST be
 /// asynchronous: return an error instead of blocking the current thread!
-error_t sys_notify(cid_t cid, enum notify_op op, intmax_t arg0) {
+error_t sys_notify(cid_t cid, notification_t notification) {
     struct thread *current = CURRENT;
     struct channel *ch = table_get(&current->process->channels, cid);
     if (UNLIKELY(!ch)) {
         return ERR_INVALID_CID;
     }
 
-    return channel_notify(ch, op, arg0);
+    return channel_notify(ch, notification);
 }
 
 /// The system call handler to be called from the arch's handler.
@@ -558,7 +549,7 @@ intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t arg2,
     case SYSCALL_TRANSFER:
         return sys_transfer(arg0, arg1);
     case SYSCALL_NOTIFY:
-        return sys_notify(arg0, arg1, arg2);
+        return sys_notify(arg0, arg1);
     default:
         return ERR_INVALID_SYSCALL;
     }
