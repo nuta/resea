@@ -52,6 +52,11 @@ void try_or_panic(error_t err, const char *file, int lineno);
         }                                                                      \
     } while (0)
 
+const char *__program_name(void);
+const char *__bracketed_program_name(void);
+#define PROGRAM_NAME  __program_name()
+#define BRACKETED_PROGRAM_NAME  __bracketed_program_name()
+
 #ifdef RELEASE_BUILD
 #    define TRACE(fmt, ...)
 #    define TRACE(fmt, ...)
@@ -62,7 +67,7 @@ void try_or_panic(error_t err, const char *file, int lineno);
     printf(COLOR_CYAN "[%s] " fmt COLOR_RESET "\n", PROGRAM_NAME, ##__VA_ARGS__)
 #endif
 
-#define BACKTRACE() do_backtrace("[" PROGRAM_NAME "] ")
+#define BACKTRACE() do_backtrace(BRACKETED_PROGRAM_NAME)
 #define INFO(fmt, ...) \
     printf(COLOR_BLUE "[%s] " fmt COLOR_RESET "\n", PROGRAM_NAME, ##__VA_ARGS__)
 #define WARN(fmt, ...)                                                         \

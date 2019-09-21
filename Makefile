@@ -124,22 +124,29 @@ $(BUILD_DIR)/include/resea_idl.h: misc/interfaces.idl tools/genstub.py
 	mkdir -p $(@D)
 	$(PYTHON3) tools/genstub.py -o $@ $<
 
-# Define server build rules.
+# Define server build rules. TODO: Needs refactoring.
 define server-make-rule
 $(eval include servers/$(1)/server.mk)
 $(eval server_objs := $(addprefix $(BUILD_DIR)/servers/$(1)/, $(objs)))
 $(eval server_libs := libruntime $(libs))
 $(eval lib_objs := $(foreach lib, $(server_libs), $(BUILD_DIR)/libs/$(lib).lib.o))
-$(server_objs): CFLAGS := -DPROGRAM_NAME='"$(1)"' $(APP_CFLAGS) \
+$(eval all_objs :=  $(server_objs) $(lib_objs) $(BUILD_DIR)/servers/$(1)/__program_name.o)
+$(server_objs): CFLAGS := $(APP_CFLAGS) \
 	$(foreach lib, $(server_libs), -Ilibs/$(lib)/include)
-$(BUILD_DIR)/servers/$(1).elf: $(server_objs) $(lib_objs) servers/$(1)/server.mk
+$(BUILD_DIR)/servers/$(1)/__program_name.o:
+	$(PROGRESS) "GEN" $(BUILD_DIR)/servers/$(1)/__program_name.o
+	mkdir -p $(BUILD_DIR)/servers/$(1)
+	echo 'const char *__program_name(void) { return "$(1)"; }' > $(BUILD_DIR)/servers/$(1)/__program_name.c
+	echo 'const char *__bracketed_program_name(void) { return "[$(1)] "; }' >> $(BUILD_DIR)/servers/$(1)/__program_name.c
+	$(CC) $(APP_CFLAGS) -c -o $(BUILD_DIR)/servers/$(1)/__program_name.o $(BUILD_DIR)/servers/$(1)/__program_name.c
+$(BUILD_DIR)/servers/$(1).elf: $(all_objs) servers/$(1)/server.mk
 $(BUILD_DIR)/servers/$(1).elf: server_name := $(1)
 # Use server's own linker script if exists.
 $(BUILD_DIR)/servers/$(1).elf: ldflags := \
 	$(if $(wildcard servers/$(1)/$(1)_$(ARCH).ld), \
 		--script=servers/$(1)/$(1)_$(ARCH).ld, \
 		--script=libs/libruntime/user_$(ARCH).ld)
-$(BUILD_DIR)/servers/$(1).elf: objs := $(server_objs) $(lib_objs)
+$(BUILD_DIR)/servers/$(1).elf: objs := $(all_objs)
 lib_deps += $(filter-out $(lib_deps), $(server_libs))
 endef
 $(foreach server, $(INIT) $(STARTUPS), $(eval $(call server-make-rule,$(server))))
@@ -151,16 +158,23 @@ $(eval include apps/$(1)/app.mk)
 $(eval app_objs := $(addprefix $(BUILD_DIR)/apps/$(1)/, $(objs)))
 $(eval app_libs := libruntime $(libs))
 $(eval lib_objs := $(foreach lib, $(app_libs), $(BUILD_DIR)/libs/$(lib).lib.o))
-$(app_objs): CFLAGS := -DPROGRAM_NAME='"$(1)"' $(APP_CFLAGS) \
+$(eval all_objs := $(app_objs) $(lib_objs) $(BUILD_DIR)/apps/$(1)/__program_name.o)
+$(app_objs): CFLAGS := $(APP_CFLAGS) \
 	$(foreach lib, $(app_libs), -Ilibs/$(lib)/include)
-$(BUILD_DIR)/apps/$(1).elf: $(app_objs) $(lib_objs) apps/$(1)/app.mk
+$(BUILD_DIR)/apps/$(1)/__program_name.o:
+	$(PROGRESS) "GEN" $(BUILD_DIR)/apps/$(1)/__program_name.o
+	mkdir -p $(BUILD_DIR)/apps/$(1)
+	echo 'const char *__program_name(void) { return "$(1)"; }' > $(BUILD_DIR)/apps/$(1)/__program_name.c
+	echo 'const char *__bracketed_program_name(void) { return "[$(1)] "; }' >> $(BUILD_DIR)/apps/$(1)/__program_name.c
+	$(CC) $(APP_CFLAGS) -c -o $(BUILD_DIR)/apps/$(1)/__program_name.o $(BUILD_DIR)/apps/$(1)/__program_name.c
+$(BUILD_DIR)/apps/$(1).elf: $(all_objs) apps/$(1)/app.mk
 $(BUILD_DIR)/apps/$(1).elf: app_name := $(1)
 # Use app's own linker script if exists.
 $(BUILD_DIR)/apps/$(1).elf: ldflags := \
 	$(if $(wildcard apps/$(1)/$(1)_$(ARCH).ld), \
 		--script=apps/$(1)/$(1)_$(ARCH).ld, \
 		--script=libs/libruntime/user_$(ARCH).ld)
-$(BUILD_DIR)/apps/$(1).elf: objs := $(app_objs) $(lib_objs)
+$(BUILD_DIR)/apps/$(1).elf: objs := $(all_objs)
 lib_deps += $(filter-out $(lib_deps), $(app_libs))
 endef
 $(foreach app, $(APPS), $(eval $(call app-make-rule,$(app))))
@@ -172,7 +186,7 @@ $(eval include libs/$(1)/lib.mk)
 $(eval lib_objs := $(addprefix $(BUILD_DIR)/libs/$(1)/, $(objs)))
 $(BUILD_DIR)/libs/$(1).lib.o: $(lib_objs) libs/$(1)/lib.mk
 $(BUILD_DIR)/libs/$(1).lib.o: objs := $(lib_objs)
-$(lib_objs): CFLAGS := -DPROGRAM_NAME='"$(1)"' $(APP_CFLAGS) \
+$(lib_objs): CFLAGS := $(APP_CFLAGS) \
 	$(foreach lib, $(1) $(libs), -Ilibs/$(lib)/include)
 endef
 $(foreach lib, $(lib_deps), $(eval $(call lib-make-rule,$(lib))))
