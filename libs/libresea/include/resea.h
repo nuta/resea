@@ -36,6 +36,12 @@ void exit(int status);
 void try_or_panic(error_t err, const char *file, int lineno);
 
 #define TRY_OR_PANIC(err) try_or_panic(err, __FILE__, __LINE__)
+#define TRY(expr) do {                                                         \
+        error_t __err = expr;                                                  \
+        if (__err != OK) {                                                     \
+            return __err;                                                      \
+        }                                                                      \
+    } while (0)
 
 #define assert(expr)                                                           \
     do {                                                                       \
