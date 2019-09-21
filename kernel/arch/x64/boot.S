@@ -178,7 +178,7 @@ long_mode:
     call rax
 
     // In case x64_setup() returns. I believe it NEVER happen.
-1:
+halt:
     cli
     hlt
-    jmp 1b
+    jmp halt
