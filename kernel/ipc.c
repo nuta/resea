@@ -298,9 +298,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             paddr_t paddr = resolve_paddr(&current->process->page_table,
                                           PAGE_PAYLOAD_ADDR(page));
 
-            // TODO: Support PAGE_TYPE_MOVE.
-            ASSERT(PAGE_TYPE(page) == PAGE_TYPE_SHARED);
-
             if (receiver->recv_in_kernel) {
                 // Kernel (receiving a pager.fill_request reply, for example)
                 // links the page by itself only if necessary.
@@ -317,6 +314,10 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                           num_pages, PAGE_USER | PAGE_WRITABLE);
                 dst_m->payloads.page = PAGE_PAYLOAD(page_base_addr, PAGE_EXP(page), 0);
             }
+
+            // Unlink the pages from the current (sender) process.
+            unlink_page(&current->process->page_table, PAGE_PAYLOAD_ADDR(page),
+                        num_pages);
         }
 
         // Handle the channel payload.
