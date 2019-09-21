@@ -325,7 +325,6 @@ void *memcpy(void *dst, const void *src, size_t len);
 {SERVER_STUBS}
 #endif
 
-#pragma clang diagnostic pop
 #endif
 """
 
