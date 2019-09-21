@@ -151,7 +151,7 @@ static error_t process_message(struct message *m) {
     // TODO:
     // case RUNTIME_EXIT_CURRENT_MSG: return handle_runtime_exit_current(m);
     case RUNTIME_PRINTCHAR_MSG: return handle_runtime_printchar(m);
-    case PAGER_FILL_MSG:   return handle_pager_fill(m);
+    case PAGER_FILL_MSG:        return handle_pager_fill(m);
     case API_CREATE_APP_MSG:    return handle_api_create_app(m);
     case API_START_APP_MSG:     return handle_api_start_app(m);
     case API_JOIN_APP_MSG:      return handle_api_join_app(m);
