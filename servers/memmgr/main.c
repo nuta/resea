@@ -14,9 +14,9 @@ static cid_t kernel_ch = 1;
 extern struct init_args __init_args;
 extern char __initfs;
 
-static error_t handle_pager_fill_page(struct message *m) {
-    pid_t pid      = m->payloads.pager.fill_page.pid;
-    uintptr_t addr = m->payloads.pager.fill_page.addr;
+static error_t handle_pager_fill(struct message *m) {
+    pid_t pid      = m->payloads.pager.fill.pid;
+    uintptr_t addr = m->payloads.pager.fill.addr;
 
     uintptr_t alloced_addr;
     if ((alloced_addr = do_alloc_pages(0)) == 0)
@@ -50,8 +50,8 @@ static error_t handle_pager_fill_page(struct message *m) {
         }
     }
 
-    m->header = PAGER_FILL_PAGE_REPLY_HEADER;
-    m->payloads.pager.fill_page_reply.page = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
+    m->header = PAGER_FILL_REPLY_HEADER;
+    m->payloads.pager.fill_reply.page = PAGE_PAYLOAD(alloced_addr, 0, PAGE_TYPE_SHARED);
     return OK;
 }
 
@@ -292,7 +292,7 @@ static error_t process_message(struct message *m) {
     // TODO: case FS_CLOSE_MSG: return handle_fs_close(m);
     case FS_READ_MSG: return handle_fs_read(m);
 
-    case PAGER_FILL_PAGE_MSG: return handle_pager_fill_page(m);
+    case PAGER_FILL_MSG: return handle_pager_fill(m);
 
     //
     //  Memmgr

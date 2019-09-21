@@ -8,9 +8,9 @@ static cid_t memmgr_ch = 1;
 static cid_t kernel_ch = 2;
 static cid_t server_ch;
 
-static error_t handle_pager_fill_page(struct message *m) {
-    pid_t pid      = m->payloads.pager.fill_page.pid;
-    uintptr_t addr = m->payloads.pager.fill_page.addr;
+static error_t handle_pager_fill(struct message *m) {
+    pid_t pid      = m->payloads.pager.fill.pid;
+    uintptr_t addr = m->payloads.pager.fill.addr;
 
     struct process *proc = get_process_by_pid(pid);
     assert(proc);
@@ -27,8 +27,8 @@ static error_t handle_pager_fill_page(struct message *m) {
             TRY_OR_PANIC(call_fs_read(proc->file->fs_server, proc->file->fd,
                 fileoff, PAGE_SIZE, page_base, (uintptr_t *) &data, &num_pages));
 
-            m->header = PAGER_FILL_PAGE_REPLY_HEADER;
-            m->payloads.pager.fill_page_reply.page = PAGE_PAYLOAD((uintptr_t) data, 0, PAGE_TYPE_SHARED);
+            m->header = PAGER_FILL_REPLY_HEADER;
+            m->payloads.pager.fill_reply.page = PAGE_PAYLOAD((uintptr_t) data, 0, PAGE_TYPE_SHARED);
             return OK;
         }
     }
@@ -39,8 +39,8 @@ static error_t handle_pager_fill_page(struct message *m) {
     size_t num_pages;
     TRY_OR_PANIC(call_memmgr_alloc_pages(memmgr_ch, 0, page_base, (uintptr_t *) &ptr, &num_pages));
 
-    m->header = PAGER_FILL_PAGE_REPLY_HEADER;
-    m->payloads.pager.fill_page_reply.page = PAGE_PAYLOAD((uintptr_t) ptr, 0, PAGE_TYPE_SHARED);
+    m->header = PAGER_FILL_REPLY_HEADER;
+    m->payloads.pager.fill_reply.page = PAGE_PAYLOAD((uintptr_t) ptr, 0, PAGE_TYPE_SHARED);
     return OK;
 }
 
@@ -151,7 +151,7 @@ static error_t process_message(struct message *m) {
     // TODO:
     // case RUNTIME_EXIT_CURRENT_MSG: return handle_runtime_exit_current(m);
     case RUNTIME_PRINTCHAR_MSG: return handle_runtime_printchar(m);
-    case PAGER_FILL_PAGE_MSG:   return handle_pager_fill_page(m);
+    case PAGER_FILL_MSG:   return handle_pager_fill(m);
     case API_CREATE_APP_MSG:    return handle_api_create_app(m);
     case API_START_APP_MSG:     return handle_api_start_app(m);
     case API_JOIN_APP_MSG:      return handle_api_join_app(m);

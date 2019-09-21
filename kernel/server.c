@@ -22,10 +22,10 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     struct channel *pager = vma->arg;
     // TRACE("user pager=%d, addr=%p", pager->cid, vaddr);
 
-    // Construct a pager.fill_page message.
-    m->header = PAGER_FILL_PAGE_HEADER;
-    m->payloads.pager.fill_page.pid = CURRENT->process->pid;
-    m->payloads.pager.fill_page.addr = vaddr;
+    // Construct a pager.fill message.
+    m->header = PAGER_FILL_HEADER;
+    m->payloads.pager.fill.pid = CURRENT->process->pid;
+    m->payloads.pager.fill.addr = vaddr;
 
     // Invoke the user pager. This would blocks the current thread.
     sys_ipc(pager->cid, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
@@ -36,7 +36,7 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
         return 0;
     }
 
-    paddr_t paddr = PAGE_PAYLOAD_ADDR(m->payloads.pager.fill_page_reply.page);
+    paddr_t paddr = PAGE_PAYLOAD_ADDR(m->payloads.pager.fill_reply.page);
     // TRACE("received a page from the pager: addr=%p", paddr);
     return paddr;
 }

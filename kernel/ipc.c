@@ -213,8 +213,8 @@ static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
 static inline bool is_annoying_msg(uint16_t msg_type) {
     return msg_type == RUNTIME_PRINTCHAR_MSG
            || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
-           || msg_type == PAGER_FILL_PAGE_MSG
-           || msg_type == PAGER_FILL_PAGE_REPLY_MSG;
+           || msg_type == PAGER_FILL_MSG
+           || msg_type == PAGER_FILL_REPLY_MSG;
 }
 
 /// The ipc system call: sends/receives messages.

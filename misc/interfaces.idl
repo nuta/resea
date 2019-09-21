@@ -56,7 +56,7 @@ interface server {
 [id(11)]
 interface pager {
     [id(1), type(call)]
-    fill_page(pid: pid, addr: uintptr, size: size) -> (page: page)
+    fill(pid: pid, addr: uintptr, size: size) -> (page: page)
 }
 
 [id(12)]
