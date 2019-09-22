@@ -534,7 +534,7 @@ intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
 
     switch (SYSCALL_TYPE(syscall)) {
     case SYSCALL_IPC:
-        return sys_ipc(arg0, (uint32_t) syscall);
+        return sys_ipc(arg0, syscall);
     case SYSCALL_OPEN:
         return sys_open();
     case SYSCALL_CLOSE:
