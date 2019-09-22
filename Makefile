@@ -113,6 +113,7 @@ $(BUILD_DIR)/kernel.elf: $(kernel_objs) kernel/arch/$(ARCH)/$(ARCH).ld tools/lin
 		--ld="$(LD)"                          \
 		--ldflags="$(KERNEL_LDFLAGS)"         \
 		--nm="$(NM)"                          \
+		--objcopy="$(OBJCOPY)"                \
 		--build-dir="$(BUILD_DIR)"            \
 		--mapfile="$(BUILD_DIR)/kernel.map"   \
 		--outfile="$@"                        \
@@ -232,6 +233,7 @@ $(BUILD_DIR)/servers/%.elf:
 		--ld="$(LD)"                                  \
 		--ldflags="$(ldflags)"                        \
 		--nm="$(NM)"                                  \
+		--objcopy="$(OBJCOPY)"                        \
 		--build-dir="$(basename $@)"                  \
 		--mapfile="$(basename $@)/$(server_name).map" \
 		--outfile="$@"                                \
@@ -246,6 +248,7 @@ $(BUILD_DIR)/apps/%.elf:
 		--ld="$(LD)"                               \
 		--ldflags="$(ldflags)"                     \
 		--nm="$(NM)"                               \
+		--objcopy="$(OBJCOPY)"                     \
 		--build-dir="$(basename $@)"               \
 		--mapfile="$(basename $@)/$(app_name).map" \
 		--outfile="$@"                             \

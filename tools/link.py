@@ -5,7 +5,46 @@ import os
 import sys
 import shlex
 import shutil
+import struct
+import tempfile
 from pathlib import Path
+import colorama
+from colorama import Fore, Style
+
+def decode_leb128(buf):
+    value = 0
+    i = 0
+    while True:
+        b = buf[i]
+        value |= (b & 0x7f) << (7 * i)
+        if b & 0x80 == 0:
+            return value, i + 1
+        i += 1
+
+def analyze_stack_sizes(objcopy, nm, file):
+    with tempfile.TemporaryDirectory() as tempdir:
+        stack_file = tempdir + "/stack_sizes.bin"
+
+        subprocess.run([objcopy, "--dump-section", f".stack_sizes={stack_file}", file])
+        nm_output = subprocess.check_output([nm, "--demangle", file], text=True)
+        functions = {}
+        for line in nm_output.splitlines():
+            cols = line.split(" ", 2)
+            functions[int(cols[0], 16)] = cols[2]
+
+        stack_sizes = open(stack_file, "rb").read()
+        if len(stack_sizes) == 0:
+            sys.exit("error: size of .stack_sizes is 0")
+
+        index = 0
+        while index < len(stack_sizes):
+            addr = struct.unpack("Q", stack_sizes[index:index+8])[0]
+            size, size_len = decode_leb128(stack_sizes[index+8:])
+            if addr in functions and size >= 1024:
+                print(f"{Fore.YELLOW}{Style.BRIGHT}{file}: Warning: Large stack usage" +
+                      f" in {functions[addr]} ({size} bytes).{Style.RESET_ALL}")
+
+            index += 8 + size_len
 
 def extract_symbols(nm, file):
     stdout = subprocess.check_output([nm, "--defined-only", "--demangle", file],
@@ -73,7 +112,7 @@ def verify_symtable(nm, old_file, new_file):
             sys.exit(f"Incorrect symbol table entry '{name}': " +
                 f"expected={symbols[name]}, actual={new_symbols[name]}")
 
-def link(cc, cflags, ld, ldflags, nm, build_dir, outfile, mapfile, objs):
+def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs):
     outfile = Path(outfile)
     stage1 = outfile.parent / ("." + outfile.name + ".stage1.tmp")
     stage2 = outfile.parent / ("." + outfile.name + ".stage2.tmp")
@@ -110,6 +149,7 @@ def link(cc, cflags, ld, ldflags, nm, build_dir, outfile, mapfile, objs):
 
     verify_symtable(nm, stage2, stage3)
     shutil.move(stage3, outfile)
+    analyze_stack_sizes(objcopy, nm, outfile)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -118,6 +158,7 @@ def main():
     parser.add_argument("--cflags", help="The clang options.", required=True)
     parser.add_argument("--ld", help="The ld path.", required=True)
     parser.add_argument("--ldflags", help="The ld options.", required=True)
+    parser.add_argument("--objcopy", help="The objcopy path.", required=True)
     parser.add_argument("--nm", help="The nm path.", required=True)
     parser.add_argument("--build-dir", help="The build directory.", required=True)
     parser.add_argument("--mapfile", help="The map file.", required=True)
@@ -126,10 +167,11 @@ def main():
     args = parser.parse_args()
 
     try:
-        link(args.cc, args.cflags, args.ld, args.ldflags, args.nm, args.build_dir,
-            args.outfile, args.mapfile, args.objs)
+        link(args.cc, args.cflags, args.ld, args.ldflags, args.objcopy, args.nm,
+             args.build_dir, args.outfile, args.mapfile, args.objs)
     except subprocess.CalledProcessError as e:
         sys.exit("link.py: A subprocess returned an error, aborting.")
 
 if __name__ == "__main__":
+    colorama.init()
     main()
