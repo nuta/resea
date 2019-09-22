@@ -211,9 +211,6 @@ static inline bool is_annoying_msg(uint16_t msg_type) {
 }
 
 /// The ipc system call: sends/receives messages.
-///
-/// TODO: Is it safe to replace spin_lock_irqsave with spin_lock?
-///
 error_t sys_ipc(cid_t cid, uint32_t syscall) {
     struct thread *current = CURRENT;
     struct channel *ch = table_get(&current->process->channels, cid);
@@ -230,10 +227,44 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct message *m = from_kernel ? current->kernel_ipc_buffer
                                         : &current->info->ipc_buffer;
         header_t header = m->header;
-        flags_t flags = spin_lock_irqsave(&ch->lock);
-        struct channel *linked_to = ch->linked_to;
-        struct channel *dst = linked_to->transfer_to;
+        struct channel *linked_to;
+        struct channel *dst;
         struct thread *receiver;
+
+        // Wait for a receiver thread.
+        while (1) {
+            flags_t flags = spin_lock_irqsave(&ch->lock);
+            linked_to = ch->linked_to;
+            dst = linked_to->transfer_to;
+            spin_lock(&dst->lock);
+            receiver = dst->receiver;
+
+            // Check if there's a thread waiting for a message on the
+            // destination channel and there're no pending notification in the
+            // channel.
+            if (receiver != NULL) {
+                dst->receiver = NULL;
+                spin_unlock(&dst->lock);
+                spin_unlock_irqrestore(&ch->lock, flags);
+                break;
+            }
+
+            // Exit the system call handler if IPC_NOBLOCK is specified.
+            if (syscall & IPC_NOBLOCK) {
+                spin_unlock(&dst->lock);
+                spin_unlock_irqrestore(&ch->lock, flags);
+                return ERR_WOULD_BLOCK;
+            }
+
+            // A receiver is not ready or another thread is sending a message
+            // to the channel. Block the current thread until a receiver thread
+            // resumes us.
+            list_push_back(&dst->queue, &current->queue_elem);
+            thread_block(current);
+            spin_unlock(&dst->lock);
+            spin_unlock_irqrestore(&ch->lock, flags);
+            thread_switch();
+        }
 
         if (!is_annoying_msg(MSG_TYPE(header))) {
             if (linked_to == dst) {
@@ -243,36 +274,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 TRACE("send: %pC -> %pC => %pC (header=%p)",
                       ch, linked_to, dst, header);
             }
-        }
-
-        spin_unlock_irqrestore(&ch->lock, flags);
-
-        // Wait for a receiver thread.
-        while (1) {
-            flags_t flags = spin_lock_irqsave(&dst->lock);
-            receiver = dst->receiver;
-            // Check if there's a thread waiting for a message on the
-            // destination channel and there're no pending notification in the
-            // channel.
-            if (receiver != NULL) {
-                dst->receiver = NULL;
-                spin_unlock_irqrestore(&dst->lock, flags);
-                break;
-            }
-
-            // Exit the system call handler if IPC_NOBLOCK is specified.
-            if (syscall & IPC_NOBLOCK) {
-                spin_unlock_irqrestore(&dst->lock, flags);
-                return ERR_WOULD_BLOCK;
-            }
-
-            // A receiver is not ready or another thread is sending a message
-            // to the channel. Block the current thread until a receiver thread
-            // resumes us.
-            list_push_back(&dst->queue, &current->queue_elem);
-            thread_block(current);
-            spin_unlock_irqrestore(&dst->lock, flags);
-            thread_switch();
         }
 
         // Now we have a receiver thread. It's time to send a message!
