@@ -143,7 +143,8 @@ static error_t handle_keyinput_event(struct message *m) {
     TRACE("keyinput_event: keycode='%c' (%x)", keycode, keycode);
 
     if (active_ch) {
-        send_gui_key_event(active_ch, keycode);
+        // FIXME:
+        async_send_gui_key_event(active_ch, keycode);
     }
 
     m->header = KEYBOARD_DRIVER_KEYINPUT_EVENT_REPLY_HEADER;
