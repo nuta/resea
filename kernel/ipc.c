@@ -110,6 +110,7 @@ error_t channel_notify(struct channel *ch, notification_t notification) {
 
     // Update the notification data.
     struct channel *dst = ch->linked_to->transfer_to;
+    spin_lock(&dst->lock);
     dst->notification |= notification;
 
     TRACE("notify: %pC -> %pC => %pC (data=%p)",
@@ -124,6 +125,7 @@ error_t channel_notify(struct channel *ch, notification_t notification) {
         dst->receiver = NULL;
     }
 
+    spin_unlock(&dst->lock);
     spin_unlock(&ch->lock);
     return OK;
 }
