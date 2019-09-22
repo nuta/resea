@@ -248,7 +248,8 @@ static error_t handle_fs_read(struct message *m) {
     return OK;
 }
 
-static void deferred_work(void) {
+static error_t deferred_work(void) {
+    bool needs_retry = false;
     for (int interface = 0; interface <= INTERFACE_ID_MAX; interface++) {
         if (!servers[interface]) {
             continue;
@@ -264,6 +265,7 @@ static void deferred_work(void) {
                 err = async_send_server_connect(servers[interface], interface);
                 if (err == ERR_WOULD_BLOCK) {
                     TRACE("Would block, ignoring...");
+                    needs_retry = true;
                     continue;
                 }
 
@@ -274,6 +276,8 @@ static void deferred_work(void) {
             }
         }
     }
+
+    return needs_retry ? ERR_NEEDS_RETRY : OK;
 }
 
 static error_t process_message(struct message *m) {

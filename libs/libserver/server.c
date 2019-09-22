@@ -4,11 +4,23 @@
 
 error_t server_mainloop_with_deferred(cid_t ch,
                                       error_t (*process)(struct message *m),
-                                      void (*deferred_work)(void)) {
+                                      error_t (*deferred_work)(void)) {
+    cid_t timer_ch;
+    if (deferred_work) {
+        TRY_OR_OOPS(open(&timer_ch));
+        TRY_OR_OOPS(transfer(timer_ch, ch));
+    }
+
     struct message m;
     while (1) {
         // Receive a message from a client.
         TRY(ipc_recv(ch, &m));
+        if (m.notification & NOTIFY_TIMER) {
+            deferred_work();
+            if (m.header == NOTIFICATION_MSG && m.notification == NOTIFY_TIMER) {
+                continue;
+            }
+        }
         // Do work and fill a reply message into `m`.
         error_t err = process(&m);
         // Warn if the handler returned ERR_UNEXPECTED_MESSAGE since it is
@@ -27,7 +39,17 @@ error_t server_mainloop_with_deferred(cid_t ch,
         }
         // Do the deferred work if specified.
         if (deferred_work) {
-            deferred_work();
+            err = deferred_work();
+            if (err == ERR_NEEDS_RETRY) {
+                // Retry the deferred work later.
+                // FIXME: Assuming @1 serves the timer interface.
+                cid_t timer_server = 1;
+                TRACE("Retrying deferred work in 500 milliseconds...");
+                int timer_id;
+                call_timer_set_timeout(timer_server, timer_ch, 500, &timer_id);
+            } else {
+                TRY(err);
+            }
         }
     }
 }
