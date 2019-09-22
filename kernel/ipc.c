@@ -254,7 +254,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             // Check if there's a thread waiting for a message on the
             // destination channel and there're no pending notification in the
             // channel.
-            if (receiver != NULL && !dst->notification) {
+            if (receiver != NULL) {
                 dst->receiver = NULL;
                 spin_unlock_irqrestore(&dst->lock, flags);
                 break;
