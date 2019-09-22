@@ -20,7 +20,8 @@ static void print_uint(uintmax_t n, int base, char pad, int width) {
 }
 
 static void print_ptr(const char **fmt, va_list vargs) {
-    switch (*(*fmt)++) {
+    char ch = *(*fmt)++;
+    switch (ch) {
     // Hex dump.
     case 'h': {
         uint8_t *buf = va_arg(vargs, uint8_t *);
@@ -41,8 +42,11 @@ static void print_ptr(const char **fmt, va_list vargs) {
         }
         break;
     }
+    // A pointer value (%p) and a following character.
     default:
-        puts("<invalid format>");
+        print_uint((uintmax_t) va_arg(vargs, void *), 16, '0',
+                   sizeof(vaddr_t) * 2);
+        putchar(ch);
     }
 }
 
@@ -105,15 +109,6 @@ void vprintf(const char *fmt, va_list vargs) {
                 }
                 print_uint(n, 10, pad, width);
                 break;
-            case 'p':
-#if __x86_64__
-                num_len = 3;
-                width = 16;
-#else
-#    error "unsupported CPU architecture"
-#endif
-                pad = '0';
-                // fallthrough
             case 'x':
                 alt = true;
                 // Fallthrough.
@@ -131,7 +126,7 @@ void vprintf(const char *fmt, va_list vargs) {
             case 'v':
                 print_value(&fmt, vargs);
                 break;
-            case '*':
+            case 'p':
                 print_ptr(&fmt, vargs);
                 break;
             case '%':
