@@ -143,7 +143,7 @@ static error_t handle_keyinput_event(struct message *m) {
     TRACE("keyinput_event: keycode='%c' (%x)", keycode, keycode);
 
     if (active_ch) {
-        // FIXME:
+        // FIXME: Deferred work.
         async_send_gui_key_event(active_ch, keycode);
     }
 
