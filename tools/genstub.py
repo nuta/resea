@@ -257,17 +257,17 @@ PAYLOAD_TEMPLATE = """\
 {%- for interface in interfaces %}
 {%- for msg in interface.messages %}
 struct {{ msg.canon_name }}_payload {
-{%- if msg.args.page %}
-    page_t {{ msg.args.page.name }};
-{%- else %}
-    page_t __unused_page;
-{%- endif %}
 {%- if msg.args.channel %}
     cid_t {{ msg.args.channel.name }};
 {%- else %}
     cid_t __unused_channel;
 {%- endif %}
-    uint8_t _padding[12];
+{%- if msg.args.page %}
+    page_t {{ msg.args.page.name }};
+{%- else %}
+    page_t __unused_page;
+{%- endif %}
+    uint8_t __padding[8];
 {%- for field in msg.args.inlines %}
     {{ field.type | resolve_type }} {{ field.name }};
 {%- endfor %}
@@ -275,17 +275,17 @@ struct {{ msg.canon_name }}_payload {
 
 {%- if msg.attrs.type == "call" %}
 struct {{ msg.canon_name }}_reply_payload {
-{%- if msg.rets.page %}
-    page_t {{ msg.rets.page.name }};
-{%- else %}
-    page_t __unused_page;
-{%- endif %}
 {%- if msg.rets.channel %}
     cid_t {{ msg.rets.channel.name }};
 {%- else %}
     cid_t __unused_channel;
 {%- endif %}
-    uint8_t _padding[12];
+{%- if msg.rets.page %}
+    page_t {{ msg.rets.page.name }};
+{%- else %}
+    page_t __unused_page;
+{%- endif %}
+    uint8_t __padding[8];
 {%- for field in msg.rets.inlines %}
     {{ field.type | resolve_type }} {{ field.name }};
 {%- endfor %}

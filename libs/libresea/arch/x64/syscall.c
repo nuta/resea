@@ -13,6 +13,7 @@ static void copy_message(struct message *dst, const struct message *src) {
     // TODO: Use memcpy.
     dst->header = header;
     dst->from = src->from;
+    dst->notification = src->notification;
     dst->payloads.channel = src->payloads.channel;
     dst->payloads.page = src->payloads.page;
 

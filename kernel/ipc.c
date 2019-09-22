@@ -28,7 +28,6 @@ struct channel *channel_create(struct process *process) {
     channel->linked_to = channel;
     channel->transfer_to = channel;
     channel->receiver = NULL;
-    channel->notified = false;
     channel->notification = 0;
     spin_lock_init(&channel->lock);
     list_init(&channel->queue);
@@ -112,7 +111,6 @@ error_t channel_notify(struct channel *ch, notification_t notification) {
     // Update the notification data.
     struct channel *dst = ch->linked_to->transfer_to;
     dst->notification |= notification;
-    dst->notified = true;
 
     TRACE("notify: %pC -> %pC => %pC (data=%p)",
           ch, ch->linked_to, dst, dst->notification);
@@ -120,6 +118,8 @@ error_t channel_notify(struct channel *ch, notification_t notification) {
     // Resume the receiver thread if exists.
     struct thread *receiver = dst->receiver;
     if (receiver) {
+        receiver->ipc_buffer->header = NOTIFICATION_HEADER;
+        receiver->ipc_buffer->from   = 0;
         thread_resume(receiver);
         dst->receiver = NULL;
     }
@@ -252,7 +252,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             // Check if there's a thread waiting for a message on the
             // destination channel and there're no pending notification in the
             // channel.
-            if (receiver != NULL && !dst->notified) {
+            if (receiver != NULL && !dst->notification) {
                 dst->receiver = NULL;
                 spin_unlock_irqrestore(&dst->lock, flags);
                 break;
@@ -367,24 +367,17 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         thread_switch();
 
         // Received a message or a notification.
-        struct message *m = current->ipc_buffer;
 
-        // Convert the received notification into a message.
-        if (recv_on->notified) {
-            TRACE("recv (notification): %pC (data=%p)",
-                  recv_on, recv_on->notification);
-            m->header = NOTIFICATION_HEADER;
-            m->from = 0;
-            m->payloads.notification.data = recv_on->notification;
-            // Reset the notification field.
-            recv_on->notification = 0;
-            recv_on->notified = false;
-        }
+        // TODO: Atomic swap.
+        struct message *m = current->ipc_buffer;
+        m->notification = recv_on->notification;
+        recv_on->notification = 0;
 
         // Now `CURRENT->ipc_buffer` is filled by the sender thread.
         if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header))) {
-            TRACE("recv: %pC <- @%d (header=%p)", recv_on,
-                current->ipc_buffer->from, current->ipc_buffer->header);
+            TRACE("recv: %pC <- @%d (header=%p, notification=%p)", recv_on,
+                current->ipc_buffer->from, current->ipc_buffer->header,
+                current->ipc_buffer->notification);
         }
 
         if (from_kernel) {
@@ -485,20 +478,14 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // is now blocked and will be resumed by another IPC call.
     arch_thread_switch(current, receiver);
 
-    // Received a message or a notification.
-    if (recv_on->notified) {
-        // Convert the received notification into a message.
-        m->header = NOTIFICATION_HEADER;
-        m->from = 0;
-        m->payloads.notification.data = recv_on->notification;
-        // Reset the notification field.
-        recv_on->notification = 0;
-        recv_on->notified = false;
-    }
+    // TODO: Atomic swap.
+    m->notification = recv_on->notification;
+    recv_on->notification = 0;
 
     if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header))) {
-        TRACE("recv: %pC <- @%d (header=%p)", recv_on,
-            current->ipc_buffer->from, current->ipc_buffer->header);
+        TRACE("recv: %pC <- @%d (header=%p, notification=%p)", recv_on,
+            current->ipc_buffer->from, current->ipc_buffer->header,
+            current->ipc_buffer->notification);
     }
 
     // Resumed by a sender thread.
