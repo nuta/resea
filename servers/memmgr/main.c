@@ -259,7 +259,15 @@ static void deferred_work(void) {
                 && !waiters[i].sent_request) {
                 TRACE("sending discovery.connect_request(to=%d, interface=%d)",
                     servers[interface], interface);
-                send_server_connect(servers[interface], interface);
+
+                error_t err;
+                err = async_send_server_connect(servers[interface], interface);
+                if (err == ERR_WOULD_BLOCK) {
+                    TRACE("Would block, ignoring...");
+                    continue;
+                }
+
+                TRY_OR_PANIC(err);
                 TRACE("sent connect_request");
                 waiters[i].server_ch = servers[interface];
                 waiters[i].sent_request = true;

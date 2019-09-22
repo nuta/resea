@@ -125,7 +125,7 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
     )
 
 #if !defined(KERNEL)
-static inline error_t send_{{ msg.canon_name }}({{ msg.args | send_params }}) {
+static inline error_t __do_send_{{ msg.canon_name }}({{ msg.args | send_params }}, bool __async) {
     struct message m;
     m.header = {{ msg.canon_name | upper }}_HEADER;
 {% for field in msg.args.fields %}
@@ -135,10 +135,29 @@ static inline error_t send_{{ msg.canon_name }}({{ msg.args | send_params }}) {
     m.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }} = {{ field.name }};
 {%- endif %}
 {%- endfor %}
-    error_t err;
-    if ((err = ipc_send(__ch, (struct message *) &m)) != OK)
+    error_t err = __async ? ipc_async_send(__ch, &m) : ipc_send(__ch, &m);
+    if (err != OK) {
         return err;
+    }
     return OK;
+}
+
+static inline error_t send_{{ msg.canon_name }}({{ msg.args | send_params }}) {
+    return __do_send_{{ msg.canon_name }}(__ch
+{%- for field in msg.args.fields -%}
+        , {{ field.name }}
+{%- endfor -%}
+        , false
+    );
+}
+
+static inline error_t async_send_{{ msg.canon_name }}({{ msg.args | send_params }}) {
+    return __do_send_{{ msg.canon_name }}(__ch
+{%- for field in msg.args.fields -%}
+        , {{ field.name }}
+{%- endfor -%}
+        , true
+    );
 }
 #endif
 
@@ -157,7 +176,7 @@ static inline error_t send_{{ msg.canon_name }}({{ msg.args | send_params }}) {
     )
 
 #if !defined(KERNEL)
-static inline error_t send_{{ msg.canon_name }}_reply({{ msg.rets | send_params }}) {
+static inline error_t __do_send_{{ msg.canon_name }}_reply({{ msg.rets | send_params }}, bool __async) {
     struct message m;
     m.header = {{ msg.canon_name | upper }}_REPLY_HEADER;
 {% for field in msg.rets.fields %}
@@ -167,10 +186,29 @@ static inline error_t send_{{ msg.canon_name }}_reply({{ msg.rets | send_params 
     m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ field.name }} = {{ field.name }};
 {%- endif %}
 {%- endfor %}
-    error_t err;
-    if ((err = ipc_send(__ch, (struct message *) &m)) != OK)
+    error_t err = __async ? ipc_async_send(__ch, &m) : ipc_send(__ch, &m);
+    if (err != OK) {
         return err;
+    }
     return OK;
+}
+
+static inline error_t send_{{ msg.canon_name }}_reply({{ msg.rets | send_params }}) {
+    return __do_send_{{ msg.canon_name }}_reply(__ch
+{%- for field in msg.rets.fields -%}
+        , {{ field.name }}
+{%- endfor -%}
+        , false
+    );
+}
+
+static inline error_t async_send_{{ msg.canon_name }}_reply({{ msg.rets | send_params }}) {
+    return __do_send_{{ msg.canon_name }}_reply(__ch
+{%- for field in msg.rets.fields -%}
+        , {{ field.name }}
+{%- endfor -%}
+        , true
+    );
 }
 
 static inline error_t call_{{ msg.canon_name }}({{ msg | call_params }}) {
@@ -309,6 +347,7 @@ TEMPLATE = f"""\
 // fies.
 void set_page_base(page_base_t page_base);
 error_t ipc_send(cid_t ch, struct message *m);
+error_t ipc_async_send(cid_t ch, struct message *m);
 error_t ipc_call(cid_t ch, struct message *m, struct message *r);
 char *strcpy_s(char *dst, size_t dst_len, const char *src);
 void *memcpy(void *dst, const void *src, size_t len);

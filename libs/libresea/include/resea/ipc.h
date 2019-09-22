@@ -28,6 +28,7 @@ error_t link(cid_t ch1, cid_t ch2);
 error_t transfer(cid_t src, cid_t dst);
 error_t ipc_recv(cid_t ch, struct message *r);
 error_t ipc_send(cid_t ch, struct message *m);
+error_t ipc_async_send(cid_t ch, struct message *m);
 error_t ipc_call(cid_t ch, struct message *m, struct message *r);
 
 #endif
