@@ -54,8 +54,7 @@ static void read_keyboard_input(void) {
     }
 }
 
-static error_t handle_notification(struct message *m) {
-    notification_t notification = m->payloads.notification.data;
+static error_t handle_notification(notification_t notification) {
     if (notification & NOTIFY_INTERRUPT) {
         read_keyboard_input();
     }
@@ -81,10 +80,15 @@ static error_t handle_listen(struct message *m) {
 }
 
 static error_t process_message(struct message *m) {
+    notification_t notification = m->notification;
+    if (notification) {
+        handle_notification(notification);
+    }
+
     switch (MSG_TYPE(m->header)) {
-    case NOTIFICATION_MSG:    return handle_notification(m);
     case SERVER_CONNECT_MSG:  return handle_server_connect(m);
     case KEYBOARD_DRIVER_LISTEN_MSG: return handle_listen(m);
+    case NOTIFICATION_MSG: return ERR_DONT_REPLY;
     }
     return ERR_UNEXPECTED_MESSAGE;
 }
@@ -100,7 +104,6 @@ void main(void) {
     TRY_OR_PANIC(server_register(memmgr_ch, server_ch,
                                  KEYBOARD_DRIVER_INTERFACE, &discovery_ch));
 
-    // FIXME: memmgr waits for us due to connect_request.
-    // INFO("entering the mainloop...");
+    INFO("entering the mainloop...");
     server_mainloop(server_ch, process_message);
 }
