@@ -41,6 +41,13 @@ void try_or_panic(error_t err, const char *file, int lineno);
             return __err;                                                      \
         }                                                                      \
     } while (0)
+#define TRY_OR_OOPS(expr) do {                                                 \
+        error_t __err = expr;                                                  \
+        if (__err != OK) {                                                     \
+            OOPS("An error occurred: %vE", __err);                             \
+            return __err;                                                      \
+        }                                                                      \
+    } while (0)
 
 #define assert(expr)                                                           \
     do {                                                                       \
