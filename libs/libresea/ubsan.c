@@ -5,8 +5,8 @@
 #include <resea.h>
 
 static void report_ubsan_event(const char *msg) {
-    printf("UBSan: %s\n", msg);
-    do_backtrace("");
+    WARN("UBSan: %s", msg);
+    backtrace();
     exit(1);
 }
 

@@ -45,7 +45,7 @@ static inline bool in_text_section(uintptr_t addr) {
 }
 
 /// Prints a backtrace.
-void do_backtrace(const char *prefix) {
+void backtrace(void) {
     WARN("Backtrace:");
     struct stack_frame *frame = get_stack_frame();
     for (int i = 0; frame != NULL && i < 16; i++) {

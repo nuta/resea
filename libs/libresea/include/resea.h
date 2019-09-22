@@ -30,7 +30,7 @@ static inline struct stack_frame *get_stack_frame(void) {
 void putchar(char ch);
 void puts(const char *s);
 void printf(const char *fmt, ...);
-void do_backtrace(const char *prefix);
+void backtrace(void);
 void exit(int status);
 void try_or_panic(error_t err, const char *file, int lineno);
 
@@ -54,7 +54,7 @@ void try_or_panic(error_t err, const char *file, int lineno);
         if (!(expr)) {                                                         \
             printf(COLOR_BOLD_RED "ASSERTION FAILURE: " #expr "\n"             \
                    COLOR_RESET);                                               \
-            do_backtrace("");                                                  \
+            backtrace();                                                       \
             exit(1);                                                           \
         }                                                                      \
     } while (0)
@@ -72,7 +72,6 @@ const char *__program_name(void);
     printf(COLOR_CYAN "[%s] " fmt COLOR_RESET "\n", PROGRAM_NAME, ##__VA_ARGS__)
 #endif
 
-#define BACKTRACE() do_backtrace(BRACKETED_PROGRAM_NAME)
 #define INFO(fmt, ...) \
     printf(COLOR_BLUE "[%s] " fmt COLOR_RESET "\n", PROGRAM_NAME, ##__VA_ARGS__)
 #define WARN(fmt, ...)                                                         \
@@ -82,14 +81,14 @@ const char *__program_name(void);
     do {                                                                       \
         printf(COLOR_YELLOW "[%s] Oops: " fmt COLOR_RESET "\n", PROGRAM_NAME,  \
             ##__VA_ARGS__);                                                    \
-        BACKTRACE();                                                           \
+        backtrace();                                                           \
     } while (0)
 
 #define BUG(fmt, ...)                                                          \
     do {                                                                       \
         printf(COLOR_BOLD_RED "[%s] BUG: " fmt COLOR_RESET "\n", PROGRAM_NAME, \
             ##__VA_ARGS__);                                                    \
-        BACKTRACE();                                                           \
+        backtrace();                                                           \
         exit(1);                                                               \
     } while (0)
 
@@ -97,7 +96,7 @@ const char *__program_name(void);
     do {                                                                       \
         printf(COLOR_BOLD_RED "[%s] Error: " fmt COLOR_RESET "\n",             \
                PROGRAM_NAME, ##__VA_ARGS__);                                   \
-        BACKTRACE();                                                           \
+        backtrace();                                                           \
         exit(1);                                                               \
     } while (0)
 
