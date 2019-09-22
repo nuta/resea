@@ -29,9 +29,11 @@ endif
 
 include .config
 objs :=
+compiled_objs :=
 include kernel/arch/$(ARCH)/arch.mk
 include kernel/kernel.mk
 kernel_objs := $(addprefix $(BUILD_DIR)/, $(objs)) $(BUILD_DIR)/initfs.o
+compiled_objs += $(kernel_objs)
 include libs/libruntime/user_$(ARCH).mk
 endif
 
@@ -74,9 +76,7 @@ APP_CFLAGS += $(COMMON_CFLAGS) -I$(BUILD_DIR)/include
 
 # Commands.
 .PHONY: build
-build:
-	$(MAKE) $(BUILD_DIR)/kernel.elf
-	$(MAKE) compile_commands
+build: $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/compile_commands.json
 
 .PHONY: clean
 clean:
@@ -148,6 +148,7 @@ $(BUILD_DIR)/servers/$(1).elf: ldflags := \
 		--script=libs/libruntime/user_$(ARCH).ld)
 $(BUILD_DIR)/servers/$(1).elf: objs := $(all_objs)
 lib_deps += $(filter-out $(lib_deps), $(server_libs))
+compiled_objs +=  $(all_objs)
 endef
 $(foreach server, $(INIT) $(STARTUPS), $(eval $(call server-make-rule,$(server))))
 initfs_files += $(foreach server, $(STARTUPS), $(BUILD_DIR)/initfs/startups/$(server).elf)
@@ -175,6 +176,7 @@ $(BUILD_DIR)/apps/$(1).elf: ldflags := \
 		--script=libs/libruntime/user_$(ARCH).ld)
 $(BUILD_DIR)/apps/$(1).elf: objs := $(all_objs)
 lib_deps += $(filter-out $(lib_deps), $(app_libs))
+compiled_objs +=  $(all_objs)
 endef
 $(foreach app, $(APPS), $(eval $(call app-make-rule,$(app))))
 initfs_files += $(foreach app, $(APPS), $(BUILD_DIR)/initfs/apps/$(app).elf)
@@ -187,6 +189,7 @@ $(BUILD_DIR)/libs/$(1).lib.o: $(lib_objs) libs/$(1)/lib.mk
 $(BUILD_DIR)/libs/$(1).lib.o: objs := $(lib_objs)
 $(lib_objs): CFLAGS := $(APP_CFLAGS) \
 	$(foreach lib, $(1) $(libs), -Ilibs/$(lib)/include)
+compiled_objs +=  $(lib_objs)
 endef
 $(foreach lib, $(lib_deps), $(eval $(call lib-make-rule,$(lib))))
 
@@ -262,8 +265,7 @@ $(BUILD_DIR)/libs/%.lib.o:
 
 # The JSON compilation database.
 # https://clang.llvm.org/docs/JSONCompilationDatabase.html
-.PHONY: compile_commands
-compile_commands:
+$(BUILD_DIR)/compile_commands.json: $(compiled_objs)
 	$(PROGRESS) "GEN" $(BUILD_DIR)/compile_commands.json
 	$(PYTHON3) tools/merge-compile-commands.py \
 		-o $(BUILD_DIR)/compile_commands.json \
