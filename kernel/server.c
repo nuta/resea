@@ -4,6 +4,8 @@
 #include <resea_idl.h>
 #include <server.h>
 #include <thread.h>
+#include <timer.h>
+#include <table.h>
 #include <types.h>
 
 struct channel *kernel_server_ch = NULL;
@@ -259,6 +261,81 @@ NORETURN static void handle_kernel_exit_kernel_test(UNUSED struct message *m) {
     arch_poweroff();
 }
 
+static struct table user_timers;
+
+static void free_user_timer(struct timer *timer) {
+    // channel_decref(timer->arg);
+    table_free(&user_timers, timer->id);
+}
+
+static void user_timer_handler(struct timer *timer) {
+    struct channel *ch = timer->arg;
+    channel_notify(ch, NOTIFY_TIMER);
+    if (!timer->interval) {
+        free_user_timer(timer);
+    }
+}
+
+static error_t create_user_timer(cid_t cid, enum timer_type type, int msec,
+                                 int *timer_id) {
+    struct channel *ch = table_get(&CURRENT->process->channels, cid);
+    ASSERT(ch);
+
+    int id = table_alloc(&user_timers);
+    if (!id) {
+        return ERR_NO_MEMORY;
+    }
+
+    struct timer *timer = timer_create(type, msec, user_timer_handler, ch);
+    if (!timer) {
+        table_free(&user_timers, id);
+        return ERR_NO_MEMORY;
+    }
+
+    channel_incref(ch);
+    *timer_id = id;
+
+    TRACE("created an user timer #%d: @%pC, type=%d, msec=%d",
+          id, ch, type, msec);
+    return OK;
+}
+
+static error_t handle_timer_set_timeout(struct message *m) {
+    cid_t ch = m->payloads.timer.set_timeout.ch;
+    int32_t msec = m->payloads.timer.set_timeout.msec;
+    int timer_id;
+    error_t err = create_user_timer(ch, TIMER_TIMEOUT, msec, &timer_id);
+    if (err != OK) {
+        return err;
+    }
+    m->header = TIMER_SET_TIMEOUT_REPLY_HEADER;
+    m->payloads.timer.set_timeout_reply.timer = timer_id;
+    return OK;
+}
+
+static error_t handle_timer_set_interval(struct message *m) {
+    cid_t ch = m->payloads.timer.set_interval.ch;
+    int32_t msec = m->payloads.timer.set_interval.msec;
+    int timer_id;
+    error_t err = create_user_timer(ch, TIMER_INTERVAL, msec, &timer_id);
+    if (err != OK) {
+        return err;
+    }
+    m->header = TIMER_SET_INTERVAL_REPLY_HEADER;
+    m->payloads.timer.set_interval_reply.timer = timer_id;
+    return OK;
+}
+
+static error_t handle_timer_clear_timeout(UNUSED struct message *m) {
+    // TODO:
+    UNIMPLEMENTED();
+}
+
+static error_t handle_timer_clear_interval(UNUSED struct message *m) {
+    // TODO:
+    UNIMPLEMENTED();
+}
+
 static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
     case RUNTIME_EXIT_CURRENT_MSG:       return handle_runtime_exit_current(m);
@@ -272,6 +349,10 @@ static error_t process_message(struct message *m) {
     case THREAD_DESTROY_MSG:             return handle_thread_destroy(m);
     case IO_ALLOW_IOMAPPED_IO_MSG:       return handle_io_allow_iomapped_io(m);
     case IO_LISTEN_IRQ_MSG:              return handle_io_listen_irq(m);
+    case TIMER_SET_TIMEOUT_MSG:          return handle_timer_set_timeout(m);
+    case TIMER_CLEAR_TIMEOUT_MSG:        return handle_timer_clear_timeout(m);
+    case TIMER_SET_INTERVAL_MSG:         return handle_timer_set_interval(m);
+    case TIMER_CLEAR_INTERVAL_MSG:       return handle_timer_clear_interval(m);
     case KERNEL_EXIT_KERNEL_TEST_MSG:
         handle_kernel_exit_kernel_test(m);
     }
@@ -300,6 +381,8 @@ NORETURN static void mainloop(cid_t server_ch) {
 /// The kernel server thread entrypoint.
 static void kernel_server_main(void) {
     ASSERT(CURRENT->process == kernel_process);
+
+    table_init(&user_timers);
 
     for (int i = 0; i < IRQ_LISTENERS_MAX; i++) {
         irq_listeners[i].ch = NULL;

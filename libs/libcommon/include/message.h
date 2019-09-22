@@ -43,6 +43,7 @@ typedef uint32_t header_t;
 
 typedef uint32_t notification_t;
 #define NOTIFY_INTERRUPT (1UL << 0)
+#define NOTIFY_TIMER     (1UL << 1)
 
 //
 //  Page Payload.
