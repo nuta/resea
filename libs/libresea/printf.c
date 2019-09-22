@@ -46,6 +46,18 @@ static void print_ptr(const char **fmt, va_list vargs) {
     }
 }
 
+static void print_value(const char **fmt, va_list vargs) {
+    char ch = *(*fmt)++;
+    switch (ch) {
+    // error_t
+    case 'E': {
+        error_t err = va_arg(vargs, int);
+        print_uint(-err, 10, 0, 0);
+        break;
+    }
+    }
+}
+
 void vprintf(const char *fmt, va_list vargs) {
     while (*fmt) {
         if (*fmt != '%') {
@@ -115,6 +127,9 @@ void vprintf(const char *fmt, va_list vargs) {
                 break;
             case 's':
                 puts(va_arg(vargs, char *));
+                break;
+            case 'v':
+                print_value(&fmt, vargs);
                 break;
             case '*':
                 print_ptr(&fmt, vargs);
