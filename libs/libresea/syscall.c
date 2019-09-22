@@ -60,16 +60,3 @@ error_t ipc_call(cid_t ch, struct message *m, struct message *r) {
     }
     return err;
 }
-
-error_t ipc_replyrecv(cid_t ch, struct message *m, struct message *r) {
-    copy_to_ipc_buffer(m);
-    error_t err = sys_ipc(ch, IPC_SEND | IPC_RECV | IPC_REPLY);
-    if (err == OK) {
-        int16_t type = MSG_TYPE(get_ipc_buffer()->header);
-        if (type < 0) {
-            return type;
-        }
-        copy_from_ipc_buffer(r);
-    }
-    return err;
-}
