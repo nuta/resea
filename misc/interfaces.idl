@@ -42,6 +42,19 @@ interface thread {
 }
 
 [id(4)]
+interface timer {
+    type timer_id = int32
+    [id(1), type(call)]
+    set_timeout(ch: channel, msec: int32) -> (timer: timer_id)
+    [id(2), type(call)]
+    clear_timeout(timer: timer_id) -> ()
+    [id(3), type(call)]
+    set_interval(ch: channel, msec: int32) -> (timer: timer_id)
+    [id(4), type(call)]
+    clear_interval(timer: timer_id) -> ()
+}
+
+[id(9)]
 interface kernel {
     [id(1), type(call)]
     exit_kernel_test() -> ()
