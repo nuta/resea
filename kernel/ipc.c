@@ -330,7 +330,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             ASSERT(dst_ch);
 
             channel_link(ch->linked_to, dst_ch);
-            channel_decref(ch);
+            // FIXME: channel_decref(ch);
             dst_m->payloads.channel = dst_ch->cid;
         }
 
