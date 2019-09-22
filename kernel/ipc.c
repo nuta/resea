@@ -42,7 +42,7 @@ void channel_incref(struct channel *ch) {
 }
 
 /// Decrements the reference counter of the channel.
-void channel_decref(struct channel *ch) {
+void channel_destroy(struct channel *ch) {
     ch->ref_count--;
     ASSERT(ch->ref_count >= 0);
 
@@ -149,7 +149,7 @@ error_t sys_close(cid_t cid) {
     }
 
     TRACE("close: @%d", ch->cid);
-    channel_decref(ch);
+    channel_destroy(ch);
     return OK;
 }
 
@@ -330,7 +330,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             ASSERT(dst_ch);
 
             channel_link(ch->linked_to, dst_ch);
-            // FIXME: channel_decref(ch);
+            // FIXME: channel_destroy(ch);
             dst_m->payloads.channel = dst_ch->cid;
         }
 

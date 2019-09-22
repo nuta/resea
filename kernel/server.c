@@ -70,7 +70,7 @@ static error_t handle_process_create(struct message *m) {
 
     struct channel *pager_ch = channel_create(get_sender_process(m->from));
     if (!pager_ch) {
-        channel_decref(pager_ch);
+        channel_destroy(pager_ch);
         process_destroy(proc);
         return ERR_OUT_OF_RESOURCE;
     }
@@ -249,7 +249,7 @@ static error_t handle_process_send_channel_to_process(struct message *m) {
     ASSERT(dst_ch);
 
     channel_link(ch->linked_to, dst_ch);
-    channel_decref(ch);
+    channel_destroy(ch);
 
     TRACE("kernel: send_channel_to_pid: created %pC", dst_ch);
     m->header = PROCESS_SEND_CHANNEL_TO_PROCESS_REPLY_HEADER;
@@ -264,7 +264,7 @@ NORETURN static void handle_kernel_exit_kernel_test(UNUSED struct message *m) {
 static struct table user_timers;
 
 static void free_user_timer(struct timer *timer) {
-    // channel_decref(timer->arg);
+    // channel_destroy(timer->arg);
     table_free(&user_timers, timer->id);
 }
 

@@ -14,7 +14,7 @@ struct channel;
 struct thread_info *get_thread_info(void);
 struct channel *channel_create(struct process *process);
 void channel_incref(struct channel *ch);
-void channel_decref(struct channel *ch);
+void channel_destroy(struct channel *ch);
 void channel_link(struct channel *ch1, struct channel *ch2);
 void channel_transfer(struct channel *src, struct channel *dst);
 error_t channel_notify(struct channel *ch, notification_t notification);
