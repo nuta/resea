@@ -391,9 +391,11 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     return OK;
 }
 
-/// The ipc system call (faster version): it optmizes a common case: payloads
-/// are inline only (i.e., no channel/page payloads), both IPC_SEND and
-/// IPC_RECV are specified, and a receiver thread already waits for a message.
+/// The ipc system call (faster version): it optmizes the common case:
+///
+///   - Payloads are inline only (i.e., no channel/page payloads).
+///   - Both IPC_SEND and  IPC_RECV are specified.
+///   - A receiver thread already waits for a message.
 ///
 /// If preconditions are not met, it fall backs into the full-featured version
 /// (`sys_ipc()`).
@@ -478,7 +480,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     }
 
     // Do a direct context switch into the receiver thread. The current thread
-    // is now blocked and will be resumed by another IPC call.
+    // is now blocked and will be resumed by another IPC.
     arch_thread_switch(current, receiver);
 
     // TODO: Atomic swap.
@@ -522,7 +524,6 @@ error_t sys_notify(cid_t cid, notification_t notification) {
 intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
     // Try IPC fastpath if possible.
     if (LIKELY(syscall == (SYSCALL_IPC | IPC_SEND | IPC_RECV))) {
-        // TODO: Support SYSCALL_REPLY.
         return sys_ipc_fastpath(arg0);
     }
 
