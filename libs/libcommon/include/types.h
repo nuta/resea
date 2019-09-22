@@ -51,6 +51,7 @@
 #define ERR_INVALID_NOTIFY_OP (-12)
 #define ERR_UNIMPLEMENTED (-13)
 #define ERR_UNEXPECTED_MESSAGE (-14)
+#define ERR_WOULD_BLOCK (-15)
 #define ERR_NOT_FOUND (-64)
 #define ERR_TOO_SHORT (-65)
 #define ERR_INVALID_DATA (-66)

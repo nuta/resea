@@ -258,6 +258,12 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 break;
             }
 
+            // Exit the system call handler if IPC_NOBLOCK is specified.
+            if (syscall & IPC_NOBLOCK) {
+                spin_unlock_irqrestore(&dst->lock, flags);
+                return ERR_WOULD_BLOCK;
+            }
+
             // A receiver is not ready or another thread is sending a message
             // to the channel. Block the current thread until a receiver thread
             // resumes us.
