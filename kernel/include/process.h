@@ -4,6 +4,7 @@
 #include <arch.h>
 #include <list.h>
 #include <table.h>
+#include <message.h>
 
 #define KERNEL_PID 1
 #define PROCESS_NAME_LEN_MAX 16
@@ -70,7 +71,7 @@ struct channel {
     /// If set, `notification` contains a noitification data.
     bool notified;
     /// The received notification data.
-    intmax_t notification;
+    notification_t notification;
     /// The channel linked with this channel. The messages sent from this
     /// channel will be sent to this channel. The destination channel can be
     /// channels in another process.
