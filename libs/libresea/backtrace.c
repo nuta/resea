@@ -46,7 +46,7 @@ static inline bool in_text_section(uintptr_t addr) {
 
 /// Prints a backtrace.
 void do_backtrace(const char *prefix) {
-    printf("%sBacktrace:\n", prefix);
+    WARN("Backtrace:");
     struct stack_frame *frame = get_stack_frame();
     for (int i = 0; frame != NULL && i < 16; i++) {
         if (!in_text_section(frame->return_addr)) {
@@ -55,9 +55,7 @@ void do_backtrace(const char *prefix) {
 
         size_t offset;
         const char *name = find_symbol(frame->return_addr, &offset);
-        printf("%s    #%d: %p %s()+0x%x\n", prefix, i, frame->return_addr, name,
-            offset);
-
+        WARN("    #%d: %p %s()+0x%x", i, frame->return_addr, name, offset);
         frame = frame->next;
     }
 }

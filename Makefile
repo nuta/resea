@@ -137,7 +137,6 @@ $(BUILD_DIR)/servers/$(1)/__program_name.o:
 	$(PROGRESS) "GEN" $(BUILD_DIR)/servers/$(1)/__program_name.o
 	mkdir -p $(BUILD_DIR)/servers/$(1)
 	echo 'const char *__program_name(void) { return "$(1)"; }' > $(BUILD_DIR)/servers/$(1)/__program_name.c
-	echo 'const char *__bracketed_program_name(void) { return "[$(1)] "; }' >> $(BUILD_DIR)/servers/$(1)/__program_name.c
 	$(CC) $(APP_CFLAGS) -c -o $(BUILD_DIR)/servers/$(1)/__program_name.o $(BUILD_DIR)/servers/$(1)/__program_name.c
 $(BUILD_DIR)/servers/$(1).elf: $(all_objs) servers/$(1)/server.mk
 $(BUILD_DIR)/servers/$(1).elf: server_name := $(1)
@@ -165,7 +164,6 @@ $(BUILD_DIR)/apps/$(1)/__program_name.o:
 	$(PROGRESS) "GEN" $(BUILD_DIR)/apps/$(1)/__program_name.o
 	mkdir -p $(BUILD_DIR)/apps/$(1)
 	echo 'const char *__program_name(void) { return "$(1)"; }' > $(BUILD_DIR)/apps/$(1)/__program_name.c
-	echo 'const char *__bracketed_program_name(void) { return "[$(1)] "; }' >> $(BUILD_DIR)/apps/$(1)/__program_name.c
 	$(CC) $(APP_CFLAGS) -c -o $(BUILD_DIR)/apps/$(1)/__program_name.o $(BUILD_DIR)/apps/$(1)/__program_name.c
 $(BUILD_DIR)/apps/$(1).elf: $(all_objs) apps/$(1)/app.mk
 $(BUILD_DIR)/apps/$(1).elf: app_name := $(1)
