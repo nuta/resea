@@ -102,7 +102,7 @@ error_t spawn_process(cid_t kernel_ch, cid_t server_ch,
 
     tid_t tid;
     TRY(call_thread_spawn(kernel_ch, pid, elf.entry, APP_INITIAL_STACK_POINTER,
-                          0x1000, 0 /* arg */, &tid));
+                          THREAD_INFO_ADDR, 0 /* arg */, &tid));
 
     struct process *proc = NULL;
     for (int i = 0; i < NUM_PROCESSES_MAX; i++) {
