@@ -236,9 +236,9 @@ static error_t handle_io_allow_iomapped_io(struct message *m) {
     return OK;
 }
 
-static error_t handle_process_send_channel_to_process(struct message *m) {
-    pid_t pid = m->payloads.process.send_channel_to_process.pid;
-    cid_t cid = m->payloads.process.send_channel_to_process.ch;
+static error_t handle_process_send_channel(struct message *m) {
+    pid_t pid = m->payloads.process.send_channel.pid;
+    cid_t cid = m->payloads.process.send_channel.ch;
     TRACE("kernel: send_channel_to_pid(pid=%d)", pid);
 
     struct process *proc = table_get(&all_processes, pid);
@@ -257,7 +257,7 @@ static error_t handle_process_send_channel_to_process(struct message *m) {
     channel_destroy(ch);
 
     TRACE("kernel: send_channel_to_pid: created %pC", dst_ch);
-    m->header = PROCESS_SEND_CHANNEL_TO_PROCESS_REPLY_HEADER;
+    m->header = PROCESS_SEND_CHANNEL_REPLY_HEADER;
     return OK;
 }
 
@@ -324,7 +324,7 @@ static error_t process_message(struct message *m) {
     case PROCESS_CREATE_MSG:             return handle_process_create(m);
     case PROCESS_DESTROY_MSG:            return handle_process_destroy(m);
     case PROCESS_ADD_PAGER_MSG:          return handle_process_add_pager(m);
-    case PROCESS_SEND_CHANNEL_TO_PROCESS_MSG: return handle_process_send_channel_to_process(m);
+    case PROCESS_SEND_CHANNEL_MSG:       return handle_process_send_channel(m);
     case PROCESS_ADD_KERNEL_CHANNEL_MSG: return handle_process_add_kernel_channel(m);
     case THREAD_SPAWN_MSG:               return handle_thread_spawn(m);
     case THREAD_DESTROY_MSG:             return handle_thread_destroy(m);

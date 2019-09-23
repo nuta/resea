@@ -24,7 +24,7 @@ interface process {
     add_pager(pid: pid, pager: cid, start: uintptr, size: size, flags: uint8)
         -> ()
     [id(4), type(call)]
-    send_channel_to_process(pid: pid, ch: channel)
+    send_channel(pid: pid, ch: channel)
         -> ()
     // FIXME: Use server.connect_request instead.
     [id(5), type(call)]

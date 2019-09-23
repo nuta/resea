@@ -19,7 +19,7 @@ static struct process processes[NUM_PROCESSES_MAX];
 error_t create_app(cid_t kernel_ch, cid_t memmgr_ch, cid_t appmgr_ch,
                    const struct file *file, pid_t *app_pid) {
     error_t err;
-    
+
     page_base_t page_base = valloc(4096);
     uint8_t *file_header;
     size_t num_pages;
@@ -45,7 +45,7 @@ error_t create_app(cid_t kernel_ch, cid_t memmgr_ch, cid_t appmgr_ch,
 
     cid_t gui_ch;
     TRY_OR_PANIC(call_discovery_connect(memmgr_ch, GUI_INTERFACE, &gui_ch));
-    TRY_OR_PANIC(call_process_send_channel_to_process(kernel_ch, pid, gui_ch));
+    TRY_OR_PANIC(call_process_send_channel(kernel_ch, pid, gui_ch));
 
     // The executable image.
     if ((err = call_process_add_pager(kernel_ch, pid, 1, APP_IMAGE_START,
