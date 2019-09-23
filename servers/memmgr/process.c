@@ -87,8 +87,8 @@ error_t spawn_process(cid_t kernel_ch, cid_t server_ch,
     TRY(call_process_create(kernel_ch, (const char *) &name, &pid, &pager_ch));
 
     cid_t user_kernel_ch;
-    TRY(call_process_add_kernel_channel(kernel_ch, pid, &user_kernel_ch));
-    assert(user_kernel_ch == 2);
+    TRY(call_server_connect(kernel_ch, 0, &user_kernel_ch));
+    TRY(call_process_send_channel(kernel_ch, pid, user_kernel_ch));
 
     TRY(transfer(pager_ch, server_ch));
 

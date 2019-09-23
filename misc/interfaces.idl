@@ -26,9 +26,6 @@ interface process {
     [id(4), type(call)]
     send_channel(pid: pid, ch: channel)
         -> ()
-    // FIXME: Use server.connect_request instead.
-    [id(5), type(call)]
-    add_kernel_channel(pid: pid) -> (kernel_ch: cid)
 }
 
 [id(3)]

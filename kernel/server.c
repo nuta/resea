@@ -154,32 +154,15 @@ static error_t handle_process_add_pager(struct message *m) {
     return OK;
 }
 
-static error_t handle_process_add_kernel_channel(struct message *m) {
-    pid_t pid = m->payloads.process.add_kernel_channel.pid;
-    TRACE("kernel: add_kernel_channel(pid=%d)", pid);
-
-    struct process *proc = table_get(&all_processes, pid);
-    if (!proc) {
-        WARN("Invalid pid #%d.", pid);
-        return ERR_INVALID_MESSAGE;
-    }
-
-    struct channel *kernel_ch = channel_create(kernel_process);
-    if (!kernel_ch) {
+static error_t handle_server_connect(struct message *m) {
+    struct channel *ch = channel_create(kernel_process);
+    if (!ch) {
         return ERR_NO_MEMORY;
     }
 
-    struct channel *user_ch = channel_create(proc);
-    if (!user_ch) {
-        channel_destroy(kernel_ch);
-        return ERR_NO_MEMORY;
-    }
-
-    channel_transfer(kernel_ch, kernel_server_ch);
-    channel_link(kernel_ch, user_ch);
-
-    m->header = PROCESS_ADD_KERNEL_CHANNEL_HEADER;
-    m->payloads.process.add_kernel_channel_reply.kernel_ch = user_ch->cid;
+    channel_transfer(ch, kernel_server_ch);
+    m->header = SERVER_CONNECT_REPLY_HEADER;
+    m->payloads.server.connect_reply.ch = ch->cid;
     return OK;
 }
 
@@ -318,19 +301,19 @@ static error_t handle_timer_clear(UNUSED struct message *m) {
 
 static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
-    case RUNTIME_EXIT_CURRENT_MSG:       return handle_runtime_exit_current(m);
-    case RUNTIME_PRINTCHAR_MSG:          return handle_runtime_printchar(m);
-    case PROCESS_CREATE_MSG:             return handle_process_create(m);
-    case PROCESS_DESTROY_MSG:            return handle_process_destroy(m);
-    case PROCESS_ADD_PAGER_MSG:          return handle_process_add_pager(m);
-    case PROCESS_SEND_CHANNEL_MSG:       return handle_process_send_channel(m);
-    case PROCESS_ADD_KERNEL_CHANNEL_MSG: return handle_process_add_kernel_channel(m);
-    case THREAD_SPAWN_MSG:               return handle_thread_spawn(m);
-    case THREAD_DESTROY_MSG:             return handle_thread_destroy(m);
-    case IO_ALLOW_IOMAPPED_IO_MSG:       return handle_io_allow_iomapped_io(m);
-    case IO_LISTEN_IRQ_MSG:              return handle_io_listen_irq(m);
-    case TIMER_SET_MSG:                  return handle_timer_set(m);
-    case TIMER_CLEAR_MSG:                return handle_timer_clear(m);
+    case RUNTIME_EXIT_CURRENT_MSG: return handle_runtime_exit_current(m);
+    case RUNTIME_PRINTCHAR_MSG:    return handle_runtime_printchar(m);
+    case PROCESS_CREATE_MSG:       return handle_process_create(m);
+    case PROCESS_DESTROY_MSG:      return handle_process_destroy(m);
+    case PROCESS_ADD_PAGER_MSG:    return handle_process_add_pager(m);
+    case PROCESS_SEND_CHANNEL_MSG: return handle_process_send_channel(m);
+    case THREAD_SPAWN_MSG:         return handle_thread_spawn(m);
+    case THREAD_DESTROY_MSG:       return handle_thread_destroy(m);
+    case IO_ALLOW_IOMAPPED_IO_MSG: return handle_io_allow_iomapped_io(m);
+    case IO_LISTEN_IRQ_MSG:        return handle_io_listen_irq(m);
+    case TIMER_SET_MSG:            return handle_timer_set(m);
+    case TIMER_CLEAR_MSG:          return handle_timer_clear(m);
+    case SERVER_CONNECT_MSG:       return handle_server_connect(m);
     }
 
     return ERR_UNEXPECTED_MESSAGE;
