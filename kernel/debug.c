@@ -2,6 +2,7 @@
 #include <debug.h>
 #include <ipc.h>
 #include <printk.h>
+#include <process.h>
 #include <thread.h>
 
 /// The symbol table. tools/link.py embeds it during the build.
@@ -270,6 +271,71 @@ static void asan_init(void) {
                   PAGE_ARENA_LEN);
 
     set_asan_enabled(true);
+}
+
+//
+//  Kernel Debugger (kdebug).
+//
+#define DPRINTK(fmt, ...) printk(COLOR_BOLD fmt COLOR_RESET, ##__VA_ARGS__)
+
+static void dump_process(struct process *proc) {
+    DPRINTK("Process #%d: %s\n", proc->pid, proc->name);
+    LIST_FOR_EACH(node, &proc->threads) {
+        struct thread *thread = LIST_CONTAINER(thread, next, node);
+        DPRINTK("  Thread %pT: \n", thread);
+
+        struct channel *send_from = thread->debug.send_from;
+        if (send_from) {
+            DPRINTK("    Sender at %pC <-> %pC => %pC\n",
+                    send_from, send_from->linked_to,
+                    send_from->linked_to->transfer_to);
+        }
+
+        struct channel *receive_from = thread->debug.receive_from;
+        if (receive_from) {
+            DPRINTK("    Receiver at %pC <-> %pC => %pC\n",
+                    receive_from, receive_from->linked_to,
+                    receive_from->linked_to->transfer_to);
+        }
+    }
+}
+static void debugger_run(const char *cmdline) {
+    if (strcmp(cmdline, "ps") == 0) {
+        LIST_FOR_EACH(node, &process_list) {
+            struct process *proc = LIST_CONTAINER(process, next, node);
+            if (proc) {
+                dump_process(proc);
+            }
+        }
+    } else {
+        WARN("Invalid debugger command: '%s'.", cmdline);
+    }
+}
+
+void debugger_oninterrupt(void) {
+    static char cmdline[128];
+    static unsigned long cursor = 0;
+    int ch;
+    while ((ch = arch_debugger_readchar()) > 0) {
+        if (ch == '\r') {
+            printk("\n");
+            cmdline[cursor] = '\0';
+            if (cursor > 0) {
+                debugger_run(cmdline);
+                cursor = 0;
+            }
+            DPRINTK("kdebug> ");
+            return;
+        } else {
+            DPRINTK("%c", ch);
+            cmdline[cursor++] = ch;
+        }
+
+        if (cursor > sizeof(cmdline) - 1) {
+            WARN("Too long kernel debugger command.");
+            cursor = 0;
+        }
+    }
 }
 
 /// Initializes the debug subsystem.

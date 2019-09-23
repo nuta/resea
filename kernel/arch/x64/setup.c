@@ -5,7 +5,7 @@
 #include <x64/apic.h>
 #include <x64/handler.h>
 #include <x64/multiboot.h>
-#include <x64/print.h>
+#include <x64/serial.h>
 #include <x64/smp.h>
 #include <x64/x64.h>
 
@@ -230,7 +230,7 @@ static void syscall_init(void) {
 
 void x64_setup(paddr_t multiboot_info_addr) {
     multiboot_info = (struct multiboot_info *) from_paddr(multiboot_info_addr);
-    x64_print_init();
+    x64_serial_early_init();
     boot();
 }
 
@@ -246,6 +246,7 @@ void arch_init(struct init_args *init_args) {
     x64_smp_init();
     x64_apic_timer_init();
     syscall_init();
+    x64_serial_init();
 }
 
 void arch_panic(void) {

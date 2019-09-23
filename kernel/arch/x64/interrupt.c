@@ -1,9 +1,11 @@
+#include <debug.h>
 #include <printk.h>
 #include <timer.h>
 #include <server.h>
 #include <x64/apic.h>
 #include <x64/interrupt.h>
 #include <x64/x64.h>
+#include <x64/serial.h>
 #include <x64/thread.h>
 
 static void print_regs(MAYBE_UNUSED struct interrupt_regs *regs) {
@@ -45,8 +47,13 @@ void x64_handle_interrupt(uint8_t vec, struct interrupt_regs *regs) {
             print_regs(regs);
             PANIC("Unhandled exception #%d", vec);
         } else if (vec >= VECTOR_IRQ_BASE) {
-            TRACE("Interrupt #%d", vec);
-            deliver_interrupt(vec - VECTOR_IRQ_BASE);
+            int irq = vec - VECTOR_IRQ_BASE;
+            if (irq == SERIAL_IRQ) {
+                debugger_oninterrupt();
+            } else {
+                TRACE("Interrupt #%d", vec);
+                deliver_interrupt(irq);
+            }
             x64_ack_interrupt();
         } else {
             print_regs(regs);

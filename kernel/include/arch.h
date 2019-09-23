@@ -52,4 +52,6 @@ static inline vaddr_t arch_get_stack_pointer(void);
 bool arch_asan_is_kernel_address(vaddr_t addr);
 void arch_asan_init(void);
 
+int arch_debugger_readchar(void);
+
 #endif

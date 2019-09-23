@@ -2,6 +2,8 @@
 #define __ARCH_TYPES_H__
 
 #include <printk.h>
+#include <x64/screen.h>
+#include <x64/serial.h>
 #include <x64/x64.h>
 
 #define KERNEL_BASE_ADDR        0xffff800000000000
@@ -178,6 +180,16 @@ static inline struct stack_frame *get_stack_frame(void) {
 
 static inline bool is_valid_page_base_addr(vaddr_t page_base) {
     return page_base != 0 && page_base < KERNEL_BASE_ADDR;
+}
+
+static inline void arch_putchar(char ch) {
+    // Insert '\r' for serial console on QEMU.
+    if (ch == '\n') {
+        x64_serial_putchar('\r');
+    }
+
+    x64_screen_putchar(ch);
+    x64_serial_putchar(ch);
 }
 
 #endif
