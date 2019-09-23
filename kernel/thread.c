@@ -57,6 +57,10 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     thread->kernel_stack = kernel_stack;
     thread->process = process;
     thread->info = thread_info;
+#ifdef DEBUG_BUILD
+    thread->debug.send_from = NULL;
+    thread->debug.receive_from = NULL;
+#endif
     spin_lock_init(&thread->lock);
     init_stack_canary(kernel_stack);
 

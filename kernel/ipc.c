@@ -230,7 +230,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct channel *linked_to;
         struct channel *dst;
         struct thread *receiver;
-
+#ifdef DEBUG_BUILD
+        current->debug.send_from = ch;
+#endif
         // Wait for a receiver thread.
         while (1) {
             flags_t flags = spin_lock_irqsave(&ch->lock);
@@ -266,6 +268,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             thread_switch();
         }
 
+#ifdef DEBUG_BUILD
+        current->debug.send_from = NULL;
+#endif
         if (!is_annoying_msg(MSG_TYPE(header))) {
             if (linked_to == dst) {
                 TRACE("send: %pC -> %pC (header=%p)",
@@ -356,6 +361,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             current->ipc_buffer = current->kernel_ipc_buffer;
         }
 
+#ifdef DEBUG_BUILD
+        current->debug.receive_from = recv_on;
+#endif
         recv_on->receiver = current;
         thread_block(current);
 
@@ -371,6 +379,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
         // Received a message or a notification.
 
+#ifdef DEBUG_BUILD
+        current->debug.receive_from = NULL;
+#endif
         // TODO: Atomic swap.
         struct message *m = current->ipc_buffer;
         m->notification = recv_on->notification;
@@ -471,8 +482,10 @@ error_t sys_ipc_fastpath(cid_t cid) {
     current->state = THREAD_BLOCKED;
     current->recv_in_kernel = false;
     receiver->state = THREAD_RUNNABLE;
-
     dst_ch->receiver = NULL;
+#ifdef DEBUG_BUILD
+    current->debug.receive_from = recv_on;
+#endif
     spin_unlock(&dst_ch->lock);
     spin_unlock(&ch->lock);
     if (ch != ch->transfer_to) {
@@ -482,6 +495,10 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // Do a direct context switch into the receiver thread. The current thread
     // is now blocked and will be resumed by another IPC.
     arch_thread_switch(current, receiver);
+
+#ifdef DEBUG_BUILD
+    current->debug.receive_from = NULL;
+#endif
 
     // TODO: Atomic swap.
     m->notification = recv_on->notification;

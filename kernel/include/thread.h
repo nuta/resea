@@ -68,6 +68,17 @@ struct thread {
     struct list_head queue_elem;
     /// Next thread in the process.
     struct list_head next;
+#ifdef DEBUG_BUILD
+    /// Fields used for debugging.
+    struct {
+        /// The channel at which the thread is being blocked in the IPC send
+        /// phase. It can be NULL.
+        struct channel *send_from;
+        /// The channel at which the thread is being blocked in the IPC receive
+        /// phase. It can be NULL.
+        struct channel *receive_from;
+    } debug;
+#endif
 };
 
 void thread_init(void);
