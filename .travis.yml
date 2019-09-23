@@ -33,5 +33,6 @@ install:
 
 script:
   - ./tools/buildconfig.py default STARTUPS=kernel-test APPS=
+  - make info
   - make -j2
   - make run
