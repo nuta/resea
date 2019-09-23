@@ -127,6 +127,18 @@ static inline char *strcpy(char *dst, size_t dst_len, const char *src) {
     return dst;
 }
 
+static inline int strcmp(const char *s1, const char *s2) {
+    ASSERT(s1 != NULL && "s1 NULL");
+    ASSERT(s2 != NULL && "s2 NULL");
+
+    while (*s1 != '\0' && *s2 != '\0' && *s1 == *s2) {
+        s1++;
+        s2++;
+    }
+
+    return *s1 - *s2;
+}
+
 static inline void arch_idle(void) {
     // Wait for an interrupt.
     __asm__ __volatile__("sti;hlt");

@@ -41,6 +41,7 @@ flags_t spin_lock_irqsave(spinlock_t *lock);
 void spin_unlock_irqrestore(spinlock_t *lock, flags_t flags);
 
 char *strcpy(char *dst, size_t dst_len, const char *src);
+int strcmp(const char *s1, const char *s2);
 
 // ASan requries memset/memcpy to be compatible with the C standard library. We
 // prepend "inlined_" to avoid the issue.
