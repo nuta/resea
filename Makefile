@@ -17,6 +17,7 @@ load_config := y
 ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
 load_config :=
 endif
+# The default target (build) needs ".config".
 ifeq ($(MAKECMDGOALS),)
 load_config := y
 endif
