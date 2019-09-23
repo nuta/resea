@@ -166,6 +166,6 @@ void thread_init(void) {
     struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0, 0);
     set_current_thread(idle_thread);
     CPUVAR->idle_thread = idle_thread;
-    timer_create(TIMER_INTERVAL, THREAD_SWITCH_INTERVAL,
+    timer_create(THREAD_SWITCH_INTERVAL, THREAD_SWITCH_INTERVAL,
                  thread_switch_by_timeout, NULL);
 }

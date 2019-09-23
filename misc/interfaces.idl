@@ -45,13 +45,9 @@ interface thread {
 interface timer {
     type timer_id = int32
     [id(1), type(call)]
-    set_timeout(ch: channel, msec: int32) -> (timer: timer_id)
+    set(ch: channel, initial: int32, interval: int32) -> (timer: timer_id)
     [id(2), type(call)]
-    clear_timeout(timer: timer_id) -> ()
-    [id(3), type(call)]
-    set_interval(ch: channel, msec: int32) -> (timer: timer_id)
-    [id(4), type(call)]
-    clear_interval(timer: timer_id) -> ()
+    clear(timer: timer_id) -> ()
 }
 
 [id(9)]

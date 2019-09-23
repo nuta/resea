@@ -25,7 +25,7 @@ void timer_interrupt_handler(int ticks) {
     }
 }
 
-struct timer *timer_create(enum timer_type type, int msec,
+struct timer *timer_create(int initial, int interval,
                            void (*handler)(struct timer *), void *arg) {
     int timer_id = table_alloc(&timers);
     if (!timer_id) {
@@ -38,10 +38,11 @@ struct timer *timer_create(enum timer_type type, int msec,
         return NULL;
     }
 
-    TRACE("timer_create: type=%d, msec=%d", type, msec, timer_id);
+    TRACE("timer_create: id=%d initial=%d, intrerval=%d",
+          timer_id, initial, interval);
     timer->id = timer_id;
-    timer->current = msec;
-    timer->interval = (type == TIMER_INTERVAL) ? msec : 0;
+    timer->current = initial;
+    timer->interval = interval;
     timer->handler = handler;
     timer->arg = arg;
     list_push_back(&active_timers, &timer->next);

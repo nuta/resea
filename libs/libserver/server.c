@@ -46,7 +46,7 @@ error_t server_mainloop_with_deferred(cid_t ch,
                 cid_t timer_server = 1;
                 TRACE("Retrying deferred work in 500 milliseconds...");
                 int timer_id;
-                call_timer_set_timeout(timer_server, timer_ch, 500, &timer_id);
+                call_timer_set(timer_server, timer_ch, 500, 0, &timer_id);
             } else {
                 TRY(err);
             }
