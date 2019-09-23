@@ -52,8 +52,6 @@ interface timer {
 
 [id(9)]
 interface kernel {
-    [id(1), type(call)]
-    exit_kernel_test() -> ()
 }
 
 [id(10)]

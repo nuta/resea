@@ -261,11 +261,6 @@ static error_t handle_process_send_channel_to_process(struct message *m) {
     return OK;
 }
 
-NORETURN static void handle_kernel_exit_kernel_test(UNUSED struct message *m) {
-    INFO("Power off");
-    arch_poweroff();
-}
-
 static void free_user_timer(struct timer *timer) {
     // channel_destroy(timer->arg);
     table_free(&user_timers, timer->id);
@@ -337,9 +332,8 @@ static error_t process_message(struct message *m) {
     case IO_LISTEN_IRQ_MSG:              return handle_io_listen_irq(m);
     case TIMER_SET_MSG:                  return handle_timer_set(m);
     case TIMER_CLEAR_MSG:                return handle_timer_clear(m);
-    case KERNEL_EXIT_KERNEL_TEST_MSG:
-        handle_kernel_exit_kernel_test(m);
     }
+
     return ERR_UNEXPECTED_MESSAGE;
 }
 

@@ -68,12 +68,6 @@ static error_t handle_runtime_printchar(struct message *m) {
     return OK;
 }
 
-static void handle_kernel_exit_kernel_test(UNUSED struct message *m) {
-    // Forward to the kernel sever.
-    call_kernel_exit_kernel_test(kernel_ch);
-    UNREACHABLE;
-}
-
 static error_t handle_memmgr_benchmark_nop(struct message *m) {
     m->header = MEMMGR_BENCHMARK_NOP_REPLY_HEADER;
     return OK;
@@ -286,11 +280,6 @@ static error_t process_message(struct message *m) {
 
     case RUNTIME_EXIT_CURRENT_MSG: return handle_runtime_exit_current(m);
     case RUNTIME_PRINTCHAR_MSG: return handle_runtime_printchar(m);
-
-    // FIXME: Remove from memmgr.
-    case KERNEL_EXIT_KERNEL_TEST_MSG:
-        handle_kernel_exit_kernel_test(m);
-        break;
 
     //
     //  Discovery

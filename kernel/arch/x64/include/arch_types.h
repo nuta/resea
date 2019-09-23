@@ -95,18 +95,6 @@ static inline struct thread *get_current_thread(void) {
     return thread;
 }
 
-NORETURN static inline void arch_poweroff(void) {
-    // Try a QEMU-specific port to exit the emulator.
-    __asm__ __volatile__("outw %%ax, %%dx" :: "a"(0x2000), "d"(0x604));
-
-    // Wait for a while.
-    for(volatile int i = 0; i < 0x10000; i++);
-
-    PANIC("failed to power off");
-    // Unreachable for loop to supress a compiler warning.
-    for(;;);
-}
-
 static inline void *inlined_memset(void *dst, int ch, size_t len) {
     __asm__ __volatile__("cld; rep stosb" ::"D"(dst), "a"(ch), "c"(len));
     return dst;
