@@ -15,7 +15,7 @@ Road Map
 - [x] Kernel for x86_64
 - [x] IPC benchmark app
 - [ ] **`memmgr`:** the user-level memory management server **(WIP)**
-- [ ] GUI server
+- [ ] GUI server **(WIP)**
 - [ ] SMP support
 - [ ] **`drvmgr`:** the device driver management server
 - [ ] **`fsmgr`:** the file system management server
