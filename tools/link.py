@@ -25,7 +25,7 @@ def analyze_stack_sizes(objcopy, nm, file):
     with tempfile.TemporaryDirectory() as tempdir:
         stack_file = tempdir + "/stack_sizes.bin"
 
-        subprocess.run([objcopy, "--dump-section", f".stack_sizes={stack_file}", file])
+        subprocess.check_call([objcopy, "--dump-section", f".stack_sizes={stack_file}", file])
         nm_output = subprocess.check_output([nm, "--demangle", file], text=True)
         functions = {}
         for line in nm_output.splitlines():
@@ -82,7 +82,7 @@ __symtable:
     PTR     ({hex(symtable_addr)} + HEADER_SIZE)  // symbols
     PTR     ({hex(symtable_addr)} + HEADER_SIZE + SIZEOF_SYMBOL * {len(symbols)}) // strbuf
 """
-    
+
     symtable += "// struct symbol symbols[]\n"
     offset = 0
     for addr, name in symbols:
@@ -124,7 +124,7 @@ def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs
         ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/__symtable.S"])
     subprocess.check_call([ld] + shlex.split(ldflags) + \
         ["-o", stage1, f"{build_dir}/__symtable.o"] + objs)
-    
+
 	# Link stage 2: Embed the generated symtable into the executable.
 	#               Symbol offsets may be changed (that is, the symtable is
 	#               not correct) in this stage since the size of the
@@ -134,7 +134,7 @@ def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs
         ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/__symtable.S"])
     subprocess.check_call([ld] + shlex.split(ldflags) + \
         ["-o", stage2, f"{build_dir}/__symtable.o"] + objs)
-    
+
 	# Link stage 3: Embed re-generated symtable into the executable again
 	#               because symbol offsets may be changed by embedding the
 	#               symtable in the stage 2. Here we assume that the linker
