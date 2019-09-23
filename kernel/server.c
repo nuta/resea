@@ -9,6 +9,9 @@
 #include <types.h>
 
 struct channel *kernel_server_ch = NULL;
+static struct table user_timers;
+static struct table irq_listeners;
+static struct list_head active_irq_listeners;
 
 static struct process *get_sender_process(cid_t from) {
     // Resolves the sender thread.
@@ -126,13 +129,13 @@ static error_t handle_process_add_pager(struct message *m) {
 
     struct process *proc = table_get(&all_processes, pid);
     if (!proc) {
-        WARN("invalid proc");
+        WARN("Invalid pid #%d.", pid);
         return ERR_INVALID_MESSAGE;
     }
 
     struct channel *pager_ch = table_get(&proc->channels, pager);
     if (!pager_ch) {
-        WARN("invalid pger_ch %d", pager);
+        WARN("Invalid pager_ch @%d.", pager);
         process_destroy(proc);
         return ERR_INVALID_MESSAGE;
     }
@@ -140,7 +143,7 @@ static error_t handle_process_add_pager(struct message *m) {
     error_t err = vmarea_add(proc, start, start + size, user_pager, pager_ch,
                              flags | PAGE_USER);
     if (err != OK) {
-        WARN("failed to add a vm area: %d", err);
+        WARN("Failed to add a vm area: %vE.", err);
         process_destroy(proc);
         return err;
     }
@@ -157,19 +160,20 @@ static error_t handle_process_add_kernel_channel(struct message *m) {
 
     struct process *proc = table_get(&all_processes, pid);
     if (!proc) {
-        WARN("invalid pid");
+        WARN("Invalid pid #%d.", pid);
         return ERR_INVALID_MESSAGE;
     }
 
 
     struct channel *kernel_ch = channel_create(kernel_process);
     if (!kernel_ch) {
-        PANIC("failed to create a channel");
+        return ERR_NO_MEMORY;
     }
 
     struct channel *user_ch = channel_create(proc);
     if (!user_ch) {
-        PANIC("failed to create a channel");
+        channel_destroy(kernel_ch);
+        return ERR_NO_MEMORY;
     }
 
     channel_transfer(kernel_ch, kernel_server_ch);
@@ -180,18 +184,11 @@ static error_t handle_process_add_kernel_channel(struct message *m) {
     return OK;
 }
 
-struct irq_listener {
-    uint8_t irq;
-    struct channel *ch;
-};
-
-#define IRQ_LISTENERS_MAX 32
-static struct irq_listener irq_listeners[IRQ_LISTENERS_MAX];
-
 void deliver_interrupt(uint8_t irq) {
-    for (int i = 0; i < IRQ_LISTENERS_MAX; i++) {
-        if (irq_listeners[i].irq == irq && irq_listeners[i].ch) {
-            channel_notify(irq_listeners[i].ch, NOTIFY_INTERRUPT);
+    LIST_FOR_EACH(e, &active_irq_listeners) {
+        struct irq_listener *listener = LIST_CONTAINER(irq_listener, next, e);
+        if (listener->irq == irq) {
+            channel_notify(listener->ch, NOTIFY_INTERRUPT);
         }
     }
 }
@@ -205,17 +202,25 @@ static error_t handle_io_listen_irq(struct message *m) {
 
     TRACE("kernel: listen_irq(ch=%pC, irq=%d)", ch, irq);
 
-    for (int i = 0; i < IRQ_LISTENERS_MAX; i++) {
-        if (irq_listeners[i].ch == NULL) {
-            irq_listeners[i].irq = irq;
-            irq_listeners[i].ch = ch;
-            enable_irq(irq);
-            return OK;
-        }
+    int id = table_alloc(&irq_listeners);
+    if (!id) {
+        return ERR_NO_MEMORY;
     }
 
+    struct irq_listener *listener = kmalloc(&small_arena);
+    if (!listener) {
+        table_free(&irq_listeners, id);
+        return ERR_NO_MEMORY;
+    }
+
+    listener->irq = irq;
+    listener->ch  = ch;
+    table_set(&irq_listeners, id, listener);
+    list_push_back(&active_irq_listeners, &listener->next);
+    enable_irq(irq);
+
     m->header = IO_LISTEN_IRQ_REPLY_HEADER;
-    return ERR_NO_MEMORY;
+    return OK;
 }
 
 static error_t handle_io_allow_iomapped_io(struct message *m) {
@@ -238,7 +243,7 @@ static error_t handle_process_send_channel_to_process(struct message *m) {
 
     struct process *proc = table_get(&all_processes, pid);
     if (!proc) {
-        WARN("invalid proc");
+        WARN("Invalid pid #%d.", pid);
         return ERR_INVALID_MESSAGE;
     }
 
@@ -260,8 +265,6 @@ NORETURN static void handle_kernel_exit_kernel_test(UNUSED struct message *m) {
     INFO("Power off");
     arch_poweroff();
 }
-
-static struct table user_timers;
 
 static void free_user_timer(struct timer *timer) {
     // channel_destroy(timer->arg);
@@ -292,6 +295,7 @@ static error_t create_user_timer(cid_t cid, enum timer_type type, int msec,
         return ERR_NO_MEMORY;
     }
 
+    table_set(&user_timers, id, timer);
     channel_incref(ch);
     *timer_id = id;
 
@@ -381,13 +385,9 @@ NORETURN static void mainloop(cid_t server_ch) {
 /// The kernel server thread entrypoint.
 static void kernel_server_main(void) {
     ASSERT(CURRENT->process == kernel_process);
-
     table_init(&user_timers);
-
-    for (int i = 0; i < IRQ_LISTENERS_MAX; i++) {
-        irq_listeners[i].ch = NULL;
-    }
-
+    table_init(&irq_listeners);
+    list_init(&active_irq_listeners);
     mainloop(kernel_server_ch->cid);
 }
 
