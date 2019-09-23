@@ -164,7 +164,6 @@ static error_t handle_process_add_kernel_channel(struct message *m) {
         return ERR_INVALID_MESSAGE;
     }
 
-
     struct channel *kernel_ch = channel_create(kernel_process);
     if (!kernel_ch) {
         return ERR_NO_MEMORY;
