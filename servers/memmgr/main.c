@@ -277,7 +277,21 @@ static error_t deferred_work(void) {
 static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
     case NOTIFICATION_MSG: return ERR_DONT_REPLY;
+    //
+    //  Memmgr
+    //
+    case MEMMGR_BENCHMARK_NOP_MSG:   return handle_memmgr_benchmark_nop(m);
+    case MEMMGR_ALLOC_PAGES_MSG:     return handle_memmgr_alloc_pages(m);
+    case MEMMGR_GET_FRAMEBUFFER_MSG: return handle_memmgr_get_framebuffer(m);
 
+    //
+    //  Pager for the startup servers.
+    //
+    case PAGER_FILL_MSG: return handle_pager_fill(m);
+
+    //
+    //  Runtime interface for the startup servers.
+    //
     case RUNTIME_EXIT_CURRENT_MSG: return handle_runtime_exit_current(m);
     case RUNTIME_PRINTCHAR_MSG: return handle_runtime_printchar(m);
 
@@ -294,15 +308,6 @@ static error_t process_message(struct message *m) {
     case FS_OPEN_MSG: return handle_fs_open(m);
     // TODO: case FS_CLOSE_MSG: return handle_fs_close(m);
     case FS_READ_MSG: return handle_fs_read(m);
-
-    case PAGER_FILL_MSG: return handle_pager_fill(m);
-
-    //
-    //  Memmgr
-    //
-    case MEMMGR_BENCHMARK_NOP_MSG: return handle_memmgr_benchmark_nop(m);
-    case MEMMGR_ALLOC_PAGES_MSG: return handle_memmgr_alloc_pages(m);
-    case MEMMGR_GET_FRAMEBUFFER_MSG: return handle_memmgr_get_framebuffer(m);
     }
 
     return ERR_UNEXPECTED_MESSAGE;
