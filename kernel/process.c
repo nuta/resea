@@ -7,6 +7,7 @@
 
 /// The process/thread table.
 struct table all_processes;
+struct list_head process_list;
 /// The kernel process.
 struct process *kernel_process;
 
@@ -37,6 +38,7 @@ struct process *process_create(const char *name) {
     page_table_init(&proc->page_table);
 
     table_set(&all_processes, pid, (void *) proc);
+    list_push_back(&process_list, &proc->next);
 
     TRACE("new process: pid=%d, name=%s", pid, &proc->name);
     return proc;
@@ -69,6 +71,7 @@ error_t vmarea_add(struct process *process, vaddr_t start, vaddr_t end,
 
 /// Initializes the process subsystem.
 void process_init(void) {
+    list_init(&process_list);
     if (table_init(&all_processes) != OK) {
         PANIC("failed to initialize all_processes");
     }

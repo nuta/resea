@@ -14,6 +14,8 @@
 struct process {
     /// The process lock.
     spinlock_t lock;
+    /// The list element used for `process_list`.
+    struct list_head next;
     /// The process ID.
     pid_t pid;
     /// The process name for humans. The kernel does not care about the
@@ -90,6 +92,7 @@ struct channel {
 
 extern struct process *kernel_process;
 extern struct table all_processes;
+extern struct list_head process_list;
 
 void process_init(void);
 struct process *process_create(const char *name);
