@@ -19,9 +19,9 @@ addons:
       - i386-elf-grub
   apt:
     packages:
-      - llvm
-      - lld
-      - clang
+      - llvm-8
+      - lld-8
+      - clang-8
       - qemu
       - mtools
       - grub2
