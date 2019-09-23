@@ -12,7 +12,7 @@ struct zone {
     size_t remaining_bytes;
 };
 
-uintptr_t do_alloc_pages(int order);
+uintptr_t alloc_pages(int order);
 struct memory_map;
 void init_alloc_pages(struct memory_map *memory_maps, int num_memory_maps);
 

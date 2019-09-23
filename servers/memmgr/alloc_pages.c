@@ -9,7 +9,7 @@ static int num_zones;
 
 /// Allocates 2^order pages.
 /// TODO: Implement Buddy sysytem or something sophisicated.
-uintptr_t do_alloc_pages(int order) {
+uintptr_t alloc_pages(int order) {
     size_t len = PAGE_SIZE * POW2(order);
     for (int i = 0; i < num_zones; i++) {
         if (len < zones[i].remaining_bytes) {
