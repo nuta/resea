@@ -2,6 +2,7 @@
 #define __TYPES_H__
 
 #define offsetof(type, field) __builtin_offsetof(type, field)
+#define is_constant(expr) __builtin_constant_p(expr)
 #define va_list __builtin_va_list
 #define va_start(ap, param) __builtin_va_start(ap, param)
 #define va_end(ap) __builtin_va_end(ap)
