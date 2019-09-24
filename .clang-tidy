@@ -1,2 +1,15 @@
-Checks: '-*,clang-analyzer-*'
+Checks: '
+    -*,
+    bugprone-*,
+    -bugprone-macro-parentheses,
+    clang-analyzer-*,
+    -clang-analyzer-unix.*,
+    -clang-analyzer-valist.Uninitialized,
+    performance-*,
+    readability-*,
+    -readability-magic-numbers,
+    -readability-redundant-declaration,
+    -readability-non-const-parameter,
+    -readability-isolate-declaration,
+'
 CheckOptions:
