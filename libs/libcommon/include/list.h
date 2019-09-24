@@ -26,10 +26,17 @@ static inline void list_insert(
     prev->next = new;
 }
 
+
 // Initializes a list.
 static inline void list_init(struct list_head *list) {
     list->prev = list;
     list->next = list;
+}
+
+// Removes a element from the list.
+static inline void list_remove(struct list_head *to_remove) {
+    to_remove->prev->next = to_remove->next;
+    to_remove->next->prev = to_remove->prev;
 }
 
 // Appends a element into the list.
