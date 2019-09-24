@@ -36,10 +36,10 @@ static const char *find_symbol(vaddr_t vaddr, size_t *offset) {
     if (l == -1) {
         *offset = 0;
         return "(invalid address)";
-    } else {
-        *offset = vaddr - __symtable.symbols[l].addr;
-        return &__symtable.strbuf[__symtable.symbols[l].offset];
     }
+
+    *offset = vaddr - __symtable.symbols[l].addr;
+    return &__symtable.strbuf[__symtable.symbols[l].offset];
 }
 
 /// Prints the stack trace.
@@ -101,10 +101,11 @@ static void report_ubsan_event(const char *event) {
 
 // TODO: Parse type_mismatch_data_v1
 void __ubsan_handle_type_mismatch_v1(UNUSED void *data, vaddr_t ptr) {
-    if (ptr)
+    if (ptr) {
         report_ubsan_event("type_mismatch");
-    else
+    } else {
         report_ubsan_event("NULL pointer dereference");
+    }
 }
 
 void __ubsan_handle_add_overflow() {
@@ -325,11 +326,11 @@ void debugger_oninterrupt(void) {
                 cursor = 0;
             }
             DPRINTK("kdebug> ");
-            return;
-        } else {
-            DPRINTK("%c", ch);
-            cmdline[cursor++] = ch;
+            continue;
         }
+
+        DPRINTK("%c", ch);
+        cmdline[cursor++] = (char) ch;
 
         if (cursor > sizeof(cmdline) - 1) {
             WARN("Too long kernel debugger command.");

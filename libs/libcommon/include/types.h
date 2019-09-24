@@ -18,7 +18,7 @@
 #define atomic_compare_and_swap __sync_bool_compare_and_swap
 #define POW2(order) (1 << (order))
 #define ALIGN_DOWN(value, align) ((value) & ~((align) - 1))
-#define ALIGN_UP(value, align) ALIGN_DOWN(value + align - 1, align)
+#define ALIGN_UP(value, align) ALIGN_DOWN((value) + (align) - 1, align)
 #define MAX(a, b)                \
     ({                           \
         __typeof__(a) __a = (a); \

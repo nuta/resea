@@ -13,10 +13,10 @@
 #define SYSCALL_TRANSFER 4
 #define SYSCALL_NOTIFY 5
 
-#define IPC_SEND (1ull << 8)
-#define IPC_RECV (1ull << 9)
-#define IPC_NOBLOCK (1ull << 10)
-#define IPC_FROM_KERNEL (1ull << 11)
+#define IPC_SEND (1ULL << 8)
+#define IPC_RECV (1ULL << 9)
+#define IPC_NOBLOCK (1ULL << 10)
+#define IPC_FROM_KERNEL (1ULL << 11)
 #define SYSCALL_TYPE(syscall_id) ((syscall_id) &0xff)
 
 //
@@ -25,10 +25,10 @@
 typedef uint32_t header_t;
 #define MSG_INLINE_LEN_OFFSET 0
 #define MSG_TYPE_OFFSET 16
-#define MSG_PAGE_PAYLOAD (1ull << 11)
-#define MSG_CHANNEL_PAYLOAD (1ull << 12)
+#define MSG_PAGE_PAYLOAD (1ULL << 11)
+#define MSG_CHANNEL_PAYLOAD (1ULL << 12)
 #define INLINE_PAYLOAD_LEN(header) (((header) >> MSG_INLINE_LEN_OFFSET) & 0x7ff)
-#define PAGE_PAYLOAD_ADDR(page) ((page) & 0xfffffffffffff000ull)
+#define PAGE_PAYLOAD_ADDR(page) ((page) & 0xfffffffffffff000ULL)
 #define MSG_TYPE(header) (((header) >> MSG_TYPE_OFFSET) & 0xffff)
 #define INTERFACE_ID(header) (MSG_TYPE(header) >> 8)
 #define INLINE_PAYLOAD_LEN_MAX 480
