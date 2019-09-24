@@ -34,31 +34,6 @@ void backtrace(void);
 void exit(int status);
 void try_or_panic(error_t err, const char *file, int lineno);
 
-#define TRY_OR_PANIC(err) try_or_panic(err, __FILE__, __LINE__)
-#define TRY(expr) do {                                                         \
-        error_t __err = expr;                                                  \
-        if (__err != OK) {                                                     \
-            return __err;                                                      \
-        }                                                                      \
-    } while (0)
-#define TRY_OR_OOPS(expr) do {                                                 \
-        error_t __err = expr;                                                  \
-        if (__err != OK) {                                                     \
-            OOPS("An error occurred: %vE", __err);                             \
-            return __err;                                                      \
-        }                                                                      \
-    } while (0)
-
-#define assert(expr)                                                           \
-    do {                                                                       \
-        if (!(expr)) {                                                         \
-            printf(COLOR_BOLD_RED "ASSERTION FAILURE: " #expr "\n"             \
-                   COLOR_RESET);                                               \
-            backtrace();                                                       \
-            exit(1);                                                           \
-        }                                                                      \
-    } while (0)
-
 const char *__program_name(void);
 #define PROGRAM_NAME  __program_name()
 
@@ -101,5 +76,30 @@ const char *__program_name(void);
     } while (0)
 
 #define UNIMPLEMENTED() ERROR("not yet implemented: %s:%d", __FILE__, __LINE__)
+
+#define TRY_OR_PANIC(err) try_or_panic(err, __FILE__, __LINE__)
+#define TRY(expr) do {                                                         \
+        error_t __err = expr;                                                  \
+        if (__err != OK) {                                                     \
+            return __err;                                                      \
+        }                                                                      \
+    } while (0)
+#define TRY_OR_OOPS(expr) do {                                                 \
+        error_t __err = expr;                                                  \
+        if (__err != OK) {                                                     \
+            OOPS("An error occurred: %vE", __err);                             \
+            return __err;                                                      \
+        }                                                                      \
+    } while (0)
+
+#define assert(expr)                                                           \
+    do {                                                                       \
+        if (!(expr)) {                                                         \
+            printf(COLOR_BOLD_RED "[%s] ASSERTION FAILURE: " #expr "\n"        \
+                   COLOR_RESET, PROGRAM_NAME);                                 \
+            backtrace();                                                       \
+            exit(1);                                                           \
+        }                                                                      \
+    } while (0)
 
 #endif
