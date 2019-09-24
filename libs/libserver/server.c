@@ -15,7 +15,7 @@ error_t server_mainloop_with_deferred(cid_t ch,
     while (1) {
         // Receive a message from a client.
         TRY(ipc_recv(ch, &m));
-        if (m.notification & NOTIFY_TIMER) {
+        if (m.notification & NOTIFY_TIMER && deferred_work) {
             deferred_work();
             if (m.header == NOTIFICATION_MSG && m.notification == NOTIFY_TIMER) {
                 continue;
