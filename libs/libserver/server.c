@@ -15,19 +15,21 @@ error_t server_mainloop_with_deferred(cid_t ch,
     while (1) {
         // Receive a message from a client.
         TRY(ipc_recv(ch, &m));
+
+        // Run the deferred work on a timer event.
         if (m.notification & NOTIFY_TIMER && deferred_work) {
             deferred_work();
-            if (m.header == NOTIFICATION_MSG && m.notification == NOTIFY_TIMER) {
-                continue;
-            }
         }
+
         // Do work and fill a reply message into `m`.
         error_t err = process(&m);
+
         // Warn if the handler returned ERR_UNEXPECTED_MESSAGE since it is
         // likely that the handler simply does not yet implement it.
         if (err == ERR_UNEXPECTED_MESSAGE) {
             WARN("unexpected message type: %x", MSG_TYPE(m.header));
         }
+
         // If the handler returned ERR_DONT_REPLY, we don't reply.
         if (err != ERR_DONT_REPLY) {
             // If the handler returned an error, reply an error message.
@@ -37,6 +39,7 @@ error_t server_mainloop_with_deferred(cid_t ch,
             // Send the reply message.
             TRY(ipc_send(m.from, &m));
         }
+
         // Do the deferred work if specified.
         if (deferred_work) {
             err = deferred_work();
