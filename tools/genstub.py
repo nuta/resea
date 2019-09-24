@@ -225,8 +225,9 @@ static inline error_t call_{{ msg.canon_name }}({{ msg | call_params }}) {
     set_page_base({{ msg.rets.page.name }}_base);
 {%- endif %}
     error_t err;
-    if ((err = ipc_call(__ch, &m, &m)) != OK)
+    if ((err = ipc_call(__ch, &m, &m)) != OK) {
         return err;
+    }
 {%- for field in msg.rets.inlines %}
 {%- if field.type == "smallstring" %}
     strcpy_s((char *) {{ field.name }}, SMALLSTRING_LEN_MAX, &m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ field.name }});
@@ -341,6 +342,7 @@ TEMPLATE = f"""\
 #ifndef __RESEA_IDL_H__
 #define __RESEA_IDL_H__
 
+#include <types.h>
 #include <message.h>
 
 // Declare internally-used functions instead of including somewhat large header

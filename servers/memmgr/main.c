@@ -19,8 +19,9 @@ static error_t handle_pager_fill(struct message *m) {
     uintptr_t addr = m->payloads.pager.fill.addr;
 
     uintptr_t alloced_addr;
-    if ((alloced_addr = alloc_pages(0)) == 0)
+    if ((alloced_addr = alloc_pages(0)) == 0) {
         return ERR_NO_MEMORY;
+    }
 
     struct process *proc = get_process_by_pid(pid);
     assert(proc);

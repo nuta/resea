@@ -3,7 +3,8 @@
 #include <x64/x64.h>
 
 void x64_serial_putchar(char ch) {
-    while ((asm_in8(IOPORT_SERIAL + LSR) & TX_READY) == 0);
+    // Wait until the serial port gets ready.
+    while ((asm_in8(IOPORT_SERIAL + LSR) & TX_READY) == 0) {}
     asm_out8(IOPORT_SERIAL, ch);
 }
 

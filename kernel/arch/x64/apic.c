@@ -11,14 +11,11 @@
 #define APIC_TIMER_DIV 0x03
 
 static inline uint32_t x64_read_apic(paddr_t addr) {
-
     return *((volatile uint32_t *) from_paddr(addr));
 }
 
 static inline void x64_write_apic(paddr_t addr, uint32_t data) {
-
     *((volatile uint32_t *) from_paddr(addr)) = data;
-    return;
 }
 
 static uint32_t ioapic_read(uint8_t reg) {

@@ -29,10 +29,10 @@ static const char *find_symbol(uintptr_t vaddr, size_t *offset) {
     if (l == -1) {
         *offset = 0;
         return "(invalid address)";
-    } else {
-        *offset = vaddr - __symtable.symbols[l].addr;
-        return &__symtable.strbuf[__symtable.symbols[l].offset];
     }
+
+    *offset = vaddr - __symtable.symbols[l].addr;
+    return &__symtable.strbuf[__symtable.symbols[l].offset];
 }
 
 /// These symbols will be added by the linker.

@@ -18,8 +18,8 @@
 #define CPUID_VENDOR_INTEL_EBX 0x756e6547
 #define CPUID_VENDOR_INTEL_ECX 0x6c65746e
 #define CPUID_VENDOR_INTEL_EDX 0x49656e69
-#define CPUID_FEATURES_ECX_XSAVE (1ul << 26)
-#define CPUID_EXT_FEATURES_EBX_FSGSBASE (1ul << 0)
+#define CPUID_FEATURES_ECX_XSAVE (1UL << 26)
+#define CPUID_EXT_FEATURES_EBX_FSGSBASE (1UL << 0)
 
 /// Defined in boot.S
 extern paddr_t multiboot_info_addr;

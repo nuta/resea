@@ -56,7 +56,7 @@ void poweroff(void) {
     ERROR("Failed to power off.");
 
     // Unreachable for loop to supress a compiler warning.
-    for(;;);
+    for(;;) {}
 }
 
 void main(void) {
