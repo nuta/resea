@@ -47,7 +47,7 @@ void printk(const char *fmt, ...);
     } while (0)
 
 #define UNIMPLEMENTED() \
-    PANIC("[kernel] not yet implemented: %s:%d", __FILE__, __LINE__)
+    PANIC("Not yet implemented: %s:%d", __FILE__, __LINE__)
 
 #define ASSERT(expr)                                             \
     do {                                                         \
