@@ -75,7 +75,7 @@ static void parse_multiboot_info(struct init_args *init_args) {
         }
 
         init_args->memory_maps[j].start = MAX(start, STRAIGHT_MAP_ADDR);
-        init_args->memory_maps[j].end = end;
+        init_args->memory_maps[j].end = MIN(end, 0x10000000 /*FIXME: ASan shadow memory */);
         init_args->memory_maps[j].type = type;
         j++;
     }
