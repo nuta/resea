@@ -32,7 +32,7 @@ struct timer *timer_create(int initial, int interval,
         return NULL;
     }
 
-    struct timer *timer = kmalloc(&small_arena);
+    struct timer *timer = KMALLOC(&small_arena, sizeof(struct timer));
     if (!timer) {
         table_free(&timers, timer_id);
         return NULL;

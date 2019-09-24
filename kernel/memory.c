@@ -7,26 +7,6 @@
 #include <table.h>
 #include <thread.h>
 
-/// A memory pool.
-struct arena {
-    spinlock_t lock;
-    /// The memory pool buffer.
-    vaddr_t elements;
-    /// The size of the buffer.
-    size_t element_size;
-    /// The miximum number of elements.
-    size_t elements_max;
-    /// The number of allocated (in use) elements.
-    size_t elements_used;
-    /// The list of unused elements.
-    struct list_head free_list;
-};
-
-/// Unused element.
-struct freed_element {
-    struct list_head next;
-};
-
 /// The PAGE_SIZE-sized memory pool.
 struct arena page_arena;
 /// The memory pool for small objects.
@@ -43,8 +23,8 @@ void arena_init(struct arena *arena, vaddr_t addr, size_t arena_size,
     list_init(&arena->free_list);
 }
 
-/// Allocates a memory.
-void *kmalloc(struct arena *arena) {
+/// Allocates a memory. Don't use this directly; use KMALLOC() macro.
+void *kmalloc_from(struct arena *arena) {
     flags_t flags = spin_lock_irqsave(&arena->lock);
 
     if (arena->elements_used < arena->elements_max) {

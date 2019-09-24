@@ -9,7 +9,7 @@
 #define ENTRY_PADDR(entry) ((entry) &0x7ffffffffffff000)
 
 void page_table_init(struct page_table *pt) {
-    void *pml4 = kmalloc(&page_arena);
+    void *pml4 = KMALLOC(&page_arena, PAGE_SIZE);
     inlined_memcpy(pml4, from_paddr(KERNEL_PML4_PADDR), PAGE_SIZE);
     asan_init_area(ASAN_VALID, pml4, PAGE_SIZE);
     pt->pml4 = (paddr_t) into_paddr(pml4);
@@ -31,7 +31,7 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
             int index = NTH_LEVEL_INDEX(level, vaddr);
             if (!table[index]) {
                 /* The PDPT, PD or PT is not allocated. Allocate it. */
-                void *page = kmalloc(&page_arena);
+                void *page = KMALLOC(&page_arena, PAGE_SIZE);
                 if (!page) {
                     PANIC("failed to allocate a page for a page table");
                 }

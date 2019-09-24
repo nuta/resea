@@ -20,27 +20,26 @@ struct thread *thread_create(struct process *process, vaddr_t start,
         return NULL;
     }
 
-    struct thread *thread = kmalloc(&page_arena);
+    struct thread *thread = KMALLOC(&small_arena, sizeof(struct thread));
     if (!thread) {
         return NULL;
     }
 
-    vaddr_t kernel_stack = (vaddr_t) kmalloc(&page_arena);
+    vaddr_t kernel_stack = (vaddr_t) KMALLOC(&page_arena, PAGE_SIZE);
     if (!kernel_stack) {
         kfree(&small_arena, thread);
         return NULL;
     }
 
-    struct thread_info *thread_info =
-        (struct thread_info *) kmalloc(&page_arena);
+    struct thread_info *thread_info = KMALLOC(&page_arena, PAGE_SIZE);
     if (!thread_info) {
         kfree(&small_arena, thread);
         kfree(&page_arena, (void *) kernel_stack);
         return NULL;
     }
 
-    struct message *kernel_ipc_buffer =
-        (struct message *) kmalloc(&page_arena);
+    struct message *kernel_ipc_buffer = KMALLOC(&page_arena,
+                                                sizeof(struct message));
     if (!kernel_ipc_buffer) {
         kfree(&small_arena, thread);
         kfree(&page_arena, (void *) kernel_stack);

@@ -189,7 +189,8 @@ static error_t handle_io_listen_irq(struct message *m) {
         return ERR_NO_MEMORY;
     }
 
-    struct irq_listener *listener = kmalloc(&small_arena);
+    struct irq_listener *listener = KMALLOC(&small_arena,
+                                            sizeof(struct irq_listener));
     if (!listener) {
         table_free(&irq_listeners, id);
         return ERR_NO_MEMORY;

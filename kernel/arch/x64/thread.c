@@ -36,7 +36,7 @@ error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
     *--rsp = 0; // Initial R15.
     *--rsp = 0x02; // RFLAGS.
 
-    vaddr_t xsave_area = (vaddr_t) kmalloc(&page_arena);
+    vaddr_t xsave_area = (vaddr_t) KMALLOC(&page_arena, PAGE_SIZE /* FIXME: */);
     if (!xsave_area) {
         return ERR_NO_MEMORY;
     }

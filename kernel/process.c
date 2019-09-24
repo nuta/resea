@@ -18,7 +18,7 @@ struct process *process_create(const char *name) {
         return NULL;
     }
 
-    struct process *proc = kmalloc(&page_arena);
+    struct process *proc = KMALLOC(&small_arena, sizeof(struct process));
     if (!proc) {
         table_free(&all_processes, pid);
         return NULL;
@@ -53,7 +53,7 @@ void process_destroy(UNUSED struct process *process) {
 error_t vmarea_add(struct process *process, vaddr_t start, vaddr_t end,
                    pager_t pager, void *pager_arg, int flags) {
 
-    struct vmarea *vma = kmalloc(&page_arena);
+    struct vmarea *vma = KMALLOC(&small_arena, sizeof(struct vmarea));
     if (!vma) {
         return ERR_OUT_OF_MEMORY;
     }

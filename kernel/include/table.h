@@ -22,7 +22,7 @@ struct table {
 
 /// Initializes the table.
 static inline error_t table_init(struct table *table) {
-    void **entries = kmalloc(&page_arena);
+    void **entries = KMALLOC(&page_arena, PAGE_SIZE);
     if (!entries) {
         return ERR_NO_MEMORY;
     }

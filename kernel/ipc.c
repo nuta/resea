@@ -15,7 +15,7 @@ struct channel *channel_create(struct process *process) {
         return NULL;
     }
 
-    struct channel *channel = kmalloc(&page_arena);
+    struct channel *channel = KMALLOC(&small_arena, sizeof(struct channel));
     if (!channel) {
         TRACE("failed to allocate a channel");
         table_free(&process->channels, cid);
