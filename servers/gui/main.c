@@ -42,8 +42,9 @@ static void fill_rectangle(int x, int y, int height, int width, color_t color) {
 }
 
 void draw_char(int base_y, int base_x, char ch, color_t color) {
-    if ((uint32_t) ch >= 0x80)
+    if ((uint32_t) ch >= 0x80) {
         return;
+    }
 
     const uint8_t *rows = &font[16 * ch];
     for (int y = 0; y < 16; y++) {

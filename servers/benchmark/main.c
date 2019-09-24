@@ -22,7 +22,7 @@ int main(void) {
     cid_t memmgr = 1;
     uint32_t ops = IPC_SEND | IPC_RECV;
     for (int i = 0; i < NUM_ITERS; i++) {
-        get_ipc_buffer()->header = BENCHMARK_NOP_HEADER;
+        get_ipc_buffer()->header = MEMMGR_BENCHMARK_NOP_HEADER;
         uint64_t start = readcyclecounter();
         error_t err = sys_ipc(memmgr, ops);
         uint64_t end = readcyclecounter();

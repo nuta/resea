@@ -89,7 +89,7 @@ static error_t handle_memmgr_alloc_pages(struct message *m) {
 static error_t handle_memmgr_get_framebuffer(struct message *m) {
     struct framebuffer_info *info = &__init_args.framebuffer;
     paddr_t paddr = info->paddr;
-    int order = ulllog2(
+    int order = (int) ulllog2(
         (info->height * info->width * (info->bpp / 8)) / PAGE_SIZE);
 
     m->header = MEMMGR_GET_FRAMEBUFFER_REPLY_HEADER;

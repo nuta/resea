@@ -32,7 +32,7 @@ void puts(const char *s);
 void printf(const char *fmt, ...);
 void backtrace(void);
 void exit(int status);
-void try_or_panic(error_t err, const char *file, int lineno);
+void panic_at(const char *file, int lineno);
 
 const char *__program_name(void);
 #define PROGRAM_NAME  __program_name()
@@ -77,7 +77,13 @@ const char *__program_name(void);
 
 #define UNIMPLEMENTED() ERROR("not yet implemented: %s:%d", __FILE__, __LINE__)
 
-#define TRY_OR_PANIC(err) try_or_panic(err, __FILE__, __LINE__)
+#define TRY_OR_PANIC(expr)                                                     \
+    do {                                                                       \
+        if ((expr) != OK) {                                                    \
+            panic_at(__FILE__, __LINE__);                                      \
+            UNREACHABLE;                                                       \
+        }                                                                      \
+    } while (0)
 #define TRY(expr) do {                                                         \
         error_t __err = expr;                                                  \
         if (__err != OK) {                                                     \

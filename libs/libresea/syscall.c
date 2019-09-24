@@ -13,8 +13,9 @@ void set_page_base(page_base_t page_base) {
 
 error_t open(cid_t *ch) {
     int cid_or_err = sys_open();
-    if (cid_or_err < 0)
+    if (cid_or_err < 0) {
         return cid_or_err;
+    }
     *ch = cid_or_err;
     return OK;
 }

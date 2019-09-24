@@ -34,7 +34,7 @@ static void read_keyboard_input(void) {
             modifiers.shift_right = (key_code & KEY_RELEASE) == 0;
             break;
         default:
-            ascii = key_code & ~KEY_RELEASE;
+            ascii = (char) (key_code & ~KEY_RELEASE);
         }
 
         TRACE("keyboard: scan_code=%x, key_code=%x, ascii='%c'%s%s%s%s%s%s%s",

@@ -46,7 +46,7 @@ void x64_ioapic_init(paddr_t ioapic_addr) {
     asm_out8(0x23, 0x01);
 
     // get the maxinum number of entries in IOREDTBL
-    max = (ioapic_read(IOAPIC_REG_IOAPICVER) >> 16) + 1;
+    max = (int) (ioapic_read(IOAPIC_REG_IOAPICVER) >> 16) + 1;
 
     // disable all hardware interrupts
     for (int i = 0; i < max; i++) {
@@ -75,8 +75,7 @@ static void calibrate_apic_timer(void) {
     x64_write_apic(APIC_REG_TIMER_INITCNT, init_count);
 
     // Wait for the PIT.
-    while ((asm_in8(KBC_PORT_B) & KBC_B_OUT2_STATUS) == 0)
-        ;
+    while ((asm_in8(KBC_PORT_B) & KBC_B_OUT2_STATUS) == 0) {}
 
     uint64_t diff = init_count - x64_read_apic(APIC_REG_TIMER_CURRENT);
     uint32_t counts_per_sec = (diff * freq) << APIC_TIMER_DIV;

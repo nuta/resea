@@ -51,7 +51,8 @@ void poweroff(void) {
     __asm__ __volatile__("outw %%ax, %%dx" :: "a"(0x2000), "d"(0x604));
 
     // Wait for a while.
-    for(volatile int i = 0; i < 0x10000; i++);
+    for(volatile int i = 0; i < 0x10000; i++) {;
+}
 
     ERROR("Failed to power off.");
 

@@ -28,7 +28,7 @@ static void copy_process_name_from_path(char *buf, size_t buf_len,
         goto invalid_path;
     }
 
-    int pos = strlen(path) - 1;
+    int pos = (int) strlen(path) - 1;
     // Find the last '.'.
     int dot_pos = 0;
     while (pos > 0) {
