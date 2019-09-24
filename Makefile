@@ -102,7 +102,7 @@ info:
 
 .PHONY: lint
 lint:
-	$(CLANG_TIDY) -p $(BUILD_DIR) $(shell find . -type f -name "*.[ch]")
+	$(CLANG_TIDY) -p $(BUILD_DIR) $(shell find . -type f -name "*.c")
 
 # The kernel executable.
 $(kernel_objs): CFLAGS := $(KERNEL_CFLAGS)
