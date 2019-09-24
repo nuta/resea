@@ -250,7 +250,7 @@ void __asan_store2_noabort(vaddr_t addr)           { check_store(addr, 2); }
 void __asan_store4_noabort(vaddr_t addr)           { check_store(addr, 4); }
 void __asan_store8_noabort(vaddr_t addr)           { check_store(addr, 8); }
 void __asan_storeN_noabort(vaddr_t addr, size_t n) { check_store(addr, n); }
-void __asan_handle_no_return(void) { OOPS("asan: handle_no_return"); }
+void __asan_handle_no_return(void) { /* TODO: */; }
 
 /// Fills the shadow memory of the given memory area with the tag.
 void asan_init_area(enum asan_shadow_tag tag, void *ptr, size_t len) {
