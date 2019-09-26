@@ -6,27 +6,27 @@
 #include <thread.h>
 
 /// The process/thread table.
-struct table all_processes;
+struct table process_table;
 struct list_head process_list;
 /// The kernel process.
 struct process *kernel_process;
 
 /// Creates a new process. `name` is used for just debugging use.
 struct process *process_create(const char *name) {
-    int pid = table_alloc(&all_processes);
+    int pid = table_alloc(&process_table);
     if (!pid) {
         return NULL;
     }
 
     struct process *proc = KMALLOC(&small_arena, sizeof(struct process));
     if (!proc) {
-        table_free(&all_processes, pid);
+        table_free(&process_table, pid);
         return NULL;
     }
 
     if (table_init(&proc->channels) != OK) {
         kfree(&small_arena, proc);
-        table_free(&all_processes, pid);
+        table_free(&process_table, pid);
         return NULL;
     }
 
@@ -37,7 +37,7 @@ struct process *process_create(const char *name) {
     list_init(&proc->threads);
     page_table_init(&proc->page_table);
 
-    table_set(&all_processes, pid, (void *) proc);
+    table_set(&process_table, pid, (void *) proc);
     list_push_back(&process_list, &proc->next);
 
     TRACE("new process: pid=%d, name=%s", pid, &proc->name);
@@ -72,8 +72,8 @@ error_t vmarea_add(struct process *process, vaddr_t start, vaddr_t end,
 /// Initializes the process subsystem.
 void process_init(void) {
     list_init(&process_list);
-    if (table_init(&all_processes) != OK) {
-        PANIC("failed to initialize all_processes");
+    if (table_init(&process_table) != OK) {
+        PANIC("failed to initialize process_table");
     }
 
     kernel_process = process_create("kernel");

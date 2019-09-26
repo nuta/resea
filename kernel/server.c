@@ -97,7 +97,7 @@ static error_t handle_thread_spawn(struct message *m) {
     uintptr_t buffer = m->payloads.thread.spawn.buffer;
     uintptr_t arg    = m->payloads.thread.spawn.arg;
 
-    struct process *proc = table_get(&all_processes, pid);
+    struct process *proc = table_get(&process_table, pid);
     if (!proc) {
         return ERR_INVALID_MESSAGE;
     }
@@ -127,7 +127,7 @@ static error_t handle_process_add_pager(struct message *m) {
     size_t size     = m->payloads.process.add_pager.size;
     uint8_t flags   = m->payloads.process.add_pager.flags;
 
-    struct process *proc = table_get(&all_processes, pid);
+    struct process *proc = table_get(&process_table, pid);
     if (!proc) {
         WARN("Invalid pid #%d.", pid);
         return ERR_INVALID_MESSAGE;
@@ -224,7 +224,7 @@ static error_t handle_process_send_channel(struct message *m) {
     cid_t cid = m->payloads.process.send_channel.ch;
     TRACE("kernel: send_channel_to_pid(pid=%d)", pid);
 
-    struct process *proc = table_get(&all_processes, pid);
+    struct process *proc = table_get(&process_table, pid);
     if (!proc) {
         WARN("Invalid pid #%d.", pid);
         return ERR_INVALID_MESSAGE;

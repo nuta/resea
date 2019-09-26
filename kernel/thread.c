@@ -15,7 +15,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
                              vaddr_t stack, vaddr_t user_buffer,
                              void *arg) {
 
-    int tid = table_alloc(&all_processes);
+    int tid = table_alloc(&process_table);
     if (!tid) {
         return NULL;
     }
@@ -82,7 +82,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
         spin_unlock_irqrestore(&process->lock, flags);
     }
 
-    table_set(&all_processes, tid, (void *) thread);
+    table_set(&process_table, tid, (void *) thread);
     asan_init_area(ASAN_VALID, thread_info, PAGE_SIZE);
     asan_init_area(ASAN_VALID, (void *) kernel_stack, PAGE_SIZE);
     asan_init_area(ASAN_VALID, (void *) kernel_ipc_buffer, PAGE_SIZE);

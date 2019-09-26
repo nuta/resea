@@ -91,7 +91,7 @@ struct channel {
 };
 
 extern struct process *kernel_process;
-extern struct table all_processes;
+extern struct table process_table;
 extern struct list_head process_list;
 
 void process_init(void);
