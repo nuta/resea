@@ -99,31 +99,11 @@ class IdlTransformer(Transformer):
         }
 
 CLIENT_STUBS = """
-#define MSG_REPLY_FLAG (1ULL << 7)
-
 {%- for interface in interfaces %}
 //
 //  {{ interface.name }}
 //
-#define {{ interface.name | upper }}_INTERFACE  {{ interface.attrs.id }}ULL
-{%- for type in interface.types %}
-typedef {{ type.alias_of }}_t {{ type.name }}_t;
-{%- endfor %}
-
 {%- for msg in interface.messages %}
-#define {{ msg.canon_name | upper }}_MSG (({{ interface.name | upper }}_INTERFACE << 8) | {{ msg.attrs.id }}ULL)
-#define {{ msg.canon_name | upper }}_INLINE_LEN ({{ msg.args | inline_len }})
-#define {{ msg.canon_name | upper }}_HEADER \
-    ( ({{ msg.canon_name | upper }}_MSG        << MSG_TYPE_OFFSET) \
-{%- if msg.args.page -%}
-    | MSG_PAGE_PAYLOAD  \
-{%- endif -%}
-{%- if msg.args.channel -%}
-    | MSG_CHANNEL_PAYLOAD  \
-{%- endif -%}
-    | ({{ msg.canon_name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
-    )
-
 #if !defined(KERNEL)
 static inline error_t __do_send_{{ msg.canon_name }}({{ msg.args | send_params }}, bool __async) {
     struct message m;
@@ -162,19 +142,6 @@ static inline error_t async_send_{{ msg.canon_name }}({{ msg.args | send_params 
 #endif
 
 {%- if msg.attrs.type == "call" %}
-#define {{ msg.canon_name | upper }}_REPLY_MSG (({{ interface.name | upper }}_INTERFACE << 8) | MSG_REPLY_FLAG | {{ msg.attrs.id }})
-#define {{ msg.canon_name | upper }}_REPLY_INLINE_LEN ({{ msg.rets | inline_len }})
-#define {{ msg.canon_name | upper }}_REPLY_HEADER \
-    ( ({{ msg.canon_name | upper }}_REPLY_MSG        << MSG_TYPE_OFFSET) \
-{%- if msg.rets.page -%}
-    | MSG_PAGE_PAYLOAD  \
-{%- endif -%}
-{%- if msg.rets.channel -%}
-    | MSG_CHANNEL_PAYLOAD  \
-{%- endif -%}
-    | ({{ msg.canon_name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
-    )
-
 #if !defined(KERNEL)
 static inline error_t __do_send_{{ msg.canon_name }}_reply({{ msg.rets | send_params }}, bool __async) {
     struct message m;
@@ -255,8 +222,29 @@ PAYLOAD_TEMPLATE = """\
 #ifndef __RESEA_IDL_PAYLOADS_H__
 #define __RESEA_IDL_PAYLOADS_H__
 
+#define MSG_REPLY_FLAG (1ULL << 7)
+
 {%- for interface in interfaces %}
+#define {{ interface.name | upper }}_INTERFACE  {{ interface.attrs.id }}ULL
+
+{%- for type in interface.types %}
+typedef {{ type.alias_of }}_t {{ type.name }}_t;
+{%- endfor %}
+
 {%- for msg in interface.messages %}
+#define {{ msg.canon_name | upper }}_MSG (({{ interface.name | upper }}_INTERFACE << 8) | {{ msg.attrs.id }}ULL)
+#define {{ msg.canon_name | upper }}_INLINE_LEN ({{ msg.args | inline_len }})
+#define {{ msg.canon_name | upper }}_HEADER \
+    ( ({{ msg.canon_name | upper }}_MSG        << MSG_TYPE_OFFSET) \
+{%- if msg.args.page -%}
+    | MSG_PAGE_PAYLOAD  \
+{%- endif -%}
+{%- if msg.args.channel -%}
+    | MSG_CHANNEL_PAYLOAD  \
+{%- endif -%}
+    | ({{ msg.canon_name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
+    )
+
 struct {{ msg.canon_name }}_payload {
 {%- if msg.args.channel %}
     cid_t {{ msg.args.channel.name }};
@@ -275,6 +263,19 @@ struct {{ msg.canon_name }}_payload {
 } PACKED;
 
 {%- if msg.attrs.type == "call" %}
+#define {{ msg.canon_name | upper }}_REPLY_MSG (({{ interface.name | upper }}_INTERFACE << 8) | MSG_REPLY_FLAG | {{ msg.attrs.id }})
+#define {{ msg.canon_name | upper }}_REPLY_INLINE_LEN ({{ msg.rets | inline_len }})
+#define {{ msg.canon_name | upper }}_REPLY_HEADER \
+    ( ({{ msg.canon_name | upper }}_REPLY_MSG        << MSG_TYPE_OFFSET) \
+{%- if msg.rets.page -%}
+    | MSG_PAGE_PAYLOAD  \
+{%- endif -%}
+{%- if msg.rets.channel -%}
+    | MSG_CHANNEL_PAYLOAD  \
+{%- endif -%}
+    | ({{ msg.canon_name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
+    )
+
 struct {{ msg.canon_name }}_reply_payload {
 {%- if msg.rets.channel %}
     cid_t {{ msg.rets.channel.name }};
