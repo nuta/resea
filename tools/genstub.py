@@ -104,7 +104,6 @@ CLIENT_STUBS = """
 //  {{ interface.name }}
 //
 {%- for msg in interface.messages %}
-#if !defined(KERNEL)
 static inline error_t __do_send_{{ msg.canon_name }}({{ msg.args | send_params }}, bool __async) {
     struct message m;
     m.header = {{ msg.canon_name | upper }}_HEADER;
@@ -139,10 +138,8 @@ static inline error_t async_send_{{ msg.canon_name }}({{ msg.args | send_params 
         , true
     );
 }
-#endif
 
 {%- if msg.attrs.type == "call" %}
-#if !defined(KERNEL)
 static inline error_t __do_send_{{ msg.canon_name }}_reply({{ msg.rets | send_params }}, bool __async) {
     struct message m;
     m.header = {{ msg.canon_name | upper }}_REPLY_HEADER;
@@ -212,7 +209,6 @@ static inline error_t call_{{ msg.canon_name }}({{ msg | call_params }}) {
 {%- endif %}
     return OK;
 }
-#endif
 {%- endif %} {# msg.attrs.type == "call" #}
 {%- endfor %} {# for msg in interface.messages #}
 {%- endfor %} {# for interface in interfaces #}
@@ -345,6 +341,10 @@ TEMPLATE = f"""\
 
 #include <types.h>
 #include <message.h>
+
+#ifdef KERNEL
+#error "resea_idl.h is not intended for the kernel!"
+#endif
 
 // Declare internally-used functions instead of including somewhat large header
 // fies.
