@@ -79,7 +79,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct message *m = from_kernel ? current->kernel_ipc_buffer
                                         : &current->info->ipc_buffer;
         header_t header = m->header;
-        struct channel *linked_to;
+        struct channel *linked_with;
         struct channel *dst;
         struct thread *receiver;
 #ifdef DEBUG_BUILD
@@ -88,8 +88,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Wait for a receiver thread.
         while (1) {
             flags_t flags = spin_lock_irqsave(&ch->lock);
-            linked_to = ch->linked_to;
-            dst = linked_to->transfer_to;
+            linked_with = ch->linked_with;
+            dst = linked_with->transfer_to;
             spin_lock(&dst->lock);
             receiver = dst->receiver;
 
@@ -124,14 +124,14 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         current->debug.send_from = NULL;
 #endif
         IPC_TRACE(m, "send: %pC -> %pC => %pC (header=%p)",
-                  ch, linked_to, dst, header);
+                  ch, linked_with, dst, header);
 
         // Now we have a receiver thread. It's time to send a message!
         struct message *dst_m = receiver->ipc_buffer;
 
         // Set header and the source channel ID.
         dst_m->header = header;
-        dst_m->from = linked_to->cid;
+        dst_m->from = linked_with->cid;
 
         // Copy inline payloads.
         inlined_memcpy(dst_m->payloads.data, m->payloads.data,
@@ -189,7 +189,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             ASSERT(ch);
             ASSERT(dst_ch);
 
-            channel_link(ch->linked_to, dst_ch);
+            channel_link(ch->linked_with, dst_ch);
             // FIXME: channel_destroy(ch);
             dst_m->payloads.channel = dst_ch->cid;
         }
@@ -297,8 +297,8 @@ error_t sys_ipc_fastpath(cid_t cid) {
         goto slowpath3;
     }
 
-    struct channel *linked_to = ch->linked_to;
-    struct channel *dst_ch = linked_to->transfer_to;
+    struct channel *linked_with = ch->linked_with;
+    struct channel *dst_ch = linked_with->transfer_to;
 
     // Try locking the destination channel.
     if (UNLIKELY(!spin_try_lock(&dst_ch->lock))) {
@@ -315,11 +315,11 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // Now all prerequisites are met. Copy the message and wait on the our
     // channel.
     IPC_TRACE(m, "send (fastpath): %pC -> %pC => %pC (header=%p)",
-               ch, linked_to, dst_ch, header);
+               ch, linked_with, dst_ch, header);
 
     struct message *dst_m = receiver->ipc_buffer;
     dst_m->header = header;
-    dst_m->from = linked_to->cid;
+    dst_m->from = linked_with->cid;
     inlined_memcpy(&dst_m->payloads.data, m->payloads.data,
                    INLINE_PAYLOAD_LEN(header));
 

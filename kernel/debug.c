@@ -288,15 +288,15 @@ static void dump_process(struct process *proc) {
         struct channel *send_from = thread->debug.send_from;
         if (send_from) {
             DPRINTK("    Sender at %pC <-> %pC => %pC\n",
-                    send_from, send_from->linked_to,
-                    send_from->linked_to->transfer_to);
+                    send_from, send_from->linked_with,
+                    send_from->linked_with->transfer_to);
         }
 
         struct channel *receive_from = thread->debug.receive_from;
         if (receive_from) {
             DPRINTK("    Receiver at %pC <-> %pC => %pC\n",
-                    receive_from, receive_from->linked_to,
-                    receive_from->linked_to->transfer_to);
+                    receive_from, receive_from->linked_with,
+                    receive_from->linked_with->transfer_to);
         }
     }
 }

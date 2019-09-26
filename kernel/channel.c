@@ -21,7 +21,7 @@ struct channel *channel_create(struct process *process) {
     channel->cid = cid;
     channel->ref_count = 1;
     channel->process = process;
-    channel->linked_to = channel;
+    channel->linked_with = channel;
     channel->transfer_to = channel;
     channel->receiver = NULL;
     channel->notification = 0;
@@ -53,8 +53,8 @@ void channel_destroy(struct channel *ch) {
 void channel_link(struct channel *ch1, struct channel *ch2) {
     if (ch1 == ch2) {
         flags_t flags = spin_lock_irqsave(&ch1->lock);
-        if (ch1->linked_to != ch1) {
-            ch1->linked_to->ref_count--;
+        if (ch1->linked_with != ch1) {
+            ch1->linked_with->ref_count--;
         }
 
         ch1->transfer_to = ch1;
@@ -65,8 +65,8 @@ void channel_link(struct channel *ch1, struct channel *ch2) {
 
         // TODO: decref old linked channels.
 
-        ch1->linked_to = ch2;
-        ch2->linked_to = ch1;
+        ch1->linked_with = ch2;
+        ch2->linked_with = ch1;
         ch1->ref_count++;
         ch2->ref_count++;
 
@@ -105,12 +105,12 @@ error_t channel_notify(struct channel *ch, notification_t notification) {
     spin_lock(&ch->lock);
 
     // Update the notification data.
-    struct channel *dst = ch->linked_to->transfer_to;
+    struct channel *dst = ch->linked_with->transfer_to;
     spin_lock(&dst->lock);
     dst->notification |= notification;
 
     TRACE("notify: %pC -> %pC => %pC (data=%p)",
-          ch, ch->linked_to, dst, dst->notification);
+          ch, ch->linked_with, dst, dst->notification);
 
     // Resume the receiver thread if exists.
     struct thread *receiver = dst->receiver;

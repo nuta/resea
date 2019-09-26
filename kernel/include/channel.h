@@ -26,8 +26,8 @@ struct channel {
     /// channel will be sent to this channel. The destination channel can be
     /// channels in another process.
     ///
-    /// By default, this points to the itself (i.e. `ch->linked_to == ch`).
-    struct channel *linked_to;
+    /// By default, this points to the itself (i.e. `ch->linked_with == ch`).
+    struct channel *linked_with;
     /// Messages are transferred to the this channel. Consider the following
     /// example:
     ///

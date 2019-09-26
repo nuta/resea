@@ -18,7 +18,7 @@ static struct process *get_sender_process(cid_t from) {
     // Resolves the sender thread.
     struct channel *ch = table_get(&kernel_process->channels, from);
     ASSERT(ch != NULL);
-    return ch->linked_to->process;
+    return ch->linked_with->process;
 }
 
 /// The user pager. When a page fault occurred in vm areas that are registered
@@ -237,7 +237,7 @@ static error_t handle_process_send_channel(struct message *m) {
     ASSERT(ch);
     ASSERT(dst_ch);
 
-    channel_link(ch->linked_to, dst_ch);
+    channel_link(ch->linked_with, dst_ch);
     channel_destroy(ch);
 
     TRACE("kernel: send_channel_to_pid: created %pC", dst_ch);
