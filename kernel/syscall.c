@@ -62,21 +62,6 @@ error_t sys_transfer(cid_t src, cid_t dst) {
     return OK;
 }
 
-/// Resolves the physical address linked to the given virtual address.
-static paddr_t resolve_paddr(struct page_table *page_table, vaddr_t vaddr) {
-    paddr_t paddr = resolve_paddr_from_vaddr(page_table, vaddr);
-    if (paddr) {
-        return paddr;
-    }
-
-    // The page does not exist in the page table. Invoke the page fault handler
-    // since perhaps it is just not filled by the pager (i.e., not yet accessed
-    // by the user). Note that page_fault_handler always returns a valid paddr;
-    // if the vaddr is invalid, it kills the current thread and won't return.
-    // TRACE("page payload %p does not exist, trying the pager...", vaddr);
-    return page_fault_handler(vaddr, PF_USER);
-}
-
 /// Checks whether the message is worth tracing.
 static inline bool is_annoying_msg(uint16_t msg_type) {
     return msg_type == RUNTIME_PRINTCHAR_MSG
@@ -170,13 +155,23 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Copy the page payload if exists.
         if (header & MSG_PAGE_PAYLOAD) {
             page_t page = m->payloads.page;
+            vaddr_t payload_vaddr = PAGE_PAYLOAD_ADDR(page);
             page_t page_base = receiver->info->page_base;
             vaddr_t page_base_addr = PAGE_PAYLOAD_ADDR(page_base);
             int num_pages = POW2(PAGE_ORDER(page));
 
             // Resolve the physical address referenced by the page payload.
-            paddr_t paddr = resolve_paddr(&current->process->page_table,
-                                          PAGE_PAYLOAD_ADDR(page));
+            struct page_table *page_table = &current->process->page_table;
+            paddr_t paddr = resolve_paddr_from_vaddr(page_table, payload_vaddr);
+            if (!paddr) {
+                // The page does not exist in the page table. Invoke the page
+                // fault handler since perhaps it is just not filled by the
+                // pager (i.e., not yet accessed by the user). Note that
+                // page_fault_handler always returns a valid paddr;  if the
+                // vaddr is invalid, it kills the current thread and won't
+                // return.
+                paddr = page_fault_handler(payload_vaddr, PF_USER);
+            }
 
             if (receiver->recv_in_kernel) {
                 // Kernel (receiving a pager.fill_request reply, for example)
