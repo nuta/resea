@@ -3,7 +3,7 @@
 #include <channel.h>
 #include <thread.h>
 #include <syscall.h>
-#include <resea_idl.h>
+#include <resea_idl_payloads.h>
 
 /// The open system call: creates a new channel.
 cid_t sys_open(void) {
