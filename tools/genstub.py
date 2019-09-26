@@ -471,7 +471,7 @@ def main():
 
     with open(Path(args.out_file), "w") as f:
         f.write(stub["stubs"])
-    with open(Path(args.out_file).parent / "resea_idl_payloads.h", "w") as f:
+    with open(Path(args.out_file).parent / "idl_messages.h", "w") as f:
         f.write(stub["payloads"])
 
 if __name__ == "__main__":

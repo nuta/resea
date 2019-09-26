@@ -3,7 +3,7 @@
 
 #include <types.h>
 #include <message.h>
-#include <resea_idl_payloads.h>
+#include <idl_messages.h>
 
 // A bit mask to determine if a message satisfies one of fastpath
 // prerequisites. This test checks if page/channel payloads are

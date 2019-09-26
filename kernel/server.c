@@ -1,7 +1,7 @@
 #include <channel.h>
 #include <printk.h>
 #include <process.h>
-#include <resea_idl_payloads.h>
+#include <idl_messages.h>
 #include <server.h>
 #include <thread.h>
 #include <timer.h>

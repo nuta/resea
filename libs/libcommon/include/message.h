@@ -56,7 +56,7 @@ typedef uintmax_t page_base_t;
 
 #define SMALLSTRING_LEN_MAX 128
 typedef char smallstring_t[SMALLSTRING_LEN_MAX];
-#include <resea_idl_payloads.h>
+#include <idl_messages.h>
 
 struct message {
     header_t header;
