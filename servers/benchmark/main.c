@@ -1,5 +1,5 @@
 #include <resea.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 
 #define NUM_ITERS 1000
 

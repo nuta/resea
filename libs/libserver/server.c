@@ -1,5 +1,5 @@
 #include <resea.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 #include <server.h>
 
 error_t server_mainloop_with_deferred(cid_t ch,

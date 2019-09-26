@@ -1,4 +1,4 @@
-#include <resea_idl.h>
+#include <idl_stubs.h>
 #include <app.h>
 #include <resea.h>
 

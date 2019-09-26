@@ -1,5 +1,5 @@
 #include <resea.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 
 static void print_uint(uintmax_t n, int base, char pad, int width) {
     char tmp[32];

@@ -1,5 +1,5 @@
 #include <resea.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 
 static cid_t memmgr_ch = 1;
 static cid_t kernel_ch = 2;

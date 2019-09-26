@@ -1,6 +1,6 @@
 #include <resea.h>
 #include <resea/string.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 #include <server.h>
 #include "font.h"
 

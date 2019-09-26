@@ -1,5 +1,5 @@
 #include <app.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 
 int main(void) {
     api_console_write("Hello World!\n");

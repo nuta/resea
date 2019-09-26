@@ -343,7 +343,7 @@ TEMPLATE = f"""\
 #include <message.h>
 
 #ifdef KERNEL
-#error "resea_idl.h is not intended for the kernel!"
+#error "idl_stubs.h is not intended for the kernel!"
 #endif
 
 // Declare internally-used functions instead of including somewhat large header

@@ -1,5 +1,5 @@
 #include <resea.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 
 NORETURN void exit(int status) {
     call_runtime_exit_current(1, status);

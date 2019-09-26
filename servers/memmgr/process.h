@@ -4,7 +4,7 @@
 #include "elf.h"
 
 #include <types.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 
 #define NUM_PROCESSES_MAX 128
 

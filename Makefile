@@ -121,7 +121,7 @@ $(BUILD_DIR)/kernel.elf: $(kernel_objs) kernel/arch/$(ARCH)/$(ARCH).ld tools/lin
 		$(kernel_objs)
 
 # IDL stub.
-$(BUILD_DIR)/include/resea_idl.h: misc/interfaces.idl tools/genstub.py
+$(BUILD_DIR)/include/idl_stubs.h: misc/interfaces.idl tools/genstub.py
 	$(PROGRESS) "GENSTUB" $@
 	mkdir -p $(@D)
 	$(PYTHON3) tools/genstub.py -o $@ $<
@@ -218,7 +218,7 @@ $(BUILD_DIR)/$(INIT).bin: $(BUILD_DIR)/servers/$(INIT).elf Makefile
 	$(OBJCOPY) -j.initfs -j.text -j.data -j.rodata -j.bss -Obinary $< $@
 
 # C/assembly source file build rules.
-$(BUILD_DIR)/%.o: %.c Makefile $(BUILD_DIR)/include/resea_idl.h
+$(BUILD_DIR)/%.o: %.c Makefile $(BUILD_DIR)/include/idl_stubs.h
 	$(PROGRESS) "CC" $@
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json) -c -o $@ $<

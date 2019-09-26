@@ -133,9 +133,9 @@ $ make -j8 run
 ```
 
 ### Using IDL stubs
-To load IDL stubs, include `resea_idl.h`:
+To load IDL stubs, include `idl_stubs.h`:
 ```c
-#include <resea_idl.h>
+#include <idl_stubs.h>
 ```
 
 In the IDL stubs the following macros and functions are definied:
@@ -174,7 +174,7 @@ model. It's straightforward and makes really easy to debug.
 ### Example
 ```c
 #include <resea.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 
 // The message handler. It responsibles to do something useful and fill the
 // reply message (`r`).

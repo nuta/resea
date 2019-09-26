@@ -1,5 +1,5 @@
 #include <resea.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 #include <elf.h>
 #include "process.h"
 #include "fs.h"

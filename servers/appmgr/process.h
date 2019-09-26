@@ -3,7 +3,7 @@
 
 #include "elf.h"
 #include <types.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 
 struct file;
 struct process {

@@ -1,6 +1,6 @@
 #include <app.h>
 #include <resea.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 #include <resea/ipc.h>
 
 int main(void) {

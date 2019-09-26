@@ -1,5 +1,5 @@
 #include <resea.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 #include <driver/io.h>
 
 error_t io_open(io_handle_t *handle, cid_t io_server, enum io_space_type type,

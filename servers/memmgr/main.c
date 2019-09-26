@@ -8,7 +8,7 @@
 #include <resea/string.h>
 #include <resea/math.h>
 #include <server.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 
 static cid_t kernel_ch = 1;
 extern struct init_args __init_args;

@@ -1,7 +1,7 @@
 #include <resea.h>
 #include <resea/ipc.h>
 #include <resea/string.h>
-#include <resea_idl.h>
+#include <idl_stubs.h>
 #include <elf.h>
 #include "process.h"
 #include "initfs.h"
