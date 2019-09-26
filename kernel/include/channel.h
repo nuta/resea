@@ -22,9 +22,8 @@ struct channel {
     int ref_count;
     /// The received notification data.
     notification_t notification;
-    /// The channel linked with this channel. The messages sent from this
-    /// channel will be sent to this channel. The destination channel can be
-    /// channels in another process.
+    /// The destination of messages. The destination channel can be a channel in
+    /// another process.
     ///
     /// By default, this points to the itself (i.e. `ch->linked_with == ch`).
     struct channel *linked_with;
