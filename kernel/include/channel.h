@@ -28,8 +28,19 @@ struct channel {
     ///
     /// By default, this points to the itself (i.e. `ch->linked_to == ch`).
     struct channel *linked_to;
-    /// The transfer channel (FIXME: we need more appropriate name). Messages
-    /// sent to this channel are transferred to the transfer channel.
+    /// Messages are transferred to the this channel. Consider the following
+    /// example:
+    ///
+    ///    +-- A --+               +------------ B ----------+
+    ///    |       |  linked_with  |       transfered_to     |
+    ///    |  @7 <-------------------> @2  =============> @3 |
+    ///    |       |               |                         |
+    ///    +-------+               +-------------------------+
+    ///
+    /// When A sends a message to her channel @7, the kernel sets the `from`
+    /// field in the message to the channel ID linked with @7, i.e., @2. Next,
+    /// it sends the message to the channel specified in the `transfer_to` field
+    /// in @2', namely, @3.
     ///
     /// By default, this points to the itself (i.e. `ch->transfer_to == ch`).
     struct channel *transfer_to;
