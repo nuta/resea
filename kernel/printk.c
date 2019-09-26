@@ -1,5 +1,6 @@
 #include <arch.h>
 #include <types.h>
+#include <channel.h>
 #include <thread.h>
 #include <process.h>
 

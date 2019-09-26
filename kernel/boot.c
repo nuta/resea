@@ -1,7 +1,7 @@
 #include <arch.h>
 #include <init_args.h>
 #include <debug.h>
-#include <ipc.h>
+#include <channel.h>
 #include <memory.h>
 #include <printk.h>
 #include <process.h>

@@ -1,4 +1,4 @@
-#include <ipc.h>
+#include <channel.h>
 #include <printk.h>
 #include <process.h>
 #include <resea_idl.h>
@@ -7,6 +7,7 @@
 #include <timer.h>
 #include <table.h>
 #include <types.h>
+#include <syscall.h>
 
 struct channel *kernel_server_ch = NULL;
 static struct table user_timers;

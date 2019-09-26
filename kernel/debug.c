@@ -1,6 +1,6 @@
 #include <arch.h>
 #include <debug.h>
-#include <ipc.h>
+#include <channel.h>
 #include <printk.h>
 #include <process.h>
 #include <thread.h>

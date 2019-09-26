@@ -2,7 +2,6 @@
 #define __THREAD_H__
 
 #include <arch.h>
-#include <ipc.h>
 #include <message.h>
 #include <list.h>
 #include <types.h>
