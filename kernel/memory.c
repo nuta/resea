@@ -34,14 +34,18 @@ void *kmalloc_from(struct arena *arena) {
         arena->elements_used++;
         spin_unlock_irqrestore(&arena->lock, flags);
 
+#ifdef DEBUG_BUILD
         asan_init_area(ASAN_UNINITIALIZED, ptr, arena->element_size);
+#endif
         return ptr;
     }
 
     void *ptr = list_pop_front(&arena->free_list);
     spin_unlock_irqrestore(&arena->lock, flags);
 
+#ifdef DEBUG_BUILD
     asan_init_area(ASAN_UNINITIALIZED, ptr, arena->element_size);
+#endif
     return ptr;
 }
 

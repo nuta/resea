@@ -83,9 +83,12 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     }
 
     table_set(&process_table, tid, (void *) thread);
+
+#ifdef DEBUG_BUILD
     asan_init_area(ASAN_VALID, thread_info, PAGE_SIZE);
     asan_init_area(ASAN_VALID, (void *) kernel_stack, PAGE_SIZE);
     asan_init_area(ASAN_VALID, (void *) kernel_ipc_buffer, PAGE_SIZE);
+#endif
 
     TRACE("new thread: pid=%d, tid=%d", process->pid, tid);
     return thread;

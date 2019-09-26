@@ -1,6 +1,8 @@
 #include <arch.h>
 #include <debug.h>
 
+#ifdef DEBUG_BUILD
+
 bool arch_asan_is_kernel_address(vaddr_t addr) {
     return addr < 0xffff8000fec00000; // APIC registers.
 }
@@ -29,3 +31,5 @@ void arch_asan_init(void) {
     // CPUVARs.
     asan_init_area(ASAN_VALID, (void *) CPU_VAR_ADDR, CPU_VAR_LEN);
 }
+
+#endif // DEBUG_BUILD

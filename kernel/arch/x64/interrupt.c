@@ -49,7 +49,9 @@ void x64_handle_interrupt(uint8_t vec, struct interrupt_regs *regs) {
         } else if (vec >= VECTOR_IRQ_BASE) {
             int irq = vec - VECTOR_IRQ_BASE;
             if (irq == SERIAL_IRQ) {
+#ifdef DEBUG_BUILD
                 debugger_oninterrupt();
+#endif
             } else {
                 TRACE("Interrupt #%d", vec);
                 deliver_interrupt(irq);

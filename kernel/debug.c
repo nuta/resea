@@ -91,6 +91,8 @@ void init_boot_stack_canary(void) {
     init_stack_canary(get_current_stack_canary_address());
 }
 
+#ifdef DEBUG_BUILD
+
 //
 // Undefined Behavior Sanitizer runtime (UBSan).
 // https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
@@ -338,8 +340,12 @@ void debugger_oninterrupt(void) {
         }
     }
 }
+#endif
 
 /// Initializes the debug subsystem.
 void debug_init(void) {
+#ifdef DEBUG_BUILD
     asan_init();
+#endif
 }
+
