@@ -3,11 +3,28 @@
 
 #include <types.h>
 #include <message.h>
+#include <resea_idl_payloads.h>
 
 // A bit mask to determine if a message satisfies one of fastpath
 // prerequisites. This test checks if page/channel payloads are
 // not contained in the message.
 #define SYSCALL_FASTPATH_TEST(header) ((header) & 0x1800ULL)
+
+
+/// Checks whether the message is worth tracing.
+static inline bool is_annoying_msg(uint16_t msg_type) {
+    return msg_type == RUNTIME_PRINTCHAR_MSG
+           || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
+           || msg_type == PAGER_FILL_MSG
+           || msg_type == PAGER_FILL_REPLY_MSG;
+}
+
+#define IPC_TRACE(m, fmt, ...)                        \
+    do {                                              \
+        if (!is_annoying_msg(MSG_TYPE(m->header))) {  \
+            TRACE(fmt, ## __VA_ARGS__);               \
+        }                                             \
+    } while (0)
 
 cid_t sys_open(void);
 error_t sys_close(cid_t cid);

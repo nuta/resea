@@ -62,14 +62,6 @@ error_t sys_transfer(cid_t src, cid_t dst) {
     return OK;
 }
 
-/// Checks whether the message is worth tracing.
-static inline bool is_annoying_msg(uint16_t msg_type) {
-    return msg_type == RUNTIME_PRINTCHAR_MSG
-           || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
-           || msg_type == PAGER_FILL_MSG
-           || msg_type == PAGER_FILL_REPLY_MSG;
-}
-
 /// The ipc system call: sends/receives messages.
 error_t sys_ipc(cid_t cid, uint32_t syscall) {
     struct thread *current = CURRENT;
@@ -131,15 +123,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 #ifdef DEBUG_BUILD
         current->debug.send_from = NULL;
 #endif
-        if (!is_annoying_msg(MSG_TYPE(header))) {
-            if (linked_to == dst) {
-                TRACE("send: %pC -> %pC (header=%p)",
-                      ch, dst, header);
-            } else {
-                TRACE("send: %pC -> %pC => %pC (header=%p)",
-                      ch, linked_to, dst, header);
-            }
-        }
+        IPC_TRACE(m, "send: %pC -> %pC => %pC (header=%p)",
+                  ch, linked_to, dst, header);
 
         // Now we have a receiver thread. It's time to send a message!
         struct message *dst_m = receiver->ipc_buffer;
@@ -258,11 +243,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         recv_on->notification = 0;
 
         // Now `CURRENT->ipc_buffer` is filled by the sender thread.
-        if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header))) {
-            TRACE("recv: %pC <- @%d (header=%p, notification=%p)", recv_on,
-                current->ipc_buffer->from, current->ipc_buffer->header,
-                current->ipc_buffer->notification);
-        }
+        IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
+                  recv_on, m->from, m->header, m->notification);
 
         if (from_kernel) {
             current->ipc_buffer = &current->info->ipc_buffer;
@@ -332,15 +314,8 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
     // Now all prerequisites are met. Copy the message and wait on the our
     // channel.
-    if (!is_annoying_msg(MSG_TYPE(header))) {
-        if (linked_to == dst_ch) {
-            TRACE("send (fastpath): %pC -> %pC (header=%p)",
-                  ch, dst_ch, header);
-        } else {
-            TRACE("send (fastpath): %pC -> %pC => %pC (header=%p)",
-                  ch, linked_to, dst_ch, header);
-        }
-    }
+    IPC_TRACE(m, "send (fastpath): %pC -> %pC => %pC (header=%p)",
+               ch, linked_to, dst_ch, header);
 
     struct message *dst_m = receiver->ipc_buffer;
     dst_m->header = header;
@@ -374,11 +349,8 @@ error_t sys_ipc_fastpath(cid_t cid) {
     m->notification = recv_on->notification;
     recv_on->notification = 0;
 
-    if (!is_annoying_msg(MSG_TYPE(current->ipc_buffer->header))) {
-        TRACE("recv: %pC <- @%d (header=%p, notification=%p)", recv_on,
-            current->ipc_buffer->from, current->ipc_buffer->header,
-            current->ipc_buffer->notification);
-    }
+    IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
+              recv_on, m->from, m->header, m->notification);
 
     // Resumed by a sender thread.
     return OK;
