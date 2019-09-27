@@ -27,6 +27,8 @@ struct process {
     struct page_table page_table;
     /// Channels in the process.
     struct table channels;
+    /// Channels in the table.
+    struct list_head channel_list;
 };
 
 struct vmarea;

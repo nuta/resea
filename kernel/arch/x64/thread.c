@@ -50,6 +50,10 @@ error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
     return OK;
 }
 
+void arch_thread_destroy(struct thread *thread) {
+    kfree(&page_arena, (void *) thread->arch.xsave_area);
+}
+
 void thread_allow_io(struct thread *thread) {
     // Set IOPL.
     thread->arch.rflags_ormask = (3 << 12);

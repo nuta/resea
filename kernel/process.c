@@ -11,6 +11,11 @@ struct list_head process_list;
 /// The kernel process.
 struct process *kernel_process;
 
+static void vmarea_destroy(struct vmarea *vma) {
+    kfree(&small_arena, vma);
+    list_remove(&vma->next);
+}
+
 /// Creates a new process. `name` is used for just debugging use.
 struct process *process_create(const char *name) {
     int pid = table_alloc(&process_table);
@@ -45,7 +50,31 @@ struct process *process_create(const char *name) {
 
 /// Destroys a process.
 void process_destroy(UNUSED struct process *process) {
-    UNIMPLEMENTED();
+    // FIXME: Make LIST_FOR_EACH safe
+
+    // Destroy threads.
+    LIST_FOR_EACH(node, &process->channel_list) {
+        struct channel *ch = LIST_CONTAINER(channel, next, node);
+        channel_destroy(ch);
+    }
+
+    // Destroy threads.
+    LIST_FOR_EACH(node, &process->threads) {
+        struct thread *thread = LIST_CONTAINER(thread, next, node);
+        thread_destroy(thread);
+    }
+
+    // Destroy vmareas.
+    LIST_FOR_EACH(node, &process->vmareas) {
+        struct vmarea *vmarea = LIST_CONTAINER(vmarea, next, node);
+        vmarea_destroy(vmarea);
+    }
+
+    table_destroy(&process->channels);
+    page_table_destroy(&process->page_table);
+    table_free(&process_table, process->pid);
+    list_remove(&process->next);
+    kfree(&small_arena, process);
 }
 
 /// Adds a new vm area.

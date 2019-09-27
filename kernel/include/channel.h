@@ -10,6 +10,8 @@ struct process;
 
 /// The channel control block.
 struct channel {
+    /// The next channel in `channel_list` in the process.
+    struct list_head next;
     /// The owner process.
     struct process *process;
     /// The channel ID.
@@ -18,6 +20,9 @@ struct channel {
     /// some of its channels must be alive to prevent dangling pointers until
     /// no one references them.
     int ref_count;
+    /// It's true if the channel is being destructed. When it's true, sending
+    /// to/receiving from the channel shall returns ERR_CLOSED_CHANNEL.
+    bool destructed;
     /// The received notification data.
     notification_t notification;
     /// The destination of messages. The destination channel can be a channel in

@@ -56,6 +56,8 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     thread->kernel_stack = kernel_stack;
     thread->process = process;
     thread->info = thread_info;
+    thread->blocked_on = NULL;
+    thread->ipc_aborted = false;
 #ifdef DEBUG_BUILD
     thread->debug.send_from = NULL;
     thread->debug.receive_from = NULL;
@@ -93,7 +95,37 @@ struct thread *thread_create(struct process *process, vaddr_t start,
 
 /// Destroys a thread.
 void thread_destroy(UNUSED struct thread *thread) {
-    UNIMPLEMENTED();
+    if (thread != CURRENT /* TODO: SMP */ && thread->state == THREAD_RUNNABLE) {
+        list_remove(&thread->runqueue_elem);
+    }
+
+    struct channel *blocked_on = thread->blocked_on;
+    if (blocked_on) {
+        list_remove(&thread->queue_elem);
+    }
+
+    kfree(&page_arena, (void *) thread->kernel_stack);
+    kfree(&page_arena, thread->info);
+    kfree(&page_arena, thread->kernel_ipc_buffer);
+
+#ifdef DEBUG_BUILD
+    thread->process           = INVALID_POINTER;
+    thread->kernel_stack      = (vaddr_t) INVALID_POINTER;
+    thread->info              = INVALID_POINTER;
+    thread->ipc_buffer        = INVALID_POINTER;
+    thread->kernel_ipc_buffer = INVALID_POINTER;
+    thread->blocked_on        = INVALID_POINTER;
+#endif
+
+    arch_thread_destroy(thread);
+    table_free(&process_table, thread->tid);
+    list_remove(&thread->next);
+    kfree(&small_arena, thread);
+
+    if (thread == CURRENT) {
+        UNIMPLEMENTED();
+        // TODO: thread_switch_without_save_current();
+    }
 }
 
 /// Kills the current thread and switches into another thread. This function

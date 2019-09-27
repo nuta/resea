@@ -37,6 +37,11 @@ static inline error_t table_init(struct table *table) {
     return OK;
 }
 
+/// Destructs the table.
+static inline void table_destroy(struct table *table) {
+    kfree(&page_arena, table->entries);
+}
+
 /// Search the table for an unused slot and mark it as reserved. It returnes
 /// the id (always greater than 0) for the reserved slot on success or 0 on
 /// failure.

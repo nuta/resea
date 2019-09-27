@@ -20,6 +20,7 @@ struct channel *channel_create(struct process *process) {
 
     channel->cid = cid;
     channel->ref_count = 1;
+    channel->destructed = false;
     channel->process = process;
     channel->linked_with = channel;
     channel->transfer_to = channel;
@@ -33,18 +34,53 @@ struct channel *channel_create(struct process *process) {
 
 /// Increments the reference counter of the channel.
 void channel_incref(struct channel *ch) {
+    ASSERT(ch->ref_count >= 1);
     ch->ref_count++;
 }
 
-/// Decrements the reference counter of the channel.
+/// Decrements the refrence counter of the channel and destructs a channel if
+/// possible.
 void channel_destroy(struct channel *ch) {
     ch->ref_count--;
     ASSERT(ch->ref_count >= 0);
 
-    if (ch->ref_count == 0) {
-        // The channel is no longer referenced. Free resources.
-        UNIMPLEMENTED();
+    if (ch->ref_count > 0) {
+        // The channel is still being referenced; we can't destruct immediately.
+        ch->destructed = true;
+        return;
     }
+
+    //
+    //  Now the channel is no longer used. Free its resources.
+    //
+
+    // Unlink the channel.
+    channel_link(ch, ch);
+    channel_transfer(ch, ch);
+
+    // Resume the receiver thread to abort its IPC operations.
+    struct thread *receiver = ch->receiver;
+    if (receiver) {
+        receiver->ipc_aborted = true;
+        thread_resume(receiver);
+    }
+
+    // Resume the sender threads to abort theier IPC operations.
+    LIST_FOR_EACH(node, &ch->queue) {
+        struct thread *sender = LIST_CONTAINER(thread, next, node);
+        sender->ipc_aborted = true;
+        thread_resume(sender);
+    }
+
+    table_free(&ch->process->channels, ch->cid);
+    list_remove(&ch->next);
+#ifdef DEBUG_BUILD
+    ch->process     = INVALID_POINTER;
+    ch->linked_with = INVALID_POINTER;
+    ch->transfer_to = INVALID_POINTER;
+    ch->receiver    = INVALID_POINTER;
+#endif
+    kfree(&small_arena, ch);
 }
 
 /// Links two channels. The message from `ch1` will be sent to `ch2`. `ch1` and

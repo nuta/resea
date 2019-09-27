@@ -31,6 +31,8 @@ struct thread {
     struct process *process;
     /// The current state of the thread.
     int state;
+    /// It's true when the channel which the thread is using is closed.
+    bool ipc_aborted;
     /// True if this thread is waiting for a message and the sys_ipc() is
     /// invoked from the kernel (e.g. calling fill_request from the page fault
     /// handler). If the receiver is kernel, we copy page payloads in physical
@@ -63,6 +65,8 @@ struct thread {
     struct list_head runqueue_elem;
     /// The entry in a message sender queue.
     struct list_head queue_elem;
+    /// The channel at which the thread is trying to send/receive a message.
+    struct channel *blocked_on;
     /// Next thread in the process.
     struct list_head next;
 #ifdef DEBUG_BUILD

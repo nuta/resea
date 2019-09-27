@@ -26,6 +26,7 @@ struct thread;
 error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
                          vaddr_t kernel_stack, vaddr_t user_buffer,
                          bool is_kernel_thread);
+void arch_thread_destroy(struct thread *thread);
 static inline struct thread *get_current_thread(void);
 void thread_allow_io(struct thread *thread);
 void set_current_thread(struct thread *thread);

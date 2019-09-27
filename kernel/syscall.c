@@ -70,6 +70,10 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         return ERR_INVALID_CID;
     }
 
+    if (ch->destructed) {
+        return ERR_CLOSED_CHANNEL;
+    }
+
     bool from_kernel = (syscall & IPC_FROM_KERNEL) != 0;
 
     //
@@ -91,6 +95,10 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             dst = linked_with->transfer_to;
             receiver = dst->receiver;
 
+            if (dst->destructed) {
+                return ERR_CLOSED_CHANNEL;
+            }
+
             // Check if there's a thread waiting for a message on the
             // destination channel and there're no pending notification in the
             // channel.
@@ -108,8 +116,14 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             // to the channel. Block the current thread until a receiver thread
             // resumes us.
             list_push_back(&dst->queue, &current->queue_elem);
+            current->blocked_on = dst;
             thread_block(current);
             thread_switch();
+
+            if (current->ipc_aborted) {
+                current->ipc_aborted = false;
+                return ERR_CLOSED_CHANNEL;
+            }
         }
 
 #ifdef DEBUG_BUILD
@@ -195,32 +209,43 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     if (syscall & IPC_RECV) {
         struct channel *recv_on = ch->transfer_to;
 
+        if (recv_on->destructed) {
+            current->ipc_aborted = false;
+            return ERR_CLOSED_CHANNEL;
+        }
+
         // Try to get the receiver right.
         if (recv_on->receiver != NULL) {
             return ERR_ALREADY_RECEVING;
         }
 
         current->recv_in_kernel = from_kernel;
-        if (from_kernel) {
-            current->ipc_buffer = current->kernel_ipc_buffer;
-        }
-
 #ifdef DEBUG_BUILD
         current->debug.receive_from = recv_on;
 #endif
         recv_on->receiver = current;
+        if (from_kernel) {
+            current->ipc_buffer = current->kernel_ipc_buffer;
+        }
+
         thread_block(current);
 
         // Resume a thread in the sender queue if exists.
         struct list_head *node = list_pop_front(&recv_on->queue);
         if (node) {
-            thread_resume(LIST_CONTAINER(thread, queue_elem, node));
+            struct thread *sender = LIST_CONTAINER(thread, queue_elem, node);
+            sender->blocked_on = NULL;
+            thread_resume(sender);
         }
 
         // Wait for a message...
         thread_switch();
 
-        // Received a message or a notification.
+        // Received a message or a notification, or the channel is destructed.
+        if (current->ipc_aborted) {
+            current->ipc_aborted = false;
+            return ERR_CLOSED_CHANNEL;
+        }
 
 #ifdef DEBUG_BUILD
         current->debug.receive_from = NULL;
@@ -313,10 +338,16 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // is now blocked and will be resumed by another IPC.
     arch_thread_switch(current, receiver);
 
+
+    // Received a message or a notification, or the channel is destructed.
+    if (current->ipc_aborted) {
+        current->ipc_aborted = false;
+        return ERR_CLOSED_CHANNEL;
+    }
+
 #ifdef DEBUG_BUILD
     current->debug.receive_from = NULL;
 #endif
-
     // TODO: Atomic swap.
     m->notification = recv_on->notification;
     recv_on->notification = 0;
