@@ -18,7 +18,7 @@ void page_table_init(struct page_table *pt) {
 }
 
 void page_table_destroy(UNUSED struct page_table *pt) {
-    // TODO:
+    // TODO: Traverse and kfree the page table.
 }
 
 void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
