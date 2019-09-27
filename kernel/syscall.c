@@ -257,7 +257,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     struct thread *current = CURRENT;
     struct channel *ch = table_get(&current->process->channels, cid);
     if (UNLIKELY(!ch)) {
-        goto slowpath1;
+        goto slowpath;
     }
 
     struct message *m = current->ipc_buffer;
