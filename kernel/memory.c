@@ -19,20 +19,16 @@ void arena_init(struct arena *arena, vaddr_t addr, size_t arena_size,
     arena->element_size = elem_size;
     arena->elements_max = arena_size / elem_size;
     arena->elements_used = 0;
-    spin_lock_init(&arena->lock);
     list_init(&arena->free_list);
 }
 
 /// Allocates a memory. Don't use this directly; use KMALLOC() macro.
 void *kmalloc_from(struct arena *arena) {
-    flags_t flags = spin_lock_irqsave(&arena->lock);
-
     if (arena->elements_used < arena->elements_max) {
         // Allocate from the uninitialized memory space.
         size_t index = arena->elements_used;
         void *ptr = (void *) (arena->elements + arena->element_size * index);
         arena->elements_used++;
-        spin_unlock_irqrestore(&arena->lock, flags);
 
 #ifdef DEBUG_BUILD
         asan_init_area(ASAN_UNINITIALIZED, ptr, arena->element_size);
@@ -41,8 +37,6 @@ void *kmalloc_from(struct arena *arena) {
     }
 
     void *ptr = list_pop_front(&arena->free_list);
-    spin_unlock_irqrestore(&arena->lock, flags);
-
 #ifdef DEBUG_BUILD
     asan_init_area(ASAN_UNINITIALIZED, ptr, arena->element_size);
 #endif

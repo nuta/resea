@@ -60,7 +60,6 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     thread->debug.send_from = NULL;
     thread->debug.receive_from = NULL;
 #endif
-    spin_lock_init(&thread->lock);
     init_stack_canary(kernel_stack);
 
     error_t err = arch_thread_init(thread, start, stack, kernel_stack,
@@ -75,11 +74,9 @@ struct thread *thread_create(struct process *process, vaddr_t start,
 
     // Allow threads to read and write the buffer.
     if (!is_kernel_thread) {
-        flags_t flags = spin_lock_irqsave(&process->lock);
         link_page(&process->page_table, user_buffer, into_paddr(thread_info),
             1, PAGE_USER | PAGE_WRITABLE);
         list_push_back(&process->threads, &thread->next);
-        spin_unlock_irqrestore(&process->lock, flags);
     }
 
     table_set(&process_table, tid, (void *) thread);
@@ -110,21 +107,15 @@ static struct list_head runqueue;
 
 /// Marks a thread runnable.
 void thread_resume(struct thread *thread) {
-    flags_t flags = spin_lock_irqsave(&thread->lock);
-
     if (thread->state != THREAD_RUNNABLE) {
         thread->state = THREAD_RUNNABLE;
         list_push_back(&runqueue, &thread->runqueue_elem);
     }
-
-    spin_unlock_irqrestore(&thread->lock, flags);
 }
 
 /// Marks a thread blocked.
 void thread_block(struct thread *thread) {
-    flags_t flags = spin_lock_irqsave(&thread->lock);
     thread->state = THREAD_BLOCKED;
-    spin_unlock_irqrestore(&thread->lock, flags);
 }
 
 /// Picks the next thread to run.

@@ -8,7 +8,6 @@
 
 /// A memory pool.
 struct arena {
-    spinlock_t lock;
     /// The memory pool buffer.
     vaddr_t elements;
     /// The size of the buffer.

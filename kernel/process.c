@@ -32,7 +32,6 @@ struct process *process_create(const char *name) {
 
     proc->pid = pid;
     strcpy((char *) &proc->name, PROCESS_NAME_LEN_MAX, name);
-    spin_lock_init(&proc->lock);
     list_init(&proc->vmareas);
     list_init(&proc->threads);
     page_table_init(&proc->page_table);

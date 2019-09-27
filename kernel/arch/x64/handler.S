@@ -3,6 +3,92 @@
 .set ARCH_THREAD_KERNEL_STACK, 8
 .set ARCH_RFLAGS_ORMASK, 40
 
+.data
+.align 8
+giant_lock:
+    .long 0
+
+/// Locks the ginant lock. Note that it uses stack.
+.macro GIANT_LOCK
+\@1:
+    push rax
+    mov  eax, 1
+    lock xchg [rip + giant_lock], eax
+    test eax, eax
+    jnz  \@1b
+    pop  rax
+.endm
+
+/// Unlocks the ginant lock. Note that it uses stack.
+.macro GIANT_UNLOCK
+    push rax
+    xor  eax, eax
+    mov  [rip + giant_lock], eax
+    pop  rax
+.endm
+
+.text
+
+/// The entry point of kernel threads.
+.globl x64_start_kernel_thread
+x64_start_kernel_thread:
+    // Clear RBP to stop backtrace here.
+    mov rbp, 0
+
+    // Call the kernel thread. Note that a kernel thread NEVER returns.
+    pop rax
+    call rax
+
+    // Invoke an exception to notice that the kernel thread returned.
+    ud2
+
+.globl x64_enter_userspace
+x64_enter_userspace:
+    GIANT_UNLOCK
+
+    /* Sanitize registers to prevent information leak. */
+    xor rax, rax
+    xor rbx, rbx
+    xor rcx, rcx
+    xor rdx, rdx
+    xor rdi, rdi
+    xor rsi, rsi
+    xor r8, r8
+    xor r9, r9
+    xor r10, r10
+    xor r11, r11
+
+    cli
+    swapgs
+    iretq
+
+.globl x64_switch
+x64_switch:
+    /* Save callee-saved registers. */
+    push rbp
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+    pushfq
+
+    /* Save and restore the stack pointer. */
+    mov [rdi + ARCH_THREAD_RSP], rsp
+    mov rsp, [rsi + ARCH_THREAD_RSP]
+
+    /* Restore callee-saved registers. */
+    popfq
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    pop rbp
+
+    /* Resume the next thread. */
+    ret
+
 .extern syscall_handler
 .globl x64_syscall_handler
 x64_syscall_handler:
@@ -50,8 +136,12 @@ x64_syscall_handler:
     push r14
     push r15
 
+    // Set RDX to the 1st argument for syscall_handler().
     mov rdx, rax
+
+    GIANT_LOCK
     call syscall_handler
+    GIANT_UNLOCK
 
     // Restore callee-saved registers.
     pop r15
@@ -144,7 +234,7 @@ handle_interrupt:
     test qword ptr [rsp + 24], 3
     jz 1f
     swapgs
-
+    GIANT_LOCK
 1:
     // Save RDI and set the IRQ number to RDI at once.
     xchg rdi, [rsp]
@@ -166,7 +256,9 @@ handle_interrupt:
     push rax
 
     mov rsi, rsp
+
     call x64_handle_interrupt
+    GIANT_UNLOCK
 
     pop rax
     pop rbx

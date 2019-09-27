@@ -29,7 +29,6 @@ objs += \
 	kernel/arch/x64/screen.o \
 	kernel/arch/x64/serial.o \
 	kernel/arch/x64/setup.o \
-	kernel/arch/x64/switch.o \
 	kernel/arch/x64/smp.o \
 	kernel/arch/x64/thread.o
 

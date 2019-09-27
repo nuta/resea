@@ -12,8 +12,6 @@ struct process;
 struct channel {
     /// The owner process.
     struct process *process;
-    /// The channel lock.
-    spinlock_t lock;
     /// The channel ID.
     cid_t cid;
     /// The reference counter. Even if the owner process has been destroyed,

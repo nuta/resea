@@ -87,10 +87,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 #endif
         // Wait for a receiver thread.
         while (1) {
-            flags_t flags = spin_lock_irqsave(&ch->lock);
             linked_with = ch->linked_with;
             dst = linked_with->transfer_to;
-            spin_lock(&dst->lock);
             receiver = dst->receiver;
 
             // Check if there's a thread waiting for a message on the
@@ -98,15 +96,11 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             // channel.
             if (receiver != NULL) {
                 dst->receiver = NULL;
-                spin_unlock(&dst->lock);
-                spin_unlock_irqrestore(&ch->lock, flags);
                 break;
             }
 
             // Exit the system call handler if IPC_NOBLOCK is specified.
             if (syscall & IPC_NOBLOCK) {
-                spin_unlock(&dst->lock);
-                spin_unlock_irqrestore(&ch->lock, flags);
                 return ERR_WOULD_BLOCK;
             }
 
@@ -115,8 +109,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             // resumes us.
             list_push_back(&dst->queue, &current->queue_elem);
             thread_block(current);
-            spin_unlock(&dst->lock);
-            spin_unlock_irqrestore(&ch->lock, flags);
             thread_switch();
         }
 
@@ -201,10 +193,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     //  Receive Phase
     //
     if (syscall & IPC_RECV) {
-        flags_t flags = spin_lock_irqsave(&ch->lock);
         struct channel *recv_on = ch->transfer_to;
-        spin_unlock_irqrestore(&ch->lock, flags);
-        flags = spin_lock_irqsave(&recv_on->lock);
 
         // Try to get the receiver right.
         if (recv_on->receiver != NULL) {
@@ -229,7 +218,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         }
 
         // Wait for a message...
-        spin_unlock_irqrestore(&recv_on->lock, flags);
         thread_switch();
 
         // Received a message or a notification.
@@ -277,39 +265,28 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
     // Fastpath accepts only inline payloads.
     if (UNLIKELY(SYSCALL_FASTPATH_TEST(header) != 0)) {
-        goto slowpath1;
+        goto slowpath;
     }
 
-    // Try locking the channel. If it failed, enter the slowpath intead of
-    // waiting for it here because spin_lock() would be large for inlining.
-    if (UNLIKELY(!spin_try_lock(&ch->lock))) {
-        goto slowpath1;
-    }
-
-    // Lock the channel where we will wait for a message if necessary.
+    // Make sure that the channels are not destructed.
     struct channel *recv_on = ch->transfer_to;
-    if (UNLIKELY(ch != recv_on && !spin_try_lock(&recv_on->lock))) {
-        goto slowpath2;
+    if (ch->destructed || recv_on->destructed) {
+        goto slowpath;
     }
 
     // Make sure that no threads are waitng for us.
     if (UNLIKELY(!list_is_empty(&recv_on->queue))) {
-        goto slowpath3;
+        goto slowpath;
     }
 
     struct channel *linked_with = ch->linked_with;
     struct channel *dst_ch = linked_with->transfer_to;
 
-    // Try locking the destination channel.
-    if (UNLIKELY(!spin_try_lock(&dst_ch->lock))) {
-        goto slowpath3;
-    }
-
     // Make sure that a receiver thread is already waiting on the destination
     // channel.
     struct thread *receiver = dst_ch->receiver;
     if (UNLIKELY(!receiver)) {
-        goto slowpath4;
+        goto slowpath;
     }
 
     // Now all prerequisites are met. Copy the message and wait on the our
@@ -331,11 +308,6 @@ error_t sys_ipc_fastpath(cid_t cid) {
 #ifdef DEBUG_BUILD
     current->debug.receive_from = recv_on;
 #endif
-    spin_unlock(&dst_ch->lock);
-    spin_unlock(&ch->lock);
-    if (ch != ch->transfer_to) {
-        spin_unlock(&recv_on->lock);
-    }
 
     // Do a direct context switch into the receiver thread. The current thread
     // is now blocked and will be resumed by another IPC.
@@ -355,15 +327,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // Resumed by a sender thread.
     return OK;
 
-slowpath4:
-    spin_unlock(&dst_ch->lock);
-slowpath3:
-    if (ch != ch->transfer_to) {
-        spin_unlock(&recv_on->lock);
-    }
-slowpath2:
-    spin_unlock(&ch->lock);
-slowpath1:
+slowpath:
     return sys_ipc(cid, IPC_SEND | IPC_RECV);
 }
 

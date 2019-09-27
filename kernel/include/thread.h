@@ -27,8 +27,6 @@ struct thread {
     struct arch_thread arch;
     /// The thread ID.
     tid_t tid;
-    /// The thread lock.
-    spinlock_t lock;
     /// The process.
     struct process *process;
     /// The current state of the thread.

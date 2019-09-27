@@ -22,7 +22,6 @@
     0x0000000002000000 // TODO: make sure that memmgr.bin is not too big
 #define STRAIGHT_MAP_ADDR       0x0000000003000000
 #define STRAIGHT_MAP_END        0xffff800000000000
-
 #define THREAD_INFO_ADDR        0x0000000000f1b000
 #define ASAN_SHADOW_MEMORY 0xffff800010000000
 #define OBJ_MAX_SIZE 1024
@@ -45,9 +44,6 @@ struct cpuvar {
     struct idt_entry idt[IDT_DESC_NUM];
     struct thread *current_fpu_owner;
 };
-
-typedef uint64_t flags_t;
-typedef uint8_t spinlock_t;
 
 struct arch_thread {
     // IMPORTANT NOTE: Don't forget to update offsets in switch.S and handler.S
@@ -107,14 +103,6 @@ static inline void *inlined_memcpy(void *dst, void *src, size_t len) {
     return dst;
 }
 
-static inline bool spin_try_lock(spinlock_t *lock) {
-    return atomic_compare_and_swap(lock, 0, 1);
-}
-
-static inline void spin_unlock(spinlock_t *lock) {
-    __atomic_store_n(lock, 0, __ATOMIC_SEQ_CST);
-}
-
 static inline char *strcpy(char *dst, size_t dst_len, const char *src) {
     ASSERT(dst != NULL && "copy to NULL");
     ASSERT(src != NULL && "copy from NULL");
@@ -144,29 +132,6 @@ static inline int strcmp(const char *s1, const char *s2) {
 static inline void arch_idle(void) {
     // Wait for an interrupt.
     __asm__ __volatile__("sti;hlt");
-}
-
-static inline void spin_lock_init(spinlock_t *lock) {
-    __atomic_store_n(lock, 0, __ATOMIC_SEQ_CST);
-}
-
-static inline void spin_lock(spinlock_t *lock) {
-    while (!atomic_compare_and_swap(lock, 0, 1)) {
-        asm_pause();
-    }
-}
-
-static inline flags_t spin_lock_irqsave(spinlock_t *lock) {
-    flags_t flags = asm_read_rflags();
-    asm_cli();
-
-    spin_lock(lock);
-    return flags;
-}
-
-static inline void spin_unlock_irqrestore(spinlock_t *lock, flags_t flags) {
-    spin_unlock(lock);
-    asm_write_rflags(flags);
 }
 
 struct stack_frame {

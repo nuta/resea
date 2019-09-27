@@ -25,7 +25,6 @@ struct channel *channel_create(struct process *process) {
     channel->transfer_to = channel;
     channel->receiver = NULL;
     channel->notification = 0;
-    spin_lock_init(&channel->lock);
     list_init(&channel->queue);
 
     table_set(&process->channels, cid, channel);
@@ -52,17 +51,12 @@ void channel_destroy(struct channel *ch) {
 /// `ch2` can be the same channel.
 void channel_link(struct channel *ch1, struct channel *ch2) {
     if (ch1 == ch2) {
-        flags_t flags = spin_lock_irqsave(&ch1->lock);
         if (ch1->linked_with != ch1) {
             ch1->linked_with->ref_count--;
         }
 
         ch1->transfer_to = ch1;
-        spin_unlock_irqrestore(&ch1->lock, flags);
     } else {
-        flags_t flags = spin_lock_irqsave(&ch1->lock);
-        spin_lock(&ch2->lock);
-
         // TODO: decref old linked channels.
 
         ch1->linked_with = ch2;
@@ -70,8 +64,6 @@ void channel_link(struct channel *ch1, struct channel *ch2) {
         ch1->ref_count++;
         ch2->ref_count++;
 
-        spin_unlock(&ch2->lock);
-        spin_unlock_irqrestore(&ch1->lock, flags);
     }
 }
 
@@ -79,34 +71,21 @@ void channel_link(struct channel *ch1, struct channel *ch2) {
 /// process.
 void channel_transfer(struct channel *src, struct channel *dst) {
     ASSERT(src->process == dst->process);
-
     if (src == dst) {
-        flags_t flags = spin_lock_irqsave(&src->lock);
         if (src->transfer_to != src) {
-            src->transfer_to->ref_count--;
+            channel_destroy(src->transfer_to);
         }
-
         src->transfer_to = src;
-        spin_unlock_irqrestore(&src->lock, flags);
     } else {
-        flags_t flags = spin_lock_irqsave(&src->lock);
-        spin_lock(&dst->lock);
-
         src->transfer_to = dst;
-        dst->ref_count++;
-
-        spin_unlock(&dst->lock);
-        spin_unlock_irqrestore(&src->lock, flags);
+        channel_incref(dst);
     }
 }
 
 /// Sends a notification.
 error_t channel_notify(struct channel *ch, notification_t notification) {
-    spin_lock(&ch->lock);
-
     // Update the notification data.
     struct channel *dst = ch->linked_with->transfer_to;
-    spin_lock(&dst->lock);
     dst->notification |= notification;
 
     TRACE("notify: %pC -> %pC => %pC (data=%p)",
@@ -121,7 +100,5 @@ error_t channel_notify(struct channel *ch, notification_t notification) {
         dst->receiver = NULL;
     }
 
-    spin_unlock(&dst->lock);
-    spin_unlock(&ch->lock);
     return OK;
 }

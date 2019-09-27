@@ -12,8 +12,6 @@
 
 /// The process control block.
 struct process {
-    /// The process lock.
-    spinlock_t lock;
     /// The list element used for `process_list`.
     struct list_head next;
     /// The process ID.
