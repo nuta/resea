@@ -52,7 +52,7 @@ void channel_destroy(struct channel *ch) {
 void channel_link(struct channel *ch1, struct channel *ch2) {
     if (ch1 == ch2) {
         if (ch1->linked_with != ch1) {
-            ch1->linked_with->ref_count--;
+            channel_destroy(ch1->linked_with);
         }
 
         ch1->transfer_to = ch1;
@@ -61,9 +61,8 @@ void channel_link(struct channel *ch1, struct channel *ch2) {
 
         ch1->linked_with = ch2;
         ch2->linked_with = ch1;
-        ch1->ref_count++;
-        ch2->ref_count++;
-
+        channel_incref(ch1);
+        channel_incref(ch2);
     }
 }
 
