@@ -33,13 +33,6 @@ void arch_thread_switch(struct thread *prev, struct thread *next);
 
 static inline bool is_valid_page_base_addr(vaddr_t page_base);
 
-void spin_lock_init(spinlock_t *lock);
-void spin_lock(spinlock_t *lock);
-static inline bool spin_try_lock(spinlock_t *lock);
-static inline void spin_unlock(spinlock_t *lock);
-flags_t spin_lock_irqsave(spinlock_t *lock);
-void spin_unlock_irqrestore(spinlock_t *lock, flags_t flags);
-
 char *strcpy(char *dst, size_t dst_len, const char *src);
 int strcmp(const char *s1, const char *s2);
 
