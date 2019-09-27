@@ -103,16 +103,6 @@ struct tss {
 //
 //  Inline assembly.
 //
-static inline uint64_t asm_read_rflags(void) {
-    uint64_t rflags;
-    __asm__ __volatile__("pushfq; popq %%rax" : "=a"(rflags));
-    return rflags;
-}
-
-static inline void asm_write_rflags(uint64_t rflags) {
-    __asm__ __volatile__("pushq %%rax; popfq" ::"a"(rflags));
-}
-
 static inline void asm_out8(uint16_t port, uint8_t value) {
     __asm__ __volatile__("outb %0, %1" ::"a"(value), "Nd"(port));
 }
