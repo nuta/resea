@@ -324,7 +324,6 @@ error_t sys_ipc_fastpath(cid_t cid) {
     IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
               recv_on, m->from, m->header, m->notification);
 
-    // Resumed by a sender thread.
     return OK;
 
 slowpath:
