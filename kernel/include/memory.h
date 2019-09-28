@@ -6,10 +6,15 @@
 #include <list.h>
 #include <printk.h>
 
+#define FREE_LIST_MAGIC1 0xdeaddead
+#define FREE_LIST_MAGIC2 0xbadbadba
+
 /// Unused element.
 struct free_list {
+    uint64_t magic1;
     struct list_head next;
     size_t num_objects;
+    uint64_t magic2;
 };
 
 /// A memory pool.
