@@ -324,19 +324,18 @@ static error_t process_message(struct message *m) {
 /// The kernel server mainloop.
 NORETURN static void mainloop(cid_t server_ch) {
     struct message *m = CURRENT->kernel_ipc_buffer;
-    sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
-
     while (1) {
+        sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
+
         error_t err = process_message(m);
+        if (err == ERR_DONT_REPLY) {
+            continue;
+        }
+
         if (err != OK) {
             m->header = ERROR_TO_HEADER(err);
         }
-
-        if (err == ERR_DONT_REPLY) {
-            sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
-        } else {
-            sys_ipc(m->from, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
-        }
+        sys_ipc(m->from, IPC_SEND | IPC_FROM_KERNEL);
     }
 }
 
