@@ -36,6 +36,10 @@ void *kmalloc_from(struct arena *arena) {
         return ptr;
     }
 
+    if (list_is_empty(&arena->free_list)) {
+        PANIC("Run out of kernel memory.");
+    }
+
     void *ptr = list_pop_front(&arena->free_list);
 #ifdef DEBUG_BUILD
     asan_init_area(ASAN_UNINITIALIZED, ptr, arena->element_size);
