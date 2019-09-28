@@ -1,0 +1,3 @@
+menuconfig PC_KBD_SERVER
+    bool "PC Keyboard (PS/2) Server"
+    default y

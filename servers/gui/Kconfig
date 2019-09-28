@@ -1,0 +1,3 @@
+menuconfig GUI_SERVER
+    bool "GUI Server"
+    default y

@@ -46,7 +46,7 @@ $ pip3 install -r tools/requirements.txt
 Building
 --------
 ```bash
-$ make defconfig            # Generate a default .config file.
+$ make menuconfig           # Edit build configuration.
 $ make build                # Build a kernel executable (debug build).
 $ make build BUILD=release  # Build a kernel executable (release build).
 $ make build V=1            # Build a kernel executable with verbose command output.

@@ -1,0 +1,3 @@
+menuconfig SHELL_APP
+    bool "Console Shell"
+    default y

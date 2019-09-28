@@ -1,0 +1,43 @@
+mainmenu "Resea Build Configuration"
+
+choice
+    prompt "Target CPU architecture"
+config ARCH_X64
+    bool "x86_64"
+endchoice
+
+menu "Build options"
+config BUILD_DIR
+    string "Build directory"
+    default "build"
+
+choice
+    prompt "Build mode"
+config BUILD_DEBUG
+    bool "Debug"
+config BUILD_RELEASE
+    bool "Release"
+endchoice
+
+config LLVM_PREFIX
+    string "Clang/LLD/LLVM toolchain prefix"
+    default "/usr/local/opt/llvm/bin/"
+
+config GRUB_PREFIX
+    string "GRUB commands prefix"
+    default "/usr/local/opt/i386-elf-grub/bin/i386-elf-"
+endmenu
+
+menu "Servers"
+source "servers/*/Kconfig"
+endmenu
+
+menu "Applications"
+source "apps/*/Kconfig"
+endmenu
+
+menu "Initfs"
+config INIT
+    string "The initial server (must be 'memmgr' for now)."
+    default "memmgr"
+endmenu

@@ -12,7 +12,7 @@ ifeq ($(V),)
 endif
 
 # Determine if we need to load ".config".
-non_config_targets := defconfig
+non_config_targets := menuconfig
 load_config := y
 ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
 load_config :=
@@ -25,10 +25,12 @@ endif
 # Include other makefiles.
 ifeq ($(load_config), y)
 ifeq ($(wildcard .config),)
-$(error .config does not exist (run 'make defconfig' first))
+$(error .config does not exist (run 'make menuconfig' first))
 endif
 
 include .config
+include .config.parsed
+
 objs :=
 compiled_objs :=
 include kernel/arch/$(ARCH)/arch.mk
@@ -43,6 +45,7 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 .SUFFIXES:
 
 # Commands.
+PYTHON3      ?= python3
 CC           := $(LLVM_PREFIX)clang
 LD           := $(LLVM_PREFIX)ld.lld
 NM           := $(LLVM_PREFIX)llvm-nm
@@ -83,10 +86,10 @@ build: $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/compile_commands.json
 clean:
 	rm -r $(BUILD_DIR)
 
-.PHONY: defconfig
-defconfig:
-	$(PYTHON3) tools/buildconfig.py default
-	echo "Generated .config"
+.PHONY: menuconfig
+menuconfig:
+	menuconfig
+	./tools/parseconfig.py
 
 .PHONY: docs
 docs:
