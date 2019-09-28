@@ -37,6 +37,8 @@ static inline void list_init(struct list_head *list) {
 static inline void list_remove(struct list_head *to_remove) {
     to_remove->prev->next = to_remove->next;
     to_remove->next->prev = to_remove->prev;
+    to_remove->next = INVALID_POINTER;
+    to_remove->prev = INVALID_POINTER;
 }
 
 // Appends a element into the list.
