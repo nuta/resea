@@ -101,7 +101,6 @@ static void report_ubsan_event(const char *event) {
     PANIC("detected an undefined behavior: %s", event);
 }
 
-// TODO: Parse type_mismatch_data_v1
 void __ubsan_handle_type_mismatch_v1(struct ubsan_mismatch_data_v1 *data,
                                      vaddr_t ptr) {
     if (!ptr) {

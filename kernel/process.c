@@ -50,8 +50,6 @@ struct process *process_create(const char *name) {
 
 /// Destroys a process.
 void process_destroy(UNUSED struct process *process) {
-    // FIXME: Make LIST_FOR_EACH safe
-
     // Destroy channels.
     LIST_FOR_EACH(ch, &process->channel_list, struct channel, next) {
         channel_destroy(ch);
