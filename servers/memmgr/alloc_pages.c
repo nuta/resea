@@ -54,7 +54,8 @@ static struct page *alloc_from_zone(struct zone *zone, int order) {
         return NULL;
     }
 
-    struct page *page = LIST_CONTAINER(page, next, list_pop_front(free_list));
+    struct page *page = LIST_CONTAINER(list_pop_front(free_list), struct page,
+                                       next);
     if (!page) {
         return NULL;
     }

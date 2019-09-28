@@ -233,7 +233,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Resume a thread in the sender queue if exists.
         struct list_head *node = list_pop_front(&recv_on->queue);
         if (node) {
-            struct thread *sender = LIST_CONTAINER(thread, queue_elem, node);
+            struct thread *sender = LIST_CONTAINER(node, struct thread,
+                                                   queue_elem);
             sender->blocked_on = NULL;
             thread_resume(sender);
         }

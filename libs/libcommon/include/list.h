@@ -3,16 +3,14 @@
 
 #include <types.h>
 
-#define LIST_CONTAINER(container, field, node) \
-    ((struct container *) ((vaddr_t)(node) - offsetof(struct container, field)))
-#define LIST_CONTAINER2(container, field, head) \
+#define LIST_CONTAINER(head, container, field) \
     ((container *) ((vaddr_t)(head) - offsetof(container, field)))
 #define LIST_FOR_EACH(elem, list, container, field) \
-    for (container *elem = LIST_CONTAINER2(container, field, list), \
-         *__next = LIST_CONTAINER2(container, field, elem->field.next); \
+    for (container *elem = LIST_CONTAINER(list, container, field), \
+         *__next = LIST_CONTAINER(elem->field.next, container, field); \
          &elem->field != (list); \
-         elem = LIST_CONTAINER2(container, field, __next), \
-         __next = LIST_CONTAINER2(container, field, elem->field.next))
+         elem = LIST_CONTAINER(__next, container, field), \
+         __next = LIST_CONTAINER(elem->field.next, container, field))
 
 struct list_head {
     struct list_head *prev;

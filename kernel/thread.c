@@ -162,7 +162,7 @@ static struct thread *scheduler(struct thread *current) {
         return CPUVAR->idle_thread;
     }
 
-    return LIST_CONTAINER(thread, runqueue_elem, next);
+    return LIST_CONTAINER(next, struct thread, runqueue_elem);
 }
 
 /// Saves the current context and switches into the next thread. This function
