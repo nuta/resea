@@ -386,6 +386,7 @@ builtin_types = {
     "cid":         { "name": "cid_t",         "size": "sizeof(cid_t)" },
     "channel":     { "name": "cid_t",         "size": "sizeof(cid_t)" },
     "uintptr":     { "name": "uintptr_t",     "size": "sizeof(uintptr_t)" },
+    "paddr":       { "name": "paddr_t",       "size": "sizeof(paddr_t)" },
     "size":        { "name": "size_t",        "size": "sizeof(size_t)" },
     "page":        { "name": "page_t",        "size": "sizeof(page_t)" },
     "page_base":   { "name": "page_base_t",   "size": "sizeof(page_base_t)" },
