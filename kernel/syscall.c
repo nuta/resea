@@ -143,6 +143,25 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         inlined_memcpy(dst_m->payloads.data, m->payloads.data,
                        INLINE_PAYLOAD_LEN(header));
 
+        // Handle the channel payload.
+        if (header & MSG_CHANNEL_PAYLOAD) {
+            struct channel *ch = table_get(&current->process->channels,
+                                           m->payloads.channel);
+            if (!ch) {
+                receiver->ipc_aborted = true;
+                return ERR_INVALID_PAYLOAD;
+            }
+
+            struct channel *dst_ch = channel_create(receiver->process);
+            if (!dst_ch) {
+                receiver->ipc_aborted = true;
+                return ERR_NO_MEMORY;
+            }
+
+            channel_link(ch->linked_with, dst_ch);
+            dst_m->payloads.channel = dst_ch->cid;
+        }
+
         // Copy the page payload if exists.
         if (header & MSG_PAGE_PAYLOAD) {
             page_t page = m->payloads.page;
@@ -173,6 +192,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 // base address is valid.
                 if (PAGE_ORDER(page_base) < PAGE_ORDER(page)
                     || !is_valid_page_base_addr(page_base_addr)) {
+                    receiver->ipc_aborted = true;
                     return ERR_UNACCEPTABLE_PAGE_PAYLOAD;
                 }
 
@@ -186,20 +206,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                         num_pages);
         }
 
-        // Handle the channel payload.
-        if (header & MSG_CHANNEL_PAYLOAD) {
-            struct channel *ch = table_get(&current->process->channels,
-                                           m->payloads.channel);
-            struct channel *dst_ch = channel_create(receiver->process);
-            // FIXME: Clean up and return an error instead.
-            ASSERT(ch);
-            ASSERT(dst_ch);
-
-            channel_link(ch->linked_with, dst_ch);
-            // FIXME: channel_destroy(ch);
-            dst_m->payloads.channel = dst_ch->cid;
-        }
-
         thread_resume(receiver);
     }
 
@@ -208,9 +214,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     //
     if (syscall & IPC_RECV) {
         struct channel *recv_on = ch->transfer_to;
-
+retry:
         if (recv_on->destructed) {
-            current->ipc_aborted = false;
             return ERR_CLOSED_CHANNEL;
         }
 
@@ -243,9 +248,12 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         thread_switch();
 
         // Received a message or a notification, or the channel is destructed.
+
         if (current->ipc_aborted) {
+            // The channel has been destructed or a sender thread aborted IPC.
+            // Redo the receive phase.
             current->ipc_aborted = false;
-            return ERR_CLOSED_CHANNEL;
+            goto retry;
         }
 
 #ifdef DEBUG_BUILD
@@ -295,6 +303,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
     // Make sure that the channels are not destructed.
     struct channel *recv_on = ch->transfer_to;
+retry:
     if (ch->destructed || recv_on->destructed) {
         goto slowpath;
     }
@@ -340,9 +349,12 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
 
     // Received a message or a notification, or the channel is destructed.
+
     if (current->ipc_aborted) {
+        // The channel has been destructed or a sender thread aborted IPC.
+        // Redo the receive phase.
         current->ipc_aborted = false;
-        return ERR_CLOSED_CHANNEL;
+        goto retry;
     }
 
 #ifdef DEBUG_BUILD
