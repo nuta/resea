@@ -10,8 +10,7 @@
             *__next = NULL;                                                    \
          (&elem->field != (list) &&                                            \
              (__next = LIST_CONTAINER(elem->field.next, container, field)));   \
-         elem = __next,                                                        \
-             __next = LIST_CONTAINER(elem->field.next, container, field))
+         elem = __next)
 
 struct list_head {
     struct list_head *prev;
