@@ -68,7 +68,7 @@ def generate_symbol_table(outfile, symbols, symtable_addr):
 #define PTR      .quad
 #define PTRSIZE  8
 #else
-#error \"Unexpected architecture. Update gen-symtable.py!\"
+#error \"Unexpected architecture. Update link.py!\"
 #endif
 #define HEADER_SIZE   (8 + PTRSIZE * 2)
 #define SIZEOF_SYMBOL (PTRSIZE + 4 * 2)
