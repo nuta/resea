@@ -197,6 +197,8 @@ static void check_load(vaddr_t addr, size_t size) {
         switch (*shadow) {
         case ASAN_VALID:
             break;
+        case ASAN_FREED:
+            PANIC("asan: detected a double-free bug of %p", addr);
         case ASAN_NOT_ALLOCATED:
             PANIC("asan: detected an use of unallocated memory at %p", addr);
         case ASAN_UNINITIALIZED:

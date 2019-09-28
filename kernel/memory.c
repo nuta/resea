@@ -12,18 +12,22 @@ struct kmalloc_arena page_arena;
 /// The memory pool for small objects.
 struct kmalloc_arena small_arena;
 
+static void add_free_list(struct kmalloc_arena *arena, vaddr_t addr,
+                          size_t num_objects) {
+    struct free_list *free_list = (struct free_list *) addr;
+#ifdef DEBUG_BUILD
+    asan_init_area(ASAN_UNINITIALIZED, free_list, sizeof(*free_list));
+#endif
+    free_list->num_objects = num_objects;
+    list_push_back(&arena->free_list, &free_list->next);
+}
+
 /// Creates a new memory pool.
 void arena_init(struct kmalloc_arena *arena, vaddr_t addr, size_t arena_size,
                 size_t object_size) {
     arena->object_size = object_size;
     list_init(&arena->free_list);
-
-    struct free_list *free_list = (struct free_list *) addr;
-#ifdef DEBUG_BUILD
-    asan_init_area(ASAN_UNINITIALIZED, free_list, sizeof(*free_list));
-#endif
-    free_list->num_objects = arena_size / arena->object_size;
-    list_push_back(&arena->free_list, &free_list->next);
+    add_free_list(arena, addr, arena_size / arena->object_size);
 }
 
 /// Allocates a memory. Don't use this directly; use KMALLOC() macro.
@@ -49,9 +53,11 @@ void *kmalloc_from(struct kmalloc_arena *arena) {
 }
 
 /// Frees a memory.
-void kfree(UNUSED struct kmalloc_arena *arena, UNUSED void *ptr) {
-    // TODO:
-    UNIMPLEMENTED();
+void kfree(struct kmalloc_arena *arena, void *ptr) {
+#ifdef DEBUG_BUILD
+    asan_init_area(ASAN_FREED, (void *) ptr, arena->object_size);
+#endif
+    add_free_list(arena, (vaddr_t) ptr, 1);
 }
 
 /// Checks if `vma` includes `addr` and allows the requested access.
