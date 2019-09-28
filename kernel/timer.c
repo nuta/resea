@@ -53,7 +53,7 @@ struct timer *timer_create(int initial, int interval,
 void timer_destroy(struct timer *timer) {
     TRACE("timer_destroy: timer=%p", timer);
     table_free(&timers, timer->id);
-    // TODO: list_remove(&active_timers, &timer->next);
+    list_remove(&timer->next);
     // TODO: kfree(&small_arena, timer);
 }
 
