@@ -33,6 +33,7 @@
     })
 
 #define NULL ((void *) 0)
+#define INVALID_POINTER ((void *) 0xdeaddead)
 
 #define PAGE_SIZE 4096
 

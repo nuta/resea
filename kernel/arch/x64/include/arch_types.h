@@ -23,7 +23,6 @@
 #define STRAIGHT_MAP_ADDR       0x0000000003000000
 #define STRAIGHT_MAP_END        0xffff800000000000
 #define THREAD_INFO_ADDR        0x0000000000f1b000
-#define INVALID_POINTER         ((void *) 0xfffffdeadbadbeef)
 #define ASAN_SHADOW_MEMORY 0xffff800010000000
 #define OBJ_MAX_SIZE 1024
 #define TICK_HZ 1000
