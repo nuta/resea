@@ -4,7 +4,7 @@
 #include <types.h>
 
 #define LIST_CONTAINER(head, container, field) \
-    ((container *) ((vaddr_t)(head) - offsetof(container, field)))
+    ((container *) ((vaddr_t) (head) - offsetof(container, field)))
 #define LIST_FOR_EACH(elem, list, container, field) \
     for (container *elem = LIST_CONTAINER(list, container, field), \
          *__next = LIST_CONTAINER(elem->field.next, container, field); \
