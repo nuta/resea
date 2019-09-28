@@ -17,7 +17,6 @@ void timer_interrupt_handler(int ticks) {
             if (timer->interval) {
                 timer->current = timer->interval;
             } else {
-                // TODO: foreach_destroyable
                 timer_destroy(timer);
             }
         }
