@@ -74,15 +74,36 @@ static error_t handle_memmgr_benchmark_nop(struct message *m) {
     return OK;
 }
 
-static error_t handle_memmgr_alloc_pages(struct message *m) {
-    size_t order = m->payloads.memmgr.alloc_pages.order;
+static error_t handle_memory_alloc_pages(struct message *m) {
+    size_t order = m->payloads.memory.alloc_pages.order;
     paddr_t paddr = alloc_pages(order);
     if (!paddr) {
         return ERR_NO_MEMORY;
     }
 
-    m->header = MEMMGR_ALLOC_PAGES_REPLY_HEADER;
-    m->payloads.memmgr.alloc_pages_reply.page = PAGE_PAYLOAD(paddr, order);
+    m->header = MEMORY_ALLOC_PAGES_REPLY_HEADER;
+    m->payloads.memory.alloc_pages_reply.page = PAGE_PAYLOAD(paddr, order);
+    return OK;
+}
+
+static error_t handle_memory_alloc_phy_pages(struct message *m) {
+    paddr_t map_at = m->payloads.memory.alloc_phy_pages.map_at;
+    size_t  order = m->payloads.memory.alloc_phy_pages.order;
+
+    paddr_t paddr;
+    if (map_at) {
+        // TODO: Make sure that paddr is not in use if paddr != 0.
+        paddr = map_at;
+    } else {
+        paddr = alloc_pages(order);
+        if (!paddr) {
+            return ERR_NO_MEMORY;
+        }
+    }
+
+    m->header = MEMORY_ALLOC_PHY_PAGES_REPLY_HEADER;
+    m->payloads.memory.alloc_phy_pages_reply.page = PAGE_PAYLOAD(paddr, order);
+    m->payloads.memory.alloc_phy_pages_reply.paddr = paddr;
     return OK;
 }
 
@@ -282,8 +303,13 @@ static error_t process_message(struct message *m) {
     //  Memmgr
     //
     case MEMMGR_BENCHMARK_NOP_MSG:   return handle_memmgr_benchmark_nop(m);
-    case MEMMGR_ALLOC_PAGES_MSG:     return handle_memmgr_alloc_pages(m);
     case MEMMGR_GET_FRAMEBUFFER_MSG: return handle_memmgr_get_framebuffer(m);
+
+    //
+    //  Memory
+    //
+    case MEMORY_ALLOC_PAGES_MSG:     return handle_memory_alloc_pages(m);
+    case MEMORY_ALLOC_PHY_PAGES_MSG: return handle_memory_alloc_phy_pages(m);
 
     //
     //  Pager for the startup servers.

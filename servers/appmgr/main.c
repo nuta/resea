@@ -37,7 +37,8 @@ static error_t handle_pager_fill(struct message *m) {
     page_base_t page_base = valloc(4096);
     uint8_t *ptr;
     size_t num_pages;
-    TRY_OR_PANIC(call_memmgr_alloc_pages(memmgr_ch, 0, page_base, (uintptr_t *) &ptr, &num_pages));
+    TRY_OR_PANIC(call_memory_alloc_pages(memmgr_ch, 0, page_base,
+                                         (uintptr_t *) &ptr, &num_pages));
 
     m->header = PAGER_FILL_REPLY_HEADER;
     m->payloads.pager.fill_reply.page = PAGE_PAYLOAD((uintptr_t) ptr, 0);

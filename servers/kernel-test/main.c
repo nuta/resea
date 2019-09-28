@@ -18,7 +18,7 @@ void ipc_test(void) {
     INFO(">>> IPC tests (w/ page payloads)");
     uintptr_t page;
     size_t page_num;
-    TRY_OR_PANIC(call_memmgr_alloc_pages(memmgr_ch, 0, valloc(128), &page,
+    TRY_OR_PANIC(call_memory_alloc_pages(memmgr_ch, 0, valloc(128), &page,
                                          &page_num));
     uint32_t *p = (uint32_t *) PAGE_PAYLOAD_ADDR(page);
     INFO("received a page: %p, addr=%p", page, p);
