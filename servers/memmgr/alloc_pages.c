@@ -48,7 +48,7 @@ static size_t page_to_pfn(struct zone *zone, struct page *page) {
 }
 
 static struct page *alloc_from_zone(struct zone *zone, int order) {
-    TRACE("alloc_from_zone: Allocating zone=%d, order=%d", zone->id, order);
+    // TRACE("alloc_from_zone: Allocating zone=%d, order=%d", zone->id, order);
     struct list_head *free_list = &zone->free_lists[order];
     if (list_is_empty(free_list)) {
         return NULL;
@@ -63,14 +63,14 @@ static struct page *alloc_from_zone(struct zone *zone, int order) {
     assert(!page->in_use);
 
     page->in_use = true;
-    TRACE("alloc_from_zone: Allocated zone=%d, pfn=%x, order=%d",
-          zone->id, page_to_pfn(zone, page), order);
+    // TRACE("alloc_from_zone: Allocated zone=%d, pfn=%x, order=%d",
+    //       zone->id, page_to_pfn(zone, page), order);
     return page;
 }
 
 static void add_to_free_list(struct zone *zone, struct page *page, int order) {
-    TRACE("add_to_free_list: zone=%d, pfn=%x, order=%d",
-          zone->id, page_to_pfn(zone, page), order);
+    // TRACE("add_to_free_list: zone=%d, pfn=%x, order=%d",
+    //       zone->id, page_to_pfn(zone, page), order);
     assert(order >= 0);
     page->in_use = false;
     page->order = order;
@@ -78,7 +78,7 @@ static void add_to_free_list(struct zone *zone, struct page *page, int order) {
 }
 
 static error_t split(struct zone *zone, int target_order) {
-    TRACE("split: target_order=%d", target_order);
+    // TRACE("split: target_order=%d", target_order);
 
     if (!list_is_empty(&zone->free_lists[target_order])) {
         return OK;
@@ -105,8 +105,8 @@ static error_t split(struct zone *zone, int target_order) {
         assert(page);
         struct page *buddy_page = pfn_to_page(zone, compute_buddy_pfn(
                                       page_to_pfn(zone, page), crnt));
-        TRACE("split: split zone=%d, pfn=%x order=%d into two order=%d chunks",
-              zone->id, page_to_pfn(zone, page), from, crnt);
+        // TRACE("split: split zone=%d, pfn=%x order=%d into two order=%d chunks",
+        //       zone->id, page_to_pfn(zone, page), from, crnt);
         add_to_free_list(zone, page, crnt);
         add_to_free_list(zone, buddy_page, crnt);
     }
