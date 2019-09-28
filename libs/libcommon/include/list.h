@@ -18,8 +18,8 @@ static inline bool list_is_empty(struct list_head *list) {
 }
 
 // Inserts a new element between `prev` and `next`.
-static inline void list_insert(
-    struct list_head *prev, struct list_head *next, struct list_head *new) {
+static inline void list_insert(struct list_head *prev, struct list_head *next,
+                               struct list_head *new) {
     new->prev = prev;
     new->next = next;
     next->prev = new;
@@ -40,8 +40,8 @@ static inline void list_remove(struct list_head *to_remove) {
 }
 
 // Appends a element into the list.
-static inline void list_push_back(
-    struct list_head *list, struct list_head *new_tail) {
+static inline void list_push_back(struct list_head *list,
+                                  struct list_head *new_tail) {
     list_insert(list->prev, list, new_tail);
 }
 
