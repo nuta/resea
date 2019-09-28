@@ -251,12 +251,11 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 #ifdef DEBUG_BUILD
         current->debug.receive_from = NULL;
 #endif
-        // TODO: Atomic swap.
         struct message *m = current->ipc_buffer;
-        m->notification = recv_on->notification;
-        recv_on->notification = 0;
 
-        // Now `CURRENT->ipc_buffer` is filled by the sender thread.
+        // Read and clear the notification field atomically.
+        m->notification = atomic_swap(&recv_on->notification, 0);
+
         IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
                   recv_on, m->from, m->header, m->notification);
 
@@ -349,9 +348,8 @@ error_t sys_ipc_fastpath(cid_t cid) {
 #ifdef DEBUG_BUILD
     current->debug.receive_from = NULL;
 #endif
-    // TODO: Atomic swap.
-    m->notification = recv_on->notification;
-    recv_on->notification = 0;
+    // Read and clear the notification field atomically.
+    m->notification = atomic_swap(&recv_on->notification, 0);
 
     IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
               recv_on, m->from, m->header, m->notification);
