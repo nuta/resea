@@ -155,6 +155,7 @@ void __ubsan_handle_builtin_unreachable() {
 static bool asan_enabled = false;
 
 static inline uint8_t *get_asan_shadow_memory(vaddr_t addr) {
+    ASSERT(addr >= KERNEL_BASE_ADDR);
     return (uint8_t *) ASAN_SHADOW_MEMORY + into_paddr((void *) addr);
 }
 
