@@ -4,9 +4,15 @@
 #include <types.h>
 
 #define LIST_CONTAINER(container, field, node) \
-    ((struct container *) ((vaddr_t)(node) -offsetof(struct container, field)))
-#define LIST_FOR_EACH(e, list) \
-    for (struct list_head *e = (list)->next; e != (list); e = e->next)
+    ((struct container *) ((vaddr_t)(node) - offsetof(struct container, field)))
+#define LIST_CONTAINER2(container, field, head) \
+    ((container *) ((vaddr_t)(head) - offsetof(container, field)))
+#define LIST_FOR_EACH(elem, list, container, field) \
+    for (container *elem = LIST_CONTAINER2(container, field, list), \
+         *__next = LIST_CONTAINER2(container, field, elem->field.next); \
+         &elem->field != (list); \
+         elem = LIST_CONTAINER2(container, field, __next), \
+         __next = LIST_CONTAINER2(container, field, elem->field.next))
 
 struct list_head {
     struct list_head *prev;

@@ -168,8 +168,7 @@ static error_t handle_server_connect(struct message *m) {
 }
 
 void deliver_interrupt(uint8_t irq) {
-    LIST_FOR_EACH(e, &active_irq_listeners) {
-        struct irq_listener *listener = LIST_CONTAINER(irq_listener, next, e);
+    LIST_FOR_EACH(listener, &active_irq_listeners, struct irq_listener, next) {
         if (listener->irq == irq) {
             channel_notify(listener->ch, NOTIFY_INTERRUPT);
         }
@@ -211,8 +210,7 @@ static error_t handle_io_allow_iomapped_io(struct message *m) {
     struct process *sender = get_sender_process(m->from);
     TRACE("kernel: allow_io(proc=%s)", sender->name);
 
-    LIST_FOR_EACH(node, &sender->threads) {
-        struct thread *thread = LIST_CONTAINER(thread, next, node);
+    LIST_FOR_EACH(thread, &sender->threads, struct thread, next) {
         thread_allow_io(thread);
     }
 

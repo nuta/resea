@@ -10,8 +10,7 @@ static struct list_head active_timers;
 
 /// The timer interrupt handler.
 void timer_interrupt_handler(int ticks) {
-    LIST_FOR_EACH(e, &active_timers) {
-        struct timer *timer = LIST_CONTAINER(timer, next, e);
+    LIST_FOR_EACH(timer, &active_timers, struct timer, next) {
         timer->current -= ticks;
         if (timer->current < 0) {
             timer->handler(timer);

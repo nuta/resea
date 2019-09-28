@@ -284,8 +284,7 @@ static void asan_init(void) {
 
 static void dump_process(struct process *proc) {
     DPRINTK("Process #%d: %s\n", proc->pid, proc->name);
-    LIST_FOR_EACH(node, &proc->threads) {
-        struct thread *thread = LIST_CONTAINER(thread, next, node);
+    LIST_FOR_EACH(thread, &proc->threads, struct thread, next) {
         DPRINTK("  Thread %pT: \n", thread);
 
         struct channel *send_from = thread->debug.send_from;
@@ -306,8 +305,7 @@ static void dump_process(struct process *proc) {
 }
 static void debugger_run(const char *cmdline) {
     if (strcmp(cmdline, "ps") == 0) {
-        LIST_FOR_EACH(node, &process_list) {
-            struct process *proc = LIST_CONTAINER(process, next, node);
+        LIST_FOR_EACH(proc, &process_list, struct process, next) {
             if (proc) {
                 dump_process(proc);
             }

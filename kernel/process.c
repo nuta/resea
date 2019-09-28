@@ -52,21 +52,18 @@ struct process *process_create(const char *name) {
 void process_destroy(UNUSED struct process *process) {
     // FIXME: Make LIST_FOR_EACH safe
 
-    // Destroy threads.
-    LIST_FOR_EACH(node, &process->channel_list) {
-        struct channel *ch = LIST_CONTAINER(channel, next, node);
+    // Destroy channels.
+    LIST_FOR_EACH(ch, &process->channel_list, struct channel, next) {
         channel_destroy(ch);
     }
 
     // Destroy threads.
-    LIST_FOR_EACH(node, &process->threads) {
-        struct thread *thread = LIST_CONTAINER(thread, next, node);
+    LIST_FOR_EACH(thread, &process->threads, struct thread, next) {
         thread_destroy(thread);
     }
 
     // Destroy vmareas.
-    LIST_FOR_EACH(node, &process->vmareas) {
-        struct vmarea *vmarea = LIST_CONTAINER(vmarea, next, node);
+    LIST_FOR_EACH(vmarea, &process->vmareas, struct vmarea, next) {
         vmarea_destroy(vmarea);
     }
 

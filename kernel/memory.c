@@ -92,8 +92,7 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
     // Look for the associated vm area.
     vaddr_t aligned_vaddr = ALIGN_DOWN(addr, PAGE_SIZE);
     struct process *process = CURRENT->process;
-    LIST_FOR_EACH(entry, &process->vmareas) {
-        struct vmarea *vma = LIST_CONTAINER(vmarea, next, entry);
+    LIST_FOR_EACH(vma, &process->vmareas, struct vmarea, next) {
         if (is_valid_page_fault_for(vma, aligned_vaddr, flags)) {
             // Ask the associated pager to fill a physical page.
             // TRACE(

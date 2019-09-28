@@ -66,8 +66,7 @@ void channel_destroy(struct channel *ch) {
     }
 
     // Resume the sender threads to abort theier IPC operations.
-    LIST_FOR_EACH(node, &ch->queue) {
-        struct thread *sender = LIST_CONTAINER(thread, next, node);
+    LIST_FOR_EACH(sender, &ch->queue, struct thread, next) {
         sender->ipc_aborted = true;
         thread_resume(sender);
     }
