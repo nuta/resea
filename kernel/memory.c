@@ -8,47 +8,48 @@
 #include <thread.h>
 
 /// The PAGE_SIZE-sized memory pool.
-struct arena page_arena;
+struct kmalloc_arena page_arena;
 /// The memory pool for small objects.
-struct arena small_arena;
+struct kmalloc_arena small_arena;
 
 /// Creates a new memory pool.
-void arena_init(struct arena *arena, vaddr_t addr, size_t arena_size,
-                size_t elem_size) {
-    arena->elements = addr;
-    arena->element_size = elem_size;
-    arena->elements_max = arena_size / elem_size;
-    arena->elements_used = 0;
+void arena_init(struct kmalloc_arena *arena, vaddr_t addr, size_t arena_size,
+                size_t object_size) {
+    arena->object_size = object_size;
     list_init(&arena->free_list);
+
+    struct free_list *free_list = (struct free_list *) addr;
+#ifdef DEBUG_BUILD
+    asan_init_area(ASAN_UNINITIALIZED, free_list, sizeof(*free_list));
+#endif
+    free_list->num_objects = arena_size / arena->object_size;
+    list_push_back(&arena->free_list, &free_list->next);
 }
 
 /// Allocates a memory. Don't use this directly; use KMALLOC() macro.
-void *kmalloc_from(struct arena *arena) {
-    if (arena->elements_used < arena->elements_max) {
-        // Allocate from the uninitialized memory space.
-        size_t index = arena->elements_used;
-        void *ptr = (void *) (arena->elements + arena->element_size * index);
-        arena->elements_used++;
-
-#ifdef DEBUG_BUILD
-        asan_init_area(ASAN_UNINITIALIZED, ptr, arena->element_size);
-#endif
-        return ptr;
-    }
-
+void *kmalloc_from(struct kmalloc_arena *arena) {
     if (list_is_empty(&arena->free_list)) {
         PANIC("Run out of kernel memory.");
     }
 
-    void *ptr = list_pop_front(&arena->free_list);
+    struct free_list *free_list = LIST_CONTAINER(
+        list_pop_front(&arena->free_list), struct free_list, next);
+    ASSERT(free_list->num_objects >= 1);
+    free_list->num_objects--;
+    if (free_list->num_objects > 0) {
+        list_push_back(&arena->free_list, &free_list->next);
+    }
+
+    vaddr_t allocated =
+        (vaddr_t) free_list + free_list->num_objects * arena->object_size;
 #ifdef DEBUG_BUILD
-    asan_init_area(ASAN_UNINITIALIZED, ptr, arena->element_size);
+    asan_init_area(ASAN_UNINITIALIZED, (void *) allocated, arena->object_size);
 #endif
-    return ptr;
+    return (void *) allocated;
 }
 
 /// Frees a memory.
-void kfree(UNUSED struct arena *arena, UNUSED void *ptr) {
+void kfree(UNUSED struct kmalloc_arena *arena, UNUSED void *ptr) {
     // TODO:
     UNIMPLEMENTED();
 }

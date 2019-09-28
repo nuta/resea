@@ -15,7 +15,7 @@ struct chunk {
 
 STATIC_ASSERT(sizeof(struct chunk) == 16);
 
-struct arena {
+struct kmalloc_arena {
     struct chunk *free_area;
 };
 

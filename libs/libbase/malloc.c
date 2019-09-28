@@ -1,11 +1,11 @@
 #include <base/malloc.h>
 
-static struct arena small_arena;
-static struct arena page_arena;
+static struct kmalloc_arena small_arena;
+static struct kmalloc_arena page_arena;
 
 #define MALLOC_PAGE_ORDER 8
 
-static void append_new_chunk(struct arena *arena, void *buf, size_t size) {
+static void append_new_chunk(struct kmalloc_arena *arena, void *buf, size_t size) {
     // Get the end of chunks.
     struct chunk *last_chunk = arena->free_area;
     while (last_chunk && last_chunk->next) {
@@ -25,13 +25,13 @@ static void append_new_chunk(struct arena *arena, void *buf, size_t size) {
     }
 }
 
-static void expand_arena(struct arena *arena) {
+static void expand_arena(struct kmalloc_arena *arena) {
     void *ptr = sys_alloc_pages(MALLOC_PAGE_ORDER);
     assert(ptr != NULL);
     append_new_chunk(arena, ptr, PAGE_SIZE * POW2(MALLOC_PAGE_ORDER));
 }
 
-static void arena_init(struct arena *arena) {
+static void arena_init(struct kmalloc_arena *arena) {
     arena->free_area = NULL;
 }
 
@@ -58,7 +58,7 @@ static void split_chunk(struct chunk *chunk, size_t size) {
     }
 }
 
-static struct chunk *alloc_from_arena(struct arena *arena, size_t size) {
+static struct chunk *alloc_from_arena(struct kmalloc_arena *arena, size_t size) {
     bool retried = false;
 
 retry:
