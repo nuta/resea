@@ -2,9 +2,13 @@
 #include <idl_stubs.h>
 #include <server.h>
 
+#define DEFERRED_WORK_DELAY      500
+#define DEFERRED_WORK_DELAY_MAX  (5 * 1000)
+
 error_t server_mainloop_with_deferred(cid_t ch,
                                       error_t (*process)(struct message *m),
                                       error_t (*deferred_work)(void)) {
+    int retries = 0;
     cid_t timer_ch;
     if (deferred_work) {
         TRY_OR_OOPS(open(&timer_ch));
@@ -16,10 +20,7 @@ error_t server_mainloop_with_deferred(cid_t ch,
         // Receive a message from a client.
         TRY(ipc_recv(ch, &m));
 
-        // Run the deferred work on a timer event.
-        if (m.notification & NOTIFY_TIMER && deferred_work) {
-            deferred_work();
-        }
+        bool deferred_work_timeout = ((m.notification & NOTIFY_TIMER) != 0);
 
         // Do work and fill a reply message into `m`.
         error_t err = process(&m);
@@ -42,16 +43,23 @@ error_t server_mainloop_with_deferred(cid_t ch,
 
         // Do the deferred work if specified.
         if (deferred_work) {
-            err = deferred_work();
-            if (err == ERR_NEEDS_RETRY) {
-                // Retry the deferred work later.
-                // FIXME: Assuming @1 serves the timer interface.
-                cid_t timer_server = 1;
-                TRACE("Retrying deferred work in 500 milliseconds...");
-                int timer_id;
-                call_timer_set(timer_server, timer_ch, 500, 0, &timer_id);
-            } else {
-                TRY(err);
+            if (retries == 0 || deferred_work_timeout) {
+                err = deferred_work();
+                if (err == ERR_NEEDS_RETRY) {
+                    // Retry the deferred work later.
+                    // FIXME: Assuming @1 serves the timer interface.
+                    cid_t timer_server = 1;
+                    retries++;
+                    uint32_t delay = MIN(DEFERRED_WORK_DELAY * retries,
+                                         DEFERRED_WORK_DELAY_MAX);
+                    TRACE("Retrying deferred work in %d milliseconds...",
+                          delay);
+                    int timer_id;
+                    call_timer_set(timer_server, timer_ch, delay, 0, &timer_id);
+                } else {
+                    TRY(err);
+                    retries = 0;
+                }
             }
         }
     }
