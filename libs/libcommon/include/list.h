@@ -5,12 +5,13 @@
 
 #define LIST_CONTAINER(head, container, field) \
     ((container *) ((vaddr_t) (head) - offsetof(container, field)))
-#define LIST_FOR_EACH(elem, list, container, field) \
-    for (container *elem = LIST_CONTAINER(list, container, field), \
-         *__next = LIST_CONTAINER(elem->field.next, container, field); \
-         &elem->field != (list); \
-         elem = LIST_CONTAINER(__next, container, field), \
-         __next = LIST_CONTAINER(elem->field.next, container, field))
+#define LIST_FOR_EACH(elem, list, container, field)                            \
+    for (container *elem = LIST_CONTAINER((list)->next, container, field),     \
+            *__next = NULL;                                                    \
+         (&elem->field != (list) &&                                            \
+             (__next = LIST_CONTAINER(elem->field.next, container, field)));   \
+         elem = __next,                                                        \
+             __next = LIST_CONTAINER(elem->field.next, container, field))
 
 struct list_head {
     struct list_head *prev;
