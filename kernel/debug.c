@@ -289,9 +289,10 @@ static void dump_process(struct process *proc) {
 
         struct channel *send_from = thread->debug.send_from;
         if (send_from) {
-            DPRINTK("    Sender at %pC <-> %pC => %pC\n",
+            DPRINTK("    Sender at %pC <-> %pC => %pC (header=%p)\n",
                     send_from, send_from->linked_with,
-                    send_from->linked_with->transfer_to);
+                    send_from->linked_with->transfer_to,
+                    thread->ipc_buffer->header);
         }
 
         struct channel *receive_from = thread->debug.receive_from;
