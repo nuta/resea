@@ -11,7 +11,7 @@ struct channel *channel_create(struct process *process) {
         return NULL;
     }
 
-    struct channel *channel = KMALLOC(&small_arena, sizeof(struct channel));
+    struct channel *channel = KMALLOC(&object_arena, sizeof(struct channel));
     if (!channel) {
         TRACE("failed to allocate a channel");
         table_free(&process->channels, cid);
@@ -79,7 +79,7 @@ void channel_destroy(struct channel *ch) {
     ch->transfer_to = INVALID_POINTER;
     ch->receiver    = INVALID_POINTER;
 #endif
-    kfree(&small_arena, ch);
+    kfree(&object_arena, ch);
 }
 
 /// Links two channels. The message from `ch1` will be sent to `ch2`. `ch1` and

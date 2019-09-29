@@ -30,7 +30,7 @@ struct timer *timer_create(int initial, int interval,
         return NULL;
     }
 
-    struct timer *timer = KMALLOC(&small_arena, sizeof(struct timer));
+    struct timer *timer = KMALLOC(&object_arena, sizeof(struct timer));
     if (!timer) {
         table_free(&timers, timer_id);
         return NULL;
@@ -52,7 +52,7 @@ void timer_destroy(struct timer *timer) {
     TRACE("timer_destroy: timer=%p", timer);
     table_free(&timers, timer->id);
     list_remove(&timer->next);
-    kfree(&small_arena, timer);
+    kfree(&object_arena, timer);
 }
 
 void timer_init(void) {

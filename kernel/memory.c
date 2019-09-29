@@ -10,7 +10,7 @@
 /// The PAGE_SIZE-sized memory pool.
 struct kmalloc_arena page_arena;
 /// The memory pool for small objects.
-struct kmalloc_arena small_arena;
+struct kmalloc_arena object_arena;
 
 static void add_free_list(struct kmalloc_arena *arena, vaddr_t addr,
                           size_t num_objects) {
@@ -141,6 +141,6 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
 
 /// Initializes the memory subsystem.
 void memory_init(void) {
-    arena_init(&small_arena, SMALL_ARENA_ADDR, SMALL_ARENA_LEN, OBJ_MAX_SIZE);
+    arena_init(&object_arena, object_arena_ADDR, object_arena_LEN, OBJ_MAX_SIZE);
     arena_init(&page_arena, PAGE_ARENA_ADDR, PAGE_ARENA_LEN, PAGE_SIZE);
 }

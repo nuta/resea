@@ -25,7 +25,7 @@ struct kmalloc_arena {
 };
 
 extern struct kmalloc_arena page_arena;
-extern struct kmalloc_arena small_arena;
+extern struct kmalloc_arena object_arena;
 
 void *kmalloc_from(struct kmalloc_arena *arena);
 void kfree(struct kmalloc_arena *arena, void *ptr);

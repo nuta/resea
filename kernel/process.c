@@ -12,7 +12,7 @@ struct list_head process_list;
 struct process *kernel_process;
 
 static void vmarea_destroy(struct vmarea *vma) {
-    kfree(&small_arena, vma);
+    kfree(&object_arena, vma);
     list_remove(&vma->next);
 }
 
@@ -23,14 +23,14 @@ struct process *process_create(const char *name) {
         return NULL;
     }
 
-    struct process *proc = KMALLOC(&small_arena, sizeof(struct process));
+    struct process *proc = KMALLOC(&object_arena, sizeof(struct process));
     if (!proc) {
         table_free(&process_table, pid);
         return NULL;
     }
 
     if (table_init(&proc->channels) != OK) {
-        kfree(&small_arena, proc);
+        kfree(&object_arena, proc);
         table_free(&process_table, pid);
         return NULL;
     }
@@ -70,7 +70,7 @@ void process_destroy(UNUSED struct process *process) {
     page_table_destroy(&process->page_table);
     table_free(&process_table, process->pid);
     list_remove(&process->next);
-    kfree(&small_arena, process);
+    kfree(&object_arena, process);
 
     // TODO: Send a message to its pager server (@1).
 }
@@ -79,7 +79,7 @@ void process_destroy(UNUSED struct process *process) {
 error_t vmarea_add(struct process *process, vaddr_t start, vaddr_t end,
                    pager_t pager, void *pager_arg, int flags) {
 
-    struct vmarea *vma = KMALLOC(&small_arena, sizeof(struct vmarea));
+    struct vmarea *vma = KMALLOC(&object_arena, sizeof(struct vmarea));
     if (!vma) {
         return ERR_OUT_OF_MEMORY;
     }

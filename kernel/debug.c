@@ -273,8 +273,8 @@ static void asan_init(void) {
     arch_asan_init();
 
     // Kmalloc small objects.
-    asan_init_area(ASAN_NOT_ALLOCATED, (void *) SMALL_ARENA_ADDR,
-                  SMALL_ARENA_LEN);
+    asan_init_area(ASAN_NOT_ALLOCATED, (void *) object_arena_ADDR,
+                  object_arena_LEN);
     // Kmalloc page objects.
     asan_init_area(ASAN_NOT_ALLOCATED, (void *) PAGE_ARENA_ADDR,
                   PAGE_ARENA_LEN);
@@ -332,8 +332,8 @@ static void debugger_run(const char *cmdline) {
             num_used_pages -= node->num_objects;
         }
 
-        size_t num_used_objects = small_arena.num_objects;
-        LIST_FOR_EACH(node, &small_arena.free_list, struct free_list, next) {
+        size_t num_used_objects = object_arena.num_objects;
+        LIST_FOR_EACH(node, &object_arena.free_list, struct free_list, next) {
             if (node->magic1 != FREE_LIST_MAGIC1
                 || node->magic2 != FREE_LIST_MAGIC2) {
                 BUG("Corrupted free_list entry %p", node);
@@ -347,8 +347,8 @@ static void debugger_run(const char *cmdline) {
                 num_used_pages, page_arena.num_objects,
                 (num_used_pages * 100) / page_arena.num_objects);
         DPRINTK("  %d of %d (%d%%) objects are in use\n",
-                num_used_objects, small_arena.num_objects,
-                (num_used_objects * 100) / small_arena.num_objects);
+                num_used_objects, object_arena.num_objects,
+                (num_used_objects * 100) / object_arena.num_objects);
     } else {
         WARN("Invalid debugger command: '%s'.", cmdline);
     }

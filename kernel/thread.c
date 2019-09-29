@@ -20,20 +20,20 @@ struct thread *thread_create(struct process *process, vaddr_t start,
         return NULL;
     }
 
-    struct thread *thread = KMALLOC(&small_arena, sizeof(struct thread));
+    struct thread *thread = KMALLOC(&object_arena, sizeof(struct thread));
     if (!thread) {
         return NULL;
     }
 
     vaddr_t kernel_stack = (vaddr_t) KMALLOC(&page_arena, PAGE_SIZE);
     if (!kernel_stack) {
-        kfree(&small_arena, thread);
+        kfree(&object_arena, thread);
         return NULL;
     }
 
     struct thread_info *thread_info = KMALLOC(&page_arena, PAGE_SIZE);
     if (!thread_info) {
-        kfree(&small_arena, thread);
+        kfree(&object_arena, thread);
         kfree(&page_arena, (void *) kernel_stack);
         return NULL;
     }
@@ -41,7 +41,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     struct message *kernel_ipc_buffer = KMALLOC(&page_arena,
                                                 sizeof(struct message));
     if (!kernel_ipc_buffer) {
-        kfree(&small_arena, thread);
+        kfree(&object_arena, thread);
         kfree(&page_arena, (void *) kernel_stack);
         kfree(&page_arena, thread_info);
         return NULL;
@@ -67,7 +67,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     error_t err = arch_thread_init(thread, start, stack, kernel_stack,
                                    user_buffer, is_kernel_thread);
     if (err != OK) {
-        kfree(&small_arena, thread);
+        kfree(&object_arena, thread);
         kfree(&page_arena, (void *) kernel_stack);
         kfree(&page_arena, thread_info);
         kfree(&page_arena, kernel_ipc_buffer);
@@ -120,7 +120,7 @@ void thread_destroy(UNUSED struct thread *thread) {
     arch_thread_destroy(thread);
     table_free(&process_table, thread->tid);
     list_remove(&thread->next);
-    kfree(&small_arena, thread);
+    kfree(&object_arena, thread);
 
     if (thread == CURRENT) {
         UNIMPLEMENTED();

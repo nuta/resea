@@ -11,8 +11,8 @@
 #define KERNEL_BOOT_STACKS_LEN  0x0000000000100000
 #define CPU_VAR_ADDR            0xffff800000b00000
 #define CPU_VAR_LEN             0x0000000000100000
-#define SMALL_ARENA_ADDR        0xffff800001000000
-#define SMALL_ARENA_LEN         0x0000000000400000
+#define object_arena_ADDR        0xffff800001000000
+#define object_arena_LEN         0x0000000000400000
 #define PAGE_ARENA_ADDR         0xffff800001400000
 #define PAGE_ARENA_LEN          0x0000000000c00000
 
