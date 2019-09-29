@@ -2,7 +2,7 @@
 #include <idl_stubs.h>
 #include <server.h>
 
-#define DEFERRED_WORK_DELAY      500
+#define DEFERRED_WORK_DELAY      100
 #define DEFERRED_WORK_DELAY_MAX  (5 * 1000)
 
 error_t server_mainloop_with_deferred(cid_t ch,
