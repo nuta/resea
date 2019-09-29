@@ -1,3 +1,3 @@
-name := kernel-test
+name := kernel_test
 objs := main.o
 libs := libresea
