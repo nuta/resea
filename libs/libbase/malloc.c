@@ -1,6 +1,6 @@
 #include <base/malloc.h>
 
-static struct kmalloc_arena small_arena;
+static struct kmalloc_arena object_arena;
 static struct kmalloc_arena page_arena;
 
 #define MALLOC_PAGE_ORDER 8
@@ -75,7 +75,7 @@ retry:
     if (!retried) {
         // Failed to allocate a chunk. Demand another space from the external
         // interface (e.g. from memmgr in Resea).
-        expand_arena(&small_arena);
+        expand_arena(&object_arena);
         retried = true;
         goto retry;
     }
@@ -93,7 +93,7 @@ void *malloc(size_t size) {
         size = 1;
     }
 
-    struct chunk *chunk = alloc_from_arena(&small_arena, size);
+    struct chunk *chunk = alloc_from_arena(&object_arena, size);
     assert(chunk != NULL);
     return chunk->data;
 }
@@ -107,6 +107,6 @@ void free(void *ptr) {
 }
 
 void base_malloc_init(void) {
-    arena_init(&small_arena);
+    arena_init(&object_arena);
     arena_init(&page_arena);
 }
