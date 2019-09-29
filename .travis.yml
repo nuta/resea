@@ -32,7 +32,7 @@ install:
   - pip3 install -r tools/requirements.txt
 
 script:
-  - ./tools/buildconfig.py default STARTUPS=kernel-test APPS=
+  - make loadconfig CONFIG=misc/ci/config
   - make info
   - make -j2
   - make run
