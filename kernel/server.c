@@ -246,51 +246,37 @@ static error_t handle_process_send_channel(struct message *m) {
     return OK;
 }
 
-static void free_user_timer(struct timer *timer) {
-    // channel_destroy(timer->arg);
-    table_free(&user_timers, timer->id);
-}
-
 static void user_timer_handler(struct timer *timer) {
     struct channel *ch = timer->arg;
     channel_notify(ch, NOTIFY_TIMER);
     if (!timer->interval) {
-        free_user_timer(timer);
+        channel_destroy(timer->arg);
+        table_free(&user_timers, timer->id);
     }
-}
-
-static error_t create_user_timer(cid_t cid, int initial, int interval,
-                                 int *timer_id) {
-    struct channel *ch = table_get(&CURRENT->process->channels, cid);
-    ASSERT(ch);
-
-    int id = table_alloc(&user_timers);
-    if (!id) {
-        return ERR_NO_MEMORY;
-    }
-
-    struct timer *timer = timer_create(initial, interval, user_timer_handler, ch);
-    if (!timer) {
-        table_free(&user_timers, id);
-        return ERR_NO_MEMORY;
-    }
-
-    table_set(&user_timers, id, timer);
-    channel_incref(ch);
-    *timer_id = id;
-    return OK;
 }
 
 static error_t handle_timer_set(struct message *m) {
-    cid_t ch = m->payloads.timer.set.ch;
+    cid_t cid = m->payloads.timer.set.ch;
     int32_t initial = m->payloads.timer.set.initial;
     int32_t interval = m->payloads.timer.set.interval;
 
-    int timer_id;
-    error_t err = create_user_timer(ch, initial, interval, &timer_id);
-    if (err != OK) {
-        return err;
+    struct channel *ch = table_get(&CURRENT->process->channels, cid);
+    ASSERT(ch);
+
+    int timer_id = table_alloc(&user_timers);
+    if (!timer_id) {
+        return ERR_NO_MEMORY;
     }
+
+    struct timer *timer = timer_create(initial, interval, user_timer_handler,
+                                       ch);
+    if (!timer) {
+        table_free(&user_timers, timer_id);
+        return ERR_NO_MEMORY;
+    }
+
+    table_set(&user_timers, timer_id, timer);
+    channel_incref(ch);
 
     m->header = TIMER_SET_REPLY_HEADER;
     m->payloads.timer.set_reply.timer = timer_id;
@@ -298,8 +284,19 @@ static error_t handle_timer_set(struct message *m) {
 }
 
 static error_t handle_timer_clear(UNUSED struct message *m) {
-    // TODO:
-    UNIMPLEMENTED();
+    int timer_id = m->payloads.timer.clear.timer;
+
+    struct timer *timer = table_get(&user_timers, timer_id);
+    if (!timer) {
+        return ERR_INVALID_PAYLOAD;
+    }
+
+    channel_destroy(timer->arg);
+    table_free(&user_timers, timer->id);
+    timer_destroy(timer);
+
+    m->header = TIMER_CLEAR_REPLY_HEADER;
+    return OK;
 }
 
 static error_t process_message(struct message *m) {
