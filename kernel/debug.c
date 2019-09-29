@@ -309,7 +309,13 @@ static void dump_process(struct process *proc) {
     }
 }
 static void debugger_run(const char *cmdline) {
-    if (strcmp(cmdline, "ps") == 0) {
+    if (strcmp(cmdline, "help") == 0) {
+        DPRINTK("Kernel debugger commands:\n");
+        DPRINTK("\n");
+        DPRINTK("  ps - List processes.\n");
+        DPRINTK("  km - Show kernel memory statistics.\n");
+        DPRINTK("\n");
+    } else if (strcmp(cmdline, "ps") == 0) {
         LIST_FOR_EACH(proc, &process_list, struct process, next) {
             if (proc) {
                 dump_process(proc);
