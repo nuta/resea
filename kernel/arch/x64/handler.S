@@ -1,3 +1,5 @@
+#include <x64/handler.h>
+
 .intel_syntax noprefix
 .set ARCH_THREAD_RSP, 0
 .set ARCH_THREAD_KERNEL_STACK, 8
@@ -179,8 +181,7 @@ x64_syscall_handler:
 //
 //  Interrupt/exception handlers
 //
-.set handler_size, 16 // TODO: define as macro and share it with idt.c
-.align handler_size
+.align INTERRUPT_HANDLER_SIZE
 .globl interrupt_handlers
 interrupt_handlers:
 .set i, 0
@@ -188,19 +189,19 @@ interrupt_handlers:
 .set handler_start, .
 // Exceptions with error code.
 .if i == 8 || 10 <= i && i <= 14 || i == 17
-    .align handler_size
+    .align INTERRUPT_HANDLER_SIZE
     cli
     push i
     jmp handle_interrupt
-    .align handler_size
+    .align INTERRUPT_HANDLER_SIZE
 // Interrupts and exceptions without error code.
 .else
-    .align handler_size
+    .align INTERRUPT_HANDLER_SIZE
     cli
     push 0 // Dummy value as error code.
     push i
     jmp handle_interrupt
-    .align handler_size
+    .align INTERRUPT_HANDLER_SIZE
 .endif
 
 // Increment the counter.

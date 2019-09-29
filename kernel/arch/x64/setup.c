@@ -173,10 +173,8 @@ static inline void set_idt_entry(int i, uint64_t handler, uint8_t ist) {
 
 static void idt_init(void) {
     // Initialize IDT entries.
-    int handler_size = 16; // FIXME:
     for (int i = 0; i <= 255; i++) {
-        set_idt_entry(
-            i, (uint64_t) interrupt_handlers + i * handler_size, IST_RSP0);
+        set_idt_entry(i, (uint64_t) &interrupt_handlers[i], IST_RSP0);
     }
 
     CPUVAR->idtr.laddr = (uint64_t) &CPUVAR->idt;
