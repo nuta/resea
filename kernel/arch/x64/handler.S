@@ -42,8 +42,8 @@ x64_start_kernel_thread:
     // Invoke an exception to notice that the kernel thread returned.
     ud2
 
-.globl x64_enter_userspace
-x64_enter_userspace:
+.globl x64_start_user_thread
+x64_start_user_thread:
     GIANT_UNLOCK
 
     /* Sanitize registers to prevent information leak. */

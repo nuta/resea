@@ -12,19 +12,19 @@ error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
                          vaddr_t kernel_stack, vaddr_t user_buffer,
                          bool is_kernel_thread) {
     // Set up a temporary kernel stack frame for x64_switch and
-    // x64_start_kernel_thread/x64_enter_userspace.
+    // x64_start_kernel_thread/x64_start_user_thread.
     uint64_t *rsp = (uint64_t *) (kernel_stack + KERNEL_STACK_SIZE);
     if (is_kernel_thread) {
         *--rsp = start;
         *--rsp = (uint64_t) &x64_start_kernel_thread;
     } else {
-        // IRET frame to be restored in x64_enter_userspace.
+        // IRET frame to be restored in x64_start_user_thread.
         *--rsp = USER_DS | USER_RPL;
         *--rsp = stack;
         *--rsp = 0x202; // RFLAGS (interrupts enabled).
         *--rsp = USER_CS64 | USER_RPL;
         *--rsp = start;
-        *--rsp = (uint64_t) &x64_enter_userspace;
+        *--rsp = (uint64_t) &x64_start_user_thread;
     }
 
     // Set up a temporary kernel stack frame for x64_switch.
