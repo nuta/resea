@@ -230,10 +230,13 @@ static error_t handle_process_send_channel(struct message *m) {
     }
 
     struct channel *ch = table_get(&CURRENT->process->channels, cid);
-    struct channel *dst_ch = channel_create(proc);
-    // FIXME: Clean up and return an error instead.
     ASSERT(ch);
-    ASSERT(dst_ch);
+
+    struct channel *dst_ch = channel_create(proc);
+    if (!dst_ch) {
+        channel_destroy(ch);
+        return ERR_NO_MEMORY;
+    }
 
     channel_link(ch->linked_with, dst_ch);
     channel_destroy(ch);
