@@ -33,7 +33,7 @@ void float_test(void) {
 
     // Do a completely pointless floating-point calculation to invoke lazy FPU
     // context switching.
-    volatile double a = __builtin_readcyclecounter() / 12.345;
+    volatile double a = 12.345;
     volatile double b = 9.87;
 
     for (int i = 0; i < 4; i++) {
