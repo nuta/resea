@@ -315,6 +315,34 @@ static void debugger_run(const char *cmdline) {
                 dump_process(proc);
             }
         }
+    } else if (strcmp(cmdline, "km") == 0) {
+        size_t num_used_pages = page_arena.num_objects;
+        LIST_FOR_EACH(node, &page_arena.free_list, struct free_list, next) {
+            if (node->magic1 != FREE_LIST_MAGIC1
+                || node->magic2 != FREE_LIST_MAGIC2) {
+                BUG("Corrupted free_list entry %p", node);
+            }
+
+            num_used_pages -= node->num_objects;
+        }
+
+        size_t num_used_objects = small_arena.num_objects;
+        LIST_FOR_EACH(node, &small_arena.free_list, struct free_list, next) {
+            if (node->magic1 != FREE_LIST_MAGIC1
+                || node->magic2 != FREE_LIST_MAGIC2) {
+                BUG("Corrupted free_list entry %p", node);
+            }
+
+            num_used_objects -= node->num_objects;
+        }
+
+        DPRINTK("Kernel Memory:\n");
+        DPRINTK("  %d of %d (%d%%) pages are in use\n",
+                num_used_pages, page_arena.num_objects,
+                (num_used_pages * 100) / page_arena.num_objects);
+        DPRINTK("  %d of %d (%d%%) objects are in use\n",
+                num_used_objects, small_arena.num_objects,
+                (num_used_objects * 100) / small_arena.num_objects);
     } else {
         WARN("Invalid debugger command: '%s'.", cmdline);
     }
