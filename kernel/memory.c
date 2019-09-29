@@ -30,9 +30,11 @@ void arena_init(struct kmalloc_arena *arena, vaddr_t addr, size_t arena_size,
     ASSERT(arena_size > object_size);
     ASSERT(arena_size > sizeof(struct free_list));
 
+    size_t num_objects = arena_size / object_size;
     arena->object_size = object_size;
+    arena->num_objects = num_objects;
     list_init(&arena->free_list);
-    add_free_list(arena, addr, arena_size / arena->object_size);
+    add_free_list(arena, addr, num_objects);
 }
 
 /// Allocates a memory. Don't use this directly; use KMALLOC() macro.

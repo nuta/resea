@@ -21,6 +21,7 @@ struct free_list {
 struct kmalloc_arena {
     struct list_head free_list;
     size_t object_size;
+    size_t num_objects;
 };
 
 extern struct kmalloc_arena page_arena;
