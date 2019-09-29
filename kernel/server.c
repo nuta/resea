@@ -52,9 +52,9 @@ static error_t handle_runtime_printchar(struct message *m) {
     return OK;
 }
 
-static error_t handle_runtime_exit_current(UNUSED struct message *m) {
-    // TODO: Kill the sender process.
-    UNIMPLEMENTED();
+static error_t handle_runtime_exit_current(struct message *m) {
+    process_destroy(get_sender_process(m->from));
+    return ERR_DONT_REPLY;
 }
 
 static error_t handle_process_create(struct message *m) {
