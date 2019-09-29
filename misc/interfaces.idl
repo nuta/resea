@@ -8,7 +8,7 @@
 [id(1)]
 interface runtime {
     [id(1), type(call)]
-    exit_current(code: int32) -> ()
+    exit(code: int32) -> ()
     [id(2), type(call)]
     printchar(ch: uint8) -> ()
 }

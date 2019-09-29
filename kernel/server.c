@@ -52,7 +52,7 @@ static error_t handle_runtime_printchar(struct message *m) {
     return OK;
 }
 
-static error_t handle_runtime_exit_current(struct message *m) {
+static error_t handle_runtime_exit(struct message *m) {
     process_destroy(get_sender_process(m->from));
     return ERR_DONT_REPLY;
 }
@@ -301,7 +301,7 @@ static error_t handle_timer_clear(UNUSED struct message *m) {
 
 static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
-    case RUNTIME_EXIT_CURRENT_MSG: return handle_runtime_exit_current(m);
+    case RUNTIME_EXIT_MSG:         return handle_runtime_exit(m);
     case RUNTIME_PRINTCHAR_MSG:    return handle_runtime_printchar(m);
     case PROCESS_CREATE_MSG:       return handle_process_create(m);
     case PROCESS_DESTROY_MSG:      return handle_process_destroy(m);

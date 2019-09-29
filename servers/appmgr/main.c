@@ -150,7 +150,7 @@ static error_t handle_api_exit_app(struct message *m) {
 static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
     // TODO:
-    // case RUNTIME_EXIT_CURRENT_MSG: return handle_runtime_exit_current(m);
+    // case RUNTIME_EXIT_MSG: return handle_runtime_exit(m);
     case RUNTIME_PRINTCHAR_MSG: return handle_runtime_printchar(m);
     case PAGER_FILL_MSG:        return handle_pager_fill(m);
     case API_CREATE_APP_MSG:    return handle_api_create_app(m);
