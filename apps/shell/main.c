@@ -4,8 +4,6 @@
 #include <resea/ipc.h>
 
 int main(void) {
-    api_console_write("Resea Shell\n");
-
     cid_t appmgr_ch = 1;
     cid_t gui_ch = 2;
     TRY_OR_PANIC(call_gui_activate(gui_ch));
@@ -15,7 +13,7 @@ int main(void) {
     int i;
     while (1) {
 new_prompt:
-        api_console_write("> ");
+        api_console_write("shell> ");
         i = 0;
         while (1) {
             struct message m;
