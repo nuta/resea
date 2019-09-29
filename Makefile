@@ -242,7 +242,7 @@ $(BUILD_DIR)/$(INIT).bin: $(BUILD_DIR)/servers/$(INIT).elf Makefile
 	$(OBJCOPY) -j.initfs -j.text -j.data -j.rodata -j.bss -Obinary $< $@
 
 # C/assembly source file build rules.
-$(BUILD_DIR)/%.o: %.c $(config_h_path)
+$(BUILD_DIR)/%.o: %.c $(BUILD_DIR)/include/idl_stubs.h $(config_h_path)
 	$(PROGRESS) "CC" $@
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json) -c -o $@ $<
