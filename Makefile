@@ -44,6 +44,10 @@ endif
 MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 .SUFFIXES:
 
+config_inc_path := .config.h.inc
+config_h_path   := $(BUILD_DIR)/include/config.h
+initfs_files    :=
+
 # Commands.
 PYTHON3      ?= python3
 CC           := $(LLVM_PREFIX)clang
@@ -88,7 +92,11 @@ clean:
 
 .PHONY: menuconfig
 menuconfig:
+	$(PROGRESS) MENUCONFIG .config
 	menuconfig
+	$(PROGRESS) GEN $(config_inc_path)
+	genconfig --header-path $(config_inc_path)
+	$(PROGRESS) GEN .config.parsed
 	./tools/parseconfig.py
 
 .PHONY: docs
@@ -221,15 +229,21 @@ $(BUILD_DIR)/$(INIT).bin: $(BUILD_DIR)/servers/$(INIT).elf Makefile
 	$(OBJCOPY) -j.initfs -j.text -j.data -j.rodata -j.bss -Obinary $< $@
 
 # C/assembly source file build rules.
-$(BUILD_DIR)/%.o: %.c Makefile $(BUILD_DIR)/include/idl_stubs.h
+$(BUILD_DIR)/%.o: %.c $(BUILD_DIR)/include/idl_stubs.h $(config_h_path)
 	$(PROGRESS) "CC" $@
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json) -c -o $@ $<
 
-$(BUILD_DIR)/%.o: %.S Makefile
+$(BUILD_DIR)/%.o: %.S $(config_h_path)
 	$(PROGRESS) "CC" $@
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json) -c -o $@ $<
+
+$(config_h_path): $(config_inc_path) Makefile
+	$(PROGRESS) "GEN" $@
+	mkdir -p $(@D)
+	echo "#pragma once" > $@
+	cat $< >> $@
 
 # Server executables.
 $(BUILD_DIR)/servers/%.elf:

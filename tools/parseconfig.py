@@ -53,7 +53,6 @@ def main():
 
     with open(args.outfile, "w") as f:
         f.write(parse_config(open(args.infile).read()))
-    print("Generated '.config.parsed'")
 
 if __name__ == "__main__":
     main()
