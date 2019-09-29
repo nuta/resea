@@ -44,9 +44,12 @@ endif
 MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 .SUFFIXES:
 
+# Variables internally used in the build system.
 config_inc_path := .config.h.inc
 config_h_path   := $(BUILD_DIR)/include/config.h
 initfs_files    :=
+lib_deps        :=
+compiled_objs   :=
 
 # Commands.
 PYTHON3      ?= python3
