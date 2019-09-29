@@ -16,6 +16,7 @@ non_config_targets := menuconfig
 load_config := y
 ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
 load_config :=
+include .config.defaults
 endif
 # The default target (build) needs ".config".
 ifeq ($(MAKECMDGOALS),)
@@ -97,6 +98,15 @@ clean:
 menuconfig:
 	$(PROGRESS) MENUCONFIG .config
 	menuconfig
+	$(PROGRESS) GEN $(config_inc_path)
+	genconfig --header-path $(config_inc_path)
+	$(PROGRESS) GEN .config.parsed
+	./tools/parseconfig.py
+
+.PHONY: loadconfig
+loadconfig:
+	$(PROGRESS) DEFCONFIG ".config (CONFIG=$(CONFIG))"
+	defconfig $(CONFIG)
 	$(PROGRESS) GEN $(config_inc_path)
 	genconfig --header-path $(config_inc_path)
 	$(PROGRESS) GEN .config.parsed
@@ -242,11 +252,15 @@ $(BUILD_DIR)/%.o: %.S $(config_h_path)
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json) -c -o $@ $<
 
+# Build config stuff.
 $(config_h_path): $(config_inc_path) Makefile
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
 	echo "#pragma once" > $@
 	cat $< >> $@
+
+.config.defaults:
+	./tools/defaultconfig.py > $@
 
 # Server executables.
 $(BUILD_DIR)/servers/%.elf:

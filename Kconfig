@@ -21,11 +21,11 @@ endchoice
 
 config LLVM_PREFIX
     string "Clang/LLD/LLVM toolchain prefix"
-    default "/usr/local/opt/llvm/bin/"
+    default "$(DEFAULT_LLVM_PREFIX)"
 
 config GRUB_PREFIX
     string "GRUB commands prefix"
-    default "/usr/local/opt/i386-elf-grub/bin/i386-elf-"
+    default "$(DEFAULT_GRUB_PREFIX)"
 endmenu
 
 menu "Servers"

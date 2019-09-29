@@ -2,6 +2,7 @@
 /.vscode
 /.config
 /.config.old
+/.config.defaults
 /.config.h.inc
 /.config.parsed
 
