@@ -66,10 +66,13 @@ void process_destroy(UNUSED struct process *process) {
     }
 
     table_destroy(&process->channels);
+    // TODO: Send pages back to memmgr.
     page_table_destroy(&process->page_table);
     table_free(&process_table, process->pid);
     list_remove(&process->next);
     kfree(&small_arena, process);
+
+    // TODO: Send a message to its pager server (@1).
 }
 
 /// Adds a new vm area.
