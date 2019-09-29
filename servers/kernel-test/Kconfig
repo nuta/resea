@@ -1,0 +1,3 @@
+menuconfig KERNEL_TEST_SERVER
+    bool "Kernel Test"
+    default n
