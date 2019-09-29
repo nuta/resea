@@ -294,5 +294,5 @@ $(BUILD_DIR)/compile_commands.json: $(compiled_objs)
 -include $(BUILD_DIR)/kernel/*.deps
 -include $(BUILD_DIR)/kernel/arch/$(ARCH)/*.deps
 -include $(foreach app, $(APPS), $(BUILD_DIR)/apps/$(app)/*.deps)
--include $(foreach server, $(STARTUPS) $(INIT), $(BUILD_DIR)/server/$(server)/*.deps)
+-include $(foreach server, $(STARTUPS) $(INIT), $(BUILD_DIR)/servers/$(server)/*.deps)
 -include $(foreach lib, $(lib_deps), $(BUILD_DIR)/libs/$(lib)/*.deps)
