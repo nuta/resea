@@ -15,6 +15,7 @@ struct memory_map {
 };
 
 struct framebuffer_info {
+    bool available;
     uint64_t paddr;
     uint32_t width;
     uint32_t height;

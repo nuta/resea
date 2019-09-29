@@ -108,6 +108,10 @@ static error_t handle_memory_alloc_phy_pages(struct message *m) {
 }
 
 static error_t handle_memmgr_get_framebuffer(struct message *m) {
+    if (!__init_args.framebuffer.available) {
+        return ERR_NOT_FOUND;
+    }
+
     struct framebuffer_info *info = &__init_args.framebuffer;
     paddr_t paddr = info->paddr;
     int order = (int) ulllog2(

@@ -28,6 +28,8 @@ config GRUB_PREFIX
     default "$(DEFAULT_GRUB_PREFIX)"
 endmenu
 
+source "kernel/Kconfig"
+
 menu "Servers"
 source "servers/*/Kconfig"
 endmenu

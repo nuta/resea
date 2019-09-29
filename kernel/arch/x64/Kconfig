@@ -1,0 +1,7 @@
+menu "x64-specific options"
+
+config TEXT_UI
+    bool "Text UI mode (Disable GUI)"
+    default n
+
+endmenu

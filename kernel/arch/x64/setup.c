@@ -1,3 +1,4 @@
+#include <config.h>
 #include <arch.h>
 #include <init_args.h>
 #include <boot.h>
@@ -82,16 +83,21 @@ static void parse_multiboot_info(struct init_args *init_args) {
 
     init_args->num_memory_maps = j;
 
+#ifdef CONFIG_TEXT_UI
+    init_args->framebuffer.available = false;
+#else
     TRACE("Framebuffer:");
     TRACE("    %dx%d, addr = %p, bpp = %d",
           multiboot_info->framebuffer_width,
           multiboot_info->framebuffer_height,
           multiboot_info->framebuffer_paddr,
           multiboot_info->framebuffer_bpp);
+    init_args->framebuffer.available = true;
     init_args->framebuffer.width = multiboot_info->framebuffer_width;
     init_args->framebuffer.height = multiboot_info->framebuffer_height;
     init_args->framebuffer.paddr = multiboot_info->framebuffer_paddr;
     init_args->framebuffer.bpp = multiboot_info->framebuffer_bpp;
+#endif
 }
 
 // Checks if a bit in the specified CPUID field is set. If not, do panic.

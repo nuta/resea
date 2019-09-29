@@ -1,8 +1,13 @@
+#include <config.h>
 .section ".boot", "ax"
 .intel_syntax noprefix
 
 .set MULTIBOOT_MAGIC,    0x1badb002
+#ifdef CONFIG_TEXT_UI
+.set MULTIBOOT_FLAGS,    0x00000002 // memory map
+#else
 .set MULTIBOOT_FLAGS,    0x00000006 // memory map and video info
+#endif
 .set MULTIBOOT_CHECKSUM, -(MULTIBOOT_MAGIC + MULTIBOOT_FLAGS)
 
 .code32
@@ -12,9 +17,11 @@
 .long MULTIBOOT_MAGIC
 .long MULTIBOOT_FLAGS
 .long MULTIBOOT_CHECKSUM
+#ifndef CONFIG_TEXT_UI
 .long 0, 0, 0, 0, 0  // Unused values.
 .long 0              // Set graphics mode.
 .long 640, 480, 32   // Width, height, and depth.
+#endif
 
 // The entry point jumped from the bootloader.
 .code32

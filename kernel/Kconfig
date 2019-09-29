@@ -1,0 +1,7 @@
+menu "Kernel"
+
+if ARCH_X64
+source "kernel/arch/x64/Kconfig"
+endif
+
+endmenu # "Kernel"
