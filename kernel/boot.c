@@ -9,6 +9,34 @@
 #include <thread.h>
 #include <timer.h>
 
+static void userland(struct init_args *args);
+
+/// Initializes the kernel and starts the first userland process.
+void boot(void) {
+    struct init_args init_args;
+    init_boot_stack_canary();
+
+    INFO("Booting Resea...");
+    debug_init();
+    memory_init();
+    arch_init(&init_args);
+    timer_init();
+    process_init();
+    thread_init();
+    kernel_server_init();
+
+    userland(&init_args);
+
+    // Perform the very first context switch. The current context will become a
+    // CPU-local idle thread.
+    thread_switch();
+
+    // Now we're in the CPU-local idle thread context.
+    while (1) {
+        arch_idle();
+    }
+}
+
 extern char __initfs[];
 
 /// The pager which maps the initfs image in the kernel executable image.
@@ -71,30 +99,4 @@ static void userland(struct init_args *args) {
 
     // Enqueue the thread into the run queue.
     thread_resume(thread);
-}
-
-/// Initializes the kernel and starts the first userland process.
-void boot(void) {
-    struct init_args init_args;
-    init_boot_stack_canary();
-
-    INFO("Booting Resea...");
-    debug_init();
-    memory_init();
-    arch_init(&init_args);
-    timer_init();
-    process_init();
-    thread_init();
-    kernel_server_init();
-
-    userland(&init_args);
-
-    // Perform the very first context switch. The current context will become a
-    // CPU-local idle thread.
-    thread_switch();
-
-    // Now we're in the CPU-local idle thread context.
-    while (1) {
-        arch_idle();
-    }
 }
