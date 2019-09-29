@@ -12,7 +12,7 @@ ifeq ($(V),)
 endif
 
 # Determine if we need to load ".config".
-non_config_targets := loadconfig menuconfig
+non_config_targets := menuconfig reloadconfig
 load_config := y
 ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
 load_config :=
@@ -98,15 +98,10 @@ clean:
 menuconfig:
 	$(PROGRESS) MENUCONFIG .config
 	menuconfig
-	$(PROGRESS) GEN $(config_inc_path)
-	genconfig --header-path $(config_inc_path)
-	$(PROGRESS) GEN .config.parsed
-	./tools/parseconfig.py
+	$(MAKE) reloadconfig
 
-.PHONY: loadconfig
-loadconfig:
-	$(PROGRESS) DEFCONFIG ".config (CONFIG=$(CONFIG))"
-	defconfig $(CONFIG)
+.PHONY: reloadconfig
+reloadconfig:
 	$(PROGRESS) GEN $(config_inc_path)
 	genconfig --header-path $(config_inc_path)
 	$(PROGRESS) GEN .config.parsed
