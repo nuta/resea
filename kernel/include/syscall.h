@@ -15,6 +15,8 @@
 static inline bool is_annoying_msg(uint16_t msg_type) {
     return msg_type == RUNTIME_PRINTCHAR_MSG
            || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
+           || msg_type == MEMMGR_BENCHMARK_NOP_MSG
+           || msg_type == MEMMGR_BENCHMARK_NOP_REPLY_MSG
            || msg_type == PAGER_FILL_MSG
            || msg_type == PAGER_FILL_REPLY_MSG;
 }
