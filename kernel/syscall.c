@@ -115,7 +115,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             // A receiver is not ready or another thread is sending a message
             // to the channel. Block the current thread until a receiver thread
             // resumes us.
-            list_push_back(&dst->queue, &current->queue_elem);
+            list_push_back(&dst->queue, &current->queue_next);
             current->blocked_on = dst;
             thread_block(current);
             thread_switch();
@@ -237,7 +237,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct list_head *node = list_pop_front(&recv_on->queue);
         if (node) {
             struct thread *sender = LIST_CONTAINER(node, struct thread,
-                                                   queue_elem);
+                                                   queue_next);
             sender->blocked_on = NULL;
             thread_resume(sender);
         }

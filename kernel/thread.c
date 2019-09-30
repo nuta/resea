@@ -96,12 +96,12 @@ struct thread *thread_create(struct process *process, vaddr_t start,
 /// Destroys a thread.
 void thread_destroy(UNUSED struct thread *thread) {
     if (thread != CURRENT /* TODO: SMP */ && thread->state == THREAD_RUNNABLE) {
-        list_remove(&thread->runqueue_elem);
+        list_remove(&thread->runqueue_next);
     }
 
     struct channel *blocked_on = thread->blocked_on;
     if (blocked_on) {
-        list_remove(&thread->queue_elem);
+        list_remove(&thread->queue_next);
     }
 
     kfree(&page_arena, (void *) thread->kernel_stack);
@@ -141,7 +141,7 @@ static struct list_head runqueue;
 void thread_resume(struct thread *thread) {
     if (thread->state != THREAD_RUNNABLE) {
         thread->state = THREAD_RUNNABLE;
-        list_push_back(&runqueue, &thread->runqueue_elem);
+        list_push_back(&runqueue, &thread->runqueue_next);
     }
 }
 
@@ -153,7 +153,7 @@ void thread_block(struct thread *thread) {
 /// Picks the next thread to run.
 static struct thread *scheduler(struct thread *current) {
     if (current->state == THREAD_RUNNABLE) {
-        list_push_back(&runqueue, &current->runqueue_elem);
+        list_push_back(&runqueue, &current->runqueue_next);
     }
 
     struct list_head *next = list_pop_front(&runqueue);
@@ -162,7 +162,7 @@ static struct thread *scheduler(struct thread *current) {
         return CPUVAR->idle_thread;
     }
 
-    return LIST_CONTAINER(next, struct thread, runqueue_elem);
+    return LIST_CONTAINER(next, struct thread, runqueue_next);
 }
 
 /// Saves the current context and switches into the next thread. This function

@@ -63,9 +63,9 @@ struct thread {
     /// The beginning of (bottom of) dedicated kernel stack.
     vaddr_t kernel_stack;
     /// The entry in a runqueue.
-    struct list_head runqueue_elem;
+    struct list_head runqueue_next;
     /// The entry in a message sender queue.
-    struct list_head queue_elem;
+    struct list_head queue_next;
     /// The channel at which the thread is trying to send/receive a message.
     struct channel *blocked_on;
     /// Next thread in the process.
