@@ -36,4 +36,4 @@ script:
   - make reloadconfig
   - make info
   - make -j2
-  - make run
+  - make run NOGUI=y
