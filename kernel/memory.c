@@ -141,6 +141,6 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
 
 /// Initializes the memory subsystem.
 void memory_init(void) {
-    arena_init(&object_arena, object_arena_ADDR, object_arena_LEN, OBJ_MAX_SIZE);
+    arena_init(&object_arena, OBJECT_ARENA_ADDR, OBJECT_ARENA_LEN, OBJ_MAX_SIZE);
     arena_init(&page_arena, PAGE_ARENA_ADDR, PAGE_ARENA_LEN, PAGE_SIZE);
 }

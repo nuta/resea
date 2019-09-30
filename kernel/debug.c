@@ -273,8 +273,8 @@ static void asan_init(void) {
     arch_asan_init();
 
     // Kmalloc small objects.
-    asan_init_area(ASAN_NOT_ALLOCATED, (void *) object_arena_ADDR,
-                  object_arena_LEN);
+    asan_init_area(ASAN_NOT_ALLOCATED, (void *) OBJECT_ARENA_ADDR,
+                  OBJECT_ARENA_LEN);
     // Kmalloc page objects.
     asan_init_area(ASAN_NOT_ALLOCATED, (void *) PAGE_ARENA_ADDR,
                   PAGE_ARENA_LEN);
