@@ -217,7 +217,9 @@ $(foreach lib, $(lib_deps), $(eval $(call lib-make-rule,$(lib))))
 $(BUILD_DIR)/initfs.o: $(initfs_files) $(BUILD_DIR)/$(INIT).bin tools/mkinitfs.py Makefile
 	$(PROGRESS) "MKINITFS" $@
 	$(PYTHON3) tools/mkinitfs.py -s $(BUILD_DIR)/$(INIT).bin \
-		--generate-asm $(@:.o=.S) -o $(@:.o=.bin) $(BUILD_DIR)/initfs
+		--generate-asm $(@:.o=.S) -o $(@:.o=.bin) \
+		--file-list "$(initfs_files)" \
+		$(BUILD_DIR)/initfs
 	$(CC) $(KERNEL_CFLAGS) -c -o $@ $(@:.o=.S)
 
 $(BUILD_DIR)/initfs/startups/%.elf: $(BUILD_DIR)/servers/%.elf

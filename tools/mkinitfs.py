@@ -16,7 +16,7 @@ def construct_file_header(name, data, length):
     header = struct.pack("48sIH10x", str(name).encode("utf-8"), length, padding)
     return header, padding
 
-def make_image(startup, root_dir):
+def make_image(startup, root_dir, file_list):
     image = bytes()
 
     # Append the startup code.
@@ -33,11 +33,14 @@ def make_image(startup, root_dir):
             continue
 
         name = file.relative_to(root_dir)
-        data = open(file, "rb").read()
+        if file_list and str(name) not in file_list:
+            print(f"mkinitfs: Excluding '{name}'")
+            continue
 
         if len(str(name)) >= 32:
             sys.exit(f"too long file name: {name}")
 
+        data = open(file, "rb").read()
         header, padding = construct_file_header(name, data, len(data))
         image += header + data + struct.pack(f"{padding}x")
         num_files += 1
@@ -60,12 +63,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", dest="output")
     parser.add_argument("-s", dest="startup")
+    parser.add_argument("--file-list")
     parser.add_argument("--generate-asm")
     parser.add_argument("dir")
     args = parser.parse_args()
 
     with open(args.output, "wb") as f:
-        f.write(make_image(args.startup, args.dir))
+        f.write(make_image(args.startup, args.dir, args.file_list))
 
     if args.generate_asm:
         with open(args.generate_asm, "w") as f:
