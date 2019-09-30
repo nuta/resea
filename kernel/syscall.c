@@ -359,7 +359,8 @@ retry:
 #ifdef DEBUG_BUILD
     current->debug.receive_from = NULL;
 #endif
-    // Read and clear the notification field atomically.
+    // Read and clear the notification field. This is not necessarily atomic,
+    // btw.
     m->notification = atomic_swap(&recv_on->notification, 0);
 
     IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
