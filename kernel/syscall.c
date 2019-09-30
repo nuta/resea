@@ -328,7 +328,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // channel. We don't need to recv_in_kernel; it is already set to false in
     // sys_ipc().
     IPC_TRACE(m, "send (fastpath): %pC -> %pC => %pC (header=%p)",
-               ch, linked_with, dst_ch, header);
+              ch, linked_with, dst_ch, header);
     struct message *dst_m = receiver->ipc_buffer;
     recv_on->receiver = current;
     dst_ch->receiver  = NULL;
