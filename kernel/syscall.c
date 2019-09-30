@@ -270,6 +270,9 @@ retry:
         if (from_kernel) {
             current->ipc_buffer = &current->info->ipc_buffer;
         }
+
+        // Set to false for the fastpath.
+        current->recv_in_kernel = false;
     }
 
     return OK;
@@ -293,13 +296,13 @@ error_t sys_ipc_fastpath(cid_t cid) {
         goto slowpath_fallback;
     }
 
-    struct message *m = current->ipc_buffer;
-    header_t header = m->header;
-
-    struct channel *recv_on = ch->transfer_to;
+    struct message *m           = current->ipc_buffer;
+    header_t header             = m->header;
+    struct channel *recv_on     = ch->transfer_to;
     struct channel *linked_with = ch->linked_with;
-    struct channel *dst_ch = linked_with->transfer_to;
-    struct thread *receiver = dst_ch->receiver;
+    cid_t from                  = linked_with->cid;
+    struct channel *dst_ch      = linked_with->transfer_to;
+    struct thread *receiver     = dst_ch->receiver;
 
     // Check whether the message can be sent in fastpath. Here we use `+`
     // instead of lengthy if statements to eliminate branches.
@@ -319,21 +322,19 @@ error_t sys_ipc_fastpath(cid_t cid) {
     }
 
     // Now all prerequisites are met. Copy the message and wait on the our
-    // channel.
+    // channel. We don't need to recv_in_kernel; it is already set to false in
+    // sys_ipc().
     IPC_TRACE(m, "send (fastpath): %pC -> %pC => %pC (header=%p)",
                ch, linked_with, dst_ch, header);
-
     struct message *dst_m = receiver->ipc_buffer;
-    dst_m->header = header;
-    dst_m->from = linked_with->cid;
+    recv_on->receiver = current;
+    dst_ch->receiver  = NULL;
+    current->state    = THREAD_BLOCKED;
+    receiver->state   = THREAD_RUNNABLE;
+    dst_m->header     = header;
+    dst_m->from       = from;
     inlined_memcpy(&dst_m->payloads.data, m->payloads.data,
                    INLINE_PAYLOAD_LEN(header));
-
-    recv_on->receiver = current;
-    current->state = THREAD_BLOCKED;
-    current->recv_in_kernel = false;
-    receiver->state = THREAD_RUNNABLE;
-    dst_ch->receiver = NULL;
 #ifdef DEBUG_BUILD
     current->debug.receive_from = recv_on;
 #endif
@@ -342,28 +343,23 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // is now blocked and will be resumed by another IPC.
     arch_thread_switch(current, receiver);
 
-
     // Received a message or a notification, or the channel is destructed.
 
     if (current->ipc_aborted) {
         // The channel has been destructed or a sender thread aborted IPC.
-        // Redo the receive phase.
-        //
         // FIXME: What if the send phase is done? We shouldn't send a same
         // message!
         UNIMPLEMENTED();
     }
 
-#ifdef DEBUG_BUILD
-    current->debug.receive_from = NULL;
-#endif
     // Read and clear the notification field. This is not necessarily atomic,
     // btw.
     m->notification = atomic_swap(&recv_on->notification, 0);
-
     IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
               recv_on, m->from, m->header, m->notification);
-
+#ifdef DEBUG_BUILD
+    current->debug.receive_from = NULL;
+#endif
     return OK;
 
 slowpath_fallback:
