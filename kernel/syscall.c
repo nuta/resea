@@ -285,42 +285,39 @@ retry:
 /// (`sys_ipc()`).
 ///
 /// Note that the current implementation is not fast enough. We need to
-/// eliminate branches and memory accesses as much as possible.
+///eliminate memory accesses...
 error_t sys_ipc_fastpath(cid_t cid) {
     struct thread *current = CURRENT;
     struct channel *ch = table_get(&current->process->channels, cid);
     if (UNLIKELY(!ch)) {
-        goto slowpath;
+        goto slowpath_fallback;
     }
 
     struct message *m = current->ipc_buffer;
     header_t header = m->header;
 
-    // Fastpath accepts only inline payloads.
-    if (UNLIKELY(SYSCALL_FASTPATH_TEST(header) != 0)) {
-        goto slowpath;
-    }
-
-    // Make sure that the channels are not destructed.
     struct channel *recv_on = ch->transfer_to;
-retry:
-    if (ch->destructed || recv_on->destructed) {
-        goto slowpath;
-    }
-
-    // Make sure that no threads are waitng for us.
-    if (UNLIKELY(!list_is_empty(&recv_on->queue))) {
-        goto slowpath;
-    }
-
     struct channel *linked_with = ch->linked_with;
     struct channel *dst_ch = linked_with->transfer_to;
-
-    // Make sure that a receiver thread is already waiting on the destination
-    // channel.
     struct thread *receiver = dst_ch->receiver;
-    if (UNLIKELY(!receiver)) {
-        goto slowpath;
+
+    // Check whether the message can be sent in fastpath. Here we use `+`
+    // instead of lengthy if statements to eliminate branches.
+    int slowpath;
+retry:
+    slowpath =
+        // Fastpath accepts only inline payloads.
+        SYSCALL_FASTPATH_TEST(header) != 0 +
+        // Make sure that the channels are not destructed.
+        ch->destructed + recv_on->destructed + dst_ch->destructed +
+        // Make sure that no threads are waitng for us.
+        !list_is_empty(&recv_on->queue) +
+        // A receiver thread already waits for a message.
+        !receiver;
+
+    // Fall back into the slowpath if the conditions are not met.
+    if (slowpath) {
+        goto slowpath_fallback;
     }
 
     // Now all prerequisites are met. Copy the message and wait on the our
@@ -368,7 +365,7 @@ retry:
 
     return OK;
 
-slowpath:
+slowpath_fallback:
     return sys_ipc(cid, IPC_SEND | IPC_RECV);
 }
 
