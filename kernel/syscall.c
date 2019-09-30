@@ -120,9 +120,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             thread_block(current);
             thread_switch();
 
-            if (current->ipc_aborted) {
-                current->ipc_aborted = false;
-                return ERR_CLOSED_CHANNEL;
+            if (current->abort_reason) {
+                return atomic_swap(&current->abort_reason, OK);
             }
         }
 
@@ -148,13 +147,13 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             struct channel *ch = table_get(&current->process->channels,
                                            m->payloads.channel);
             if (!ch) {
-                receiver->ipc_aborted = true;
+                receiver->abort_reason = ERR_NEEDS_RETRY;
                 return ERR_INVALID_PAYLOAD;
             }
 
             struct channel *dst_ch = channel_create(receiver->process);
             if (!dst_ch) {
-                receiver->ipc_aborted = true;
+                receiver->abort_reason = ERR_NEEDS_RETRY;
                 return ERR_NO_MEMORY;
             }
 
@@ -192,7 +191,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 // base address is valid.
                 if (PAGE_ORDER(page_base) < PAGE_ORDER(page)
                     || !is_valid_page_base_addr(page_base_addr)) {
-                    receiver->ipc_aborted = true;
+                    receiver->abort_reason = ERR_NEEDS_RETRY;
                     return ERR_UNACCEPTABLE_PAGE_PAYLOAD;
                 }
 
@@ -214,7 +213,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     //
     if (syscall & IPC_RECV) {
         struct channel *recv_on = ch->transfer_to;
-retry:
         if (recv_on->destructed) {
             return ERR_CLOSED_CHANNEL;
         }
@@ -247,15 +245,11 @@ retry:
         // Wait for a message...
         thread_switch();
 
-        // Received a message or a notification, or the channel is destructed.
-
-        if (current->ipc_aborted) {
-            // The channel has been destructed or a sender thread aborted IPC.
-            // Redo the receive phase.
-            current->ipc_aborted = false;
-            goto retry;
+        // Received a message or a notification, or the IPC operation is
+        // aborted.
+        if (current->abort_reason != OK) {
+            return atomic_swap(&current->abort_reason, OK);
         }
-
 #ifdef DEBUG_BUILD
         current->debug.receive_from = NULL;
 #endif
@@ -343,18 +337,12 @@ error_t sys_ipc_fastpath(cid_t cid) {
 #endif
 
     // Do a direct context switch into the receiver thread. The current thread
-    // is now blocked and will be resumed by another IPC.
+    // is now blocked and will be resumed by another IPC or when the send or
+    // receive operation is aborted.
     arch_thread_switch(current, receiver);
 
     // Received a message or a notification, or the channel is destructed.
-
-    if (current->ipc_aborted) {
-        // The channel has been destructed or a sender thread aborted IPC.
-        // FIXME: What if the send phase is done? We shouldn't send a same
-        // message!
-        UNIMPLEMENTED();
-    }
-
+    //
     // Read and clear the notification field. This is not necessarily atomic,
     // btw.
     m->notification = atomic_swap(&recv_on->notification, 0);
@@ -363,7 +351,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
 #ifdef DEBUG_BUILD
     current->debug.receive_from = NULL;
 #endif
-    return OK;
+    return atomic_swap(&current->abort_reason, OK);
 
 slowpath_fallback:
     return sys_ipc(cid, IPC_SEND | IPC_RECV);

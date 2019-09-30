@@ -61,13 +61,13 @@ void channel_destroy(struct channel *ch) {
     // Resume the receiver thread to abort its IPC operations.
     struct thread *receiver = ch->receiver;
     if (receiver) {
-        receiver->ipc_aborted = true;
+        receiver->abort_reason = ERR_CHANNEL_CLOSED;
         thread_resume(receiver);
     }
 
     // Resume the sender threads to abort theier IPC operations.
     LIST_FOR_EACH(sender, &ch->queue, struct thread, next) {
-        sender->ipc_aborted = true;
+        sender->abort_reason = ERR_CHANNEL_CLOSED;
         thread_resume(sender);
     }
 

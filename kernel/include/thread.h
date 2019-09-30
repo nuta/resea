@@ -31,8 +31,9 @@ struct thread {
     struct process *process;
     /// The current state of the thread.
     int state;
-    /// It's true when the channel which the thread is using is closed.
-    bool ipc_aborted;
+    /// It is set if a IPC operation is aborted due to channel destruction,
+    /// etc.
+    error_t abort_reason;
     /// True if this thread is waiting for a message and the sys_ipc() is
     /// invoked from the kernel (e.g. calling fill_request from the page fault
     /// handler). If the receiver is kernel, we copy page payloads in physical

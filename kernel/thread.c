@@ -57,7 +57,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     thread->process = process;
     thread->info = thread_info;
     thread->blocked_on = NULL;
-    thread->ipc_aborted = false;
+    thread->abort_reason = OK;
 #ifdef DEBUG_BUILD
     thread->debug.send_from = NULL;
     thread->debug.receive_from = NULL;
