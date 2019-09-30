@@ -16,7 +16,7 @@ BOCHS ?= bochs
 QEMU ?= qemu-system-x86_64
 QEMUFLAGS += -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
 QEMUFLAGS += -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04
-QEMUFLAGS += $(if $(GUI),, -nographic)
+QEMUFLAGS += $(if $(NOGUI),-nographic,)
 
 
 objs += \
