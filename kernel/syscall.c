@@ -311,6 +311,9 @@ error_t sys_ipc_fastpath(cid_t cid) {
         SYSCALL_FASTPATH_TEST(header) != 0 +
         // Make sure that the channels are not destructed.
         ch->destructed + recv_on->destructed + dst_ch->destructed +
+        // Make sure that the current thread is able to be the receiver of
+        // `recv_on`.
+        ((int) recv_on->receiver) +
         // Make sure that no threads are waitng for us.
         !list_is_empty(&recv_on->queue) +
         // A receiver thread already waits for a message.
