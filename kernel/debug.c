@@ -233,6 +233,8 @@ static void check_store(vaddr_t addr, size_t size) {
         switch (*shadow) {
         case ASAN_VALID:
             break;
+        case ASAN_FREED:
+            PANIC("asan: detected a double-free bug: ptr=%p", addr);
         case ASAN_UNINITIALIZED:
             // TODO: Propagate shadow memory.
             *shadow = ASAN_VALID;
