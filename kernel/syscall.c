@@ -350,8 +350,10 @@ retry:
     if (current->ipc_aborted) {
         // The channel has been destructed or a sender thread aborted IPC.
         // Redo the receive phase.
-        current->ipc_aborted = false;
-        goto retry;
+        //
+        // FIXME: What if the send phase is done? We shouldn't send a same
+        // message!
+        UNIMPLEMENTED();
     }
 
 #ifdef DEBUG_BUILD
