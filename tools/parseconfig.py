@@ -6,7 +6,8 @@ def parse_config(config):
     vs = {}
     # Parse the .config file.
     for line in config.splitlines():
-        m = re.match(r"CONFIG_(?P<name>[^=]+)=['\"]?(?P<value>[^'\"]*)['\"]?$", line)
+        m = re.match(r"CONFIG_(?P<name>[^=]+)=['\"]?(?P<value>[^'\"]*)['\"]?$",
+            line)
         if m is None:
             continue
         vs[m.group("name")] = m.group("value").replace("CONFIG_", "", 1)

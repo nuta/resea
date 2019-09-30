@@ -25,7 +25,8 @@ def analyze_stack_sizes(objcopy, nm, file):
     with tempfile.TemporaryDirectory() as tempdir:
         stack_file = tempdir + "/stack_sizes.bin"
 
-        subprocess.check_call([objcopy, "--dump-section", f".stack_sizes={stack_file}", file])
+        subprocess.check_call([objcopy, "--dump-section",
+            f".stack_sizes={stack_file}", file])
         nm_output = subprocess.check_output([nm, "--demangle", file], text=True)
         functions = {}
         for line in nm_output.splitlines():
@@ -153,7 +154,7 @@ def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Link and an symbol table.")
+        description="Link object files and a symbol table to a executable.")
     parser.add_argument("--cc", help="The clang path.", required=True)
     parser.add_argument("--cflags", help="The clang options.", required=True)
     parser.add_argument("--ld", help="The ld path.", required=True)

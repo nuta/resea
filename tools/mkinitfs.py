@@ -23,7 +23,8 @@ def make_image(startup, root_dir, file_list):
     num_files = 1
     startup_bin = open(startup, "rb") .read()
     startup_len = len(startup_bin) - FS_HEADER_SIZE - FILE_HEADER_SIZE
-    header, padding = construct_file_header(Path(startup).name, startup_bin, startup_len)
+    header, padding = construct_file_header(Path(startup).name, startup_bin,
+        startup_len)
     image += startup_bin + bytearray(padding)
     image = image[:FS_HEADER_SIZE] + header + image[FS_HEADER_SIZE+len(header):]
 
@@ -47,7 +48,8 @@ def make_image(startup, root_dir, file_list):
 
     # Write the file system header.
     fs_header = struct.pack("III", VERSION, len(image), num_files)
-    image = image[:JUMP_CODE_SIZE] + fs_header + image[JUMP_CODE_SIZE+len(fs_header):]
+    image = image[:JUMP_CODE_SIZE] + fs_header + \
+        image[JUMP_CODE_SIZE+len(fs_header):]
 
     return image
 
@@ -60,12 +62,15 @@ __initfs:
 """
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-o", dest="output")
-    parser.add_argument("-s", dest="startup")
-    parser.add_argument("--file-list")
-    parser.add_argument("--generate-asm")
-    parser.add_argument("dir")
+    parser = argparse.ArgumentParser(description="Generates a initfs image.")
+    parser.add_argument("-o", dest="output", help="The output file.")
+    parser.add_argument("-s", dest="startup",
+        help="The init server executable.")
+    parser.add_argument("--file-list", help="Files to include.")
+    parser.add_argument("--generate-asm",
+        help="Generate an assembly file to embed initfs.")
+    parser.add_argument("dir",
+        help="The root directory of initfs to be embeddded.")
     args = parser.parse_args()
 
     with open(args.output, "wb") as f:
