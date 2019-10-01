@@ -144,9 +144,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
         // Handle the channel payload.
         if (header & MSG_CHANNEL_PAYLOAD) {
-            struct channel *ch = table_get(&current->process->channels,
+            struct channel *payload_ch = table_get(&current->process->channels,
                                            m->payloads.channel);
-            if (!ch) {
+            if (!payload_ch) {
                 receiver->abort_reason = ERR_NEEDS_RETRY;
                 return ERR_INVALID_PAYLOAD;
             }
@@ -157,7 +157,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 return ERR_NO_MEMORY;
             }
 
-            channel_link(ch->linked_with, dst_ch);
+            channel_link(payload_ch->linked_with, dst_ch);
             dst_m->payloads.channel = dst_ch->cid;
         }
 
@@ -212,21 +212,21 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     //  Receive Phase
     //
     if (syscall & IPC_RECV) {
-        struct channel *recv_on = ch->transfer_to;
-        if (recv_on->destructed) {
+        struct channel *recv_ch = ch->transfer_to;
+        if (recv_ch->destructed) {
             return ERR_CLOSED_CHANNEL;
         }
 
         // Try to get the receiver right.
-        if (recv_on->receiver != NULL) {
+        if (recv_ch->receiver != NULL) {
             return ERR_ALREADY_RECEVING;
         }
 
         current->recv_in_kernel = from_kernel;
 #ifdef DEBUG_BUILD
-        current->debug.receive_from = recv_on;
+        current->debug.receive_from = recv_ch;
 #endif
-        recv_on->receiver = current;
+        recv_ch->receiver = current;
         if (from_kernel) {
             current->ipc_buffer = current->kernel_ipc_buffer;
         }
@@ -234,7 +234,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         thread_block(current);
 
         // Resume a thread in the sender queue if exists.
-        struct list_head *node = list_pop_front(&recv_on->queue);
+        struct list_head *node = list_pop_front(&recv_ch->queue);
         if (node) {
             struct thread *sender = LIST_CONTAINER(node, struct thread,
                                                    queue_next);
@@ -256,10 +256,10 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct message *m = current->ipc_buffer;
 
         // Read and clear the notification field atomically.
-        m->notification = atomic_swap(&recv_on->notification, 0);
+        m->notification = atomic_swap(&recv_ch->notification, 0);
 
         IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
-                  recv_on, m->from, m->header, m->notification);
+                  recv_ch, m->from, m->header, m->notification);
 
         if (from_kernel) {
             current->ipc_buffer = &current->info->ipc_buffer;
@@ -292,7 +292,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
 
     struct message *m           = current->ipc_buffer;
     header_t header             = m->header;
-    struct channel *recv_on     = ch->transfer_to;
+    struct channel *recv_ch     = ch->transfer_to;
     struct channel *linked_with = ch->linked_with;
     cid_t from                  = linked_with->cid;
     struct channel *dst_ch      = linked_with->transfer_to;
@@ -304,12 +304,12 @@ error_t sys_ipc_fastpath(cid_t cid) {
         // Fastpath accepts only inline payloads.
         SYSCALL_FASTPATH_TEST(header) != 0 +
         // Make sure that the channels are not destructed.
-        ch->destructed + recv_on->destructed + dst_ch->destructed +
+        ch->destructed + recv_ch->destructed + dst_ch->destructed +
         // Make sure that the current thread is able to be the receiver of
-        // `recv_on`.
-        ((int) recv_on->receiver) +
+        // `recv_ch`.
+        ((int) recv_ch->receiver) +
         // Make sure that no threads are waitng for us.
-        !list_is_empty(&recv_on->queue) +
+        !list_is_empty(&recv_ch->queue) +
         // A receiver thread already waits for a message.
         !receiver;
 
@@ -324,7 +324,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     IPC_TRACE(m, "send (fastpath): %pC -> %pC => %pC (header=%p)",
               ch, linked_with, dst_ch, header);
     struct message *dst_m = receiver->ipc_buffer;
-    recv_on->receiver = current;
+    recv_ch->receiver = current;
     dst_ch->receiver  = NULL;
     current->state    = THREAD_BLOCKED;
     receiver->state   = THREAD_RUNNABLE;
@@ -333,7 +333,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     inlined_memcpy(&dst_m->payloads.data, m->payloads.data,
                    INLINE_PAYLOAD_LEN(header));
 #ifdef DEBUG_BUILD
-    current->debug.receive_from = recv_on;
+    current->debug.receive_from = recv_ch;
 #endif
 
     // Do a direct context switch into the receiver thread. The current thread
@@ -345,9 +345,9 @@ error_t sys_ipc_fastpath(cid_t cid) {
     //
     // Read and clear the notification field. This is not necessarily atomic,
     // btw.
-    m->notification = atomic_swap(&recv_on->notification, 0);
+    m->notification = atomic_swap(&recv_ch->notification, 0);
     IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
-              recv_on, m->from, m->header, m->notification);
+              recv_ch, m->from, m->header, m->notification);
 #ifdef DEBUG_BUILD
     current->debug.receive_from = NULL;
 #endif
