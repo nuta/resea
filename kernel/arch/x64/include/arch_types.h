@@ -104,8 +104,8 @@ static inline void *inlined_memcpy(void *dst, void *src, size_t len) {
 }
 
 static inline char *strcpy(char *dst, size_t dst_len, const char *src) {
-    ASSERT(dst != NULL && "copy to NULL");
-    ASSERT(src != NULL && "copy from NULL");
+    DEBUG_ASSERT(dst != NULL && "copy to NULL");
+    DEBUG_ASSERT(src != NULL && "copy from NULL");
 
     size_t i = 0;
     while (i < dst_len - 1 && src[i] != '\0') {
@@ -118,8 +118,8 @@ static inline char *strcpy(char *dst, size_t dst_len, const char *src) {
 }
 
 static inline int strcmp(const char *s1, const char *s2) {
-    ASSERT(s1 != NULL && "s1 NULL");
-    ASSERT(s2 != NULL && "s2 NULL");
+    DEBUG_ASSERT(s1 != NULL && "s1 NULL");
+    DEBUG_ASSERT(s2 != NULL && "s2 NULL");
 
     while (*s1 != '\0' && *s2 != '\0' && *s1 == *s2) {
         s1++;
