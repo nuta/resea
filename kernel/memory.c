@@ -66,12 +66,9 @@ void *kmalloc_from(struct kmalloc_arena *arena) {
 /// Frees a memory.
 void kfree(struct kmalloc_arena *arena, void *ptr) {
 #ifdef DEBUG_BUILD
-    *((volatile uint8_t *) ptr) = 0; // Make sure that ptr is accessible (not yet freed).
-#endif
-    add_free_list(arena, (vaddr_t) ptr, 1);
-#ifdef DEBUG_BUILD
     asan_init_area(ASAN_FREED, (void *) ptr, arena->object_size);
 #endif
+    add_free_list(arena, (vaddr_t) ptr, 1);
 }
 
 /// Checks if `vma` includes `addr` and allows the requested access.
