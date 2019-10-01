@@ -91,10 +91,13 @@ void channel_link(struct channel *ch1, struct channel *ch2) {
             channel_destroy(ch1->linked_with);
         }
 
-        ch1->transfer_to = ch1;
+        if (ch2->linked_with != ch2) {
+            channel_destroy(ch2->linked_with);
+        }
+
+        ch1->linked_with = ch1;
     } else {
         // TODO: decref old linked channels.
-
         ch1->linked_with = ch2;
         ch2->linked_with = ch1;
         channel_incref(ch1);
