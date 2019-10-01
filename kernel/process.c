@@ -12,8 +12,8 @@ struct list_head process_list;
 struct process *kernel_process;
 
 static void vmarea_destroy(struct vmarea *vma) {
-    kfree(&object_arena, vma);
     list_remove(&vma->next);
+    kfree(&object_arena, vma);
 }
 
 /// Creates a new process. `name` is used for just debugging use.
