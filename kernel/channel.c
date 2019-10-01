@@ -29,6 +29,7 @@ struct channel *channel_create(struct process *process) {
     list_init(&channel->queue);
 
     table_set(&process->channels, cid, channel);
+    list_push_back(&process->channel_list, &channel->next);
     return channel;
 }
 

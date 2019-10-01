@@ -39,6 +39,7 @@ struct process *process_create(const char *name) {
     strcpy((char *) &proc->name, PROCESS_NAME_LEN_MAX, name);
     list_init(&proc->vmareas);
     list_init(&proc->threads);
+    list_init(&proc->channel_list);
     page_table_init(&proc->page_table);
 
     table_set(&process_table, pid, (void *) proc);
