@@ -3,26 +3,25 @@ Resea
 [![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
 
 Resea *[ríːseə]* is a pure microkernel-based operating system written from
-scratch. It aims to be easy to learn the implementation and experience
-microkernel-style development. Resea consists of a microkernel and servers.
-The microkernel provides essential functionalities: process, thread, and
-message passing (IPC). Servers are userland programs that provide services
-such as memory allocation, device drivers, file system, and TCP/IP. See
-**[Documentation](#documentation)** for details.
+scratch.
+
+Resea consists of a microkernel and servers. The microkernel provides essential
+functionalities: process, thread, and message passing (IPC). Servers are
+userland programs that provide services such as memory allocation,
+device drivers, file system, and TCP/IP. See **[Documentation](#documentation)**
+for details.
 
 Road Map
 --------
 - [x] Kernel for x86_64
 - [x] IPC benchmark app
-- [ ] **`memmgr`:** the user-level memory management server **(WIP)**
-- [ ] GUI server **(WIP)**
-- [ ] SMP support
-- [ ] **`drvmgr`:** the device driver management server
-- [ ] **`fsmgr`:** the file system management server
-- [ ] virtio-blk device driver
+- [x] The user-level memory management server
+- [ ] virtio-blk device driver **(WIP)**
 - [ ] FAT file system server
+- [ ] GUI server **(WIP)**
 - [ ] virtio-net device driver
 - [ ] TCP/IP server
+- [ ] SMP support
 - [ ] Port Doom
 
 Prerequisites
@@ -50,8 +49,8 @@ $ make menuconfig           # Edit build configuration.
 $ make build                # Build a kernel executable (debug build).
 $ make build BUILD=release  # Build a kernel executable (release build).
 $ make build V=1            # Build a kernel executable with verbose command output.
-$ make run GUI=1            # Run on QEMU.
-$ make run                  # Run on QEMU with -nographic.
+$ make run                  # Run on QEMU.
+$ make run NOGUI=1          # Run on QEMU with -nographic.
 $ make bochs                # Run on Bochs.
 $ make clean                # Remove built files.
 $ make docs                 # Generate a source code reference.
@@ -59,8 +58,9 @@ $ make docs                 # Generate a source code reference.
 
 Documentation
 -------------
-- **[Design and Internals](https://github.com/seiyanuta/resea/blob/master/docs/internals.md)**
-- **[Developer's Guide](https://github.com/seiyanuta/resea/blob/master/docs/hacking.md)**
+- **[Design](https://github.com/seiyanuta/resea/blob/master/docs/design.md)**
+- **[Internals](https://github.com/seiyanuta/resea/blob/master/docs/internals.md)**
+- **[Server Writer's Guide](https://github.com/seiyanuta/resea/blob/master/docs/server-writers-guide.md)**
 
 Contributing
 ------------
