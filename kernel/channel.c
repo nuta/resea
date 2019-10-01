@@ -109,6 +109,7 @@ void channel_link(struct channel *ch1, struct channel *ch2) {
 /// process.
 void channel_transfer(struct channel *src, struct channel *dst) {
     ASSERT(src->process == dst->process);
+
     if (src == dst) {
         if (src->transfer_to != src) {
             channel_destroy(src->transfer_to);
