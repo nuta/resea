@@ -56,12 +56,12 @@ static paddr_t straight_map_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
 // Spawns the first user process from the initfs.
 static void userland(struct init_args *args) {
     // Create the very first user process and thread.
-    struct process *user_process = process_create("memmgr");
-    if (!user_process) {
+    init_process = process_create("memmgr");
+    if (!init_process) {
         PANIC("failed to create a process");
     }
 
-    struct thread *thread = thread_create(user_process, INITFS_ADDR,
+    struct thread *thread = thread_create(init_process, INITFS_ADDR,
         0 /* stack */, THREAD_INFO_ADDR, 0 /* arg */);
     if (!thread) {
         PANIC("failed to create a user thread");
@@ -74,7 +74,7 @@ static void userland(struct init_args *args) {
         PANIC("failed to create a channel");
     }
 
-    struct channel *user_ch = channel_create(user_process);
+    struct channel *user_ch = channel_create(init_process);
     if (!user_ch) {
         PANIC("failed to create a channel");
     }
@@ -84,12 +84,12 @@ static void userland(struct init_args *args) {
 
     // Set up pagers.
     int flags = PAGE_WRITABLE | PAGE_USER;
-    if (vmarea_add(user_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL,
+    if (vmarea_add(init_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL,
                    flags) != OK) {
         PANIC("failed to add a vmarea");
     }
 
-    if (vmarea_add(user_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END,
+    if (vmarea_add(init_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END,
                    straight_map_pager, NULL, flags) != OK) {
         PANIC("failed to add a vmarea");
     }

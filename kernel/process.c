@@ -10,6 +10,8 @@ struct table process_table;
 struct list_head process_list;
 /// The kernel process.
 struct process *kernel_process;
+/// THe first userland process (typically memmgr).
+struct process *init_process;
 
 static void vmarea_destroy(struct vmarea *vma) {
     list_remove(&vma->next);
@@ -51,6 +53,10 @@ struct process *process_create(const char *name) {
 
 /// Destroys a process.
 void process_destroy(UNUSED struct process *process) {
+    if (process == init_process) {
+        PANIC("Tried to kill the init process!");
+    }
+
     // Destroy channels.
     LIST_FOR_EACH(ch, &process->channel_list, struct channel, next) {
         channel_destroy(ch);

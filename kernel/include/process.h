@@ -59,6 +59,7 @@ struct vmarea {
 };
 
 extern struct process *kernel_process;
+extern struct process *init_process;
 extern struct table process_table;
 extern struct list_head process_list;
 
