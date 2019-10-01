@@ -80,6 +80,7 @@ COMMON_CFLAGS += -Werror=int-conversion
 COMMON_CFLAGS += -Werror=incompatible-pointer-types
 COMMON_CFLAGS += -Werror=shift-count-overflow
 COMMON_CFLAGS += -Werror=return-type
+COMMON_CFLAGS += -Werror=pointer-integer-compare
 COMMON_CFLAGS += -Ilibs/libcommon/include
 KERNEL_CFLAGS += -DKERNEL -Ikernel/include -Ikernel/arch/$(ARCH)/include
 KERNEL_CFLAGS += -I$(BUILD_DIR)/include
