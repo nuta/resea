@@ -59,4 +59,10 @@ void printk(const char *fmt, ...);
         }                                                        \
     } while (0)
 
+#ifdef DEBUG_BUILD
+#define DEBUG_ASSERT ASSERT
+#else // DEBUG_BUILD
+#define DEBUG_ASSERT(expr)
+#endif
+
 #endif
