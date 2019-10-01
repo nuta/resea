@@ -57,42 +57,31 @@ static paddr_t straight_map_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
 static void userland(struct init_args *args) {
     // Create the very first user process and thread.
     init_process = process_create("memmgr");
-    if (!init_process) {
-        PANIC("failed to create a process");
-    }
+    ASSERT(init_process);
 
     struct thread *thread = thread_create(init_process, INITFS_ADDR,
         0 /* stack */, THREAD_INFO_ADDR, 0 /* arg */);
-    if (!thread) {
-        PANIC("failed to create a user thread");
-    }
+    ASSERT(thread);
 
     // Create a channel connection between the kernel server and the user
     // process.
     struct channel *kernel_ch = channel_create(kernel_process);
-    if (!kernel_ch) {
-        PANIC("failed to create a channel");
-    }
-
+    ASSERT(kernel_ch);
     struct channel *user_ch = channel_create(init_process);
-    if (!user_ch) {
-        PANIC("failed to create a channel");
-    }
+    ASSERT(kernel_ch);
 
     channel_transfer(kernel_ch, kernel_server_ch);
     channel_link(kernel_ch, user_ch);
 
     // Set up pagers.
     int flags = PAGE_WRITABLE | PAGE_USER;
-    if (vmarea_add(init_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL,
-                   flags) != OK) {
-        PANIC("failed to add a vmarea");
-    }
-
-    if (vmarea_add(init_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END,
-                   straight_map_pager, NULL, flags) != OK) {
-        PANIC("failed to add a vmarea");
-    }
+    error_t err;
+    err = vmarea_add(init_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL,
+                     flags);
+    ASSERT(err == OK);
+    err = vmarea_add(init_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END,
+                     straight_map_pager, NULL, flags);
+    ASSERT(err == OK);
 
     // Fill init_args.
     inlined_memcpy(__initfs + INIT_ARGS_OFFSET, args, sizeof(*args));
