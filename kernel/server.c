@@ -7,7 +7,7 @@
 #include <timer.h>
 #include <table.h>
 #include <types.h>
-#include <syscall.h>
+#include <ipc.h>
 
 struct channel *kernel_server_ch = NULL;
 static struct table user_timers;

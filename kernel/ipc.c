@@ -3,7 +3,7 @@
 #include <process.h>
 #include <channel.h>
 #include <thread.h>
-#include <syscall.h>
+#include <ipc.h>
 #include <idl_messages.h>
 
 /// The open system call: creates a new channel. It returns negated error value

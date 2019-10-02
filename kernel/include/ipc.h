@@ -1,5 +1,5 @@
-#ifndef __SYSCALL_H__
-#define __SYSCALL_H__
+#ifndef __IPC_H__
+#define __IPC_H__
 
 #include <types.h>
 #include <message.h>

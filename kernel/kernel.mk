@@ -5,7 +5,7 @@ objs += \
 	kernel/memory.o \
 	kernel/thread.o \
 	kernel/server.o \
-	kernel/syscall.o \
+	kernel/ipc.o \
 	kernel/timer.o \
 	kernel/printk.o \
 	kernel/debug.o
