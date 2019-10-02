@@ -211,7 +211,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 if (PAGE_ORDER(page_base) < PAGE_ORDER(page)
                     || !is_valid_page_base_addr(page_base_addr)) {
                     receiver->abort_reason = ERR_NEEDS_RETRY;
-                    return ERR_UNACCEPTABLE_PAGE_PAYLOAD;
+                    return ERR_INVALID_PAGE_PAYLOAD;
                 }
 
                 link_page(&receiver->process->page_table, page_base_addr, paddr,

@@ -65,23 +65,24 @@ enum error_codes {
     ERR_OUT_OF_RESOURCE,
     ERR_UNIMPLEMENTED,
 
-    // Invalid inputs.
+    // Errors from system calls.
     ERR_INVALID_CID,
     ERR_INVALID_HEADER,
     ERR_INVALID_PAYLOAD,
     ERR_INVALID_MESSAGE,
-    ERR_INVALID_DATA,
     ERR_INVALID_SYSCALL,
-    ERR_UNACCEPTABLE_PAGE_PAYLOAD,
-    ERR_UNEXPECTED_MESSAGE,
-    ERR_TOO_SHORT,
-
-    // No longer valid.
+    ERR_INVALID_PAGE_PAYLOAD,
     ERR_NO_LONGER_LINKED,
     ERR_CHANNEL_CLOSED,
 
-    // Input is valid but it failed.
+    // General errors.
+    ERR_UNEXPECTED_MESSAGE,
+    ERR_BAD_REQUEST,
     ERR_NOT_FOUND,
+    ERR_NOT_ACCEPTABLE,
+    ERR_TOO_SHORT,
+    ERR_TOO_LARGE,
+    ERR_IM_A_TEAPOT,
 
     // Try again!
     ERR_ALREADY_RECEVING,

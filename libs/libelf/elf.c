@@ -13,7 +13,7 @@ error_t elf_parse(struct elf_file *elf, const void *image, size_t image_len) {
     // Verify the magic.
     struct elf64_ehdr *ehdr = (struct elf64_ehdr *) image;
     if (memcmp(&ehdr->e_ident, "\x7f" "ELF", 4) != 0) {
-        return ERR_INVALID_DATA;
+        return ERR_NOT_ACCEPTABLE;
     }
 
     elf->entry = ehdr->e_entry;
