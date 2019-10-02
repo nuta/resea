@@ -21,6 +21,7 @@ Road Map
 - [ ] TCP/IP server
 - [ ] Rust support in userspace
 - [ ] SMP support
+- [ ] ARM support
 - [ ] Port Doom
 
 Prerequisites
