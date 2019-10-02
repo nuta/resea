@@ -82,12 +82,16 @@ error_t server_mainloop(cid_t ch, error_t (*process)(struct message *m)) {
     return server_mainloop_with_deferred(ch, process, NULL);
 }
 
-error_t server_register(cid_t discovery_server, cid_t receive_at,
-                        uint16_t interface, cid_t *new_ch) {
+error_t server_register(cid_t discovery_server, cid_t server_ch,
+                        uint16_t interface) {
     cid_t ch;
     TRY(open(&ch));
-    TRY(transfer(ch, receive_at));
-    TRY(call_discovery_publicize(discovery_server, interface, ch));
-    *new_ch = ch;
+    TRY(transfer(ch, server_ch));
+    TRY(call_discovery_publicize(discovery_server, interface, server_ch));
+    return OK;
+}
+
+error_t server_connect(cid_t discovery_server, uint16_t interface, cid_t *ch) {
+    TRY(call_discovery_connect(discovery_server, interface, ch));
     return OK;
 }

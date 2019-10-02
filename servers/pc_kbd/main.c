@@ -12,8 +12,6 @@ static cid_t kernel_ch = 2;
 static cid_t server_ch;
 // The channel to receive interrupt notifications. Transfers to server_ch.
 static cid_t kbd_irq_ch;
-// The channel to receive discovery.connect_request. Transfers to server_ch.
-static cid_t discovery_ch;
 // The channel to send keyboard events.
 static cid_t listener_ch = 0;
 
@@ -102,7 +100,7 @@ void main(void) {
     TRY_OR_PANIC(io_listen_interrupt(kernel_ch, server_ch, KEYBOARD_IRQ,
                                      &kbd_irq_ch));
     TRY_OR_PANIC(server_register(memmgr_ch, server_ch,
-                                 KEYBOARD_DRIVER_INTERFACE, &discovery_ch));
+                                 KEYBOARD_DRIVER_INTERFACE));
 
     INFO("entering the mainloop...");
     server_mainloop(server_ch, process_message);
