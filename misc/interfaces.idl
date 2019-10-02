@@ -74,8 +74,6 @@ interface pager {
 [id(13)]
 interface memmgr {
     [id(1), type(call)]
-    benchmark_nop() -> ()
-    [id(2), type(call)]
     get_framebuffer()
         -> (framebuffer: page, width: int32, height: int32, bpp: uint8)
 }
@@ -123,6 +121,12 @@ interface gui {
     activate() -> ()
     [id(3), type(call)]
     key_event(ch: uint8) -> ()
+}
+
+[id(19)]
+interface benchmark {
+    [id(1), type(call)]
+    nop() -> ()
 }
 
 [id(20)]

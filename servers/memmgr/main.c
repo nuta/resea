@@ -69,11 +69,6 @@ static error_t handle_runtime_printchar(struct message *m) {
     return OK;
 }
 
-static error_t handle_memmgr_benchmark_nop(struct message *m) {
-    m->header = MEMMGR_BENCHMARK_NOP_REPLY_HEADER;
-    return OK;
-}
-
 static error_t handle_memory_alloc_pages(struct message *m) {
     size_t order = m->payloads.memory.alloc_pages.order;
     paddr_t paddr = alloc_pages(order);
@@ -306,7 +301,6 @@ static error_t process_message(struct message *m) {
     //
     //  Memmgr
     //
-    case MEMMGR_BENCHMARK_NOP_MSG:   return handle_memmgr_benchmark_nop(m);
     case MEMMGR_GET_FRAMEBUFFER_MSG: return handle_memmgr_get_framebuffer(m);
 
     //
