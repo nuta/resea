@@ -66,8 +66,28 @@ error_t sys_transfer(cid_t src, cid_t dst) {
 }
 
 /// The ipc system call: sends/receives messages.
-error_t sys_ipc(cid_t cid, uint32_t syscall) {
+error_t kernel_ipc(cid_t cid, uint32_t syscall) {
     struct thread *current = CURRENT;
+    current->recv_in_kernel = true;
+    current->ipc_buffer = current->kernel_ipc_buffer;
+
+    error_t err = sys_ipc(cid, syscall);
+
+    current->ipc_buffer = &current->info->ipc_buffer;
+    current->recv_in_kernel = false;
+    return err;
+}
+
+/// The ipc system call: sends/receives messages.
+error_t sys_ipc(cid_t cid, uint32_t syscall) {
+    DEBUG_ASSERT(
+        (CURRENT->process != kernel_process
+         || CURRENT->ipc_buffer == CURRENT->kernel_ipc_buffer)
+        && "Don't use sys_ipc() directly from a kernel thread; use kernel_ipc()"
+    );
+
+    struct thread *current = CURRENT;
+    struct message *m = current->ipc_buffer;
     struct channel *ch = table_get(&current->process->channels, cid);
     if (!ch) {
         return ERR_INVALID_CID;
@@ -77,14 +97,10 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         return ERR_CHANNEL_CLOSED;
     }
 
-    bool from_kernel = (syscall & IPC_FROM_KERNEL) != 0;
-
     //
     //  Send Phase
     //
     if (syscall & IPC_SEND) {
-        struct message *m = from_kernel ? current->kernel_ipc_buffer
-                                        : &current->info->ipc_buffer;
         header_t header = m->header;
         struct channel *linked_with;
         struct channel *dst;
@@ -225,14 +241,10 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             return ERR_ALREADY_RECEVING;
         }
 
-        current->recv_in_kernel = from_kernel;
 #ifdef DEBUG_BUILD
         current->debug.receive_from = recv_ch;
 #endif
         recv_ch->receiver = current;
-        if (from_kernel) {
-            current->ipc_buffer = current->kernel_ipc_buffer;
-        }
 
         thread_block(current);
 
@@ -251,14 +263,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Received a message or a notification, or the IPC operation is
         // aborted.
         if (current->abort_reason != OK) {
-            current->ipc_buffer = &current->info->ipc_buffer;
-            current->recv_in_kernel = false;
             return atomic_swap(&current->abort_reason, OK);
         }
-#ifdef DEBUG_BUILD
-        current->debug.receive_from = NULL;
-#endif
-        struct message *m = current->ipc_buffer;
 
         // Read and clear the notification field atomically.
         m->notification = atomic_swap(&recv_ch->notification, 0);
@@ -266,9 +272,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
                   recv_ch, m->from, m->header, m->notification);
 
-        current->ipc_buffer = &current->info->ipc_buffer;
-        // Set to false for the fastpath.
-        current->recv_in_kernel = false;
+#ifdef DEBUG_BUILD
+        current->debug.receive_from = NULL;
+#endif
     }
 
     return OK;
@@ -286,6 +292,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 /// Note that the current implementation is not fast enough. We need to
 ///eliminate memory accesses...
 error_t sys_ipc_fastpath(cid_t cid) {
+    DEBUG_ASSERT(CURRENT->process != kernel_process);
+
     struct thread *current = CURRENT;
     struct channel *ch = table_get(&current->process->channels, cid);
     if (UNLIKELY(!ch)) {
@@ -373,14 +381,11 @@ error_t sys_notify(cid_t cid, notification_t notification) {
 
 /// The system call handler to be called from the arch's handler.
 int syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
+    DEBUG_ASSERT(CURRENT->process != kernel_process);
+
     // Try IPC fastpath if possible.
     if (LIKELY(syscall == (SYSCALL_IPC | IPC_SEND | IPC_RECV))) {
         return sys_ipc_fastpath(arg0);
-    }
-
-    // IPC_FROM_KERNEL must not be specified by the user.
-    if (syscall & IPC_FROM_KERNEL) {
-        return ERR_INVALID_HEADER;
     }
 
     switch (SYSCALL_TYPE(syscall)) {

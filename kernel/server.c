@@ -34,7 +34,7 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     m->payloads.pager.fill.addr = vaddr;
 
     // Invoke the user pager. This would blocks the current thread.
-    error_t err = sys_ipc(pager->cid, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
+    error_t err = kernel_ipc(pager->cid, IPC_SEND | IPC_RECV);
     if (err != OK) {
         WARN("failed to call the user pager (error=%d)", err);
         return 0;
@@ -335,7 +335,7 @@ static error_t process_message(struct message *m) {
 NORETURN static void mainloop(cid_t server_ch) {
     struct message *m = CURRENT->kernel_ipc_buffer;
     while (1) {
-        sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
+        kernel_ipc(server_ch, IPC_RECV);
 
         error_t err = process_message(m);
         if (err == DONT_REPLY) {
@@ -345,7 +345,7 @@ NORETURN static void mainloop(cid_t server_ch) {
         if (err != OK) {
             m->header = ERROR_TO_HEADER(err);
         }
-        sys_ipc(m->from, IPC_SEND | IPC_FROM_KERNEL);
+        kernel_ipc(m->from, IPC_SEND);
     }
 }
 

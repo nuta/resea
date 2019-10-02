@@ -16,7 +16,6 @@
 #define IPC_SEND (1ULL << 8)
 #define IPC_RECV (1ULL << 9)
 #define IPC_NOBLOCK (1ULL << 10)
-#define IPC_FROM_KERNEL (1ULL << 11)
 #define SYSCALL_TYPE(syscall_id) ((syscall_id) &0xff)
 
 //
