@@ -6,8 +6,6 @@
 #include <list.h>
 #include <types.h>
 
-#define THREAD_BLOCKED 0
-#define THREAD_RUNNABLE 1
 #define KERNEL_STACK_SIZE PAGE_SIZE
 #define CURRENT get_current_thread()
 
@@ -28,13 +26,14 @@ struct thread {
     /// The beginning of (bottom of) dedicated kernel stack.
     vaddr_t kernel_stack;
 
-    /// The thread ID.
-    tid_t tid;
-    /// The current state of the thread.
-    int state;
     /// The process.
     struct process *process;
+    /// The thread ID.
+    tid_t tid;
 
+    /// The thread state. It's true if the thread is blocked. Note that blocking
+    /// occurrs only within `sys_ipc()`.
+    bool blocked;
     /// It is set if a IPC operation is aborted due to channel destruction,
     /// etc.
     error_t abort_reason;

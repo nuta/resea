@@ -52,7 +52,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     thread->ipc_buffer = &thread_info->ipc_buffer;
     thread->kernel_ipc_buffer = kernel_ipc_buffer;
     thread->tid = tid;
-    thread->state = THREAD_BLOCKED;
+    thread->blocked = true;
     thread->kernel_stack = kernel_stack;
     thread->process = process;
     thread->info = thread_info;
@@ -95,7 +95,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
 
 /// Destroys a thread.
 void thread_destroy(UNUSED struct thread *thread) {
-    if (thread != CURRENT /* TODO: SMP */ && thread->state == THREAD_RUNNABLE) {
+    if (thread != CURRENT /* TODO: SMP */ && !thread->blocked) {
         list_remove(&thread->runqueue_next);
     }
 
@@ -139,20 +139,20 @@ static struct list_head runqueue;
 
 /// Marks a thread runnable.
 void thread_resume(struct thread *thread) {
-    if (thread->state != THREAD_RUNNABLE) {
-        thread->state = THREAD_RUNNABLE;
+    if (thread->blocked) {
+        thread->blocked = false;
         list_push_back(&runqueue, &thread->runqueue_next);
     }
 }
 
 /// Marks a thread blocked.
 void thread_block(struct thread *thread) {
-    thread->state = THREAD_BLOCKED;
+    thread->blocked = true;
 }
 
 /// Picks the next thread to run.
 static struct thread *scheduler(struct thread *current) {
-    if (current->state == THREAD_RUNNABLE) {
+    if (!current->blocked) {
         list_push_back(&runqueue, &current->runqueue_next);
     }
 

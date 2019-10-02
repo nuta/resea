@@ -351,8 +351,8 @@ error_t sys_ipc_fastpath(cid_t cid) {
     struct message *dst_m = receiver->ipc_buffer;
     recv_ch->receiver = current;
     dst_ch->receiver  = NULL;
-    current->state    = THREAD_BLOCKED;
-    receiver->state   = THREAD_RUNNABLE;
+    current->blocked  = true;
+    receiver->blocked = false;
     dst_m->header     = header;
     dst_m->from       = from;
     inlined_memcpy(&dst_m->payloads.data, m->payloads.data,
