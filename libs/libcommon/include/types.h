@@ -41,8 +41,20 @@
 
 typedef int error_t;
 enum error_codes {
-    // Success. Not an error!
+    // Indicates success. Not an error! Set it to a non-zero value in debug
+    // build to reveal bad error checking bugs:
+    //
+    //     error_t err = do_something();
+    //     /* Don't do this - compare with OK instead (i.e. err == OK) */
+    //     if (!err) {
+    //       printk("Success!");
+    //     }
+    //
+#ifdef DEBUG_BUILD
+    OK = 0x1a1a,
+#else
     OK,
+#endif
 
     // Used by servers to indicate that the server does not need to send a reply
     // message.
