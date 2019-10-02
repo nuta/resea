@@ -2,8 +2,8 @@ Resea
 =====
 [![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
 
-Resea *[ríːseə]* is an operating system written from scratch. Resea is based on
-pure microkernel: the kernel provdes only essential features such as process,
+Resea *[ríːseə]* is an operating system written from scratch based on a pure
+microkernel: the kernel provdes only essential features such as process,
 thread, and channel-based IPC (message passing). Major features like physical
 memory allocator and device drivers are implemented as isolated user-space
 programs.
