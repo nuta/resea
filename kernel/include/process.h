@@ -7,7 +7,7 @@
 #include <message.h>
 
 #define KERNEL_PID 1
-#define PROCESS_NAME_LEN_MAX 16
+#define PROCESS_NAME_LEN_MAX 32
 #define IS_KERNEL_PROCESS(proc) ((proc) == kernel_process)
 
 /// The process control block.
