@@ -71,24 +71,6 @@ void kfree(struct kmalloc_arena *arena, void *ptr) {
     add_free_list(arena, (vaddr_t) ptr, 1);
 }
 
-/// Checks if `vma` includes `addr` and allows the requested access.
-static int is_valid_page_fault_for(
-    struct vmarea *vma, vaddr_t vaddr, uintmax_t flags) {
-    if (!(vma->start <= vaddr && vaddr < vma->end)) {
-        return 0;
-    }
-
-    if (flags & PF_USER && vma->flags & !(PAGE_USER)) {
-        return 0;
-    }
-
-    if (flags & PF_WRITE && vma->flags & !(PAGE_WRITABLE)) {
-        return 0;
-    }
-
-    return 1;
-}
-
 /// Adds a new vm area.
 error_t vmarea_create(struct process *process, vaddr_t start, vaddr_t end,
                       pager_t pager, void *pager_arg, int flags) {
@@ -112,6 +94,24 @@ error_t vmarea_create(struct process *process, vaddr_t start, vaddr_t end,
 void vmarea_destroy(struct vmarea *vma) {
     list_remove(&vma->next);
     kfree(&object_arena, vma);
+}
+
+/// Checks if `vma` includes `addr` and allows the requested access.
+static int is_valid_page_fault_for(struct vmarea *vma, vaddr_t vaddr,
+                                   uintmax_t flags) {
+    if (!(vma->start <= vaddr && vaddr < vma->end)) {
+        return 0;
+    }
+
+    if (flags & PF_USER && vma->flags & !(PAGE_USER)) {
+        return 0;
+    }
+
+    if (flags & PF_WRITE && vma->flags & !(PAGE_WRITABLE)) {
+        return 0;
+    }
+
+    return 1;
 }
 
 /// The page fault handler. It calls pagers and updates the page table. If the
