@@ -345,8 +345,7 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     }
 
     // Now all prerequisites are met. Copy the message and wait on the our
-    // channel. We don't need to recv_in_kernel; it is already set to false in
-    // sys_ipc().
+    // channel.
     IPC_TRACE(m, "send (fastpath): %pC -> %pC => %pC (header=%p)",
               ch, linked_with, dst_ch, header);
     struct message *dst_m = receiver->ipc_buffer;
@@ -363,7 +362,7 @@ static error_t sys_ipc_fastpath(cid_t cid) {
 #endif
 
     // Do a direct context switch into the receiver thread. The current thread
-    // is now blocked and will be resumed by another IPC or when the send or
+    // is now blocked and will be resumed by another IPC or when the send or the
     // receive operation is aborted.
     arch_thread_switch(current, receiver);
 
