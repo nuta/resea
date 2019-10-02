@@ -76,11 +76,11 @@ static void userland(struct init_args *args) {
     // Set up pagers.
     int flags = PAGE_WRITABLE | PAGE_USER;
     error_t err;
-    err = vmarea_add(init_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL,
-                     flags);
+    err = vmarea_create(init_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL,
+                        flags);
     ASSERT(err == OK);
-    err = vmarea_add(init_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END,
-                     straight_map_pager, NULL, flags);
+    err = vmarea_create(init_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END,
+                        straight_map_pager, NULL, flags);
     ASSERT(err == OK);
 
     // Fill init_args.

@@ -141,8 +141,8 @@ static error_t handle_process_add_pager(struct message *m) {
         return ERR_INVALID_MESSAGE;
     }
 
-    error_t err = vmarea_add(proc, start, start + size, user_pager, pager_ch,
-                             flags | PAGE_USER);
+    error_t err = vmarea_create(proc, start, start + size, user_pager, pager_ch,
+                                flags | PAGE_USER);
     if (err != OK) {
         WARN("Failed to add a vm area: %vE.", err);
         process_destroy(proc);

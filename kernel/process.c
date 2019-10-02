@@ -13,11 +13,6 @@ struct process *kernel_process;
 /// THe first userland process (typically memmgr).
 struct process *init_process;
 
-static void vmarea_destroy(struct vmarea *vma) {
-    list_remove(&vma->next);
-    kfree(&object_arena, vma);
-}
-
 /// Creates a new process. `name` is used for just debugging use.
 struct process *process_create(const char *name) {
     int pid = table_alloc(&process_table);
@@ -82,25 +77,6 @@ void process_destroy(UNUSED struct process *process) {
     // TODO: Send a message to its pager server (@1).
 }
 
-/// Adds a new vm area.
-error_t vmarea_add(struct process *process, vaddr_t start, vaddr_t end,
-                   pager_t pager, void *pager_arg, int flags) {
-
-    struct vmarea *vma = KMALLOC(&object_arena, sizeof(struct vmarea));
-    if (!vma) {
-        return ERR_OUT_OF_MEMORY;
-    }
-
-    TRACE("new vmarea: vaddr=%p-%p", start, end);
-    vma->start = start;
-    vma->end = end;
-    vma->pager = pager;
-    vma->arg = pager_arg;
-    vma->flags = flags;
-
-    list_push_back(&process->vmareas, &vma->next);
-    return OK;
-}
 
 /// Initializes the process subsystem.
 void process_init(void) {

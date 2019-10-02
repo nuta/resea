@@ -24,11 +24,42 @@ struct kmalloc_arena {
     size_t num_objects;
 };
 
+struct vmarea;
+typedef paddr_t (*pager_t)(struct vmarea *vma, vaddr_t vaddr);
+
+/// A region in a virtual address space.
+struct vmarea {
+    /// The next vmarea in the process.
+    struct list_head next;
+    /// The start of the virtual memory region.
+    vaddr_t start;
+    /// The start of the virtual memory region.
+    vaddr_t end;
+    /// The pager function. A pager is responsible to fill pages within the
+    /// vmarea and is called when a page fault has occurred.
+    pager_t pager;
+    /// The pager-specific data.
+    void *arg;
+    /// Allowed operations to the vmarea. Defined operations are:
+    ///
+    /// - PAGE_WRITABLE: The region is writable. If this flag is not set, the
+    ///                  region is readonly.
+    /// - PAGE_USER: The region is accessible from the user. If this flag is
+    ///              not set, the region is for accessible only from the
+    ///              kernel.
+    ///
+    uintmax_t flags;
+};
+
 extern struct kmalloc_arena page_arena;
 extern struct kmalloc_arena object_arena;
 
 void *kmalloc_from(struct kmalloc_arena *arena);
 void kfree(struct kmalloc_arena *arena, void *ptr);
+struct process;
+error_t vmarea_create(struct process *process, vaddr_t start, vaddr_t end,
+                      pager_t pager, void *pager_arg, int flags);
+void vmarea_destroy(struct vmarea *vma);
 paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags);
 void memory_init(void);
 

@@ -89,6 +89,31 @@ static int is_valid_page_fault_for(
     return 1;
 }
 
+/// Adds a new vm area.
+error_t vmarea_create(struct process *process, vaddr_t start, vaddr_t end,
+                      pager_t pager, void *pager_arg, int flags) {
+
+    struct vmarea *vma = KMALLOC(&object_arena, sizeof(struct vmarea));
+    if (!vma) {
+        return ERR_OUT_OF_MEMORY;
+    }
+
+    TRACE("new vmarea: vaddr=%p-%p", start, end);
+    vma->start = start;
+    vma->end = end;
+    vma->pager = pager;
+    vma->arg = pager_arg;
+    vma->flags = flags;
+
+    list_push_back(&process->vmareas, &vma->next);
+    return OK;
+}
+
+void vmarea_destroy(struct vmarea *vma) {
+    list_remove(&vma->next);
+    kfree(&object_arena, vma);
+}
+
 /// The page fault handler. It calls pagers and updates the page table. If the
 /// page fault is invalid (e.g., segfault and NULL pointer dereference), kill
 /// the current thread.

@@ -31,33 +31,6 @@ struct process {
     struct list_head channel_list;
 };
 
-struct vmarea;
-typedef paddr_t (*pager_t)(struct vmarea *vma, vaddr_t vaddr);
-
-/// A region in a virtual address space.
-struct vmarea {
-    /// The next vmarea in the process.
-    struct list_head next;
-    /// The start of the virtual memory region.
-    vaddr_t start;
-    /// The start of the virtual memory region.
-    vaddr_t end;
-    /// The pager function. A pager is responsible to fill pages within the
-    /// vmarea and is called when a page fault has occurred.
-    pager_t pager;
-    /// The pager-specific data.
-    void *arg;
-    /// Allowed operations to the vmarea. Defined operations are:
-    ///
-    /// - PAGE_WRITABLE: The region is writable. If this flag is not set, the
-    ///                  region is readonly.
-    /// - PAGE_USER: The region is accessible from the user. If this flag is
-    ///              not set, the region is for accessible only from the
-    ///              kernel.
-    ///
-    uintmax_t flags;
-};
-
 extern struct process *kernel_process;
 extern struct process *init_process;
 extern struct table process_table;
@@ -66,7 +39,5 @@ extern struct list_head process_list;
 void process_init(void);
 struct process *process_create(const char *name);
 void process_destroy(struct process *process);
-error_t vmarea_add(struct process *process, vaddr_t start, vaddr_t end,
-                   pager_t pager, void *pager_arg, int flags);
 
 #endif
