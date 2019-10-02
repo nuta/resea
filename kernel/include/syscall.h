@@ -5,11 +5,21 @@
 #include <message.h>
 #include <idl_messages.h>
 
-// A bit mask to determine if a message satisfies one of fastpath
-// prerequisites. This test checks if page/channel payloads are
-// not contained in the message.
-#define SYSCALL_FASTPATH_TEST(header) ((header) & 0x1800ULL)
+/// Determines if the specifed system call satisfies fastpath prerequisites:
+///
+///   - The system call is `ipc`.
+///   - Both IPC_SEND and IPC_RECV are set.
+///
+/// Note that we ignore IPC_NOBLOCK as the fastpath handles both blocking and
+/// non-blocking IPC properly: it falls back into sys_ipc() if the IPC operation
+/// would block.
+///
+#define FASTPATH_SYSCALL_TEST(syscall) \
+    ((syscall) & ~(IPC_NOBLOCK)) == (SYSCALL_IPC | IPC_SEND | IPC_RECV)
 
+/// Determines if a message satisfies a fastpath prerequisite. This test checks
+/// that page/channel payloads are not contained in the message.
+#define FASTPATH_HEADER_TEST(header) (((header) & 0x1800ULL) == 0)
 
 /// Checks whether the message is worth tracing.
 static inline bool is_annoying_msg(uint16_t msg_type) {

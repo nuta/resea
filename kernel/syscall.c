@@ -1,3 +1,4 @@
+#include <config.h>
 #include <channel.h>
 #include <process.h>
 #include <channel.h>
@@ -313,7 +314,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
     // instead of lengthy if statements to eliminate branches.
     int slowpath =
         // Fastpath accepts only inline payloads.
-        SYSCALL_FASTPATH_TEST(header) != 0 +
+        !FASTPATH_HEADER_TEST(header) +
         // Make sure that the channels are not destructed.
         ch->destructed + recv_ch->destructed + dst_ch->destructed +
         // Make sure that the current thread is able to be the receiver of
@@ -387,7 +388,7 @@ int syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
 
 #ifdef CONFIG_FASTPATH
     // Try IPC fastpath if possible.
-    if (LIKELY(syscall == (SYSCALL_IPC | IPC_SEND | IPC_RECV))) {
+    if (LIKELY(FASTPATH_SYSCALL_TEST(syscall))) {
         return sys_ipc_fastpath(arg0);
     }
 #endif
