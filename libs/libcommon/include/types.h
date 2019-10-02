@@ -36,6 +36,7 @@
 #define NULL ((void *) 0)
 #define INVALID_POINTER ((void *) 0xdeaddead)
 
+// FIXME: This is arch-specific, isn't it?
 #define PAGE_SIZE 4096
 
 typedef int error_t;
