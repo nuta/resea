@@ -16,7 +16,7 @@ int sys_open(void) {
         return -ERR_OUT_OF_RESOURCE;
     }
 
-    TRACE("open: @%d", ch->cid);
+    TRACE("sys_open: created %pC", ch);
     return ch->cid;
 }
 
@@ -27,7 +27,7 @@ error_t sys_close(cid_t cid) {
         return ERR_INVALID_CID;
     }
 
-    TRACE("close: @%d", ch->cid);
+    TRACE("sys_close: destructing %pC", ch);
     channel_destroy(ch);
     return OK;
 }
@@ -44,7 +44,7 @@ error_t sys_link(cid_t ch1, cid_t ch2) {
         return ERR_INVALID_CID;
     }
 
-    TRACE("link: @%d->@%d", ch1_ch->cid, ch2_ch->cid);
+    TRACE("sys_link: linking %pC <-> %pC", ch1_ch, ch2_ch);
     channel_link(ch1_ch, ch2_ch);
     return OK;
 }
@@ -61,7 +61,7 @@ error_t sys_transfer(cid_t src, cid_t dst) {
         return ERR_INVALID_CID;
     }
 
-    TRACE("trasnfer: @%d->@%d", src_ch->cid, dst_ch->cid);
+    TRACE("sys_trasnfer: transfering %pC -> %pC", src_ch, dst_ch);
     channel_transfer(src_ch, dst_ch);
     return OK;
 }
