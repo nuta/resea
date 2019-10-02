@@ -18,7 +18,20 @@ error_t server_mainloop_with_deferred(cid_t ch,
     struct message m;
     while (1) {
         // Receive a message from a client.
-        TRY(ipc_recv(ch, &m));
+        while (true) {
+            error_t err = ipc_recv(ch, &m);
+            if (err == OK) {
+                break;
+            }
+
+            if (err == ERR_NEEDS_RETRY) {
+                continue;
+            }
+
+            // An unexpected error.
+            OOPS("unexpected error (%vE) from ipc_recv", err);
+            return err;
+        }
 
         bool deferred_work_timeout = ((m.notification & NOTIFY_TIMER) != 0);
 
