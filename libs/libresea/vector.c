@@ -1,5 +1,6 @@
-#include <base/malloc.h>
-#include <base/vector.h>
+#include <resea/malloc.h>
+#include <resea/vector.h>
+#include <resea/string.h>
 
 vector_t vector_new(trait_t trait) {
     vector_t vec = malloc(sizeof(struct vector));
@@ -39,9 +40,10 @@ void vector_set(vector_t vec, int index, opaque_t data) {
 
 void vector_resize(vector_t vec, int new_capacity) {
     assert(new_capacity > vec->capacity);
+    size_t new_buf_size = sizeof(opaque_t) * new_capacity;
     opaque_t *old_buf = vec->buf;
-    opaque_t *new_buf = malloc(sizeof(opaque_t) * new_capacity);
-    memcpy(new_buf, old_buf, sizeof(opaque_t) * vec->capacity);
+    opaque_t *new_buf = malloc(new_buf_size);
+    memcpy_s(new_buf, new_buf_size, old_buf, sizeof(opaque_t) * vec->capacity);
     vec->buf = new_buf;
     vec->capacity = new_capacity;
     free(old_buf);

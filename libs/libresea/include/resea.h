@@ -1,6 +1,8 @@
 #ifndef __RESEA_H__
 #define __RESEA_H__
 
+// TODO: Needs refactoring.
+
 #include <types.h>
 #include <color.h>
 
@@ -33,6 +35,20 @@ void printf(const char *fmt, ...);
 void backtrace(void);
 void exit(int status);
 void panic_at(const char *file, int lineno);
+
+typedef void *opaque_t;
+
+typedef void (*delete_func_t)(opaque_t obj);
+typedef bool (*equals_func_t)(opaque_t a, opaque_t b);
+typedef int (*hash_func_t)(opaque_t key);
+
+struct trait {
+    delete_func_t delete_func;
+    equals_func_t equals_func;
+    hash_func_t hash_func;
+};
+
+typedef struct trait *trait_t;
 
 const char *__program_name(void);
 #define PROGRAM_NAME  __program_name()

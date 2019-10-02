@@ -1,5 +1,5 @@
-#include <base/hash.h>
-#include <base/malloc.h>
+#include <resea/hash.h>
+#include <resea/malloc.h>
 
 static struct hash_element *hash_element_new(opaque_t key, opaque_t value,
                                              struct hash_delete_funcs *funcs) {

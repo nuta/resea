@@ -1,8 +1,8 @@
 #ifndef __BASE_HASH_H__
 #define __BASE_HASH_H__
 
-#include <base/types.h>
-#include <base/vector.h>
+#include <resea.h>
+#include <resea/vector.h>
 
 #define HASH_INITIAL_NUM_BINS 8
 #define HASH_REHASH_THRESHOLD 4

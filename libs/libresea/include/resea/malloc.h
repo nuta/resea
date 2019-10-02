@@ -1,7 +1,7 @@
 #ifndef __BASE_MALLOC_H__
 #define __BASE_MALLOC_H__
 
-#include <base/types.h>
+#include <resea.h>
 
 struct chunk {
     /// The pointer to the next chunk.
@@ -15,12 +15,11 @@ struct chunk {
 
 STATIC_ASSERT(sizeof(struct chunk) == 16);
 
-struct kmalloc_arena {
+struct malloc_arena {
     struct chunk *free_area;
 };
 
 void *malloc(size_t size);
 void free(void *ptr);
-void base_malloc_init(void);
 
 #endif

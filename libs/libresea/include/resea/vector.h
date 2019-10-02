@@ -1,7 +1,7 @@
 #ifndef __BASE_VECTOR_H__
 #define __BASE_VECTOR_H__
 
-#include <base/types.h>
+#include <resea.h>
 
 struct vector {
     /// The elements.
