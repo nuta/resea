@@ -306,7 +306,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 ///
 /// Note that the current implementation is not fast enough. We need to
 ///eliminate memory accesses...
-error_t sys_ipc_fastpath(cid_t cid) {
+static error_t sys_ipc_fastpath(cid_t cid) {
     DEBUG_ASSERT(CURRENT->process != kernel_process);
 
     struct thread *current = CURRENT;
