@@ -1,7 +1,10 @@
 #include <resea.h>
+#include <server.h>
 #include <idl_stubs.h>
 
 #define NUM_ITERS 1000
+
+static cid_t memmgr_ch = 1;
 
 static inline uint64_t readcyclecounter(void) {
 #ifdef __x86_64__
@@ -18,19 +21,26 @@ int main(void) {
     INFO("* Benchmark");
     INFO("*");
 
-    INFO("IPC round-trip overhead");
-    cid_t memmgr = 1;
+    INFO(">>> Connecting to the benchmark server...");
+    cid_t benchmark_server;
+    TRY_OR_PANIC(server_connect(memmgr_ch, BENCHMARK_INTERFACE,
+                                &benchmark_server));
+
+
+    INFO(">>> IPC round-trip overhead");
     uint32_t ops = IPC_SEND | IPC_RECV;
     uint64_t cycles[NUM_ITERS];
+    struct message *m = get_ipc_buffer();
     for (int i = 0; i < NUM_ITERS; i++) {
-        get_ipc_buffer()->header = MEMMGR_BENCHMARK_NOP_HEADER;
+        m->header = BENCHMARK_NOP_HEADER;
 
         uint64_t start = readcyclecounter();
-        error_t err = sys_ipc(memmgr, ops);
+        error_t err = sys_ipc(benchmark_server, ops);
+        uint64_t end = readcyclecounter();
+
         if (err != OK) {
             ERROR("sys_ipc returned an error: %d", err);
         }
-        uint64_t end = readcyclecounter();
 
         cycles[i] = end - start;
     }

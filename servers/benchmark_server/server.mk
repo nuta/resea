@@ -1,3 +1,3 @@
 name := benchmark
 objs := main.o
-libs := libresea
+libs := libresea libserver

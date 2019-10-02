@@ -1,3 +1,0 @@
-menuconfig BENCHMARK_SERVER
-    bool "Benchmark"
-    default n

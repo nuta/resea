@@ -1,0 +1,4 @@
+menuconfig BENCHMARK_CLIENT_SERVER
+    bool "Benchmark Client"
+    select BENCHMARK_SERVER_SERVER
+    default n
