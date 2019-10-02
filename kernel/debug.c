@@ -197,7 +197,7 @@ static void check_load(vaddr_t addr, size_t size) {
         case ASAN_VALID:
             break;
         case ASAN_FREED:
-            PANIC("asan: detected a double-free bug of %p", addr);
+            PANIC("asan: detected a use-after-free bug of %p", addr);
         case ASAN_NOT_ALLOCATED:
             PANIC("asan: detected an use of unallocated memory at %p", addr);
         case ASAN_UNINITIALIZED:
@@ -237,6 +237,8 @@ static void check_store(vaddr_t addr, size_t size) {
             // TODO: Propagate shadow memory.
             *shadow = ASAN_VALID;
             break;
+        case ASAN_FREED:
+            PANIC("asan: detected a use-after-free bug of %p", addr);
         case ASAN_NOT_ALLOCATED:
             PANIC("asan: detected an use of unallocated memory at %p", addr);
         default:

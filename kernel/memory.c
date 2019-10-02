@@ -15,13 +15,20 @@ struct kmalloc_arena object_arena;
 static void add_free_list(struct kmalloc_arena *arena, vaddr_t addr,
                           size_t num_objects) {
     struct free_list *free_list = (struct free_list *) addr;
+
 #ifdef DEBUG_BUILD
+    // Fill the shadow memory to access `free_list`.
     asan_init_area(ASAN_UNINITIALIZED, free_list, sizeof(*free_list));
 #endif
+
     free_list->magic1 = FREE_LIST_MAGIC1;
     free_list->magic2 = FREE_LIST_MAGIC2;
     free_list->num_objects = num_objects;
     list_push_back(&arena->free_list, &free_list->next);
+
+#ifdef DEBUG_BUILD
+    asan_init_area(ASAN_FREED, free_list->padding, sizeof(free_list->padding));
+#endif
 }
 
 /// Creates a new memory pool.
@@ -65,9 +72,6 @@ void *kmalloc_from(struct kmalloc_arena *arena) {
 
 /// Frees a memory.
 void kfree(struct kmalloc_arena *arena, void *ptr) {
-#ifdef DEBUG_BUILD
-    asan_init_area(ASAN_FREED, (void *) ptr, arena->object_size);
-#endif
     add_free_list(arena, (vaddr_t) ptr, 1);
 }
 
