@@ -11,7 +11,9 @@ start:
     cld
     rep stosb
 
+    // Clear the RBP to stop backtrace here.
     mov rbp, 0
+
     call main
 
     mov edi, eax

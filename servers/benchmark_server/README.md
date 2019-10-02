@@ -1,4 +1,4 @@
-IPC Benchmark
-=============
+benchmark_server - IPC Benchmark Server
+=======================================
 
-Runs IPC benchmarks. Supports only x64 arch for now.
+The server used by `benchmark_client`.
