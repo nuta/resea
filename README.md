@@ -8,8 +8,9 @@ thread, and channel-based IPC (message passing). Major features like physical
 memory allocator and device drivers are implemented as isolated user-space
 programs.
 
-Resea aims to be *hackable*: easy to understand the whole design, customize the
-system, and extend the functionality.
+Resea aims to provide the attractive developer experience and be *hackable*:
+intuitive to understand the whole design, easy to customize the system, and fun
+to extend the functionality.
 
 See **[Documentation](#documentation)** for details.
 
