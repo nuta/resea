@@ -99,7 +99,7 @@ x64_syscall_handler:
     // Sanitize registers to prevent information leak. Note that some scratch
     // registers holds values for SYSRETQ and the user:
     //
-    //   RAX: The return value.
+    //   EAX: The return value.
     //   RCX: User RIP.
     //   R11: User RFLAGS.
     //

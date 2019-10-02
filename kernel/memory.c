@@ -15,7 +15,6 @@ struct kmalloc_arena object_arena;
 static void add_free_list(struct kmalloc_arena *arena, vaddr_t addr,
                           size_t num_objects) {
     struct free_list *free_list = (struct free_list *) addr;
-
 #ifdef DEBUG_BUILD
     asan_check_double_free(free_list);
     // Fill the shadow memory to access `free_list`.

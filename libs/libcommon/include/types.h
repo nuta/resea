@@ -16,7 +16,7 @@
 #define LIKELY(cond) __builtin_expect(cond, 1)
 #define UNLIKELY(cond) __builtin_expect(cond, 0)
 #define atomic_swap(ptr, new_value) __sync_swap(ptr, new_value)
-#define atomic_compare_and_swap __sync_bool_compare_and_swap
+#define atomic_compare_and_swap(ptr, new, old) __sync_bool_compare_and_swap(ptr, new, old)
 #define POW2(order) (1 << (order))
 #define ALIGN_DOWN(value, align) ((value) & ~((align) - 1))
 #define ALIGN_UP(value, align) ALIGN_DOWN((value) + (align) - 1, align)
@@ -38,30 +38,32 @@
 
 #define PAGE_SIZE 4096
 
-// error_t values
-#define OK (0)
-#define ERR_INVALID_CID (-1)
-#define ERR_OUT_OF_RESOURCE (-2)
-#define ERR_ALREADY_RECEVING (-3)
-#define ERR_INVALID_HEADER (-4)
-#define ERR_INVALID_PAYLOAD (-5)
-#define ERR_INVALID_MESSAGE (-6)
-#define ERR_NO_LONGER_LINKED (-7)
-#define ERR_CHANNEL_CLOSED (-8)
-#define ERR_OUT_OF_MEMORY (-9)
-#define ERR_INVALID_SYSCALL (-10)
-#define ERR_UNACCEPTABLE_PAGE_PAYLOAD (-11)
-#define ERR_INVALID_NOTIFY_OP (-12)
-#define ERR_UNIMPLEMENTED (-13)
-#define ERR_UNEXPECTED_MESSAGE (-14)
-#define ERR_WOULD_BLOCK (-15)
-#define ERR_NEEDS_RETRY (-16)
-#define ERR_CLOSED_CHANNEL (-17)
-#define ERR_NOT_FOUND (-64)
-#define ERR_TOO_SHORT (-65)
-#define ERR_INVALID_DATA (-66)
-#define ERR_DONT_REPLY (-67)
-#define ERR_NO_MEMORY (-68)
+typedef int error_t;
+enum error_values {
+    OK,
+    ERR_INVALID_CID,
+    ERR_OUT_OF_RESOURCE,
+    ERR_ALREADY_RECEVING,
+    ERR_INVALID_HEADER,
+    ERR_INVALID_PAYLOAD,
+    ERR_INVALID_MESSAGE,
+    ERR_NO_LONGER_LINKED,
+    ERR_CHANNEL_CLOSED,
+    ERR_OUT_OF_MEMORY,
+    ERR_INVALID_SYSCALL,
+    ERR_UNACCEPTABLE_PAGE_PAYLOAD,
+    ERR_INVALID_NOTIFY_OP,
+    ERR_UNIMPLEMENTED,
+    ERR_UNEXPECTED_MESSAGE,
+    ERR_WOULD_BLOCK,
+    ERR_CLOSED_CHANNEL,
+    ERR_NEEDS_RETRY,
+    ERR_NOT_FOUND,
+    ERR_TOO_SHORT,
+    ERR_INVALID_DATA,
+    ERR_DONT_REPLY,
+    ERR_NO_MEMORY,
+};
 
 typedef int bool;
 #define true 1
@@ -87,7 +89,6 @@ typedef int64_t intmax_t;
 #    error "32-bit CPU is not yet supported"
 #endif
 
-typedef int16_t error_t;
 typedef int32_t pid_t;
 typedef int32_t tid_t;
 typedef int32_t cid_t;

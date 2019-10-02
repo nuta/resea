@@ -32,6 +32,6 @@ cid_t sys_open(void);
 error_t sys_close(cid_t cid);
 error_t sys_ipc(cid_t cid, uint32_t syscall);
 error_t sys_notify(cid_t cid, notification_t notification);
-intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall);
+int syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall);
 
 #endif

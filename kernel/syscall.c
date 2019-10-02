@@ -5,11 +5,14 @@
 #include <syscall.h>
 #include <idl_messages.h>
 
-/// The open system call: creates a new channel.
-cid_t sys_open(void) {
+/// The open system call: creates a new channel. It returns negated error value
+/// if an error occurred.
+int sys_open(void) {
+    STATIC_ASSERT(sizeof(int) == sizeof(cid_t));
+
     struct channel *ch = channel_create(CURRENT->process);
     if (!ch) {
-        return ERR_OUT_OF_RESOURCE;
+        return -ERR_OUT_OF_RESOURCE;
     }
 
     TRACE("open: @%d", ch->cid);
@@ -370,7 +373,7 @@ error_t sys_notify(cid_t cid, notification_t notification) {
 }
 
 /// The system call handler to be called from the arch's handler.
-intmax_t syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
+int syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
     // Try IPC fastpath if possible.
     if (LIKELY(syscall == (SYSCALL_IPC | IPC_SEND | IPC_RECV))) {
         return sys_ipc_fastpath(arg0);

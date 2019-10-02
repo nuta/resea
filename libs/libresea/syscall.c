@@ -37,7 +37,7 @@ error_t ipc_recv(cid_t ch, struct message *r) {
     if (err == OK) {
         int16_t type = MSG_TYPE(get_ipc_buffer()->header);
         if (type < 0) {
-            return type;
+            return -type;
         }
         copy_from_ipc_buffer(r);
     }
