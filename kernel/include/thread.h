@@ -34,8 +34,8 @@ struct thread {
     /// The thread state. It's true if the thread is blocked. Note that blocking
     /// occurrs only within `sys_ipc()`.
     bool blocked;
-    /// It is set if a IPC operation is aborted due to channel destruction,
-    /// etc.
+    /// It is not `OK` if an IPC operation is aborted due to channel
+    /// destruction, etc.
     error_t abort_reason;
     /// The channel at which the thread is trying to send/receive a message.
     struct channel *blocked_on;
