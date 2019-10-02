@@ -66,16 +66,29 @@ error_t sys_transfer(cid_t src, cid_t dst) {
     return OK;
 }
 
-/// The ipc system call: sends/receives messages.
+/// Performs an IPC from kernel threads.
 error_t kernel_ipc(cid_t cid, uint32_t syscall) {
+    // Switch to the thread-local kernel IPC buffer. Kernel threads can't use
+    // the buffer in the TIB because page faults could be occurred during IPC
+    // preparation in userland. Consider the following example:
+    //
+    // ```
+    //    ipc_buffer->header = PRINTCHAR_HEADER;
+    //    ipc_buffer->data[0] = foo(); // Page fault occurs here!
+    //    // If kernel and user share one ipc_buffer, the buffer is
+    //    // overwritten by the page fault handler. Consequently,
+    //    // ipc_buffer->header is no longer equal to PRINTCHAR_HEADER!
+    //    //
+    //    // This is why we need a kernel's own ipc buffer.
+    //    sys_ipc(ch);
+    // ```
+    //
     struct thread *current = CURRENT;
-    current->recv_in_kernel = true;
     current->ipc_buffer = current->kernel_ipc_buffer;
 
     error_t err = sys_ipc(cid, syscall);
 
     current->ipc_buffer = &current->info->ipc_buffer;
-    current->recv_in_kernel = false;
     return err;
 }
 
@@ -202,9 +215,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 paddr = page_fault_handler(payload_vaddr, PF_USER);
             }
 
-            if (receiver->recv_in_kernel) {
-                // Kernel (receiving a pager.fill_request reply, for example)
-                // links the page by itself only if necessary.
+            if (receiver->ipc_buffer == receiver->kernel_ipc_buffer) {
+                // Kernel threads prefers the physical address (e.g, receiving a
+                // pager.fill_request reply).
                 dst_m->payloads.page = paddr;
             } else {
                 // Make sure that the receiver accepts a page payload and its

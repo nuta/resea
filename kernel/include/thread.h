@@ -34,11 +34,6 @@ struct thread {
     /// It is set if a IPC operation is aborted due to channel destruction,
     /// etc.
     error_t abort_reason;
-    /// True if this thread is waiting for a message and the sys_ipc() is
-    /// invoked from the kernel (e.g. calling fill_request from the page fault
-    /// handler). If the receiver is kernel, we copy page payloads in physical
-    /// addresses.
-    bool recv_in_kernel;
     /// The thread-local information block.
     struct thread_info *info;
     /// The current thread-local IPC buffer. This points to whether
@@ -46,19 +41,6 @@ struct thread {
     struct message *ipc_buffer;
     /// The thread-local kernel IPC buffer. The kernel use this buffer when it
     /// sends a message on behalf of the thread (e.g. pager.fill_request).
-    ///
-    /// Consider the following example:
-    ///
-    /// ```
-    ///    ipc_buffer->header = PRINTCHAR_HEADER;
-    ///    ipc_buffer->data[0] = foo(); // Page fault occurs here!
-    ///    // If kernel and user share one ipc_buffer, the buffer is
-    ///    // overwritten by the page fault handler. Consequently,
-    ///    // ipc_buffer->header is no longer equal to PRINTCHAR_HEADER!
-    ///    //
-    ///    // This is why we need a kernel's own ipc buffer.
-    ///    sys_ipc(ch);
-    /// ```
     struct message *kernel_ipc_buffer;
     /// The beginning of (bottom of) dedicated kernel stack.
     vaddr_t kernel_stack;
