@@ -371,7 +371,7 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     // Read and clear the notification field. This is not necessarily atomic,
     // btw.
     m->notification = atomic_swap(&recv_ch->notification, 0);
-    IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
+    IPC_TRACE(m, "recv (fastpath): %pC <- @%d (header=%p, notification=%p)",
               recv_ch, m->from, m->header, m->notification);
 #ifdef DEBUG_BUILD
     current->debug.receive_from = NULL;
