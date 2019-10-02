@@ -276,6 +276,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
         // Received a message or a notification, or the IPC operation is
         // aborted.
+
         if (current->abort_reason != OK) {
             return atomic_swap(&current->abort_reason, OK);
         }
@@ -366,10 +367,9 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     // receive operation is aborted.
     arch_thread_switch(current, receiver);
 
-    // Received a message or a notification, or the channel is destructed.
-    //
-    // Read and clear the notification field. This is not necessarily atomic,
-    // btw.
+    // Received a message or a notification, or the IPC operation is aborted.
+
+    // Read and clear the notification field.
     m->notification = atomic_swap(&recv_ch->notification, 0);
     IPC_TRACE(m, "recv (fastpath): %pC <- @%d (header=%p, notification=%p)",
               recv_ch, m->from, m->header, m->notification);
