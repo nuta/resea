@@ -11,15 +11,17 @@
 
 /// Unused element.
 struct free_list {
-    uint64_t magic1;
 #ifdef DEBUG_BUILD
+    uint64_t magic1;
     // A unused space to detect use-after-free bug by ASan: `padding` is marked
     // as ASAN_FREED when the memory chunk is freed.
     uint8_t padding[200];
 #endif
     struct list_head next;
     size_t num_objects;
+#ifdef DEBUG_BUILD
     uint64_t magic2;
+#endif
 };
 
 /// A memory pool.

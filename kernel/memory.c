@@ -19,10 +19,10 @@ static void add_free_list(struct kmalloc_arena *arena, vaddr_t addr,
 #ifdef DEBUG_BUILD
     // Fill the shadow memory to access `free_list`.
     asan_init_area(ASAN_UNINITIALIZED, free_list, sizeof(*free_list));
-#endif
-
     free_list->magic1 = FREE_LIST_MAGIC1;
     free_list->magic2 = FREE_LIST_MAGIC2;
+#endif
+
     free_list->num_objects = num_objects;
     list_push_back(&arena->free_list, &free_list->next);
 
@@ -53,9 +53,9 @@ void *kmalloc_from(struct kmalloc_arena *arena) {
     struct free_list *free_list = LIST_CONTAINER(
         list_pop_front(&arena->free_list), struct free_list, next);
 
-    ASSERT(free_list->magic1 == FREE_LIST_MAGIC1);
-    ASSERT(free_list->magic2 == FREE_LIST_MAGIC2);
-    ASSERT(free_list->num_objects >= 1);
+    DEBUG_ASSERT(free_list->magic1 == FREE_LIST_MAGIC1);
+    DEBUG_ASSERT(free_list->magic2 == FREE_LIST_MAGIC2);
+    DEBUG_ASSERT(free_list->num_objects >= 1);
 
     free_list->num_objects--;
     if (free_list->num_objects > 0) {
