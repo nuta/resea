@@ -5,12 +5,6 @@ An server is called *server* if it provides services to other processes. Note th
 there're no differences between apps and servers: it's just
 [a terminology used in microkernels](https://en.wikipedia.org/wiki/Microkernel#Servers).
 
-
-### Interface Definition Language (IDL)
-Parsing and constructing IPC messages are really annoying and painful work. To improve
-the productivity, Resea provides the stub generator ([tools/genstub.py](https://github.com/seiyanuta/resea/blob/master/tools/genstub.py)). It generates message definitions and stub functions
-from the IDL file ([interface.idl](https://github.com/seiyanuta/resea/blob/master/misc/interfaces.idl)).
-
 ### Getting started
 1. Create essential files in `servers` directory:
 ```
@@ -54,7 +48,13 @@ $ make menuconfig
 $ make -j8 run
 ```
 
-### Using IDL stubs
+### Interface Definition Language (IDL)
+Parsing and constructing IPC messages are really annoying and painful work. To improve
+the productivity, Resea provides the stub generator ([tools/genstub.py](https://github.com/seiyanuta/resea/blob/master/tools/genstub.py)). It generates message definitions and stub functions
+from the IDL file ([interface.idl](https://github.com/seiyanuta/resea/blob/master/misc/interfaces.idl)).
+
+
+#### Using IDL stubs
 To load IDL stubs, include `idl_stubs.h`:
 ```c
 #include <idl_stubs.h>

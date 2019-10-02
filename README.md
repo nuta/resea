@@ -2,14 +2,12 @@ Resea
 =====
 [![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
 
-Resea *[ríːseə]* is a pure microkernel-based operating system written from
-scratch.
+Resea *[ríːseə]* is an operating system written from scratch. Resea is based on
+pure microkernel: the kernel provdes only essential features such as process,
+thread, and channel-based IPC (message passing). Major features like physical
+memory allocator, device drivers, file system work in the userland.
 
-Resea consists of a microkernel and servers. The microkernel provides essential
-functionalities: process, thread, and message passing (IPC). Servers are
-userland programs that provide services such as memory allocation,
-device drivers, file system, and TCP/IP. See **[Documentation](#documentation)**
-for details.
+See **[Documentation](#documentation)** for details.
 
 Road Map
 --------
@@ -21,6 +19,7 @@ Road Map
 - [ ] GUI server **(WIP)**
 - [ ] virtio-net device driver
 - [ ] TCP/IP server
+- [ ] Rust support in userspace
 - [ ] SMP support
 - [ ] Port Doom
 
@@ -45,15 +44,14 @@ $ pip3 install -r tools/requirements.txt
 Building
 --------
 ```bash
-$ make menuconfig           # Edit build configuration.
-$ make build                # Build a kernel executable (debug build).
-$ make build BUILD=release  # Build a kernel executable (release build).
-$ make build V=1            # Build a kernel executable with verbose command output.
-$ make run                  # Run on QEMU.
-$ make run NOGUI=1          # Run on QEMU with -nographic.
-$ make bochs                # Run on Bochs.
-$ make clean                # Remove built files.
-$ make docs                 # Generate a source code reference.
+$ make menuconfig    # Edit build configuration.
+$ make build         # Build a kernel executable.
+$ make build V=1     # Build a kernel executable with verbose command output.
+$ make run           # Run on QEMU.
+$ make run NOGUI=1   # Run on QEMU with -nographic.
+$ make bochs         # Run on Bochs.
+$ make docs          # Generate a source code reference.
+$ make clean         # Remove built files.
 ```
 
 Documentation

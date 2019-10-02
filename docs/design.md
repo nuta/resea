@@ -25,8 +25,21 @@ All system calls are only essential ones for message passing:
 - `error_t sys_transfer(cid_t src, cid_t dst)`
   - Transfer messages from the channel linked to `src` to `dst` channels.
 
+### IPC Buffer
 The message buffer to send/receive a message is located in the thread-local
-buffer (see [Thread Information Block](#thread-information-block)).
+buffer. The message layout is as follows:
+
+```c
+struct message {
+    header_t header;
+    cid_t from;
+    notification_t notification;
+    cid_t channel;
+    page_t page;
+    uint8_t padding[/* Depends on arch. */];
+    uint8_t data[INLINE_PAYLOAD_LEN_MAX];
+};
+```
 
 ### Notifications
 While synchronous (blocking) IPC works pretty fine in most cases, sometimes you
@@ -35,30 +48,19 @@ interrupts into messages but it should not block.
 
 Notifications is a simple solution just like *signal* in Unix:
 
-- `error_t sys_notify(cid_t ch, enum notify_op op, uintmax_t arg0)`
+- `error_t sys_notify(cid_t cid, notification_t notification)`
   - Sends a notification to the channel. It simply updates the notification
-    field in the destination channel and never blocks (asynchronous).
-  - The notification field is an `intmax_t`.
-
-When you receive a message, the kernel first checks the notification. If a
-notifcation exists, it returns the notification. Sender threads are blocked
-until the notification is received.
-
-#### Notification Operations
-`op` specifies how the kernel updates the notification field in `ch`:
-- `NOTIFY_OP_SET`: Atomically sets `arg0` to the notification field.
-- `NOTIFY_OP_ADD`: Atomically adds `arg0` to the notification field.
+    field in the destination channel (by OR'ing `notification`).  
+  - If a receiver thread already waits for a message on the destination channel,
+    the kernel sends a message as `NOTIFICATION_MSG` to it.
+  -  It never blocks (asynchronous).
+  - `notification_t` is `uint32_t`.
 
 Kernel server
 -------------
 Kernel server is a kernel thread which provdes features that only the kernel can
 provide: kernel-level thread (don't get confused with kernel thread!), virtual
 memory pager management, interrupts, etc.
-
-Only memmgr and startup servers (apps spawned by memmgr) has a channel
-connected to the kernel server. There're no differences between the kernel
-server and other servers. Use `sys_ipc` to communicate with the kernel
-server as if it is a normal userland server.
 
 System Call Data Structures
 ----------------------------

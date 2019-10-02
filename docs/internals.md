@@ -1,9 +1,8 @@
 Internals
 =========
 
-
 ### Thread Infomation Block
-Thread Information Block (TIB) is a thread-local page filled by the kernel. TIB
+Thread Information Block (TIB) is a thread-local page linked by the kernel. TIB
 is always visible from both the kernel and the user. In x64, you can locate it
 by the RDGSBASE instruction in the user mode.
 
@@ -36,9 +35,6 @@ Initfs
 Initfs is a simple file system embedded in the kernel executable. It contains
 the first userland process image (typically memmgr) and some essential servers
 to boot the system. It's equivalent to *initramfs* in Linux.
-
-Note that kernel does not parse it at all. It simply maps into the specific
-address space to avoid adding the code to kernel as possible.
 
 Memory maps
 -----------
