@@ -5,7 +5,11 @@ Resea
 Resea *[ríːseə]* is an operating system written from scratch. Resea is based on
 pure microkernel: the kernel provdes only essential features such as process,
 thread, and channel-based IPC (message passing). Major features like physical
-memory allocator, device drivers, file system work in the userland.
+memory allocator and device drivers are implemented as isolated user-space
+programs.
+
+Resea aims to be *hackable*: easy to understand the whole design, customize the
+system, and extend the functionality.
 
 See **[Documentation](#documentation)** for details.
 
@@ -23,6 +27,7 @@ Road Map
 - [ ] SMP support
 - [ ] ARM support
 - [ ] Port Doom
+- [ ] Write documentation
 
 Prerequisites
 -------------
