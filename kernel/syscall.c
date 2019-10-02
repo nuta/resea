@@ -251,6 +251,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Received a message or a notification, or the IPC operation is
         // aborted.
         if (current->abort_reason != OK) {
+            current->ipc_buffer = &current->info->ipc_buffer;
+            current->recv_in_kernel = false;
             return atomic_swap(&current->abort_reason, OK);
         }
 #ifdef DEBUG_BUILD
@@ -264,10 +266,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
                   recv_ch, m->from, m->header, m->notification);
 
-        if (from_kernel) {
-            current->ipc_buffer = &current->info->ipc_buffer;
-        }
-
+        current->ipc_buffer = &current->info->ipc_buffer;
         // Set to false for the fastpath.
         current->recv_in_kernel = false;
     }
