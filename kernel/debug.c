@@ -270,6 +270,14 @@ void asan_init_area(enum asan_shadow_tag tag, void *ptr, size_t len) {
     set_asan_enabled(asan_state);
 }
 
+/// Detects double-free bugs.
+void asan_check_double_free(struct free_list *free_list) {
+    uint8_t *shadow = get_asan_shadow_memory((vaddr_t) &free_list->padding);
+    if (*shadow == ASAN_FREED) {
+        PANIC("asan: detected double-free bug (free_list=%p)", free_list);
+    }
+}
+
 /// Initializes the ASan runtime.
 static void asan_init(void) {
     arch_asan_init();

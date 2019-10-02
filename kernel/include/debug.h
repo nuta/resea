@@ -49,7 +49,8 @@ enum asan_shadow_tag {
 };
 
 void asan_init_area(enum asan_shadow_tag tag, void *ptr, size_t len);
-
+struct free_list;
+void asan_check_double_free(struct free_list *free_list);
 
 void backtrace(void);
 void check_stack_canary(void);
