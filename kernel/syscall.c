@@ -123,7 +123,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             thread_block(current);
             thread_switch();
 
-            if (current->abort_reason) {
+            if (current->abort_reason != OK) {
                 return atomic_swap(&current->abort_reason, OK);
             }
         }
