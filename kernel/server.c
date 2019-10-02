@@ -34,11 +34,23 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     m->payloads.pager.fill.addr = vaddr;
 
     // Invoke the user pager. This would blocks the current thread.
-    sys_ipc(pager->cid, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
+    error_t err = sys_ipc(pager->cid, IPC_SEND | IPC_RECV | IPC_FROM_KERNEL);
+    if (err != OK) {
+        WARN("failed to call the user pager (error=%d)", err);
+        return 0;
+    }
+
+    // I suppose we never receive notifications on this channel.
+    DEBUG_ASSERT(m->notification == 0);
 
     // The user pager replied the message.
-    if (MSG_TYPE(m->header) < 0) {
-        WARN("user pager returned an error");
+    if (m->header != PAGER_FILL_REPLY_HEADER) {
+        int16_t type_or_error = MSG_TYPE(m->header);
+        if (type_or_error < 0) {
+            WARN("user pager returned an error");
+        } else {
+            WARN("user pager replied an invalid header (header=%p)", m->header);
+        }
         return 0;
     }
 
