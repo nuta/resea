@@ -295,17 +295,17 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 }
 
 #ifdef CONFIG_FASTPATH
-/// The ipc system call (faster version): it optmizes the common case:
+/// The faster ipc system call implementation optimized for the common case:
 ///
 ///   - Payloads are inline only (i.e., no channel/page payloads).
 ///   - Both IPC_SEND and  IPC_RECV are specified.
 ///   - A receiver thread already waits for a message.
 ///
-/// If preconditions are not met, it fall backs into the full-featured version
-/// (`sys_ipc()`).
+/// If these preconditions are not met, it fall backs into the full-featured
+/// version (`sys_ipc()`).
 ///
 /// Note that the current implementation is not fast enough. We need to
-///eliminate memory accesses...
+/// eliminate memory accesses...
 static error_t sys_ipc_fastpath(cid_t cid) {
     DEBUG_ASSERT(CURRENT->process != kernel_process);
 
