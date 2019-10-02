@@ -25,15 +25,22 @@ struct process;
 struct thread {
     /// Architecture-dependent context such as registers.
     struct arch_thread arch;
+    /// The beginning of (bottom of) dedicated kernel stack.
+    vaddr_t kernel_stack;
+
     /// The thread ID.
     tid_t tid;
-    /// The process.
-    struct process *process;
     /// The current state of the thread.
     int state;
+    /// The process.
+    struct process *process;
+
     /// It is set if a IPC operation is aborted due to channel destruction,
     /// etc.
     error_t abort_reason;
+    /// The channel at which the thread is trying to send/receive a message.
+    struct channel *blocked_on;
+
     /// The thread-local information block.
     struct thread_info *info;
     /// The current thread-local IPC buffer. This points to whether
@@ -42,16 +49,14 @@ struct thread {
     /// The thread-local kernel IPC buffer. The kernel use this buffer when it
     /// sends a message on behalf of the thread (e.g. pager.fill_request).
     struct message *kernel_ipc_buffer;
-    /// The beginning of (bottom of) dedicated kernel stack.
-    vaddr_t kernel_stack;
+
     /// The entry in a runqueue.
     struct list_head runqueue_next;
     /// The entry in a message sender queue.
     struct list_head queue_next;
-    /// The channel at which the thread is trying to send/receive a message.
-    struct channel *blocked_on;
     /// Next thread in the process.
     struct list_head next;
+
 #ifdef DEBUG_BUILD
     /// Fields used for debugging.
     struct {
