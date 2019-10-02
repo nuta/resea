@@ -11,7 +11,7 @@ extern struct symbol_table __symtable;
 /// Resolves the symbol name and the offset from the beginning of symbol.
 /// This function returns "(invalid address)" if the symbol does not
 /// exist in the symbol table.
-static const char *find_symbol(vaddr_t vaddr, size_t *offset) {
+const char *find_symbol(vaddr_t vaddr, size_t *offset) {
     ASSERT(
         __symtable.magic == SYMBOL_TABLE_MAGIC && "invalid symbol table magic");
 

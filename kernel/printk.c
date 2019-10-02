@@ -1,6 +1,7 @@
 #include <arch.h>
 #include <types.h>
 #include <channel.h>
+#include <debug.h>
 #include <thread.h>
 #include <process.h>
 
@@ -50,6 +51,17 @@ static void print_ptr(const char **fmt, va_list vargs) {
         print_uint(ch->cid, 10, ' ', 0);
         break;
     }
+    // Symbol name.
+    case 'S': {
+        void *symbol = va_arg(vargs, void *);
+        size_t offset;
+        print_str(find_symbol((vaddr_t) symbol, &offset));
+        if (offset > 0) {
+            print_str("+0x");
+            print_uint(offset, 16, 0, 0);
+        }
+        break;
+    }
     // A pointer value (%p) and a following character.
     default:
         print_uint((uintmax_t) va_arg(vargs, void *), 16, '0',
@@ -69,6 +81,7 @@ static void print_ptr(const char **fmt, va_list vargs) {
 ///  %p  - An pointer value.
 ///  %pT - `struct thread *`.
 ///  %pC - `struct channel *`.
+///  %pS - A symbol name.
 ///
 ///  TODO: Support printing error_t.
 ///

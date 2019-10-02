@@ -52,6 +52,7 @@ void asan_init_area(enum asan_shadow_tag tag, void *ptr, size_t len);
 struct free_list;
 void asan_check_double_free(struct free_list *free_list);
 
+const char *find_symbol(vaddr_t vaddr, size_t *offset);
 void backtrace(void);
 void check_stack_canary(void);
 void init_stack_canary(vaddr_t stack_bottom);
