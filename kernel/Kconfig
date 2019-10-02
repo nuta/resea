@@ -4,4 +4,8 @@ if ARCH_X64
 source "kernel/arch/x64/Kconfig"
 endif
 
+config FASTPATH
+    bool "Enable IPC fastpath"
+    default y
+
 endmenu # "Kernel"

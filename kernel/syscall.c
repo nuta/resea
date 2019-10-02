@@ -280,6 +280,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     return OK;
 }
 
+#ifdef CONFIG_FASTPATH
 /// The ipc system call (faster version): it optmizes the common case:
 ///
 ///   - Payloads are inline only (i.e., no channel/page payloads).
@@ -366,6 +367,7 @@ error_t sys_ipc_fastpath(cid_t cid) {
 slowpath_fallback:
     return sys_ipc(cid, IPC_SEND | IPC_RECV);
 }
+#endif // CONFIG_FASTPATH
 
 /// The notify system call: sends a notification. This system call MUST be
 /// asynchronous: return an error instead of blocking the current thread!
@@ -383,10 +385,12 @@ error_t sys_notify(cid_t cid, notification_t notification) {
 int syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
     DEBUG_ASSERT(CURRENT->process != kernel_process);
 
+#ifdef CONFIG_FASTPATH
     // Try IPC fastpath if possible.
     if (LIKELY(syscall == (SYSCALL_IPC | IPC_SEND | IPC_RECV))) {
         return sys_ipc_fastpath(arg0);
     }
+#endif
 
     switch (SYSCALL_TYPE(syscall)) {
     case SYSCALL_IPC:
