@@ -26,8 +26,10 @@ struct thread {
     /// The beginning of (bottom of) dedicated kernel stack.
     vaddr_t kernel_stack;
 
-    /// The process.
+    /// The process to which the thread belongs.
     struct process *process;
+    /// Next thread in the process.
+    struct list_head next;
     /// The thread ID.
     tid_t tid;
 
@@ -50,11 +52,12 @@ struct thread {
     struct message *kernel_ipc_buffer;
 
     /// The entry in a runqueue.
+    ///
+    /// TODO: I belive it is safe to add an union to hold runqueue_next and
+    ///       queue_next.
     struct list_head runqueue_next;
     /// The entry in a message sender queue.
     struct list_head queue_next;
-    /// Next thread in the process.
-    struct list_head next;
 
 #ifdef DEBUG_BUILD
     /// Fields used for debugging.
