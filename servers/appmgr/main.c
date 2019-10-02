@@ -123,7 +123,7 @@ static error_t handle_api_join_app(struct message *m) {
     j->using = true;
     j->target = pid;
     j->waiter = m->from;
-    return ERR_DONT_REPLY;
+    return DONT_REPLY;
 }
 
 static error_t handle_api_exit_app(struct message *m) {
@@ -144,7 +144,7 @@ static error_t handle_api_exit_app(struct message *m) {
 
     send_api_join_app_reply(j->waiter, code);
     j->using = false;
-    return ERR_DONT_REPLY;
+    return DONT_REPLY;
 }
 
 static error_t process_message(struct message *m) {

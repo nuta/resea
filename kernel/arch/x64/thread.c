@@ -38,7 +38,7 @@ error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
 
     vaddr_t xsave_area = (vaddr_t) KMALLOC(&page_arena, PAGE_SIZE /* FIXME: */);
     if (!xsave_area) {
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
     thread->arch.xsave_area = xsave_area;
 

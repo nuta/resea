@@ -54,7 +54,7 @@ static error_t handle_runtime_printchar(struct message *m) {
 
 static error_t handle_runtime_exit(struct message *m) {
     process_destroy(get_sender_process(m->from));
-    return ERR_DONT_REPLY;
+    return DONT_REPLY;
 }
 
 static error_t handle_process_create(struct message *m) {
@@ -158,7 +158,7 @@ static error_t handle_process_add_pager(struct message *m) {
 static error_t handle_server_connect(struct message *m) {
     struct channel *ch = channel_create(kernel_process);
     if (!ch) {
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     channel_transfer(ch, kernel_server_ch);
@@ -186,14 +186,14 @@ static error_t handle_io_listen_irq(struct message *m) {
 
     int id = table_alloc(&irq_listeners);
     if (!id) {
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     struct irq_listener *listener = KMALLOC(&object_arena,
                                             sizeof(struct irq_listener));
     if (!listener) {
         table_free(&irq_listeners, id);
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     listener->irq = irq;
@@ -235,7 +235,7 @@ static error_t handle_process_send_channel(struct message *m) {
     struct channel *dst_ch = channel_create(proc);
     if (!dst_ch) {
         channel_destroy(ch);
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     channel_link(ch->linked_with, dst_ch);
@@ -265,14 +265,14 @@ static error_t handle_timer_set(struct message *m) {
 
     int timer_id = table_alloc(&user_timers);
     if (!timer_id) {
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     struct timer *timer = timer_create(initial, interval, user_timer_handler,
                                        ch);
     if (!timer) {
         table_free(&user_timers, timer_id);
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     table_set(&user_timers, timer_id, timer);
@@ -326,7 +326,7 @@ NORETURN static void mainloop(cid_t server_ch) {
         sys_ipc(server_ch, IPC_RECV | IPC_FROM_KERNEL);
 
         error_t err = process_message(m);
-        if (err == ERR_DONT_REPLY) {
+        if (err == DONT_REPLY) {
             continue;
         }
 

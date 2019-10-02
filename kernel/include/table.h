@@ -24,7 +24,7 @@ struct table {
 static inline error_t table_init(struct table *table) {
     void **entries = KMALLOC(&page_arena, PAGE_SIZE);
     if (!entries) {
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     size_t num = PAGE_SIZE / sizeof(void *);

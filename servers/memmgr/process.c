@@ -113,7 +113,7 @@ error_t spawn_process(cid_t kernel_ch, cid_t server_ch,
 
     if (!proc) {
         WARN("too many processes");
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     proc->pid = pid;

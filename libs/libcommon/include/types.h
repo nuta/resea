@@ -39,30 +39,41 @@
 #define PAGE_SIZE 4096
 
 typedef int error_t;
-enum error_values {
+enum error_codes {
+    // Success. Not an error!
     OK,
-    ERR_INVALID_CID,
+
+    // Used by servers to indicate that the server does not need to send a reply
+    // message.
+    DONT_REPLY,
+
+    // Critical errors.
+    ERR_OUT_OF_MEMORY,
     ERR_OUT_OF_RESOURCE,
-    ERR_ALREADY_RECEVING,
+    ERR_UNIMPLEMENTED,
+
+    // Invalid inputs.
+    ERR_INVALID_CID,
     ERR_INVALID_HEADER,
     ERR_INVALID_PAYLOAD,
     ERR_INVALID_MESSAGE,
-    ERR_NO_LONGER_LINKED,
-    ERR_CHANNEL_CLOSED,
-    ERR_OUT_OF_MEMORY,
+    ERR_INVALID_DATA,
     ERR_INVALID_SYSCALL,
     ERR_UNACCEPTABLE_PAGE_PAYLOAD,
-    ERR_INVALID_NOTIFY_OP,
-    ERR_UNIMPLEMENTED,
     ERR_UNEXPECTED_MESSAGE,
-    ERR_WOULD_BLOCK,
-    ERR_CLOSED_CHANNEL,
-    ERR_NEEDS_RETRY,
-    ERR_NOT_FOUND,
     ERR_TOO_SHORT,
-    ERR_INVALID_DATA,
-    ERR_DONT_REPLY,
-    ERR_NO_MEMORY,
+
+    // No longer valid.
+    ERR_NO_LONGER_LINKED,
+    ERR_CHANNEL_CLOSED,
+
+    // Input is valid but it failed.
+    ERR_NOT_FOUND,
+
+    // Try again!
+    ERR_ALREADY_RECEVING,
+    ERR_WOULD_BLOCK,
+    ERR_NEEDS_RETRY,
 };
 
 typedef int bool;

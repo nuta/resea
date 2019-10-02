@@ -31,8 +31,8 @@ error_t server_mainloop_with_deferred(cid_t ch,
             WARN("unexpected message type: %x", MSG_TYPE(m.header));
         }
 
-        // If the handler returned ERR_DONT_REPLY, we don't reply.
-        if (err != ERR_DONT_REPLY) {
+        // If the handler returned DONT_REPLY, we don't reply.
+        if (err != DONT_REPLY) {
             // If the handler returned an error, reply an error message.
             if (err != OK) {
                 m.header = ERROR_TO_HEADER(err);

@@ -20,7 +20,7 @@ static error_t handle_pager_fill(struct message *m) {
 
     uintptr_t alloced_addr;
     if ((alloced_addr = alloc_pages(0)) == 0) {
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     struct process *proc = get_process_by_pid(pid);
@@ -58,7 +58,7 @@ static error_t handle_pager_fill(struct message *m) {
 
 static error_t handle_runtime_exit(UNUSED struct message *m) {
     UNIMPLEMENTED();
-    return ERR_DONT_REPLY;
+    return DONT_REPLY;
 }
 
 static error_t handle_runtime_printchar(struct message *m) {
@@ -78,7 +78,7 @@ static error_t handle_memory_alloc_pages(struct message *m) {
     size_t order = m->payloads.memory.alloc_pages.order;
     paddr_t paddr = alloc_pages(order);
     if (!paddr) {
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     m->header = MEMORY_ALLOC_PAGES_REPLY_HEADER;
@@ -97,7 +97,7 @@ static error_t handle_memory_alloc_phy_pages(struct message *m) {
     } else {
         paddr = alloc_pages(order);
         if (!paddr) {
-            return ERR_NO_MEMORY;
+            return ERR_OUT_OF_MEMORY;
         }
     }
 
@@ -177,13 +177,13 @@ static error_t handle_discovery_connect(struct message *m) {
     }
 
     if (!waiter) {
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     waiter->reply_to = m->from;
     waiter->interface = interface;
     waiter->sent_request = false;
-    return ERR_DONT_REPLY;
+    return DONT_REPLY;
 }
 
 static error_t handle_server_connect_reply(struct message *m) {
@@ -200,7 +200,7 @@ static error_t handle_server_connect_reply(struct message *m) {
     assert(waiter);
     send_discovery_connect_reply(waiter->reply_to, ch);
     waiter->reply_to = 0;
-    return ERR_DONT_REPLY;
+    return DONT_REPLY;
 }
 
 #define FD_TABLE_MAX 64
@@ -254,7 +254,7 @@ static error_t handle_fs_read(struct message *m) {
 
     uintptr_t alloced_addr;
     if ((alloced_addr = alloc_pages(0)) == 0) {
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     assert(len <= PAGE_SIZE);
@@ -302,7 +302,7 @@ static error_t deferred_work(void) {
 
 static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
-    case NOTIFICATION_MSG: return ERR_DONT_REPLY;
+    case NOTIFICATION_MSG: return DONT_REPLY;
     //
     //  Memmgr
     //

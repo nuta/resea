@@ -59,7 +59,7 @@ static error_t handle_notification(notification_t notification) {
         read_keyboard_input();
     }
 
-    return ERR_DONT_REPLY;
+    return DONT_REPLY;
 }
 
 static error_t handle_server_connect(struct message *m) {
@@ -88,7 +88,7 @@ static error_t process_message(struct message *m) {
     switch (MSG_TYPE(m->header)) {
     case SERVER_CONNECT_MSG:  return handle_server_connect(m);
     case KEYBOARD_DRIVER_LISTEN_MSG: return handle_listen(m);
-    case NOTIFICATION_MSG: return ERR_DONT_REPLY;
+    case NOTIFICATION_MSG: return DONT_REPLY;
     }
     return ERR_UNEXPECTED_MESSAGE;
 }

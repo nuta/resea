@@ -68,7 +68,7 @@ error_t create_app(cid_t kernel_ch, cid_t memmgr_ch, cid_t appmgr_ch,
 
     if (!proc) {
         WARN("too many processes");
-        return ERR_NO_MEMORY;
+        return ERR_OUT_OF_MEMORY;
     }
 
     proc->pid = pid;

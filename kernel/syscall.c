@@ -74,7 +74,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     }
 
     if (ch->destructed) {
-        return ERR_CLOSED_CHANNEL;
+        return ERR_CHANNEL_CLOSED;
     }
 
     bool from_kernel = (syscall & IPC_FROM_KERNEL) != 0;
@@ -99,7 +99,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             receiver = dst->receiver;
 
             if (dst->destructed) {
-                return ERR_CLOSED_CHANNEL;
+                return ERR_CHANNEL_CLOSED;
             }
 
             // Check if there's a thread waiting for a message on the
@@ -157,7 +157,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             struct channel *dst_ch = channel_create(receiver->process);
             if (!dst_ch) {
                 receiver->abort_reason = ERR_NEEDS_RETRY;
-                return ERR_NO_MEMORY;
+                return ERR_OUT_OF_MEMORY;
             }
 
             channel_link(payload_ch->linked_with, dst_ch);
@@ -217,7 +217,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     if (syscall & IPC_RECV) {
         struct channel *recv_ch = ch->transfer_to;
         if (recv_ch->destructed) {
-            return ERR_CLOSED_CHANNEL;
+            return ERR_CHANNEL_CLOSED;
         }
 
         // Try to get the receiver right.

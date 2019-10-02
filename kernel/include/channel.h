@@ -21,7 +21,7 @@ struct channel {
     /// no one references them.
     int ref_count;
     /// It's true if the channel is being destructed. When it's true, sending
-    /// to/receiving from the channel shall returns ERR_CLOSED_CHANNEL.
+    /// to/receiving from the channel shall returns ERR_CHANNEL_CLOSED.
     bool destructed;
     /// The received notification data.
     notification_t notification;
