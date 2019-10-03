@@ -149,3 +149,12 @@ interface keyboard_driver {
     [id(2), type(call)]
     keyinput_event(keycode: uint8) -> ()
 }
+
+[id(32)]
+interface storage_driver {
+    [id(1), type(call)]
+    read(sector: uint64, len: size) -> (data: page)
+    [id(2), type(call)]
+    write(sector: uint64, len: size, data: page) -> ()
+}
+
