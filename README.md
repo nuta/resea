@@ -3,12 +3,12 @@ Resea
 [![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
 
 Resea *[ríːseə]* is an operating system written from scratch based on a *pure*
-microkernel: the kernel provides only primitive features such as process,
-thread, and channel-based IPC (message passing). Major features like physical
-memory allocator and device drivers are implemented as isolated user-space
-programs.
+microkernel: the kernel provides only primitives such as process/thread
+management and channel-based IPC (message passing). Major features like physical
+memory manager, file system, device drivers are implemented as isolated
+userspace programs.
 
-Resea aims to provide the attractive developer experience and be *hackable*:
+Resea aims to provide an attractive developer experience and be *hackable*:
 intuitive to understand the whole design, easy to customize the system, and fun
 to extend the functionality.
 
@@ -52,11 +52,14 @@ Building
 --------
 ```bash
 $ make menuconfig    # Edit build configuration.
+
 $ make build         # Build a kernel executable.
 $ make build V=1     # Build a kernel executable with verbose command output.
+
 $ make run           # Run on QEMU.
 $ make run NOGUI=1   # Run on QEMU with -nographic.
 $ make bochs         # Run on Bochs.
+
 $ make docs          # Generate a source code reference.
 $ make clean         # Remove built files.
 ```
@@ -73,4 +76,4 @@ We receive bug reports, feature requests, and patches on [GitHub](https://github
 
 License
 -------
-CC0 or MIT. Choose whichever you prefer.
+[CC0](https://creativecommons.org/publicdomain/zero/1.0/) or [MIT](https://opensource.org/licenses/MIT). Choose whichever you prefer.
