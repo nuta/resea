@@ -12,10 +12,17 @@ KERNEL_CFLAGS += -mllvm -asan-use-after-return=false
 KERNEL_CFLAGS += -mllvm -asan-use-after-scope=false
 endif
 
+HDD_DIR = $(BUILD_DIR)/hdd
 BOCHS ?= bochs
 QEMU ?= qemu-system-x86_64
 QEMUFLAGS += -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
 QEMUFLAGS += -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04
+ifdef CONFIG_VIRTIO_BLK_SERVER
+QEMUFLAGS += -drive id=hdd0,if=none,file=fat:rw:$(HDD_DIR)
+QEMUFLAGS += -drive id=hdd0,if=none,file=hdd.img
+QEMUFLAGS += -device virtio-blk-pci,drive=hdd0
+endif
+QEMUFLAGS += -boot d
 QEMUFLAGS += $(if $(NOGUI),-nographic,)
 
 
@@ -41,6 +48,9 @@ bochs: $(BUILD_DIR)/resea.iso
 	$(BOCHS) -qf misc/bochsrc
 
 run: $(BUILD_DIR)/resea.iso
+	$(PROGRESS) POPULATE $(HDD_DIR)
+	mkdir -p $(HDD_DIR)
+	echo "Hello from virtio-blk!" > $(HDD_DIR)/hello.txt
 	$(PROGRESS) QEMU $(BUILD_DIR)/kernel.iso
 	$(QEMU) $(QEMUFLAGS) -cdrom $<
 
