@@ -1,8 +1,8 @@
 Server Writer's Guide
 ======================
 
-An server is called *server* if it provides services to other processes. Note that
-there're no differences between apps and servers: it's just
+An user program is called *server* if it provides services to other processes.
+Note that there're no differences between apps and servers: it's just
 [a terminology used in microkernels](https://en.wikipedia.org/wiki/Microkernel#Servers).
 
 ### Getting started
