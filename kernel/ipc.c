@@ -430,6 +430,8 @@ int syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
         return sys_transfer(arg0, arg1);
     case SYSCALL_NOTIFY:
         return sys_notify(arg0, arg1);
+    case SYSCALL_NOP:
+        return OK;
     default:
         return ERR_INVALID_SYSCALL;
     }

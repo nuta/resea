@@ -12,6 +12,7 @@
 #define SYSCALL_LINK 3
 #define SYSCALL_TRANSFER 4
 #define SYSCALL_NOTIFY 5
+#define SYSCALL_NOP 6
 
 #define IPC_SEND (1ULL << 8)
 #define IPC_RECV (1ULL << 9)
