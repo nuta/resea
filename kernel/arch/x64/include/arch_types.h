@@ -15,23 +15,23 @@
 #define OBJECT_ARENA_LEN        0x0000000000400000
 #define PAGE_ARENA_ADDR         0xffff800001400000
 #define PAGE_ARENA_LEN          0x0000000000c00000
-
-#define INIT_ARGS_OFFSET 256
-#define INITFS_ADDR 0x0000000001000000
-#define INITFS_END \
-    0x0000000002000000 // TODO: make sure that memmgr.bin is not too big
+#define INIT_ARGS_OFFSET        256
+#define INITFS_ADDR             0x0000000001000000
+// TODO: make sure that memmgr.bin is not too big
+#define INITFS_END              0x0000000002000000
 #define STRAIGHT_MAP_ADDR       0x0000000003000000
 #define STRAIGHT_MAP_END        0xffff800000000000
 #define THREAD_INFO_ADDR        0x0000000000f1b000
 #define ASAN_SHADOW_MEMORY      0xffff800010000000
-#define OBJ_MAX_SIZE 256
-#define TICK_HZ 1000
-#define PAGE_PRESENT (1 << 0)
+#define OBJ_MAX_SIZE  256
+#define TICK_HZ       1000
+#define PAGE_PRESENT  (1 << 0)
 #define PAGE_WRITABLE (1 << 1)
-#define PAGE_USER (1 << 2)
-#define PF_PRESENT (1 << 0)
-#define PF_WRITE (1 << 1)
-#define PF_USER (1 << 2)
+#define PAGE_USER     (1 << 2)
+#define PF_PRESENT    (1 << 0)
+#define PF_WRITE      (1 << 1)
+#define PF_USER       (1 << 2)
+#define CPUVAR        (x64_get_cpuvar())
 
 struct thread;
 struct cpuvar {
@@ -101,32 +101,6 @@ static inline void *inlined_memset(void *dst, int ch, size_t len) {
 static inline void *inlined_memcpy(void *dst, void *src, size_t len) {
     __asm__ __volatile__("cld; rep movsb" ::"D"(dst), "S"(src), "c"(len));
     return dst;
-}
-
-static inline char *strcpy(char *dst, size_t dst_len, const char *src) {
-    DEBUG_ASSERT(dst != NULL && "copy to NULL");
-    DEBUG_ASSERT(src != NULL && "copy from NULL");
-
-    size_t i = 0;
-    while (i < dst_len - 1 && src[i] != '\0') {
-        dst[i] = src[i];
-        i++;
-    }
-
-    dst[i] = '\0';
-    return dst;
-}
-
-static inline int strcmp(const char *s1, const char *s2) {
-    DEBUG_ASSERT(s1 != NULL && "s1 NULL");
-    DEBUG_ASSERT(s2 != NULL && "s2 NULL");
-
-    while (*s1 != '\0' && *s2 != '\0' && *s1 == *s2) {
-        s1++;
-        s2++;
-    }
-
-    return *s1 - *s2;
 }
 
 static inline void arch_idle(void) {

@@ -20,6 +20,7 @@ QEMUFLAGS += $(if $(NOGUI),-nographic,)
 
 
 objs += \
+	kernel/arch/string.o \
 	kernel/arch/x64/boot.o \
 	kernel/arch/x64/apic.o \
 	kernel/arch/x64/asan.o \

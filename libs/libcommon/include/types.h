@@ -11,6 +11,7 @@
 #define UNUSED __attribute__((unused))
 #define MAYBE_UNUSED __attribute__((unused))
 #define PACKED __attribute__((packed))
+#define WEAK __attribute__((weak))
 #define NORETURN __attribute__((noreturn))
 #define UNREACHABLE __builtin_unreachable()
 #define LIKELY(cond) __builtin_expect(cond, 1)
