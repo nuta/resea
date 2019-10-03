@@ -132,7 +132,7 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
     if (flags & PF_PRESENT) {
         // Invalid access. For instance the user thread has tried to write to
         // readonly area.
-        TRACE("page fault: already present: addr=%p", addr);
+        WARN("page fault: already present: addr=%p (perhaps segfault?)", addr);
         thread_kill_current();
     }
 
