@@ -18,8 +18,8 @@ void main(void) {
     TRY_OR_PANIC(sys_ipc(server_ch, IPC_RECV));
     TRY_OR_PANIC(open(&client_ch));
     TRY_OR_PANIC(transfer(client_ch, server_ch));
-    assert(m->header == SERVER_CONNECT_HEADER);
-    m->header = SERVER_CONNECT_REPLY_HEADER;
+    assert(m->header == SERVER_CONNECT_MSG);
+    m->header = SERVER_CONNECT_REPLY_MSG;
     m->payloads.server.connect_reply.ch = client_ch;
 
     // Receive a message from the benchmark client and return the message as it

@@ -29,7 +29,7 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     // TRACE("user pager=%d, addr=%p", pager->cid, vaddr);
 
     // Construct a pager.fill message.
-    m->header = PAGER_FILL_HEADER;
+    m->header = PAGER_FILL_MSG;
     m->payloads.pager.fill.pid = CURRENT->process->pid;
     m->payloads.pager.fill.addr = vaddr;
 
@@ -44,8 +44,8 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     DEBUG_ASSERT(m->notification == 0);
 
     // The user pager replied the message.
-    if (m->header != PAGER_FILL_REPLY_HEADER) {
-        int16_t type_or_error = MSG_TYPE(m->header);
+    if (m->header != PAGER_FILL_REPLY_MSG) {
+        int16_t type_or_error = m->header;
         if (type_or_error < 0) {
             WARN("user pager returned an error");
         } else {
@@ -93,7 +93,7 @@ static error_t handle_process_create(struct message *m) {
 
     channel_link(user_ch, pager_ch);
 
-    m->header = PROCESS_CREATE_REPLY_HEADER;
+    m->header = PROCESS_CREATE_REPLY_MSG;
     m->payloads.process.create_reply.pid = proc->pid;
     m->payloads.process.create_reply.pager_ch = pager_ch->cid;
     return OK;
@@ -124,7 +124,7 @@ static error_t handle_thread_spawn(struct message *m) {
     thread_resume(thread);
 
     TRACE("kernel: spawn_thread_response(tid=%d)", thread->tid);
-    m->header = THREAD_SPAWN_REPLY_HEADER;
+    m->header = THREAD_SPAWN_REPLY_MSG;
     m->payloads.thread.spawn_reply.tid = thread->tid;
     return OK;
 }
@@ -163,7 +163,7 @@ static error_t handle_process_add_pager(struct message *m) {
     channel_incref(pager_ch);
 
     TRACE("kernel: add_pager_response()");
-    m->header = PROCESS_ADD_PAGER_REPLY_HEADER;
+    m->header = PROCESS_ADD_PAGER_REPLY_MSG;
     return OK;
 }
 
@@ -174,7 +174,7 @@ static error_t handle_server_connect(struct message *m) {
     }
 
     channel_transfer(ch, kernel_server_ch);
-    m->header = SERVER_CONNECT_REPLY_HEADER;
+    m->header = SERVER_CONNECT_REPLY_MSG;
     m->payloads.server.connect_reply.ch = ch->cid;
     return OK;
 }
@@ -214,7 +214,7 @@ static error_t handle_io_listen_irq(struct message *m) {
     list_push_back(&active_irq_listeners, &listener->next);
     enable_irq(irq);
 
-    m->header = IO_LISTEN_IRQ_REPLY_HEADER;
+    m->header = IO_LISTEN_IRQ_REPLY_MSG;
     return OK;
 }
 
@@ -226,7 +226,7 @@ static error_t handle_io_allow_iomapped_io(struct message *m) {
         thread_allow_io(thread);
     }
 
-    m->header = IO_ALLOW_IOMAPPED_IO_REPLY_HEADER;
+    m->header = IO_ALLOW_IOMAPPED_IO_REPLY_MSG;
     return OK;
 }
 
@@ -254,7 +254,7 @@ static error_t handle_process_send_channel(struct message *m) {
     channel_destroy(ch);
 
     TRACE("kernel: send_channel_to_pid: created %pC", dst_ch);
-    m->header = PROCESS_SEND_CHANNEL_REPLY_HEADER;
+    m->header = PROCESS_SEND_CHANNEL_REPLY_MSG;
     return OK;
 }
 
@@ -290,7 +290,7 @@ static error_t handle_timer_set(struct message *m) {
     table_set(&user_timers, timer_id, timer);
     channel_incref(ch);
 
-    m->header = TIMER_SET_REPLY_HEADER;
+    m->header = TIMER_SET_REPLY_MSG;
     m->payloads.timer.set_reply.timer = timer_id;
     return OK;
 }
@@ -307,12 +307,12 @@ static error_t handle_timer_clear(UNUSED struct message *m) {
     table_free(&user_timers, timer->id);
     timer_destroy(timer);
 
-    m->header = TIMER_CLEAR_REPLY_HEADER;
+    m->header = TIMER_CLEAR_REPLY_MSG;
     return OK;
 }
 
 static error_t process_message(struct message *m) {
-    switch (MSG_TYPE(m->header)) {
+    switch (m->header) {
     case RUNTIME_EXIT_MSG:         return handle_runtime_exit(m);
     case RUNTIME_PRINTCHAR_MSG:    return handle_runtime_printchar(m);
     case PROCESS_CREATE_MSG:       return handle_process_create(m);

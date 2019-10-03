@@ -27,7 +27,7 @@ static error_t handle_pager_fill(struct message *m) {
             TRY_OR_PANIC(call_fs_read(proc->file->fs_server, proc->file->fd,
                 fileoff, PAGE_SIZE, page_base, (uintptr_t *) &data, &num_pages));
 
-            m->header = PAGER_FILL_REPLY_HEADER;
+            m->header = PAGER_FILL_REPLY_MSG;
             m->payloads.pager.fill_reply.page = PAGE_PAYLOAD((uintptr_t) data, 0);
             return OK;
         }
@@ -40,7 +40,7 @@ static error_t handle_pager_fill(struct message *m) {
     TRY_OR_PANIC(call_memory_alloc_pages(memmgr_ch, 0, page_base,
                                          (uintptr_t *) &ptr, &num_pages));
 
-    m->header = PAGER_FILL_REPLY_HEADER;
+    m->header = PAGER_FILL_REPLY_MSG;
     m->payloads.pager.fill_reply.page = PAGE_PAYLOAD((uintptr_t) ptr, 0);
     return OK;
 }
@@ -86,7 +86,7 @@ static error_t handle_api_create_app(struct message *m) {
     pid_t pid;
     TRY_OR_PANIC(create_app(kernel_ch, memmgr_ch, server_ch, f, &pid));
 
-    m->header = API_CREATE_APP_REPLY_HEADER;
+    m->header = API_CREATE_APP_REPLY_MSG;
     m->payloads.api.create_app_reply.pid = pid;
     return OK;
 }
@@ -94,7 +94,7 @@ static error_t handle_api_create_app(struct message *m) {
 static error_t handle_api_start_app(struct message *m) {
     pid_t pid = m->payloads.api.start_app.pid;
     TRY_OR_PANIC(start_app(kernel_ch, pid));
-    m->header = API_START_APP_REPLY_HEADER;
+    m->header = API_START_APP_REPLY_MSG;
     return OK;
 }
 
@@ -148,7 +148,7 @@ static error_t handle_api_exit_app(struct message *m) {
 }
 
 static error_t process_message(struct message *m) {
-    switch (MSG_TYPE(m->header)) {
+    switch (m->header) {
     // TODO:
     // case RUNTIME_EXIT_MSG: return handle_runtime_exit(m);
     case RUNTIME_PRINTCHAR_MSG: return handle_runtime_printchar(m);

@@ -22,7 +22,7 @@
 #define FASTPATH_HEADER_TEST(header) (((header) & 0x1800ULL) == 0)
 
 /// Checks whether the message is worth tracing.
-static inline bool is_annoying_msg(uint16_t msg_type) {
+static inline bool is_annoying_msg(header_t msg_type) {
     return msg_type == RUNTIME_PRINTCHAR_MSG
            || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
            || msg_type == BENCHMARK_NOP_MSG
@@ -33,7 +33,7 @@ static inline bool is_annoying_msg(uint16_t msg_type) {
 
 #define IPC_TRACE(m, fmt, ...)                        \
     do {                                              \
-        if (!is_annoying_msg(MSG_TYPE(m->header))) {  \
+        if (!is_annoying_msg(m->header)) {  \
             TRACE(fmt, ## __VA_ARGS__);               \
         }                                             \
     } while (0)

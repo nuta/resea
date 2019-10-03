@@ -51,7 +51,7 @@ static error_t handle_pager_fill(struct message *m) {
         }
     }
 
-    m->header = PAGER_FILL_REPLY_HEADER;
+    m->header = PAGER_FILL_REPLY_MSG;
     m->payloads.pager.fill_reply.page = PAGE_PAYLOAD(alloced_addr, 0);
     return OK;
 }
@@ -65,7 +65,7 @@ static error_t handle_runtime_printchar(struct message *m) {
     // Forward to the kernel sever.
     uint8_t ch = m->payloads.runtime.printchar.ch;
     TRY(call_runtime_printchar(kernel_ch, ch));
-    m->header = RUNTIME_PRINTCHAR_REPLY_HEADER;
+    m->header = RUNTIME_PRINTCHAR_REPLY_MSG;
     return OK;
 }
 
@@ -76,7 +76,7 @@ static error_t handle_memory_alloc_pages(struct message *m) {
         return ERR_OUT_OF_MEMORY;
     }
 
-    m->header = MEMORY_ALLOC_PAGES_REPLY_HEADER;
+    m->header = MEMORY_ALLOC_PAGES_REPLY_MSG;
     m->payloads.memory.alloc_pages_reply.page = PAGE_PAYLOAD(paddr, order);
     return OK;
 }
@@ -96,7 +96,7 @@ static error_t handle_memory_alloc_phy_pages(struct message *m) {
         }
     }
 
-    m->header = MEMORY_ALLOC_PHY_PAGES_REPLY_HEADER;
+    m->header = MEMORY_ALLOC_PHY_PAGES_REPLY_MSG;
     m->payloads.memory.alloc_phy_pages_reply.page = PAGE_PAYLOAD(paddr, order);
     m->payloads.memory.alloc_phy_pages_reply.paddr = paddr;
     return OK;
@@ -112,7 +112,7 @@ static error_t handle_memmgr_get_framebuffer(struct message *m) {
     int order = (int) ulllog2(
         (info->height * info->width * (info->bpp / 8)) / PAGE_SIZE);
 
-    m->header = MEMMGR_GET_FRAMEBUFFER_REPLY_HEADER;
+    m->header = MEMMGR_GET_FRAMEBUFFER_REPLY_MSG;
     m->payloads.memmgr.get_framebuffer_reply.framebuffer = PAGE_PAYLOAD(paddr, order);
     m->payloads.memmgr.get_framebuffer_reply.width = (int) info->width;
     m->payloads.memmgr.get_framebuffer_reply.height = (int) info->height;
@@ -155,7 +155,7 @@ static error_t handle_discovery_publicize(struct message *m) {
     servers[interface] = ch;
     TRY_OR_PANIC(transfer(servers[interface], server_ch));
 
-    m->header = DISCOVERY_PUBLICIZE_REPLY_HEADER;
+    m->header = DISCOVERY_PUBLICIZE_REPLY_MSG;
     return OK;
 }
 
@@ -227,7 +227,7 @@ static error_t handle_fs_open(struct message *m) {
     while ((file = initfs_readdir(&dir)) != NULL) {
         if (strcmp(path, file->path) == 0) {
             entry->file = file;
-            m->header = FS_OPEN_REPLY_HEADER;
+            m->header = FS_OPEN_REPLY_MSG;
             m->payloads.fs.open_reply.handle = fd;
             return OK;
         }
@@ -258,7 +258,7 @@ static error_t handle_fs_read(struct message *m) {
     memcpy_s((void *) alloced_addr, PAGE_SIZE, &file->content[offset],
              copy_len);
 
-    m->header = FS_READ_REPLY_HEADER;
+    m->header = FS_READ_REPLY_MSG;
     m->payloads.fs.read_reply.data = PAGE_PAYLOAD(alloced_addr, 0);
     return OK;
 }
@@ -296,7 +296,7 @@ static error_t deferred_work(void) {
 }
 
 static error_t process_message(struct message *m) {
-    switch (MSG_TYPE(m->header)) {
+    switch (m->header) {
     case NOTIFICATION_MSG: return DONT_REPLY;
     //
     //  Memmgr

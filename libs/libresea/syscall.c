@@ -2,6 +2,17 @@
 #include <resea/math.h>
 #include <resea/ipc.h>
 
+static error_t post_receive_work(error_t err, struct message *r) {
+    if (err == OK) {
+        int16_t type = (get_ipc_buffer()->header >> MSG_TYPE_OFFSET) & 0xffff;
+        if (type < 0) {
+            return -type;
+        }
+        copy_from_ipc_buffer(r);
+    }
+    return err;
+}
+
 struct message *get_ipc_buffer(void) {
     return &get_thread_info()->ipc_buffer;
 }
@@ -34,14 +45,7 @@ error_t transfer(cid_t src, cid_t dst) {
 
 error_t ipc_recv(cid_t ch, struct message *r) {
     error_t err = sys_ipc(ch, IPC_RECV);
-    if (err == OK) {
-        int16_t type = MSG_TYPE(get_ipc_buffer()->header);
-        if (type < 0) {
-            return -type;
-        }
-        copy_from_ipc_buffer(r);
-    }
-    return err;
+    return post_receive_work(err, r);
 }
 
 error_t ipc_send(cid_t ch, struct message *m) {
@@ -57,12 +61,5 @@ error_t ipc_async_send(cid_t ch, struct message *m) {
 error_t ipc_call(cid_t ch, struct message *m, struct message *r) {
     copy_to_ipc_buffer(m);
     error_t err = sys_ipc(ch, IPC_SEND | IPC_RECV);
-    if (err == OK) {
-        int16_t type = MSG_TYPE(get_ipc_buffer()->header);
-        if (type < 0) {
-            return type;
-        }
-        copy_from_ipc_buffer(r);
-    }
-    return err;
+    return post_receive_work(err, r);
 }

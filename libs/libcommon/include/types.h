@@ -68,7 +68,7 @@ enum error_codes {
 
     // Errors from system calls.
     ERR_INVALID_CID,
-    ERR_INVALID_HEADER,
+    ERR_INVALID_MSG,
     ERR_INVALID_PAYLOAD,
     ERR_INVALID_MESSAGE,
     ERR_INVALID_SYSCALL,

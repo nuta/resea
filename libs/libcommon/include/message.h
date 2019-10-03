@@ -29,8 +29,7 @@ typedef uint32_t header_t;
 #define MSG_CHANNEL_PAYLOAD (1ULL << 12)
 #define INLINE_PAYLOAD_LEN(header) (((header) >> MSG_INLINE_LEN_OFFSET) & 0x7ff)
 #define PAGE_PAYLOAD_ADDR(page) ((page) & 0xfffffffffffff000ULL)
-#define MSG_TYPE(header) (((header) >> MSG_TYPE_OFFSET) & 0xffff)
-#define INTERFACE_ID(header) (MSG_TYPE(header) >> 8)
+#define INTERFACE_ID(header) ((((header) >> MSG_TYPE_OFFSET) & 0xffff) >> 8)
 #define INLINE_PAYLOAD_LEN_MAX 480
 #define ERROR_TO_HEADER(error) ((uint32_t) (-error) << MSG_TYPE_OFFSET)
 
@@ -38,8 +37,7 @@ typedef uint32_t header_t;
 //  Notification.
 //
 #define NOTIFICATION_INTERFACE  100ULL
-#define NOTIFICATION_MSG        ((NOTIFICATION_INTERFACE << 8) | 1)
-#define NOTIFICATION_HEADER     (NOTIFICATION_MSG << MSG_TYPE_OFFSET)
+#define NOTIFICATION_MSG        (((NOTIFICATION_INTERFACE << 8) | 1) << MSG_TYPE_OFFSET)
 
 typedef uint32_t notification_t;
 #define NOTIFY_INTERRUPT (1UL << 0)

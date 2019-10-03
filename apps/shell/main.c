@@ -18,7 +18,7 @@ new_prompt:
         while (1) {
             struct message m;
             TRY_OR_PANIC(ipc_recv(gui_ch, &m));
-            switch (MSG_TYPE(m.header)) {
+            switch (m.header) {
             case GUI_KEY_EVENT_MSG: {
                 uint8_t ch = m.payloads.gui.key_event.ch;
                 if (ch == 0 /* KEY_ENTER */) {
@@ -44,7 +44,7 @@ new_prompt:
                 break;
             }
             default:
-                WARN("invalid message type %x", MSG_TYPE(m.header));
+                WARN("invalid message type %x", m.header);
             }
         }
     }

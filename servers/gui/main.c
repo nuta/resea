@@ -120,7 +120,7 @@ static error_t handle_server_connect(struct message *m) {
     TRY(open(&new_ch));
     transfer(new_ch, server_ch);
 
-    m->header = SERVER_CONNECT_REPLY_HEADER;
+    m->header = SERVER_CONNECT_REPLY_MSG;
     m->payloads.server.connect_reply.ch = new_ch;
     return OK;
 }
@@ -129,13 +129,13 @@ static error_t handle_gui_console_write(struct message *m) {
     uint8_t ch = m->payloads.gui.console_write.ch;
     TRACE("console_write: '%c'", ch);
     console_write_char(ch, CONSOLE_NORMAL_COLOR);
-    m->header = GUI_CONSOLE_WRITE_REPLY_HEADER;
+    m->header = GUI_CONSOLE_WRITE_REPLY_MSG;
     return OK;
 }
 
 static error_t handle_gui_activate(struct message *m) {
     active_ch = m->from;
-    m->header = GUI_ACTIVATE_REPLY_HEADER;
+    m->header = GUI_ACTIVATE_REPLY_MSG;
     return OK;
 }
 
@@ -148,12 +148,12 @@ static error_t handle_keyinput_event(struct message *m) {
         async_send_gui_key_event(active_ch, keycode);
     }
 
-    m->header = KEYBOARD_DRIVER_KEYINPUT_EVENT_REPLY_HEADER;
+    m->header = KEYBOARD_DRIVER_KEYINPUT_EVENT_REPLY_MSG;
     return OK;
 }
 
 static error_t process_message(struct message *m) {
-    switch (MSG_TYPE(m->header)) {
+    switch (m->header) {
     case SERVER_CONNECT_MSG:    return handle_server_connect(m);
     case GUI_CONSOLE_WRITE_MSG: return handle_gui_console_write(m);
     case GUI_ACTIVATE_MSG:      return handle_gui_activate(m);

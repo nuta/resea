@@ -65,7 +65,7 @@ static error_t handle_server_connect(struct message *m) {
     TRY(open(&new_ch));
     transfer(new_ch, server_ch);
 
-    m->header = SERVER_CONNECT_REPLY_HEADER;
+    m->header = SERVER_CONNECT_REPLY_MSG;
     m->payloads.server.connect_reply.ch = new_ch;
     return OK;
 }
@@ -73,7 +73,7 @@ static error_t handle_server_connect(struct message *m) {
 static error_t handle_listen(struct message *m) {
     listener_ch = m->payloads.keyboard_driver.listen.ch;
 
-    m->header = KEYBOARD_DRIVER_LISTEN_REPLY_HEADER;
+    m->header = KEYBOARD_DRIVER_LISTEN_REPLY_MSG;
     return OK;
 }
 
@@ -83,7 +83,7 @@ static error_t process_message(struct message *m) {
         handle_notification(notification);
     }
 
-    switch (MSG_TYPE(m->header)) {
+    switch (m->header) {
     case SERVER_CONNECT_MSG:  return handle_server_connect(m);
     case KEYBOARD_DRIVER_LISTEN_MSG: return handle_listen(m);
     case NOTIFICATION_MSG: return DONT_REPLY;

@@ -89,7 +89,7 @@ int main(void) {
     struct message *m = get_ipc_buffer();
     bench_start(&bench, "IPC round-trip overhead");
     for (int i = 0; i < NUM_ITERS; i++) {
-        m->header = BENCHMARK_NOP_HEADER;
+        m->header = BENCHMARK_NOP_MSG;
         bench_start_iter(&bench, i);
         error_t err = sys_ipc(benchmark_server, ops);
         bench_end_iter(&bench, i);

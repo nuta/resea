@@ -106,7 +106,7 @@ CLIENT_STUBS = """
 {%- for msg in interface.messages %}
 static inline error_t __do_send_{{ msg.canon_name }}({{ msg.args | send_params }}, bool __async) {
     struct message m;
-    m.header = {{ msg.canon_name | upper }}_HEADER;
+    m.header = {{ msg.canon_name | upper }}_MSG;
 {% for field in msg.args.fields %}
 {%- if field.type == "smallstring" %}
     strcpy_s((char *) &m.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
@@ -142,7 +142,7 @@ static inline error_t async_send_{{ msg.canon_name }}({{ msg.args | send_params 
 {%- if msg.attrs.type == "call" %}
 static inline error_t __do_send_{{ msg.canon_name }}_reply({{ msg.rets | send_params }}, bool __async) {
     struct message m;
-    m.header = {{ msg.canon_name | upper }}_REPLY_HEADER;
+    m.header = {{ msg.canon_name | upper }}_REPLY_MSG;
 {% for field in msg.rets.fields %}
 {%- if field.type == "smallstring" %}
     strcpy_s((char *) &m.payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
@@ -177,7 +177,7 @@ static inline error_t async_send_{{ msg.canon_name }}_reply({{ msg.rets | send_p
 
 static inline error_t call_{{ msg.canon_name }}({{ msg | call_params }}) {
     struct message m;
-    m.header = {{ msg.canon_name | upper }}_HEADER;
+    m.header = {{ msg.canon_name | upper }}_MSG;
 {% for field in msg.args.fields %}
 {%- if field.type == "smallstring" %}
     strcpy_s((char *) &m.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }}, SMALLSTRING_LEN_MAX, {{ field.name }});
@@ -228,17 +228,17 @@ typedef {{ type.alias_of }}_t {{ type.name }}_t;
 {%- endfor %}
 
 {%- for msg in interface.messages %}
-#define {{ msg.canon_name | upper }}_MSG (({{ interface.name | upper }}_INTERFACE << 8) | {{ msg.attrs.id }}ULL)
 #define {{ msg.canon_name | upper }}_INLINE_LEN ({{ msg.args | inline_len }})
-#define {{ msg.canon_name | upper }}_HEADER \
-    ( ({{ msg.canon_name | upper }}_MSG        << MSG_TYPE_OFFSET) \
+#define {{ msg.canon_name | upper }}_MSG \
+    ( \
+        ((({{ interface.name | upper }}_INTERFACE << 8) | {{ msg.attrs.id }}ULL) << MSG_TYPE_OFFSET) \
 {%- if msg.args.page -%}
-    | MSG_PAGE_PAYLOAD  \
+        | MSG_PAGE_PAYLOAD  \
 {%- endif -%}
 {%- if msg.args.channel -%}
-    | MSG_CHANNEL_PAYLOAD  \
+        | MSG_CHANNEL_PAYLOAD  \
 {%- endif -%}
-    | ({{ msg.canon_name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
+        | ({{ msg.canon_name | upper }}_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
 struct {{ msg.canon_name }}_payload {
@@ -259,17 +259,17 @@ struct {{ msg.canon_name }}_payload {
 } PACKED;
 
 {%- if msg.attrs.type == "call" %}
-#define {{ msg.canon_name | upper }}_REPLY_MSG (({{ interface.name | upper }}_INTERFACE << 8) | MSG_REPLY_FLAG | {{ msg.attrs.id }})
 #define {{ msg.canon_name | upper }}_REPLY_INLINE_LEN ({{ msg.rets | inline_len }})
-#define {{ msg.canon_name | upper }}_REPLY_HEADER \
-    ( ({{ msg.canon_name | upper }}_REPLY_MSG        << MSG_TYPE_OFFSET) \
+#define {{ msg.canon_name | upper }}_REPLY_MSG \
+    ( \
+        ((({{ interface.name | upper }}_INTERFACE << 8) | MSG_REPLY_FLAG | {{ msg.attrs.id }}) << MSG_TYPE_OFFSET) \
 {%- if msg.rets.page -%}
-    | MSG_PAGE_PAYLOAD  \
+        | MSG_PAGE_PAYLOAD  \
 {%- endif -%}
 {%- if msg.rets.channel -%}
-    | MSG_CHANNEL_PAYLOAD  \
+        | MSG_CHANNEL_PAYLOAD  \
 {%- endif -%}
-    | ({{ msg.canon_name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
+        | ({{ msg.canon_name | upper }}_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET) \
     )
 
 struct {{ msg.canon_name }}_reply_payload {
@@ -315,7 +315,7 @@ static error_t handle_{{ msg.canon_name }}(struct message *m) {
     // TODO: {{ field.type | resolve_type }} {{ field.name }} = m->payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }};
 {%- endfor %}
     UNIMPLEMENTED();
-    m->header = {{ msg.canon_name | upper }}_REPLY_HEADER;
+    m->header = {{ msg.canon_name | upper }}_REPLY_MSG;
 {%- for field in msg.rets.fields %}
     // TODO: m->payloads.{{ interface.name }}.{{ msg.name }}_reply.{{ field.name }} = ;
 {%- endfor %}
@@ -324,7 +324,7 @@ static error_t handle_{{ msg.canon_name }}(struct message *m) {
 {%- endfor %}
 
 static error_t process_message(struct message *m) {
-    switch (MSG_TYPE(m->header)) {
+    switch (m->header) {
 {%- for interface in interfaces %}
 {%- for msg in interface.messages %}
     case {{ msg.canon_name | upper }}_MSG: return handle_{{ msg.canon_name }}(m);

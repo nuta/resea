@@ -41,7 +41,7 @@ error_t server_mainloop_with_deferred(cid_t ch,
         // Warn if the handler returned ERR_UNEXPECTED_MESSAGE since it is
         // likely that the handler simply does not yet implement it.
         if (err == ERR_UNEXPECTED_MESSAGE) {
-            WARN("unexpected message type: %x", MSG_TYPE(m.header));
+            WARN("unexpected message type: %x", m.header);
         }
 
         // If the handler returned DONT_REPLY, we don't reply.

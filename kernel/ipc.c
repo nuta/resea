@@ -73,11 +73,11 @@ error_t kernel_ipc(cid_t cid, uint32_t syscall) {
     // preparation in userland. Consider the following example:
     //
     // ```
-    //    ipc_buffer->header = PRINTCHAR_HEADER;
+    //    ipc_buffer->header = PRINTCHAR_MSG;
     //    ipc_buffer->data[0] = foo(); // Page fault occurs here!
     //    // If kernel and user share one ipc_buffer, the buffer is
     //    // overwritten by the page fault handler. Consequently,
-    //    // ipc_buffer->header is no longer equal to PRINTCHAR_HEADER!
+    //    // ipc_buffer->header is no longer equal to PRINTCHAR_MSG!
     //    //
     //    // This is why we need a kernel's own ipc buffer.
     //    sys_ipc(ch);

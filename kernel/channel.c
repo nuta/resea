@@ -133,7 +133,7 @@ error_t channel_notify(struct channel *ch, notification_t notification) {
     // Resume the receiver thread if exists.
     struct thread *receiver = dst->receiver;
     if (receiver) {
-        receiver->ipc_buffer->header = NOTIFICATION_HEADER;
+        receiver->ipc_buffer->header = NOTIFICATION_MSG;
         receiver->ipc_buffer->from   = 0;
         thread_resume(receiver);
         dst->receiver = NULL;
