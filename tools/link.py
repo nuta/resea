@@ -41,7 +41,7 @@ def analyze_stack_sizes(objcopy, nm, file):
         while index < len(stack_sizes):
             addr = struct.unpack("Q", stack_sizes[index:index+8])[0]
             size, size_len = decode_leb128(stack_sizes[index+8:])
-            if addr in functions and size >= 1024:
+            if addr in functions and size >= 2048:
                 print(f"{Fore.YELLOW}{Style.BRIGHT}{file}: Warning: Large stack usage" +
                       f" in {functions[addr]} ({size} bytes).{Style.RESET_ALL}")
 
