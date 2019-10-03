@@ -311,18 +311,22 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     DEBUG_ASSERT(CURRENT->process != kernel_process);
 
     struct thread *current = CURRENT;
+    struct message *m      = current->ipc_buffer;
+    prefetch(m);
+
     struct channel *ch = table_get(&current->process->channels, cid);
     if (UNLIKELY(!ch)) {
         goto slowpath_fallback;
     }
 
-    struct message *m           = current->ipc_buffer;
     header_t header             = m->header;
     struct channel *recv_ch     = ch->transfer_to;
     struct channel *linked_with = ch->linked_with;
     cid_t from                  = linked_with->cid;
     struct channel *dst_ch      = linked_with->transfer_to;
     struct thread *receiver     = dst_ch->receiver;
+
+    prefetch(recv_ch);
 
     // Check whether the message can be sent in fastpath. Here we use `+`
     // instead of lengthy if statements to eliminate branches.
@@ -348,7 +352,11 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     // channel.
     IPC_TRACE(m, "send (fastpath): %pC -> %pC => %pC (header=%p)",
               ch, linked_with, dst_ch, header);
+
     struct message *dst_m = receiver->ipc_buffer;
+    prefetch(dst_m);
+    prefetch(receiver);
+
     recv_ch->receiver = current;
     dst_ch->receiver  = NULL;
     current->blocked  = true;
@@ -357,6 +365,7 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     dst_m->from       = from;
     inlined_memcpy(&dst_m->payloads.data, m->payloads.data,
                    INLINE_PAYLOAD_LEN(header));
+
 #ifdef DEBUG_BUILD
     current->debug.receive_from = recv_ch;
 #endif
@@ -370,11 +379,14 @@ static error_t sys_ipc_fastpath(cid_t cid) {
 
     // Read and clear the notification field.
     m->notification = atomic_swap(&recv_ch->notification, 0);
+
     IPC_TRACE(m, "recv (fastpath): %pC <- @%d (header=%p, notification=%p)",
               recv_ch, m->from, m->header, m->notification);
+
 #ifdef DEBUG_BUILD
     current->debug.receive_from = NULL;
 #endif
+
     return atomic_swap(&current->abort_reason, OK);
 
 slowpath_fallback:

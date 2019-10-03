@@ -8,4 +8,8 @@ config FASTPATH
     bool "Enable IPC fastpath"
     default y
 
+config PREFETCH
+    bool "Utilize prefetching"
+    default y
+
 endmenu # "Kernel"
