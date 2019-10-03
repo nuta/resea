@@ -4,12 +4,6 @@
 #include <types.h>
 #include <message.h>
 
-struct thread_info {
-    uintmax_t arg;
-    page_t page_base;
-    struct message ipc_buffer;
-} PACKED;
-
 page_base_t valloc(size_t num_pages);
 struct thread_info *get_thread_info(void);
 void set_page_base(page_base_t page_base);

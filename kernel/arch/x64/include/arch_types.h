@@ -89,7 +89,11 @@ static inline vaddr_t arch_get_stack_pointer(void) {
 
 static inline struct thread *get_current_thread(void) {
     struct thread *thread;
+#ifdef CONFIG_X86_FSGSBASE
     __asm__ __volatile__("rdgsbase %0" : "=r"(thread));
+#else
+    thread = (struct thread *) asm_rdmsr(MSR_GS_BASE);
+#endif
     return thread;
 }
 

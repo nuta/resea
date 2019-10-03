@@ -1,10 +1,15 @@
+#include <config.h>
 #include <resea.h>
 #include <resea/ipc.h>
 #include <resea/string.h>
 
 struct thread_info *get_thread_info(void) {
     struct thread_info *info;
+#ifdef CONFIG_X86_FSGSBASE
     __asm__ __volatile__("rdgsbase %0" : "=a"(info));
+#else
+    __asm__ __volatile__("mov %%gs:(0), %0" : "=a"(info));
+#endif
     return info;
 }
 

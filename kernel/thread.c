@@ -48,6 +48,7 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     }
 
     bool is_kernel_thread = IS_KERNEL_PROCESS(process);
+    thread_info->self = user_buffer;
     thread_info->arg = (vaddr_t) arg;
     thread->ipc_buffer = &thread_info->ipc_buffer;
     thread->kernel_ipc_buffer = kernel_ipc_buffer;

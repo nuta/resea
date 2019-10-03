@@ -4,4 +4,8 @@ config TEXT_UI
     bool "Text UI mode (Disable GUI)"
     default n
 
+config X86_FSGSBASE
+    bool "Enable FSGSBASE instructions"
+    default y
+
 endmenu

@@ -122,10 +122,12 @@ static void cpu_features_init(void) {
               ebx, ecx, edx);
     }
 
+#ifdef CONFIG_X86_FSGSBASE
     // Activate RDGSBASE/WRGSBASE instructions.
     CHECK_CPUID_BIT(CPUID_EXT_FEATURES, 0, ebx,
                     CPUID_EXT_FEATURES_EBX_FSGSBASE);
     asm_write_cr4(asm_read_cr4() | CR4_FSGSBASE);
+#endif
 
     // Make sure that XSAVE area is smaller than PAGE_SIZE.
     asm_cpuid_count(CPUID_EXT_STATE_ENUM, 0, &eax, &ebx, &ecx, &edx);

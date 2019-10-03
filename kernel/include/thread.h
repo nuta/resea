@@ -9,14 +9,6 @@
 #define KERNEL_STACK_SIZE PAGE_SIZE
 #define CURRENT get_current_thread()
 
-/// Thread-local information block. Keep in mind that this block is readable and
-/// WRITABLE from the user: don't put sensitive data in it.
-struct thread_info {
-    vaddr_t arg;
-    vaddr_t page_base;
-    struct message ipc_buffer;
-} PACKED;
-
 struct process;
 
 /// The thread control block.

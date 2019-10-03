@@ -53,6 +53,9 @@ typedef uintmax_t page_base_t;
 #define PAGE_BASE(addr, order)    ((addr) | (order))
 #define PAGE_ORDER(page) ((page) & 0x1f)
 
+//
+//  Message
+//
 #define SMALLSTRING_LEN_MAX 128
 typedef char smallstring_t[SMALLSTRING_LEN_MAX];
 #include <idl_messages.h>
@@ -83,5 +86,22 @@ STATIC_ASSERT(offsetof(struct message, notification)     == 8);
 STATIC_ASSERT(offsetof(struct message, payloads.channel) == 12);
 STATIC_ASSERT(offsetof(struct message, payloads.page)    == 16);
 STATIC_ASSERT(offsetof(struct message, payloads.data)    == 32);
+
+//
+//  Thread Information Block (TIB).
+//
+
+/// Thread Information Block (TIB).
+struct thread_info {
+    /// The pointer to itself in the userspace. This field must be the first.
+    vaddr_t self;
+    /// The user-provided argument.
+    uintmax_t arg;
+    /// The page base set by the user. It contains the base virtual address and
+    /// the maximum number of pages to receive page payloads.
+    page_t page_base;
+    /// The thread-local user IPC buffer.
+    struct message ipc_buffer;
+} PACKED;
 
 #endif
