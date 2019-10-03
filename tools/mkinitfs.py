@@ -10,6 +10,10 @@ JUMP_CODE_SIZE = 16
 FS_HEADER_SIZE = 128
 FILE_HEADER_SIZE = 64
 
+# Don't change this value: the kernel memory map layout assumes that initfs.bin
+# is smaller than 16MiB!
+INITFS_MAX_SIZE = (16 *1024 * 1024) - 1
+
 def construct_file_header(name, data, length):
     assert len(str(name)) < 48
     padding = PAGE_SIZE - (length % PAGE_SIZE)
@@ -51,6 +55,8 @@ def make_image(startup, root_dir, file_list):
     image = image[:JUMP_CODE_SIZE] + fs_header + \
         image[JUMP_CODE_SIZE+len(fs_header):]
 
+    if len(image) > INITFS_MAX_SIZE:
+        sys.exit(f"initfs.bin is too big ({len(image) / 1024}KiB)")
     return image
 
 def generate_asm(binfile):
