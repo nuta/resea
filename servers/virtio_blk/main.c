@@ -59,6 +59,10 @@ static error_t init_driver(void) {
                                     page_base, &buffer, &num_pages,
                                     &paddr));
 
+    struct virtio_blk_req *req = (struct virtio_blk_req *) buffer;
+    req->sector = 0;
+    req->type = VIRTIO_BLK_T_IN;
+
     virtio.virtq->desc[0].paddr = paddr;
     virtio.virtq->desc[0].len   = sizeof(uint32_t) * 2 + sizeof(uint64_t);
     virtio.virtq->desc[0].flags = VIRTQ_DESC_F_NEXT;

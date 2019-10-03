@@ -19,7 +19,6 @@ QEMUFLAGS += -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
 QEMUFLAGS += -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04
 ifdef CONFIG_VIRTIO_BLK_SERVER
 QEMUFLAGS += -drive id=hdd0,if=none,file=fat:rw:$(HDD_DIR)
-QEMUFLAGS += -drive id=hdd0,if=none,file=hdd.img
 QEMUFLAGS += -device virtio-blk-pci,drive=hdd0
 endif
 QEMUFLAGS += -boot d
