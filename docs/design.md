@@ -25,9 +25,12 @@ All system calls are only essential ones for message passing:
 - `error_t sys_transfer(cid_t src, cid_t dst)`
   - Transfer messages from the channel linked to `src` to `dst` channels.
 
-### IPC Buffer
-The message buffer to send/receive a message is located in the thread-local
-buffer. The message layout is as follows:
+### Message Structure
+You may noticed that `sys_ipc` does not take a pointer to the message buffer
+to send/receive: the message buffer is located in the thread-local buffer. It
+simplifies and optimizes the IPC implementation in kernel a bit.
+
+The message layout is as follows:
 
 ```c
 struct message {
@@ -41,6 +44,20 @@ struct message {
 };
 ```
 
+#### Payloads
+- *Inline Payload* is a small (less than about 200 bytes) arbitrary data that
+  simplified copied to the destination thread's IPC buffer.
+- *Channel Payload* delegates the specified sender's channel to the destination
+  process.
+- *Page Payload* transfers physical memory pages to the destination process.
+  - The kernel accepts this payload only if the receiver thread sets the
+    page base in its Thread Information Block.
+  - This payload *moves* the physical pages. Sent pages are no longer
+    accessible in the sender process. This implies that it is impossible to
+    implement *Shared Memory* in Resea.
+
+
+
 ### Notifications
 While synchronous (blocking) IPC works pretty fine in most cases, sometimes you
 may want asynchronous (non-blocking) IPC. For example, the kernel converts
@@ -50,7 +67,7 @@ Notifications is a simple solution just like *signal* in Unix:
 
 - `error_t sys_notify(cid_t cid, notification_t notification)`
   - Sends a notification to the channel. It simply updates the notification
-    field in the destination channel (by OR'ing `notification`).  
+    field in the destination channel (by OR'ing `notification`).
   - If a receiver thread already waits for a message on the destination channel,
     the kernel sends a message as `NOTIFICATION_MSG` to it.
   -  It never blocks (asynchronous).
