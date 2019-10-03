@@ -34,6 +34,7 @@ static void parse_multiboot_info(struct init_args *init_args) {
     struct multiboot_mmap *memory_maps =
         (struct multiboot_mmap *) from_paddr(multiboot_info->mmap_paddr);
     int num_mmaps = (int) (multiboot_info->mmap_len / sizeof(struct multiboot_mmap));
+    ASSERT(num_mmaps <= INIT_ARGS_MEMORY_MAPS_MAX - 1);
     TRACE("Memory map:");
     int j = 0;
     for (int i = 0; i < num_mmaps; i++) {

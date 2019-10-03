@@ -22,8 +22,9 @@ struct framebuffer_info {
     uint8_t bpp;
 };
 
+#define INIT_ARGS_MEMORY_MAPS_MAX 32
 struct init_args {
-    struct memory_map memory_maps[16];
+    struct memory_map memory_maps[INIT_ARGS_MEMORY_MAPS_MAX];
     struct framebuffer_info framebuffer;
     int num_memory_maps;
 };
