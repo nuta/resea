@@ -45,8 +45,8 @@ struct message {
 ```
 
 #### Payloads
-- *Inline Payload* is a small (less than about 200 bytes) arbitrary data that
-  simplified copied to the destination thread's IPC buffer.
+- *Inline Payload* is small (less than about 200 bytes) arbitrary data that
+  simply copied to the destination thread's IPC buffer.
 - *Channel Payload* delegates the specified sender's channel to the destination
   process.
 - *Page Payload* transfers physical memory pages to the destination process.
