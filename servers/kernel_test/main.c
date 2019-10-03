@@ -9,7 +9,7 @@ void ipc_test(void) {
 
     INFO(">>> IPC tests (inline only)");
     struct message *m = get_ipc_buffer();
-    m->header = RUNTIME_PRINTCHAR_MSG;
+    m->header = RUNTIME_PRINTCHAR_HEADER;
     m->payloads.runtime.printchar.ch = 'A';
     err = sys_ipc(memmgr_ch, IPC_SEND | IPC_RECV);
     if (err != OK) {
