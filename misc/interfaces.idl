@@ -158,3 +158,21 @@ interface storage_driver {
     write(sector: uint64, len: size, data: page) -> ()
 }
 
+[id(40)]
+interface pci {
+    [id(1), type(call)]
+    wait_for_device(vendor: uint16, device: uint16)
+        -> (subvendor: uint16, subdevice: uint16, bus: uint8, slot: uint8)
+    [id(2), type(call)]
+    read_config16(bus: uint8, slot: uint8, offset: uint16)
+        -> (data: uint16)
+    [id(3), type(call)]
+    read_config32(bus: uint8, slot: uint8, offset: uint16)
+        -> (data: uint32)
+    [id(4), type(call)]
+    write_config8(bus: uint8, slot: uint8, offset: uint16, data: uint8)
+        -> ()
+    [id(5), type(call)]
+    write_config32(bus: uint8, slot: uint8, offset: uint16, data: uint32)
+        -> ()
+}

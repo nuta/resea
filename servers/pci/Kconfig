@@ -1,0 +1,2 @@
+menuconfig PCI_SERVER
+    bool "PCI Bus Driver"
