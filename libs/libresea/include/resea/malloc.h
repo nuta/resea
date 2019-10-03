@@ -21,5 +21,6 @@ struct malloc_arena {
 
 void *malloc(size_t size);
 void free(void *ptr);
+page_base_t valloc(size_t num_pages);
 
 #endif

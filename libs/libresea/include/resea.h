@@ -7,6 +7,7 @@
 #include <color.h>
 
 #include <resea/ipc.h>
+#include <resea/malloc.h>
 
 //
 //  Arch-dependent stuff.
