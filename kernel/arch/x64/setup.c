@@ -263,7 +263,7 @@ void x64_ap_setup(void) {
 void arch_init(struct init_args *init_args) {
     parse_multiboot_info(init_args);
     pic_init();
-    x64_mp_init();
+    x64_read_mp_table();
     common_cpu_setup();
     x64_serial_init();
 }

@@ -86,6 +86,6 @@ struct mp_localint_assign_entry {
     uint8_t dest_localapic_intin;
 } PACKED;
 
-void x64_mp_init(void);
+void x64_read_mp_table(void);
 
 #endif
