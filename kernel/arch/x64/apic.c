@@ -49,7 +49,6 @@ void x64_send_ipi(uint8_t vector, enum ipi_dest dest, uint8_t dest_apic_id,
         | vector;
     x64_write_apic(APIC_REG_ICR_HIGH, data >> 32);
     x64_write_apic(APIC_REG_ICR_LOW, data & 0xffffffff);
-    INFO("sent IPI: %p", data);
 }
 
 void x64_ioapic_init(paddr_t ioapic_addr) {
