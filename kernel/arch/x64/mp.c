@@ -1,7 +1,7 @@
 #include <arch.h>
 #include <printk.h>
 #include <x64/apic.h>
-#include <x64/smp.h>
+#include <x64/mp.h>
 #include <x64/x64.h>
 
 #ifdef CONFIG_MP
@@ -54,7 +54,7 @@ static struct mp_float_ptr *look_for_floatptr_table(paddr_t start,
     return NULL;
 }
 
-void x64_smp_init(void) {
+void x64_mp_init(void) {
     struct mp_table_header *mptblhdr;
     struct mp_ioapic_entry *ioapic_entry;
     void *entry_ptr;

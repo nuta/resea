@@ -7,7 +7,7 @@
 #include <x64/handler.h>
 #include <x64/multiboot.h>
 #include <x64/serial.h>
-#include <x64/smp.h>
+#include <x64/mp.h>
 #include <x64/x64.h>
 
 // EAX input values.
@@ -263,7 +263,7 @@ void x64_ap_setup(void) {
 void arch_init(struct init_args *init_args) {
     parse_multiboot_info(init_args);
     pic_init();
-    x64_smp_init();
+    x64_mp_init();
     common_cpu_setup();
     x64_serial_init();
 }
