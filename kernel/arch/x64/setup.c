@@ -72,7 +72,7 @@ static void parse_multiboot_info(struct init_args *init_args) {
         TRACE("    %p-%p: %s", start, end, type_name);
 
         // Ignore memory ranges outside of the straight mapping.
-        if (end < STRAIGHT_MAP_ADDR) {
+        if (end < STRAIGHT_MAP_ADDR || start > 0x10000000 /*FIXME: ASan shadow memory */) {
             continue;
         }
 
