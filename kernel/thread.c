@@ -186,6 +186,8 @@ void thread_switch(void) {
     check_stack_canary();
 }
 
+/// This handler is called in a the timer interrupt context when the current
+/// thread has used up its time slice.
 static void thread_switch_by_timeout(UNUSED struct timer *timer) {
     thread_switch();
 }
