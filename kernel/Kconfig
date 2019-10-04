@@ -4,6 +4,11 @@ if ARCH_X64
 source "kernel/arch/x64/Kconfig"
 endif
 
+config MP
+    bool "Multi-processor support (Experimental)"
+    default n
+    depends on ARCH_X64
+
 config FASTPATH
     bool "Enable IPC fastpath"
     default y

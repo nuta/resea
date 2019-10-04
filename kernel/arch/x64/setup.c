@@ -235,24 +235,36 @@ static void syscall_init(void) {
     asm_wrmsr(MSR_EFER, asm_rdmsr(MSR_EFER) | EFER_SCE);
 }
 
-void x64_setup(paddr_t multiboot_info_addr) {
+static void common_cpu_setup(void) {
+    cpu_features_init();
+    x64_apic_init();
+    fpu_init();
+    gdt_init();
+    tss_init();
+    idt_init();
+    x64_apic_timer_init();
+    syscall_init();
+}
+
+void x64_bsp_setup(paddr_t multiboot_info_addr) {
     multiboot_info = (struct multiboot_info *) from_paddr(multiboot_info_addr);
     x64_serial_early_init();
     boot();
 }
 
+#ifdef CONFIG_MP
+void x64_ap_setup(void) {
+    INFO("Initializing CPU #%d", x64_read_cpu_id());
+    common_cpu_setup();
+    boot_ap();
+}
+#endif
+
 void arch_init(struct init_args *init_args) {
     parse_multiboot_info(init_args);
-    cpu_features_init();
-    fpu_init();
     pic_init();
-    x64_apic_init();
-    gdt_init();
-    tss_init();
-    idt_init();
     x64_smp_init();
-    x64_apic_timer_init();
-    syscall_init();
+    common_cpu_setup();
     x64_serial_init();
 }
 

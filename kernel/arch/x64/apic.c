@@ -10,6 +10,8 @@
 #define KBC_B_OUT2_STATUS 0x20
 #define APIC_TIMER_DIV 0x03
 
+static paddr_t ioapic_paddr;
+
 static inline uint32_t x64_read_apic(paddr_t addr) {
     return *((volatile uint32_t *) from_paddr(addr));
 }
@@ -19,13 +21,13 @@ static inline void x64_write_apic(paddr_t addr, uint32_t data) {
 }
 
 static uint32_t ioapic_read(uint8_t reg) {
-    *((uint32_t *) from_paddr(CPUVAR->ioapic)) = reg;
-    return *((uint32_t *) from_paddr(CPUVAR->ioapic + 0x10));
+    *((uint32_t *) from_paddr(ioapic_paddr)) = reg;
+    return *((uint32_t *) from_paddr(ioapic_paddr + 0x10));
 }
 
 static void ioapic_write(uint8_t reg, uint32_t data) {
-    *((uint32_t *) from_paddr(CPUVAR->ioapic)) = reg;
-    *((uint32_t *) from_paddr(CPUVAR->ioapic + 0x10)) = data;
+    *((uint32_t *) from_paddr(ioapic_paddr)) = reg;
+    *((uint32_t *) from_paddr(ioapic_paddr + 0x10)) = data;
 }
 
 static void x64_ioapic_enable_irq(uint8_t vector, uint8_t irq) {
@@ -37,9 +39,22 @@ void enable_irq(uint8_t irq) {
     x64_ioapic_enable_irq(VECTOR_IRQ_BASE + irq, irq);
 }
 
+void x64_send_ipi(uint8_t vector, enum ipi_dest dest, uint8_t dest_apic_id,
+                  enum ipi_mode mode) {
+    uint64_t data =
+          ((uint64_t) dest_apic_id << 56)
+        | ((uint64_t) dest << 18)
+        | (1ULL << 14) // Level: assert
+        | ((uint64_t) mode << 8)
+        | vector;
+    x64_write_apic(APIC_REG_ICR_HIGH, data >> 32);
+    x64_write_apic(APIC_REG_ICR_LOW, data & 0xffffffff);
+    INFO("sent IPI: %p", data);
+}
+
 void x64_ioapic_init(paddr_t ioapic_addr) {
     int max;
-    CPUVAR->ioapic = ioapic_addr;
+    ioapic_paddr = ioapic_addr;
 
     // symmetric I/O mode
     asm_out8(0x22, 0x70);

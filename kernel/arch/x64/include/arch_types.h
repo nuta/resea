@@ -30,7 +30,8 @@
 #define PF_PRESENT    (1 << 0)
 #define PF_WRITE      (1 << 1)
 #define PF_USER       (1 << 2)
-#define CPUVAR        (x64_get_cpuvar())
+#define CPUVAR            (x64_get_cpuvar(x64_read_cpu_id()))
+#define CPUVAR_OF(cpu_id) (x64_get_cpuvar(cpu_id))
 
 struct thread;
 struct cpuvar {
@@ -38,7 +39,6 @@ struct cpuvar {
     struct gdtr gdtr;
     struct gdtr idtr;
     struct tss tss;
-    uint64_t ioapic;
     uint64_t gdt[GDT_DESC_NUM];
     struct idt_entry idt[IDT_DESC_NUM];
     struct thread *current_fpu_owner;
@@ -75,9 +75,9 @@ static inline uint8_t x64_read_cpu_id(void) {
     return *((volatile uint32_t *) apic_reg_id) >> 24;
 }
 
-static inline struct cpuvar *x64_get_cpuvar(void) {
+static inline struct cpuvar *x64_get_cpuvar(unsigned cpu_id) {
     struct cpuvar *cpuvars = (struct cpuvar *) CPU_VAR_ADDR;
-    return &cpuvars[x64_read_cpu_id()];
+    return &cpuvars[cpu_id];
 }
 
 static inline vaddr_t arch_get_stack_pointer(void) {

@@ -9,6 +9,7 @@ void arch_init(struct init_args *args);
 void arch_idle(void);
 void arch_putchar(char ch);
 NORETURN void arch_panic(void);
+void arch_mp_init(void);
 
 void page_table_init(struct page_table *pt);
 void page_table_destroy(struct page_table *pt);

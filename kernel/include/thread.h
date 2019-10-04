@@ -66,6 +66,7 @@ struct thread {
 
 void thread_init(void);
 void thread_switch(void);
+void thread_first_switch(void);
 struct thread *thread_create(struct process *process, vaddr_t start,
                              vaddr_t stack, vaddr_t user_buffer,
                              void *arg);

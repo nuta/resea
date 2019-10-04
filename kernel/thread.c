@@ -192,12 +192,24 @@ static void thread_switch_by_timeout(UNUSED struct timer *timer) {
     thread_switch();
 }
 
+/// Performs the very first context switch. All processors (both BSP and APs)
+/// must call this function at the end of boot. The current context will become
+/// a CPU-local idle thread.
+void thread_first_switch(void) {
+    init_boot_stack_canary();
+    set_current_thread(CPUVAR->idle_thread);
+    timer_create(THREAD_SWITCH_INTERVAL, THREAD_SWITCH_INTERVAL,
+                 thread_switch_by_timeout, NULL);
+    thread_switch();
+}
+
 /// Initializes the thread subsystem.
 void thread_init(void) {
     list_init(&runqueue);
-    struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0, 0);
-    set_current_thread(idle_thread);
-    CPUVAR->idle_thread = idle_thread;
-    timer_create(THREAD_SWITCH_INTERVAL, THREAD_SWITCH_INTERVAL,
-                 thread_switch_by_timeout, NULL);
+    // FIXME:
+    const int NUM_CPU_MAX = 8;
+    for (unsigned cpu_id = 0; cpu_id < NUM_CPU_MAX; cpu_id++) {
+        struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0, 0);
+        CPUVAR_OF(cpu_id)->idle_thread = idle_thread;
+    }
 }

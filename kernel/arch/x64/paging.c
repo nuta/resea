@@ -11,6 +11,7 @@
 void page_table_init(struct page_table *pt) {
     void *pml4 = KMALLOC(&page_arena, PAGE_SIZE);
     inlined_memcpy(pml4, from_paddr(KERNEL_PML4_PADDR), PAGE_SIZE);
+    *((uint64_t *) pml4) = 0; // FIXME: only used by the boot code
 #ifdef DEBUG_BUILD
     asan_init_area(ASAN_VALID, pml4, PAGE_SIZE);
 #endif

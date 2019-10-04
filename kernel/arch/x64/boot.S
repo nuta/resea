@@ -37,7 +37,7 @@ x64_boot:
     //     length  = PAGE_SIZE
     //
     //  Here we assume that the current processor is BSP, its APIC ID is 0,
-    //  and PAGE_SIZE is 4096.    
+    //  and PAGE_SIZE is 4096.
     mov esp, 0xa00000 + 4096
 
     // Save the 64-bit physical address of struct multiboot_info.
@@ -51,7 +51,7 @@ x64_boot:
     lea edx, [protected_mode]
     push edx
 
-    lgdt [gdtr]
+    lgdt [x64_boot_gdtr]
     retf
 
 protected_mode:
@@ -101,6 +101,57 @@ write_pd_entry:
     add edi, 8
     loop write_pd_entry
 
+    jmp enable_long_mode
+
+#ifdef CONFIG_MP
+//
+//  AP boot code.
+//
+.code16
+.globl x64_ap_boot, x64_ap_boot_end
+x64_ap_boot:
+    cli
+    mov ax, 0
+    mov ds, ax
+    mov es, ax
+
+    // Load GDT and enable Protected Mode.
+    lgdt [0x5f00]
+    mov  eax, cr0
+    or   eax, 1
+    mov  cr0, eax
+
+    // jmp 24:ap_protected_mode
+    .byte 0xea
+    .word ap_protected_mode - x64_ap_boot + 0x5000
+    .byte 0x18, 0x00
+
+.code32
+ap_protected_mode:
+    mov ax, 16
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+
+    //
+    // Set the boot (later reused for the cpu-local idle thread) stack:
+    //
+    //    ESP = 0xa00000 + (cpu_id * PAGE_SIZE).
+    //
+    mov eax, [0xfee00020] // Get the Local APIC ID.
+    shr eax, 24
+    shl eax, 12 // EAX * 4096
+    add eax, 0xa00000
+    mov esp, eax
+
+    lea eax, [enable_long_mode]
+    jmp eax
+x64_ap_boot_end:
+#endif
+
+//
+//  Common boot code for both BSP and APs.
+//
 enable_long_mode:
     // Enable PAE and PGE.
     mov eax, cr4
@@ -134,7 +185,8 @@ enable_long_mode:
 // symbol addresses must be physical to load. (in the protected mode, we are not
 // yet able to handle addresses above 0xffff800000000000).
 .align 8
-gdtr:
+.globl x64_boot_gdtr
+x64_boot_gdtr:
     .word gdt_end - gdt - 1
     .quad gdt
 
@@ -162,14 +214,32 @@ long_mode_in_low_address:
     or rax, rbx
     jmp rax
 
-// From here, we're in the .text section: we no longer use physical address.
+//
+//  From here, we're in the .text section: we no longer use physical address.
+//
+.code64
 .text
 long_mode:
+#ifdef CONFIG_MP
+    // Determine the current CPU is BSP or AP.
+    mov edi, 0xfee00020
+    mov eax, [edi]
+    shr eax, 24
+    test eax, eax
+    jz setup_bsp
+setup_ap:
+    lea rax, [rip + x64_ap_setup]
+    call rax
+    jmp halt
+#endif
+
+setup_bsp:
     // The kernel no longer access a virtual address around 0x0000_0000. Unmap
     // the area to catch bugs (especially NULL pointer dereferences in the
     // kernel).
-    mov rdi, 0x0700000
-    mov qword ptr [edi], 0 // Clear the PML4 entry to unmap.
+// FIXME: ap boot code use this in long_mode_in_low_address
+//    mov rdi, 0x0700000
+//    mov qword ptr [edi], 0 // Clear the PML4 entry to unmap.
 
     // Clear .bss section
     mov al, 0x00
@@ -179,9 +249,9 @@ long_mode:
     cld
     rep stosb
 
-    // Enter x64_setup()
-    pop rdi
-    lea rax, [rip + x64_setup]
+    // Enter x64_bsp_setup
+    pop rdi // Restore the address of multiboot_info
+    lea rax, [rip + x64_bsp_setup]
     call rax
 
     // In case x64_setup() returns. I believe it NEVER happen.

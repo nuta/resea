@@ -20,6 +20,7 @@
 #define APIC_REG_TIMER_INITCNT 0xfee00380
 #define APIC_REG_TIMER_CURRENT 0xfee00390
 #define APIC_REG_TIMER_DIV 0xfee003e0
+#define AP_BOOT_CODE_PADDR  0x5000
 
 #define IOAPIC_IOREGSEL_OFFSET 0x00
 #define IOAPIC_IOWIN_OFFSET 0x10
@@ -29,9 +30,24 @@
 #define IOAPIC_REG_NTH_IOREDTBL_LOW(n) (0x10 + (n * 2))
 #define IOAPIC_REG_NTH_IOREDTBL_HIGH(n) (0x10 + (n * 2) + 1)
 
+enum ipi_dest {
+    IPI_DEST_UNICAST            = 0,
+    IPI_DEST_SELF               = 1,
+    IPI_DEST_ALL_EXCLUDING_SELF = 2,
+    IPI_DEST_ALL                = 3,
+};
+
+enum ipi_mode {
+    IPI_MODE_FIXED   = 0,
+    IPI_MODE_INIT    = 5,
+    IPI_MODE_STARTUP = 6,
+};
+
 void x64_ioapic_init(paddr_t ioapic_addr);
 void x64_apic_init(void);
 void x64_apic_timer_init(void);
 void x64_ack_interrupt(void);
+void x64_send_ipi(uint8_t vector, enum ipi_dest dest, uint8_t dest_apic_id,
+                  enum ipi_mode mode);
 
 #endif

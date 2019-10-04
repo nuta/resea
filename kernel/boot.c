@@ -24,18 +24,27 @@ void boot(void) {
     process_init();
     thread_init();
     kernel_server_init();
-
+#ifdef CONFIG_MP
+    arch_mp_init();
+#endif
     userland(&init_args);
 
-    // Perform the very first context switch. The current context will become a
-    // CPU-local idle thread.
-    thread_switch();
-
-    // Now we're in the CPU-local idle thread context.
+    thread_first_switch();
     while (1) {
         arch_idle();
     }
 }
+
+#ifdef CONFIG_MP
+/// The entry point for application processors (processors other than the CPU
+/// which booted the system).
+void boot_ap(void) {
+    thread_first_switch();
+    while (1) {
+        arch_idle();
+    }
+}
+#endif
 
 extern char __initfs[];
 

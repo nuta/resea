@@ -4,8 +4,46 @@
 #include <x64/smp.h>
 #include <x64/x64.h>
 
-static struct mp_float_ptr *look_for_floatptr_table(
-    paddr_t start, paddr_t end) {
+#ifdef CONFIG_MP
+static void udelay(int usec) {
+    while (usec-- > 0) {
+        __asm__ __volatile__("inb $0x80, %%al" ::: "%rax");
+    }
+}
+
+// Note: these symbols points to **physical** addresses.
+extern char x64_boot_gdtr[];
+extern char x64_ap_boot[];
+extern char x64_ap_boot_end[];
+
+static void start_aps(unsigned num_aps) {
+    inlined_memcpy(from_paddr(0x5f00), x64_boot_gdtr, sizeof(struct gdtr));
+    inlined_memcpy(from_paddr(AP_BOOT_CODE_PADDR),
+        from_paddr((paddr_t) x64_ap_boot),
+        (size_t) x64_ap_boot_end - (size_t) x64_ap_boot);
+
+    for (unsigned apic_id = 1; apic_id < 1 + num_aps; apic_id++) {
+        INFO("Processor #%d", apic_id);
+
+        x64_send_ipi(0, IPI_DEST_UNICAST, apic_id, IPI_MODE_INIT);
+        udelay(20000);
+        x64_send_ipi(AP_BOOT_CODE_PADDR >> 12, IPI_DEST_UNICAST,
+                     apic_id, IPI_MODE_STARTUP);
+        udelay(400);
+
+        // TODO: Make sure that the AP is started.
+        udelay(4000);
+    }
+}
+
+static unsigned num_aps = 0;
+void arch_mp_init(void) {
+    start_aps(num_aps);
+}
+#endif
+
+static struct mp_float_ptr *look_for_floatptr_table(paddr_t start,
+                                                    paddr_t end) {
     vaddr_t end_vaddr = (vaddr_t) from_paddr(end);
     for (uint32_t *p = from_paddr(start); (vaddr_t) p < end_vaddr; p++) {
         if (*p == MP_FLOATPTR_SIGNATURE) {
@@ -51,6 +89,12 @@ void x64_smp_init(void) {
             break;
         case MP_BASETABLE_PROCESSOR_ENTRY:
             size = sizeof(struct mp_processor_entry);
+#ifdef CONFIG_MP
+            struct mp_processor_entry *entry = (void *) entry_ptr;
+            if (entry->localapic_id != x64_read_cpu_id()) {
+                num_aps++;
+            }
+#endif
             break;
         case MP_BASETABLE_IOINT_ASSIGN_ENTRY:
             size = sizeof(struct mp_ioint_assign_entry);

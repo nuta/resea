@@ -1,4 +1,5 @@
 #include <arch.h>
+#include <x64/apic.h>
 #include <debug.h>
 
 #ifdef DEBUG_BUILD
@@ -15,6 +16,8 @@ void arch_asan_init(void) {
 
     // Kernel image.
     asan_init_area(ASAN_VALID, (void *) __kernel_image_start, image_len);
+    // AP boot code.
+    asan_init_area(ASAN_VALID, from_paddr(AP_BOOT_CODE_PADDR), 0x1000);
     // QEMU multiboot info.
     asan_init_area(ASAN_VALID, from_paddr(0x9000), 0x1000);
     // GRUB multiboot info.
