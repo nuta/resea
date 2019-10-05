@@ -141,7 +141,7 @@ ap_protected_mode:
     mov eax, [0xfee00020] // Get the Local APIC ID.
     shr eax, 24
     shl eax, 12 // EAX * 4096
-    add eax, 0xa00000
+    add eax, 0xa01000
     mov esp, eax
 
     lea eax, [enable_long_mode]
