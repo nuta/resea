@@ -150,6 +150,15 @@ interface keyboard_driver {
     keyinput_event(keycode: uint8) -> ()
 }
 
+[id(31)]
+interface mouse_driver {
+    [id(1), type(call)]
+    listen(ch: channel) -> ()
+
+    [id(2), type(call)]
+    mouse_event(left_button: bool, right_button: bool, x: int16, y: int16) -> ()
+}
+
 [id(32)]
 interface storage_driver {
     [id(1), type(call)]
