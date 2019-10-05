@@ -96,6 +96,10 @@ x64_syscall_handler:
     pop r11
     pop rsp
 
+    // Update RFLAGS. TODO: Abandon io.allow_iomapped_io and remove this.
+    mov rdx, gs:[ARCH_RFLAGS_ORMASK]
+    or  r11, rdx
+
     // Sanitize registers to prevent information leak. Note that some scratch
     // registers holds values for SYSRETQ and the user:
     //
