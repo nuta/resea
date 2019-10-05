@@ -7,27 +7,6 @@
 
 .data
 .align 8
-giant_lock:
-    .long 0
-
-/// Locks the ginant lock. Note that it uses stack.
-.macro GIANT_LOCK
-\@1:
-    push rax
-    mov  eax, 1
-    lock xchg [rip + giant_lock], eax
-    test eax, eax
-    jnz  \@1b
-    pop  rax
-.endm
-
-/// Unlocks the ginant lock. Note that it uses stack.
-.macro GIANT_UNLOCK
-    push rax
-    xor  eax, eax
-    mov  [rip + giant_lock], eax
-    pop  rax
-.endm
 
 .text
 
@@ -81,9 +60,7 @@ x64_syscall_handler:
     // Set RDX to the 1st argument for syscall_handler().
     mov rdx, rax
 
-    GIANT_LOCK
     call syscall_handler
-    GIANT_UNLOCK
 
     // Restore callee-saved registers.
     pop r15
@@ -179,7 +156,6 @@ handle_interrupt:
     test qword ptr [rsp + 24], 3
     jz 1f
     swapgs
-    GIANT_LOCK
 1:
     // Save RDI and set the IRQ number to RDI at once.
     xchg rdi, [rsp]
@@ -203,7 +179,6 @@ handle_interrupt:
     mov rsi, rsp
 
     call x64_handle_interrupt
-    GIANT_UNLOCK
 
     pop rax
     pop rbx
@@ -255,8 +230,6 @@ x64_start_kernel_thread:
 
 .globl x64_start_user_thread
 x64_start_user_thread:
-    GIANT_UNLOCK
-
     /* Sanitize registers to prevent information leak. */
     xor rax, rax
     xor rbx, rbx
