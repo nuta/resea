@@ -152,12 +152,20 @@ static error_t handle_keyinput_event(struct message *m) {
     return OK;
 }
 
+static error_t handle_mouse_event(struct message *m) {
+    int x = m->payloads.mouse_driver.mouse_event.x;
+    int y = m->payloads.mouse_driver.mouse_event.y;
+    TRACE("mouse: (%d, %d)", x, y);
+    return DONT_REPLY;
+}
+
 static error_t process_message(struct message *m) {
     switch (m->header) {
     case SERVER_CONNECT_MSG:    return handle_server_connect(m);
     case GUI_CONSOLE_WRITE_MSG: return handle_gui_console_write(m);
     case GUI_ACTIVATE_MSG:      return handle_gui_activate(m);
     case KEYBOARD_DRIVER_KEYINPUT_EVENT_MSG: return handle_keyinput_event(m);
+    case MOUSE_DRIVER_MOUSE_EVENT_MSG: return handle_mouse_event(m);
     }
     return ERR_UNEXPECTED_MESSAGE;
 }
@@ -179,12 +187,21 @@ void main(void) {
                                              &framebuffer.bpp));
     console_init();
 
+    INFO("waiting for kbd...");
     cid_t kbd_ch;
     TRY_OR_PANIC(call_discovery_connect(memmgr_ch, KEYBOARD_DRIVER_INTERFACE, &kbd_ch));
     cid_t kbd_listener_ch;
     TRY_OR_PANIC(open(&kbd_listener_ch));
     TRY_OR_PANIC(transfer(kbd_listener_ch, server_ch));
     TRY_OR_PANIC(call_keyboard_driver_listen(kbd_ch, kbd_listener_ch));
+
+    INFO("waiting for mouse...");
+    cid_t mouse_ch;
+    TRY_OR_PANIC(call_discovery_connect(memmgr_ch, MOUSE_DRIVER_INTERFACE, &mouse_ch));
+    cid_t mouse_listener_ch;
+    TRY_OR_PANIC(open(&mouse_listener_ch));
+    TRY_OR_PANIC(transfer(mouse_listener_ch, server_ch));
+    TRY_OR_PANIC(call_mouse_driver_listen(mouse_ch, mouse_listener_ch));
 
     cid_t discovery_ch;
     TRY_OR_PANIC(open(&discovery_ch));
