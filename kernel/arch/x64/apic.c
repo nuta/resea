@@ -69,6 +69,8 @@ void x64_ioapic_init(paddr_t ioapic_addr) {
     }
 }
 
+static uint32_t counts_per_sec;
+
 static void calibrate_apic_timer(void) {
     // FIXME: This method works well on QEMU though on the real machine
     // this doesn't. For example on my machine `counts_per_sec' is 7x greater
@@ -92,7 +94,7 @@ static void calibrate_apic_timer(void) {
     while ((asm_in8(KBC_PORT_B) & KBC_B_OUT2_STATUS) == 0) {}
 
     uint64_t diff = init_count - x64_read_apic(APIC_REG_TIMER_CURRENT);
-    uint32_t counts_per_sec = (diff * freq) << APIC_TIMER_DIV;
+    counts_per_sec = (diff * freq) << APIC_TIMER_DIV;
     x64_write_apic(APIC_REG_TIMER_INITCNT, counts_per_sec / TICK_HZ);
     TRACE("calibrated the APIC timer using PIT: %d counts/msec",
         counts_per_sec / 1000);
@@ -107,7 +109,12 @@ void x64_apic_timer_init(void) {
     x64_write_apic(APIC_REG_TIMER_INITCNT, 0xffffffff);
     x64_write_apic(APIC_REG_LVT_TIMER, APIC_TIMER_VECTOR | 0x20000);
     x64_write_apic(APIC_REG_TIMER_DIV, APIC_TIMER_DIV);
-    calibrate_apic_timer();
+
+    if (x64_read_cpu_id() == 0) {
+        calibrate_apic_timer();
+    }
+
+    x64_write_apic(APIC_REG_TIMER_INITCNT, counts_per_sec / TICK_HZ);
 }
 
 void x64_apic_init(void) {
