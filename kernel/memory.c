@@ -45,6 +45,7 @@ void arena_init(struct kmalloc_arena *arena, vaddr_t addr, size_t arena_size,
 }
 
 /// Allocates a memory. Don't use this directly; use KMALLOC() macro.
+/// TODO: Prepare zero-filled pages in idle threads.
 void *kmalloc_from(struct kmalloc_arena *arena) {
     if (list_is_empty(&arena->free_list)) {
         PANIC("Run out of kernel memory.");
