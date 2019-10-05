@@ -1,0 +1,3 @@
+menuconfig PS2_SERVER
+    bool "PC keyboard/mouse (PS/2) driver"
+    default y
