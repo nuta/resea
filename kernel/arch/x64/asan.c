@@ -25,7 +25,7 @@ void arch_asan_init(void) {
     // Text-mode VGA.
     asan_init_area(ASAN_VALID, from_paddr(0xb8000), 0x1000);
     // MP table.
-    asan_init_area(ASAN_VALID, from_paddr(0xf0000), 0x10000);
+    asan_init_area(ASAN_VALID, from_paddr(0xe0000), 0x20000);
     // Kernel's page table (maps above 0xffff8000_00000000).
     asan_init_area(ASAN_VALID, from_paddr(0x700000), 0x30000);
     // Kernel boot stacks.
