@@ -24,10 +24,10 @@ void boot(void) {
     process_init();
     thread_init();
     kernel_server_init();
+    userland(&init_args);
 #ifdef CONFIG_MP
     arch_mp_init();
 #endif
-    userland(&init_args);
 
     thread_first_switch();
     while (1) {
