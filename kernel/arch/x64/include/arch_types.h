@@ -144,7 +144,7 @@ static inline void arch_putchar(char ch) {
 
 static inline void prefetch(MAYBE_UNUSED void *ptr) {
 #ifdef CONFIG_PREFETCH
-    __asm__ __volatile__("prefetcht0 %0" :: "m"(ptr));
+    __asm__ __volatile__("prefetcht0 (%0)" :: "r"(ptr));
 #endif
 }
 
