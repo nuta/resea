@@ -392,6 +392,7 @@ builtin_types = {
     "page_base":   { "name": "page_base_t",   "size": "sizeof(page_base_t)" },
     "char":        { "name": "char",          "size": "sizeof(char)" },
     "smallstring": { "name": "smallstring_t", "size": "SMALLSTRING_LEN_MAX" },
+    "bool":        { "name": "bool",          "size": "sizeof(bool)" },
 }
 
 user_defined_types = {}
