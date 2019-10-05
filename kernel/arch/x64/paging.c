@@ -47,6 +47,7 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
 #ifdef DEBUG_BUILD
                 asan_init_area(ASAN_VALID, page, PAGE_SIZE);
 #endif
+                inlined_memset(page, 0, PAGE_SIZE);
                 table[index] = (uint64_t) into_paddr(page);
             }
 
