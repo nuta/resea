@@ -152,7 +152,6 @@ void __ubsan_handle_builtin_unreachable() {
 //  pointer dereference, use of an uninitialized memory, etc.
 //
 // TODO: SMP support: asan_enabled should be a CPU-local variable.
-// TODO: SMP support: Shadow memory data are not atomic variables.
 //
 
 static bool asan_enabled = false;
