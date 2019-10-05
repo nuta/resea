@@ -88,7 +88,7 @@ error_t server_register(cid_t discovery_server, cid_t server_ch,
     cid_t ch;
     TRY(open(&ch));
     TRY(transfer(ch, server_ch));
-    TRY(call_discovery_publicize(discovery_server, interface, server_ch));
+    TRY(call_discovery_publicize(discovery_server, interface, ch));
     return OK;
 }
 
