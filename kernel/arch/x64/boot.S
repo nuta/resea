@@ -234,13 +234,6 @@ setup_ap:
 #endif
 
 setup_bsp:
-    // The kernel no longer access a virtual address around 0x0000_0000. Unmap
-    // the area to catch bugs (especially NULL pointer dereferences in the
-    // kernel).
-// FIXME: ap boot code use this in long_mode_in_low_address
-//    mov rdi, 0x0700000
-//    mov qword ptr [edi], 0 // Clear the PML4 entry to unmap.
-
     // Clear .bss section
     mov al, 0x00
     lea rdi, [rip + __bss]

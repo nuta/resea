@@ -1,6 +1,7 @@
 #ifndef __ARCH_TYPES_H__
 #define __ARCH_TYPES_H__
 
+#include <config.h>
 #include <printk.h>
 #include <x64/screen.h>
 #include <x64/serial.h>
@@ -33,8 +34,12 @@
 #define CPUVAR            (x64_get_cpuvar(x64_read_cpu_id()))
 #define CPUVAR_OF(cpu_id) (x64_get_cpuvar(cpu_id))
 
+#ifdef CONFIG_MP
 unsigned x64_num_cpus(void);
-#define NUM_CPUS          (x64_num_cpus())
+#define NUM_CPUS  (x64_num_cpus())
+#else
+#define NUM_CPUS  1
+#endif
 
 struct thread;
 struct cpuvar {

@@ -9,9 +9,14 @@
 #define ENTRY_PADDR(entry) ((entry) &0x7ffffffffffff000)
 
 void page_table_init(struct page_table *pt) {
-    void *pml4 = KMALLOC(&page_arena, PAGE_SIZE);
+    uint64_t *pml4 = KMALLOC(&page_arena, PAGE_SIZE);
     inlined_memcpy(pml4, from_paddr(KERNEL_PML4_PADDR), PAGE_SIZE);
-    *((uint64_t *) pml4) = 0; // FIXME: only used by the boot code
+
+    // The kernel no longer access a virtual address around 0x0000_0000. Unmap
+    // the area to catch bugs (especially NULL pointer dereferences in the
+    // kernel).
+    pml4[0] = 0;
+
 #ifdef DEBUG_BUILD
     asan_init_area(ASAN_VALID, pml4, PAGE_SIZE);
 #endif
