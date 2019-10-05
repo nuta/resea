@@ -206,6 +206,7 @@ void thread_first_switch(void) {
 /// Initializes the thread subsystem.
 void thread_init(void) {
     list_init(&runqueue);
+    // Create idle threads for every CPU.
     for (unsigned cpu_id = 0; cpu_id < NUM_CPUS; cpu_id++) {
         struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0, 0);
         CPUVAR_OF(cpu_id)->idle_thread = idle_thread;
