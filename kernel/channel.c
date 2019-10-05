@@ -94,11 +94,11 @@ void channel_destroy(struct channel *ch) {
 void channel_link(struct channel *ch1, struct channel *ch2) {
     if (ch1 == ch2) {
         if (ch1->linked_with != ch1) {
-            channel_destroy(ch1->linked_with);
+            channel_decref(ch1->linked_with);
         }
 
         if (ch2->linked_with != ch2) {
-            channel_destroy(ch2->linked_with);
+            channel_decref(ch2->linked_with);
         }
 
         ch1->linked_with = ch1;
@@ -118,7 +118,7 @@ void channel_transfer(struct channel *src, struct channel *dst) {
 
     if (src == dst) {
         if (src->transfer_to != src) {
-            channel_destroy(src->transfer_to);
+            channel_decref(src->transfer_to);
         }
         src->transfer_to = src;
     } else {

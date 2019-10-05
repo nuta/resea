@@ -303,7 +303,7 @@ static error_t handle_timer_clear(UNUSED struct message *m) {
         return ERR_INVALID_PAYLOAD;
     }
 
-    channel_destroy(timer->arg);
+    channel_decref(timer->arg);
     table_free(&user_timers, timer->id);
     timer_destroy(timer);
 
