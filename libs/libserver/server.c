@@ -68,6 +68,7 @@ error_t server_mainloop_with_deferred(cid_t ch,
                     TRACE("Retrying deferred work in %d milliseconds...",
                           delay);
                     int timer_id;
+                    // FIXME: We can't reuse timer_ch!
                     call_timer_set(timer_server, timer_ch, delay, 0, &timer_id);
                 } else {
                     TRY(err);
