@@ -206,9 +206,7 @@ void thread_first_switch(void) {
 /// Initializes the thread subsystem.
 void thread_init(void) {
     list_init(&runqueue);
-    // FIXME:
-    const int NUM_CPU_MAX = 8;
-    for (unsigned cpu_id = 0; cpu_id < NUM_CPU_MAX; cpu_id++) {
+    for (unsigned cpu_id = 0; cpu_id < NUM_CPUS; cpu_id++) {
         struct thread *idle_thread = thread_create(kernel_process, 0, 0, 0, 0);
         CPUVAR_OF(cpu_id)->idle_thread = idle_thread;
     }

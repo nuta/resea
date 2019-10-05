@@ -33,6 +33,9 @@
 #define CPUVAR            (x64_get_cpuvar(x64_read_cpu_id()))
 #define CPUVAR_OF(cpu_id) (x64_get_cpuvar(cpu_id))
 
+unsigned x64_num_cpus(void);
+#define NUM_CPUS          (x64_num_cpus())
+
 struct thread;
 struct cpuvar {
     struct thread *idle_thread;

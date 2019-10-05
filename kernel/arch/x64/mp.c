@@ -16,13 +16,19 @@ extern char x64_boot_gdtr[];
 extern char x64_ap_boot[];
 extern char x64_ap_boot_end[];
 
-static void start_aps(unsigned num_aps) {
+static unsigned num_cpus = 1;
+
+unsigned x64_num_cpus(void) {
+    return num_cpus;
+}
+
+static void start_aps() {
     inlined_memcpy(from_paddr(0x5f00), x64_boot_gdtr, sizeof(struct gdtr));
     inlined_memcpy(from_paddr(AP_BOOT_CODE_PADDR),
         from_paddr((paddr_t) x64_ap_boot),
         (size_t) x64_ap_boot_end - (size_t) x64_ap_boot);
 
-    for (unsigned apic_id = 1; apic_id < 1 + num_aps; apic_id++) {
+    for (unsigned apic_id = 1; apic_id < x64_num_cpus(); apic_id++) {
         INFO("Processor #%d", apic_id);
 
         x64_send_ipi(0, IPI_DEST_UNICAST, apic_id, IPI_MODE_INIT);
@@ -36,9 +42,8 @@ static void start_aps(unsigned num_aps) {
     }
 }
 
-static unsigned num_aps = 0;
 void arch_mp_init(void) {
-    start_aps(num_aps);
+    start_aps();
 }
 #endif
 
@@ -92,7 +97,7 @@ void x64_read_mp_table(void) {
 #ifdef CONFIG_MP
             struct mp_processor_entry *entry = (void *) entry_ptr;
             if (entry->localapic_id != x64_read_cpu_id()) {
-                num_aps++;
+                num_cpus++;
             }
 #endif
             break;
