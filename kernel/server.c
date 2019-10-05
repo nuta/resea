@@ -262,7 +262,7 @@ static void user_timer_handler(struct timer *timer) {
     struct channel *ch = timer->arg;
     channel_notify(ch, NOTIFY_TIMER);
     if (!timer->interval) {
-        channel_destroy(timer->arg);
+        channel_decref(timer->arg);
         table_free(&user_timers, timer->id);
     }
 }
@@ -280,6 +280,7 @@ static error_t handle_timer_set(struct message *m) {
         return ERR_OUT_OF_MEMORY;
     }
 
+    channel_incref(ch);
     struct timer *timer = timer_create(initial, interval, user_timer_handler,
                                        ch);
     if (!timer) {
@@ -288,7 +289,6 @@ static error_t handle_timer_set(struct message *m) {
     }
 
     table_set(&user_timers, timer_id, timer);
-    channel_incref(ch);
 
     m->header = TIMER_SET_REPLY_MSG;
     m->payloads.timer.set_reply.timer = timer_id;

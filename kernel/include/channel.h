@@ -55,6 +55,7 @@ struct channel {
 
 struct channel *channel_create(struct process *process);
 void channel_incref(struct channel *ch);
+void channel_decref(struct channel *ch);
 void channel_destroy(struct channel *ch);
 void channel_link(struct channel *ch1, struct channel *ch2);
 void channel_transfer(struct channel *src, struct channel *dst);

@@ -39,15 +39,12 @@ void channel_incref(struct channel *ch) {
     ch->ref_count++;
 }
 
-/// Decrements the refrence counter of the channel and destructs a channel if
-/// possible.
-void channel_destroy(struct channel *ch) {
+/// Increments the reference counter of the channel.
+void channel_decref(struct channel *ch) {
+    ASSERT(ch->ref_count >= 1);
     ch->ref_count--;
-    ASSERT(ch->ref_count >= 0);
 
     if (ch->ref_count > 0) {
-        // The channel is still being referenced; we can't destruct immediately.
-        ch->destructed = true;
         return;
     }
 
@@ -81,6 +78,15 @@ void channel_destroy(struct channel *ch) {
     ch->receiver    = INVALID_POINTER;
 #endif
     kfree(&object_arena, ch);
+}
+
+/// Decrements the refrence counter of the channel and destructs a channel if
+/// possible.
+void channel_destroy(struct channel *ch) {
+    DEBUG_ASSERT(!ch->destructed);
+    ch->destructed = true;
+
+    channel_decref(ch);
 }
 
 /// Links two channels. The message from `ch1` will be sent to `ch2`. `ch1` and
