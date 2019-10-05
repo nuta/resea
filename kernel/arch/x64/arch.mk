@@ -15,7 +15,7 @@ endif
 HDD_DIR = $(BUILD_DIR)/hdd
 BOCHS ?= bochs
 QEMU ?= qemu-system-x86_64
-QEMUFLAGS += -smp 4 -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
+QEMUFLAGS += -smp 2 -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
 QEMUFLAGS += -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04
 ifdef CONFIG_VIRTIO_BLK_SERVER
 QEMUFLAGS += -drive id=hdd0,if=none,file=fat:rw:$(HDD_DIR)
