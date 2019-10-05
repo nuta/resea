@@ -1,7 +1,7 @@
 romimage: file=$BXSHARE/BIOS-bochs-latest
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 config_interface: textconfig
-display_library: nogui
+display_library: sdl2
 
 cpu: model=corei7_ivy_bridge_3770k, count=2
 memory: guest=512, host=512
