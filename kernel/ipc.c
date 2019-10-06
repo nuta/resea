@@ -178,7 +178,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Handle the channel payload.
         if (header & MSG_CHANNEL_PAYLOAD) {
             struct channel *payload_ch = table_get(&current->process->channels,
-                                           m->payloads.channel);
+                                                   m->payloads.channel);
             if (!payload_ch) {
                 receiver->abort_reason = ERR_NEEDS_RETRY;
                 return ERR_INVALID_PAYLOAD;
@@ -194,13 +194,13 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             dst_m->payloads.channel = dst_ch->cid;
         }
 
-        // Copy the page payload if exists.
+        // Handle the page payload.
         if (header & MSG_PAGE_PAYLOAD) {
-            page_t page = m->payloads.page;
-            vaddr_t payload_vaddr = PAGE_PAYLOAD_ADDR(page);
-            page_t page_base = receiver->info->page_base;
+            page_t page            = m->payloads.page;
+            vaddr_t payload_vaddr  = PAGE_PAYLOAD_ADDR(page);
+            page_t page_base       = receiver->info->page_base;
             vaddr_t page_base_addr = PAGE_PAYLOAD_ADDR(page_base);
-            int num_pages = POW2(PAGE_ORDER(page));
+            int num_pages          = POW2(PAGE_ORDER(page));
 
             // Resolve the physical address referenced by the page payload.
             struct page_table *page_table = &current->process->page_table;
@@ -230,7 +230,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
                 link_page(&receiver->process->page_table, page_base_addr, paddr,
                           num_pages, PAGE_USER | PAGE_WRITABLE);
-                dst_m->payloads.page = PAGE_PAYLOAD(page_base_addr, PAGE_ORDER(page));
+                dst_m->payloads.page = PAGE_PAYLOAD(page_base_addr,
+                                                    PAGE_ORDER(page));
             }
 
             // Unlink the pages from the current (sender) process.
@@ -371,8 +372,7 @@ static error_t sys_ipc_fastpath(cid_t cid) {
 #endif
 
     // Do a direct context switch into the receiver thread. The current thread
-    // is now blocked and will be resumed by another IPC or when the send or the
-    // receive operation is aborted.
+    // is now blocked and will be resumed by another IPC.
     arch_thread_switch(current, receiver);
 
     // Received a message or a notification, or the IPC operation is aborted.

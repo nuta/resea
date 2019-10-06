@@ -119,8 +119,8 @@ static int is_valid_page_fault_for(struct vmarea *vma, vaddr_t vaddr,
     return 1;
 }
 
-/// The page fault handler. It calls pagers and updates the page table. If the
-/// page fault is invalid (e.g., segfault and NULL pointer dereference), kill
+/// The page fault handler. It calls a pager and updates the page table. If the
+/// page fault is invalid (e.g., segfault or NULL pointer dereference), kill
 /// the current thread.
 paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
     // TRACE("page_fault_handler: addr=%p", addr);

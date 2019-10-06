@@ -31,7 +31,7 @@ x64_boot:
     cld
 
     // Set the boot (later reused for the cpu-local idle thread) stack. It is
-    // statically allocated as follows (see INTERNALS.md):
+    // statically allocated as follows (see docs/internals.md):
     //
     //     address = 0xffff800000a00000 + (cpu_id * PAGE_SIZE)
     //     length  = PAGE_SIZE
@@ -51,6 +51,7 @@ x64_boot:
     lea edx, [protected_mode]
     push edx
 
+    // Switch to our own temporary GDT.
     lgdt [x64_boot_gdtr]
     retf
 
@@ -105,7 +106,8 @@ write_pd_entry:
 
 #ifdef CONFIG_MP
 //
-//  AP boot code.
+//  AP boot code. x64_ap_boot is located at 0x5000 (copied to the address by the
+//  kernel later).
 //
 .code16
 .globl x64_ap_boot, x64_ap_boot_end
@@ -116,7 +118,7 @@ x64_ap_boot:
     mov es, ax
 
     // Load GDT and enable Protected Mode.
-    lgdt [0x5f00]
+    lgdt [0x5f00 /* FIXME: Define a macro instead. */]
     mov  eax, cr0
     or   eax, 1
     mov  cr0, eax
@@ -155,7 +157,7 @@ x64_ap_boot_end:
 enable_long_mode:
     // Enable PAE and PGE.
     mov eax, cr4
-    or eax, 0xa0
+    or  eax, 0xa0
     mov cr4, eax
 
     // Set the page table address.
@@ -165,13 +167,13 @@ enable_long_mode:
     // Enable long mode.
     mov ecx, 0xc0000080
     rdmsr
-    or eax, 0x0100
+    or  eax, 0x0100
     wrmsr
 
     // Prepare for RETF.
-    mov eax, 8
+    mov  eax, 8
     push eax
-    lea edx, [long_mode_in_low_address]
+    lea  edx, [long_mode_in_low_address]
     push edx
 
     // Enable paging.
@@ -181,10 +183,8 @@ enable_long_mode:
 
     retf
 
-// Temporary GDTR/GDT entries. They are located in the .boot section as theier
-// symbol addresses must be physical to load. (in the protected mode, we are not
-// yet able to handle addresses above 0xffff800000000000).
-.align 8
+// Temporary GDTR/GDT entries. This must be located in the .boot section as its
+// address (gdt) must be physical to load.
 .globl x64_boot_gdtr
 x64_boot_gdtr:
     .word gdt_end - gdt - 1
@@ -209,9 +209,9 @@ long_mode_in_low_address:
 
     // Update RSP/RIP to use the virtual address.
     mov rbx, 0xffff800000000000
-    or rsp, rbx
+    or  rsp, rbx
     lea rax, [long_mode - 0xffff800000000000]
-    or rax, rbx
+    or  rax, rbx
     jmp rax
 
 //
@@ -226,11 +226,11 @@ long_mode:
     mov eax, [edi]
     shr eax, 24
     test eax, eax
-    jz setup_bsp
+    jz  setup_bsp
 setup_ap:
-    lea rax, [rip + x64_ap_setup]
+    lea  rax, [rip + x64_ap_setup]
     call rax
-    jmp halt
+    jmp  halt
 #endif
 
 setup_bsp:
@@ -243,8 +243,8 @@ setup_bsp:
     rep stosb
 
     // Enter x64_bsp_setup
-    pop rdi // Restore the address of multiboot_info
-    lea rax, [rip + x64_bsp_setup]
+    pop  rdi // Restore the address of multiboot_info
+    lea  rax, [rip + x64_bsp_setup]
     call rax
 
     // In case x64_setup() returns. I believe it NEVER happen.
