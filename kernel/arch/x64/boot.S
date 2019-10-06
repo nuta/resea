@@ -69,17 +69,17 @@ protected_mode:
 construct_page_table:
     // PML4: 0x00000000_00000000 (temporarily used in protected mode)
     mov edi, 0x0700000
-    mov dword ptr [edi], 0x0701003 // Present, writable.
+    mov dword ptr [edi], 0x0701103 // Present, writable, global.
     mov dword ptr [edi + 4], 0
 
     // PML4: 0xffff8000_00000000
     mov edi, 0x0700000 + 256 * 8
-    mov dword ptr [edi], 0x0701003 // Present, writable.
+    mov dword ptr [edi], 0x0701103 // Present, writable, global.
     mov dword ptr [edi + 4], 0
 
     // PDPT
     mov edi, 0x0701000
-    mov eax, 0x0702003 // Present, writable
+    mov eax, 0x0702103 // Present, writable, global.
     mov ecx, NUM_PDPT_ENTRIES
 
 write_pdpt_entry:
@@ -91,7 +91,7 @@ write_pdpt_entry:
 
     // Page Directory
     mov edi, 0x0702000
-    mov eax, 0x0083 // Present, writable, page size is 2MB.
+    mov eax, 0x0000183 // Present, writable, global, page size is 2MB.
     mov ecx, NUM_PDPT_ENTRIES * 512 // (# of PDPT entries) * (# of entries in PD)
 
 write_pd_entry:
