@@ -43,11 +43,9 @@ pub struct {{ msg.name | camelcase }}Msg {
     __unused_channel: Channel,
 {%- endif %}
 {%- if msg.args.page %}
-    pub {{ msg.args.page.name }}_addr: usize,
-    pub {{ msg.args.page.name }}_num_pages: usize,
+    pub {{ msg.args.page.name }}: Page,
 {%- else %}
-    __unused_page_addr: usize,
-    __unused_num_pages: usize,
+    __unused_page: Page,
 {%- endif %}
 {%- for field in msg.args.inlines %}
     pub {{ field.name }}: {{ field.type | resolve_type_in_msg_struct }},
@@ -79,11 +77,9 @@ pub struct {{ msg.name | camelcase }}ReplyMsg {
     __unused_channel: Channel,
 {%- endif %}
 {%- if msg.rets.page %}
-    pub {{ msg.rets.page.name }}_addr: usize,
-    pub {{ msg.rets.page.name }}_num_pages: usize,
+    pub {{ msg.rets.page.name }}: Page,
 {%- else %}
-    __unused_page_addr: usize,
-    __unused_num_pages: usize,
+    __unused_page: Page,
 {%- endif %}
 {%- for field in msg.rets.inlines %}
     pub {{ field.name }}: {{ field.type | resolve_type_in_msg_struct }},

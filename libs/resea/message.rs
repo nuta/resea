@@ -54,6 +54,7 @@ impl Notification {
 }
 
 #[repr(C, packed)]
+#[derive(Clone, Copy)]
 pub struct Page {
     pub addr: usize,
     pub len: usize,
