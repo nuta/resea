@@ -11,6 +11,12 @@ pub struct Channel {
 }
 
 impl Channel {
+    pub fn create() -> Result<Channel, Error> {
+        unsafe {
+            syscall::open().map(Channel::from_cid)
+        }
+    }
+
     pub const fn from_cid(cid: i32) -> Channel {
         Channel { cid }
     }
