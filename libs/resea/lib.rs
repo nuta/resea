@@ -34,6 +34,7 @@ pub mod channel;
 pub mod server;
 pub mod idl;
 pub mod message;
+pub mod utils;
 
 mod arch;
 mod allocator;

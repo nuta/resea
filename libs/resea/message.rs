@@ -1,4 +1,6 @@
 use crate::error::Error;
+use crate::channel::CId;
+use crate::std::string::String;
 
 pub const SYSCALL_IPC: u32 = 0;
 pub const SYSCALL_OPEN: u32 = 1;
@@ -59,7 +61,6 @@ pub struct Page {
 
 pub const MESSAGE_SIZE: usize = 256;
 pub const INLINE_PAYLOAD_LEN_MAX: usize = MESSAGE_SIZE - core::mem::size_of::<usize>() * 4;
-pub type CId = i32;
 
 #[repr(C, packed)]
 pub struct Message {
@@ -80,6 +81,32 @@ impl Message {
         let mut m = unsafe { Message::uninit() };
         m.header = MessageHeader::from_error(error);
         m
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct Handle(i32);
+
+#[repr(transparent)]
+pub struct FixedString([u8; 128]);
+
+impl FixedString {
+    pub fn from_str(from: &str) -> FixedString {
+        unsafe {
+            use core::{mem::MaybeUninit, cmp::min, ptr::copy_nonoverlapping};
+            let mut string: FixedString = MaybeUninit::uninit().assume_init();
+            let copy_len = min(from.len(), 127);
+            copy_nonoverlapping(from.as_ptr(), string.0.as_mut_ptr(), copy_len);
+            // Set NUL character.
+            *string.0.as_mut_ptr().add(copy_len) = 0;
+            string
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        let s = unsafe { crate::utils::c_str_to_str(self.0.as_ptr()) };
+        String::from(s)
     }
 }
 

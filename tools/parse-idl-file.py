@@ -112,10 +112,22 @@ builtin_sizes = {
     "uint16":  2,
     "uint32":  4,
     "uint64":  8,
-    "intmax":  8,
-    "uintmax": 8,
     "bool":    1,
     "char":    1,
+
+    # These payloads are not included in the inline payload.
+    "channel": 0,
+    "page":    0,
+
+    # FIXME: Arch-dependent types.
+    "size":    8,
+    "paddr":   8,
+    "uintptr": 8,
+    "intmax":  8,
+    "uintmax": 8,
+    "cid":     4,
+    "handle":  4,
+    "string": 128,
 }
 
 def main():

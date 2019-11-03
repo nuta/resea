@@ -4,10 +4,12 @@ use crate::arch::thread_info::{copy_from_ipc_buffer, copy_to_ipc_buffer};
 use crate::message::Message;
 use core::mem::MaybeUninit;
 
+pub type CId = i32;
+
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct Channel {
-    cid: i32,
+    cid: CId,
 }
 
 impl Channel {
@@ -17,11 +19,11 @@ impl Channel {
         }
     }
 
-    pub const fn from_cid(cid: i32) -> Channel {
+    pub const fn from_cid(cid: CId) -> Channel {
         Channel { cid }
     }
 
-    pub fn cid(&self) -> i32 {
+    pub fn cid(&self) -> CId {
         self.cid
     }
 

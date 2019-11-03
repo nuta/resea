@@ -13,14 +13,14 @@ TEMPLATE = """\
 use crate::message::*;
 use crate::error::Error;
 use crate::arch::syscall;
-use crate::channel::Channel;
-use crate::message::*;
+use crate::channel::{CId, Channel};
+use crate::std::string::String;
 
 pub const INTERFACE_ID: u8 = {{ attrs.id }};
 
 {% for msg in messages %}
 pub const {{ msg.name | upper }}_MSG_INLINE_LEN: usize = ({{ msg.args | inline_len }});
-pub const {{ msg.name | upper }}_MSG: MessageHeader = 
+pub const {{ msg.name | upper }}_MSG: MessageHeader =
     MessageHeader::new( \
         (((INTERFACE_ID as u32) << 8) | {{ msg.attrs.id }}) << MSG_TYPE_OFFSET \
 {%- if msg.args.page -%}
@@ -35,12 +35,12 @@ pub const {{ msg.name | upper }}_MSG: MessageHeader =
 #[repr(C, packed)]
 pub struct {{ msg.name | camelcase }}Msg {
     pub header: MessageHeader,
-    pub from: CId,
+    pub from: Channel,
     pub notification: Notification,
 {%- if msg.args.channel %}
-    pub {{ msg.args.channel.name }}: CId,
+    pub {{ msg.args.channel.name }}: Channel,
 {%- else %}
-    __unused_channel: CId,
+    __unused_channel: Channel,
 {%- endif %}
 {%- if msg.args.page %}
     pub {{ msg.args.page.name }}_addr: usize,
@@ -50,10 +50,9 @@ pub struct {{ msg.name | camelcase }}Msg {
     __unused_num_pages: usize,
 {%- endif %}
 {%- for field in msg.args.inlines %}
-    pub {{ field.name }}: {{ field.type | resolve_type }},
+    pub {{ field.name }}: {{ field.type | resolve_type_in_msg_struct }},
 {%- endfor %}
 }
-
 
 {%- if msg.attrs.type == "call" %}
 pub const {{ msg.name | upper }}_REPLY_MSG_INLINE_LEN: usize = ({{ msg.rets | inline_len }});
@@ -72,12 +71,12 @@ pub const {{ msg.name | upper }}_REPLY_MSG: MessageHeader =
 #[repr(C, packed)]
 pub struct {{ msg.name | camelcase }}ReplyMsg {
     pub header: MessageHeader,
-    pub from: CId,
+    pub from: Channel,
     pub notification: Notification,
 {%- if msg.rets.channel %}
-    pub {{ msg.rets.channel.name }}: CId,
+    pub {{ msg.rets.channel.name }}: Channel,
 {%- else %}
-    __unused_channel: CId,
+    __unused_channel: Channel,
 {%- endif %}
 {%- if msg.rets.page %}
     pub {{ msg.rets.page.name }}_addr: usize,
@@ -87,7 +86,7 @@ pub struct {{ msg.name | camelcase }}ReplyMsg {
     __unused_num_pages: usize,
 {%- endif %}
 {%- for field in msg.rets.inlines %}
-    pub {{ field.name }}: {{ field.type | resolve_type }},
+    pub {{ field.name }}: {{ field.type | resolve_type_in_msg_struct }},
 {%- endfor %}
     __unused_data: [u8; INLINE_PAYLOAD_LEN_MAX - {{ msg.name | upper }}_REPLY_MSG_INLINE_LEN]
 }
@@ -102,7 +101,7 @@ pub fn send_{{ msg.name }}({{ msg.args | arg_params("__ch: &Channel") }}) -> Res
 {% endfor -%}
 
 pub trait Client {
-    fn client_channel(&self) -> Channel;  
+    fn client_channel(&self) -> Channel;
 {% for msg in messages %}
 {%- if msg.attrs.type == "call" %}
     fn {{ msg.name }}({{ msg.args | arg_params("&self") }}) -> Result<{{ msg.rets | ret_params }}, Error> {
@@ -113,16 +112,28 @@ pub trait Client {
             unsafe { core::mem::transmute::<&mut Message, &mut {{ msg.name | camelcase }}Msg>(&mut __m) };
         __m2.header = {{ msg.name | upper }}_MSG;
 {%- for field in msg.args.inlines %}
+{%- if field.type == "string" %}
+        __m2.{{ field.name }} = FixedString::from_str({{ field.name }}.as_str());
+{%- else %}
         __m2.{{ field.name }} = {{ field.name }};
+{%- endif %}
 {%- endfor %}
         __ch.call(&__m).map(|__r| {
             let __r = unsafe { core::mem::transmute::<Message, {{ msg.name | camelcase }}ReplyMsg>(__r) };
 {%- if msg.rets.fields | length == 1 %}
-            __r.{{ msg.rets.fields[0].name }} 
+{%- if msg.rets.fields[0].type == "string" %}
+            __r.{{ msg.rets.fields[0].name }}.to_string()
+{%- else %}
+            __r.{{ msg.rets.fields[0].name }}
+{%- endif %}
 {%- else %}
             (
 {%- for field in msg.rets.fields -%}
+{%- if field.type == "string" %}
+            __r.{{ field.name }}.to_string(),
+{%- else %}
             __r.{{ field.name }},
+{%- endif %}
 {%- endfor -%}
             )
 {%- endif %}
@@ -151,10 +162,18 @@ pub trait Server {
                     Some(Ok(rets)) => {
                         let resp = unsafe { core::mem::transmute::<&mut Message, &mut {{ msg.name | camelcase }}ReplyMsg>(m) };
                     {%- if msg.rets.fields | length == 1 %}
-                        resp.{{ msg.rets.fields[0].name }} = rets;
+                    {%- if msg.rets.fields[0].type == "string" %}
+                        resp.{{ msg.rets.fields[0].name }} = FixedString::from_str(rets.as_str());
                     {%- else %}
-                    {%- for ret in msg.rets.fields %}
-                        resp.{{ ret.name }} = rets.{{ loop.index0 }};
+                        resp.{{ msg.rets.fields[0].name }} = rets;
+                    {%- endif %}
+                    {%- else %}
+                    {%- for field in msg.rets.fields %}
+                    {%- if field.type == "string" %}
+                        resp.{{ field.name }} = FixedString::from_str(rets.{{ loop.index0 }}.as_str());
+                    {%- else %}
+                        resp.{{ field.name }} = rets.{{ loop.index0 }};
+                    {%- endif %}
                     {%- endfor %}
                     {%- endif %}
                         true
@@ -179,24 +198,39 @@ pub trait Server {
 """
 
 builtin_types = {
-    "int8":     { "name": "i8",       "size": "core::mem::size_of::<i8>()" },
-    "int16":    { "name": "i16",      "size": "core::mem::size_of::<i16>()" },
-    "int32":    { "name": "i32",      "size": "core::mem::size_of::<i32>()" },
-    "int64":    { "name": "i64",      "size": "core::mem::size_of::<i64>()" },
-    "uint8":    { "name": "u8",       "size": "core::mem::size_of::<u8>()" },
-    "uint16":   { "name": "u16",      "size": "core::mem::size_of::<u16>()" },
-    "uint32":   { "name": "u32",      "size": "core::mem::size_of::<u32>()" },
-    "uint64":   { "name": "u64",      "size": "core::mem::size_of::<u64>()" },
-    "intmax":   { "name": "isize",    "size": "core::mem::size_of::<isize>()" },
-    "uintmax":  { "name": "usize",    "size": "core::mem::size_of::<usize>()" },
-    "bool":     { "name": "bool",     "size": "core::mem::size_of::<bool>()" },
-    "char":     { "name": "u8",       "size": "core::mem::size_of::<u8>()" },
+    "int8":     { "name_in_msg": None, "name": "i8",       "size": "core::mem::size_of::<i8>()" },
+    "int16":    { "name_in_msg": None, "name": "i16",      "size": "core::mem::size_of::<i16>()" },
+    "int32":    { "name_in_msg": None, "name": "i32",      "size": "core::mem::size_of::<i32>()" },
+    "int64":    { "name_in_msg": None, "name": "i64",      "size": "core::mem::size_of::<i64>()" },
+    "uint8":    { "name_in_msg": None, "name": "u8",       "size": "core::mem::size_of::<u8>()" },
+    "uint16":   { "name_in_msg": None, "name": "u16",      "size": "core::mem::size_of::<u16>()" },
+    "uint32":   { "name_in_msg": None, "name": "u32",      "size": "core::mem::size_of::<u32>()" },
+    "uint64":   { "name_in_msg": None, "name": "u64",      "size": "core::mem::size_of::<u64>()" },
+    "bool":     { "name_in_msg": None, "name": "bool",     "size": "core::mem::size_of::<bool>()" },
+    "char":     { "name_in_msg": None, "name": "u8",       "size": "core::mem::size_of::<u8>()" },
+    "cid":      { "name_in_msg": None, "name": "CId",      "size": "core::mem::size_of::<CId>()" },
+    "handle":   { "name_in_msg": None, "name": "Handle",   "size": "core::mem::size_of::<Handle>()" },
+    "channel":  { "name_in_msg": None, "name": "Channel",  "size": "0" },
+    "page":     { "name_in_msg": None, "name": "Page",     "size": "0" },
+    "intmax":   { "name_in_msg": None, "name": "isize",    "size": "core::mem::size_of::<isize>()" },
+    "uintmax":  { "name_in_msg": None, "name": "usize",    "size": "core::mem::size_of::<usize>()" },
+    "uintptr":  { "name_in_msg": None, "name": "usize",    "size": "core::mem::size_of::<usize>()" },
+    "paddr":    { "name_in_msg": None, "name": "usize",    "size": "core::mem::size_of::<usize>()" },
+    "size":     { "name_in_msg": None, "name": "usize",    "size": "core::mem::size_of::<usize>()" },
+    "string":   { "name_in_msg": "FixedString", "name": "String", "size": "core::mem::size_of::<FixedString>()" },
 }
 
 # Resolves a type name to a corresponding builtin type.
 def resolve_type(type_name):
     assert type_name in builtin_types
     return builtin_types[type_name]["name"]
+
+def resolve_type_in_msg_struct(type_name):
+    assert type_name in builtin_types
+    if builtin_types[type_name]["name_in_msg"] is not None:
+        return builtin_types[type_name]["name_in_msg"]
+    else:
+        return builtin_types[type_name]["name"]
 
 def inline_len(params):
     sizes = []
@@ -211,7 +245,14 @@ def inline_len(params):
 def call_args(args, msg_var):
     values = []
     for arg in args["fields"]:
-        values.append(f"{msg_var}.{arg['name']}")
+        value = f"{msg_var}.{arg['name']}"
+        if arg["type"] in ["handle", "channel"]:
+            # It's possibly unsafe: https://github.com/rust-lang/rust/issues/46043
+            values.append(f"unsafe {{ {value}.clone() }}")
+        elif arg["type"] in ["string"]:
+            values.append(f"{value}.to_string()")
+        else:
+            values.append(f"{value}")
     return ", ".join(values)
 
 def arg_params(args, first_param):
@@ -234,6 +275,7 @@ def genstub(out_dir, idl):
     renderer.filters["camelcase"] \
         = lambda x: "".join(map(lambda frag: frag.title(), x.split("_")))
     renderer.filters["resolve_type"] = resolve_type
+    renderer.filters["resolve_type_in_msg_struct"] = resolve_type_in_msg_struct
     renderer.filters["inline_len"] = inline_len
     renderer.filters["arg_params"] = arg_params
     renderer.filters["ret_params"] = ret_params

@@ -1,8 +1,8 @@
 #ifndef __IDL_H__
 #define __IDL_H__
 
-#define SMALLSTRING_LEN_MAX 128
-typedef char smallstring_t[SMALLSTRING_LEN_MAX];
+#define STRING_LEN_MAX 128
+typedef char string_t[STRING_LEN_MAX];
 
 #define MSG_REPLY_FLAG (1ULL << 7)
 #define RUNTIME_INTERFACE  1ULL
@@ -41,14 +41,14 @@ struct runtime_printchar_reply_payload {
     size_t num_pages;
 } PACKED;
 #define PROCESS_INTERFACE  2ULL
-#define PROCESS_CREATE_INLINE_LEN (SMALLSTRING_LEN_MAX)
+#define PROCESS_CREATE_INLINE_LEN (STRING_LEN_MAX)
 #define PROCESS_CREATE_MSG     (         (((PROCESS_INTERFACE << 8) | 1ULL) << MSG_TYPE_OFFSET)| (PROCESS_CREATE_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
 
 struct process_create_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
     size_t num_pages;
-    smallstring_t name;
+    string_t name;
 } PACKED;
 #define PROCESS_CREATE_REPLY_INLINE_LEN (sizeof(pid_t) + sizeof(cid_t))
 #define PROCESS_CREATE_REPLY_MSG     (         (((PROCESS_INTERFACE << 8) | MSG_REPLY_FLAG | 1) << MSG_TYPE_OFFSET)| (PROCESS_CREATE_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
