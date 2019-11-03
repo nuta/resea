@@ -51,7 +51,7 @@ $ make -j8 run
 ### Interface Definition Language (IDL)
 Parsing and constructing IPC messages are really annoying and painful work. To improve
 the productivity, Resea provides the stub generator ([tools/genstub.py](https://github.com/seiyanuta/resea/blob/master/tools/genstub.py)). It generates message definitions and stub functions
-from the IDL file ([interface.idl](https://github.com/seiyanuta/resea/blob/master/misc/interfaces.idl)).
+from the IDL file ([interface.idl](https://github.com/seiyanuta/resea/blob/master/interfaces.idl)).
 
 
 #### Using IDL stubs

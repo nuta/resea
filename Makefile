@@ -171,7 +171,7 @@ CFLAGS += -mcmodel=large -mno-red-zone
 CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 
 # IDL stub.
-$(BUILD_DIR)/idl.json: misc/interfaces.idl tools/parse-idl-file.py
+$(BUILD_DIR)/idl.json: interfaces.idl tools/parse-idl-file.py
 	$(PROGRESS) "PARSEIDL" $@
 	$(PYTHON3) tools/parse-idl-file.py $< $@
 
