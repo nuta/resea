@@ -11,29 +11,22 @@ macro_rules! serve_forever {
         debug_assert!($server.ch.cid() != 0);
         let mut server = $server;
         loop {
-            let m = server.ch.recv().expect("failed to receive");
+            let mut m = server.ch.recv().expect("failed to receive");
             let mut reply_to = Channel::from_cid(m.from);
-            let reply = match m.header.interface_id() {
+            let has_reply = match m.header.interface_id() {
                 $( $crate::idl::$interface::INTERFACE_ID =>
-                    $crate::idl::$inteface::Server::handle(server, m), )*
+                    $crate::idl::$interface::Server::__handle(server, &mut m), )*
                 _ => {
-                    // println!("unknown message");
-                    Some(Err(Error::UnknownMessage))
+                    warn!("unknown message");
+                    m.header =
+                        $crate::message::MessageHeader::from_error(
+                            $crate::error::Error::UnknownMessage);
+                    true
                 }
             };
 
-            match reply {
-                Some(Ok(r)) => {
-                    // FIXME: Don't panic here!
-                    reply_to.send(r).expect("failed to reply");
-                }
-                Some(Err(err)) => {
-                    // FIXME: Don't panic here!
-                    reply_to.send_err(err).expect("failed to reply");
-                }
-                None => {
-                    // Don't reply: nothing to do.
-                }
+            if has_reply {
+                reply_to.send(&m).ok();
             }
         }
     }};
