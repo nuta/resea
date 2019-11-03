@@ -3,7 +3,6 @@
 
 #include <types.h>
 #include <message.h>
-#include <idl_messages.h>
 
 /// Determines if the specifed system call satisfies fastpath prerequisites:
 ///
@@ -23,18 +22,38 @@
 
 /// Checks whether the message is worth tracing.
 static inline bool is_annoying_msg(header_t msg_type) {
-    return msg_type == RUNTIME_PRINTCHAR_MSG
-           || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
-           || msg_type == BENCHMARK_NOP_MSG
+    return // msg_type == RUNTIME_PRINTCHAR_MSG
+           // || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
+            msg_type == BENCHMARK_NOP_MSG
            || msg_type == BENCHMARK_NOP_REPLY_MSG
            || msg_type == PAGER_FILL_MSG
            || msg_type == PAGER_FILL_REPLY_MSG;
 }
 
+static inline void dump_message(struct message *m) {
+    int len = MSG_COMMON_HEADER_LEN + INLINE_PAYLOAD_LEN(m->header);
+    for (int i = 0; i < len; i++) {
+        if (i % 16 == 0) {
+            printk("%s[kernel] pcap> %04x ", (i == 0) ? "" : "\n", i);
+        }
+
+        printk("%02x ", ((uint8_t *) m)[i]);
+    }
+    
+    printk("\n");
+}
+
 #define IPC_TRACE(m, fmt, ...)                        \
     do {                                              \
-        if (!is_annoying_msg(m->header)) {  \
+        if (!is_annoying_msg(m->header)) {            \
             TRACE(fmt, ## __VA_ARGS__);               \
+        }                                             \
+    } while (0)
+
+#define DUMP_MESSAGE(m)                               \
+    do {                                              \
+        if (!is_annoying_msg(m->header)) {            \
+            dump_message(m);                          \
         }                                             \
     } while (0)
 

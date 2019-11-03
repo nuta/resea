@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from functools import reduce
 import subprocess
 import os
 import sys
@@ -10,6 +11,8 @@ import tempfile
 from pathlib import Path
 import colorama
 from colorama import Fore, Style
+
+TOO_MUCH_STACK_THRESHOLD = 2048
 
 def decode_leb128(buf):
     value = 0
@@ -41,7 +44,7 @@ def analyze_stack_sizes(objcopy, nm, file):
         while index < len(stack_sizes):
             addr = struct.unpack("Q", stack_sizes[index:index+8])[0]
             size, size_len = decode_leb128(stack_sizes[index+8:])
-            if addr in functions and size >= 2048:
+            if addr in functions and size >= TOO_MUCH_STACK_THRESHOLD:
                 print(f"{Fore.YELLOW}{Style.BRIGHT}{file}: Warning: Large stack usage" +
                       f" in {functions[addr]} ({size} bytes).{Style.RESET_ALL}")
 
@@ -64,6 +67,7 @@ def extract_symbols(nm, file):
 
 def generate_symbol_table(outfile, symbols, symtable_addr):
     symbols = sorted(symbols.items(), key=lambda s: s[0])
+    strbuf_len = reduce(lambda x,s: x + len(s[1]) + 1, symbols, 0)
     symtable = f"""\
 #ifdef __x86_64__
 #define PTR      .quad
@@ -71,17 +75,17 @@ def generate_symbol_table(outfile, symbols, symtable_addr):
 #else
 #error \"Unexpected architecture. Update link.py!\"
 #endif
-#define HEADER_SIZE   (8 + PTRSIZE * 2)
+#define HEADER_SIZE   (12 + PTRSIZE * 2)
 #define SIZEOF_SYMBOL (PTRSIZE + 4 * 2)
 
 .section .rodata
 .globl __symtable
 __symtable:
     .long   0x2b012b01       // magic
-    .short  {len(symbols)}   // num_symbols
-    .short  0                // reserved
+    .long   {len(symbols)}   // num_symbols
     PTR     ({hex(symtable_addr)} + HEADER_SIZE)  // symbols
     PTR     ({hex(symtable_addr)} + HEADER_SIZE + SIZEOF_SYMBOL * {len(symbols)}) // strbuf
+    .long   {strbuf_len} // strbuf_len
 """
 
     symtable += "// struct symbol symbols[]\n"
@@ -89,13 +93,12 @@ __symtable:
     for addr, name in symbols:
         symtable += f"""\
 PTR     {hex(addr)}  // addr
-.short  {offset}     // offset
-.space  6            // reserved
+.long   {offset}     // offset
+.long   {len(name)}  // len
 """
         offset += len(name) + 1
 
     symtable += "// strings\n"
-    offset = 0
     for _, name in symbols:
         symtable += f".asciz \"{name}\"\n"
 
@@ -120,9 +123,9 @@ def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs
     stage3 = outfile.parent / ("." + outfile.name + ".stage3.tmp")
 
     # Link stage 1: Embed an empty symtable into the executable.
-    generate_symbol_table(f"{build_dir}/__symtable.S", {}, 0)
+    generate_symbol_table(f"{build_dir}/.__symtable1.S", {}, 0)
     subprocess.check_call([cc] + shlex.split(cflags) + \
-        ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/__symtable.S"])
+        ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/.__symtable1.S"])
     subprocess.check_call([ld] + shlex.split(ldflags) + \
         ["-o", stage1, f"{build_dir}/__symtable.o"] + objs)
 
@@ -130,9 +133,9 @@ def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs
 	#               Symbol offsets may be changed (that is, the symtable is
 	#               not correct) in this stage since the size of the
 	#               symtable is no longer empty.
-    generate_symbol_table(f"{build_dir}/__symtable.S", *extract_symbols(nm, stage1))
+    generate_symbol_table(f"{build_dir}/.__symtable2.S", *extract_symbols(nm, stage1))
     subprocess.check_call([cc] + shlex.split(cflags) + \
-        ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/__symtable.S"])
+        ["-c", "-o", f"{build_dir}/__symtable.o", f"{build_dir}/.__symtable2.S"])
     subprocess.check_call([ld] + shlex.split(ldflags) + \
         ["-o", stage2, f"{build_dir}/__symtable.o"] + objs)
 

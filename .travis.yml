@@ -1,9 +1,16 @@
-language: c
-dist: bionic
 sudo: false
+dist: bionic
 os:
   - linux
   - osx
+
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+
+cache: cargo
 
 notifications:
   email: false
@@ -30,10 +37,7 @@ addons:
 install:
   - "if [[ $TRAVIS_OS_NAME == linux ]]; then pyenv global 3.7.1; fi"
   - pip3 install -r tools/requirements.txt
+  - cargo install xargo
 
 script:
-  - defconfig misc/ci/$TRAVIS_OS_NAME.config
-  - make reloadconfig
-  - make info
-  - make -j2
-  - make run NOGUI=y
+  - make

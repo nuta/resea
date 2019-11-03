@@ -59,32 +59,18 @@ def make_image(startup, root_dir, file_list):
         sys.exit(f"initfs.bin is too big ({len(image) / 1024}KiB)")
     return image
 
-def generate_asm(binfile):
-    return f"""\
-.globl __initfs
-.align 4096
-__initfs:
-    .incbin "{binfile}"
-"""
-
 def main():
     parser = argparse.ArgumentParser(description="Generates a initfs image.")
     parser.add_argument("-o", dest="output", help="The output file.")
     parser.add_argument("-s", dest="startup",
         help="The init server executable.")
     parser.add_argument("--file-list", help="Files to include.")
-    parser.add_argument("--generate-asm",
-        help="Generate an assembly file to embed initfs.")
     parser.add_argument("dir",
         help="The root directory of initfs to be embeddded.")
     args = parser.parse_args()
 
     with open(args.output, "wb") as f:
         f.write(make_image(args.startup, args.dir, args.file_list))
-
-    if args.generate_asm:
-        with open(args.generate_asm, "w") as f:
-            f.write(generate_asm(args.output))
 
 if __name__ == "__main__":
     main()

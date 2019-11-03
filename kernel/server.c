@@ -1,7 +1,6 @@
 #include <channel.h>
 #include <printk.h>
 #include <process.h>
-#include <idl_messages.h>
 #include <server.h>
 #include <thread.h>
 #include <timer.h>
@@ -54,7 +53,7 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
         return 0;
     }
 
-    paddr_t paddr = PAGE_PAYLOAD_ADDR(m->payloads.pager.fill_reply.page);
+    paddr_t paddr = m->payloads.pager.fill_reply.page;
     // TRACE("received a page from the pager: addr=%p", paddr);
     return paddr;
 }

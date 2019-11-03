@@ -1,3 +1,0 @@
-menuconfig HELLO_APP
-    bool "Hello World!"
-    default y

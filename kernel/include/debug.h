@@ -9,16 +9,16 @@
 
 struct symbol {
     uint64_t addr;
-    uint16_t offset;
-    uint8_t reserved[6];
+    uint32_t offset;
+    uint32_t name_len;
 } PACKED;
 
 struct symbol_table {
     uint32_t magic;
-    uint16_t num_symbols;
-    uint16_t reserved;
+    uint32_t num_symbols;
     struct symbol *symbols;
     char *strbuf;
+    uint32_t strbuf_len;
 } PACKED;
 
 struct ubsan_type {

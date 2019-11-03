@@ -79,9 +79,9 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     if (!is_kernel_thread) {
         link_page(&process->page_table, user_buffer, into_paddr(thread_info),
             1, PAGE_USER | PAGE_WRITABLE);
-        list_push_back(&process->threads, &thread->next);
     }
 
+    list_push_back(&process->threads, &thread->next);
     table_set(&process_table, tid, (void *) thread);
 
 #ifdef DEBUG_BUILD

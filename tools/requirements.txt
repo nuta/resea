@@ -1,4 +1,3 @@
 colorama
 lark-parser
 jinja2
-kconfiglib

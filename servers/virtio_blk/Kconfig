@@ -1,4 +1,0 @@
-menuconfig VIRTIO_BLK_SERVER
-    bool "Virtio-blk Device Driver (WIP)"
-    select PCI_SERVER
-    default n

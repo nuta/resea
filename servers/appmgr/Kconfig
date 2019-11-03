@@ -1,3 +1,0 @@
-menuconfig APPMGR_SERVER
-    bool "App Management Server (appmgr)"
-    default y

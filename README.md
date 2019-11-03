@@ -56,8 +56,8 @@ $ make menuconfig    # Edit build configuration.
 $ make build         # Build a kernel executable.
 $ make build V=1     # Build a kernel executable with verbose command output.
 
-$ make run           # Run on QEMU.
-$ make run NOGUI=1   # Run on QEMU with -nographic.
+$ make run           # Run on QEMU with -nographic.
+$ make run GUI=1     # Run on QEMU without -nographic.
 $ make bochs         # Run on Bochs.
 
 $ make docs          # Generate a source code reference.

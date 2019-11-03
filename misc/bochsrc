@@ -1,12 +1,9 @@
 romimage: file=$BXSHARE/BIOS-bochs-latest
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 config_interface: textconfig
-display_library: sdl2
+display_library: nogui
+# display_library: sdl2
 
-# FIXME: Using mutil processors significantly degrate the performance! Setting
-#        `ips` does not help and even worse, the BIOS never boots our bootable
-#        disc.
-# cpu: model=corei7_ivy_bridge_3770k, count=2
 cpu: model=corei7_ivy_bridge_3770k, ips=2000000
 memory: guest=512, host=512
 

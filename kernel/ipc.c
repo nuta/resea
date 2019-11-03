@@ -4,7 +4,6 @@
 #include <channel.h>
 #include <thread.h>
 #include <ipc.h>
-#include <idl_messages.h>
 
 /// The open system call: creates a new channel. It returns negated error value
 /// if an error occurred.
@@ -163,6 +162,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 #endif
         IPC_TRACE(m, "send: %pC -> %pC => %pC (header=%p)",
                   ch, linked_with, dst, header);
+        DUMP_MESSAGE(m);
 
         // Now we have a receiver thread. It's time to send a message!
         struct message *dst_m = receiver->ipc_buffer;
@@ -196,15 +196,13 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
         // Handle the page payload.
         if (header & MSG_PAGE_PAYLOAD) {
-            page_t page            = m->payloads.page;
-            vaddr_t payload_vaddr  = PAGE_PAYLOAD_ADDR(page);
-            page_t page_base       = receiver->info->page_base;
-            vaddr_t page_base_addr = PAGE_PAYLOAD_ADDR(page_base);
-            int num_pages          = POW2(PAGE_ORDER(page));
+            vaddr_t page_addr       = m->payloads.page;
+            size_t  num_pages       = m->payloads.num_pages;
+            vaddr_t page_base_addr  = receiver->info->page_addr;
 
             // Resolve the physical address referenced by the page payload.
             struct page_table *page_table = &current->process->page_table;
-            paddr_t paddr = resolve_paddr_from_vaddr(page_table, payload_vaddr);
+            paddr_t paddr = resolve_paddr_from_vaddr(page_table, page_addr);
             if (!paddr) {
                 // The page does not exist in the page table. Invoke the page
                 // fault handler since perhaps it is just not filled by the
@@ -212,7 +210,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 // page_fault_handler always returns a valid paddr;  if the
                 // vaddr is invalid, it kills the current thread and won't
                 // return.
-                paddr = page_fault_handler(payload_vaddr, PF_USER);
+                paddr = page_fault_handler(page_addr, PF_USER);
             }
 
             if (receiver->ipc_buffer == receiver->kernel_ipc_buffer) {
@@ -222,7 +220,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             } else {
                 // Make sure that the receiver accepts a page payload and its
                 // base address is valid.
-                if (PAGE_ORDER(page_base) < PAGE_ORDER(page)
+                if (receiver->info->num_pages < num_pages
                     || !is_valid_page_base_addr(page_base_addr)) {
                     receiver->abort_reason = ERR_NEEDS_RETRY;
                     return ERR_INVALID_PAGE_PAYLOAD;
@@ -230,12 +228,12 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
                 link_page(&receiver->process->page_table, page_base_addr, paddr,
                           num_pages, PAGE_USER | PAGE_WRITABLE);
-                dst_m->payloads.page = PAGE_PAYLOAD(page_base_addr,
-                                                    PAGE_ORDER(page));
+                dst_m->payloads.page = page_base_addr;
+                dst_m->payloads.num_pages = num_pages;
             }
 
             // Unlink the pages from the current (sender) process.
-            unlink_page(&current->process->page_table, PAGE_PAYLOAD_ADDR(page),
+            unlink_page(&current->process->page_table, page_addr,
                         num_pages);
         }
 

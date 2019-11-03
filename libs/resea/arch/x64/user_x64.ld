@@ -1,12 +1,8 @@
 OUTPUT_FORMAT("elf64-x86-64");
-ENTRY(start_memmgr);
+ENTRY(start);
 
 SECTIONS {
     . = 0x0000000001000000;
-
-    .initfs : ALIGN(8) {
-        KEEP(*(.initfs));
-    }
 
     .text : ALIGN(8) {
         __text = .;
@@ -26,7 +22,6 @@ SECTIONS {
         *(.data.*);
     }
 
-    . = 0x03400000; /* TODO: */
     .bss : ALIGN(8) {
         __bss = .;
         *(.bss);
