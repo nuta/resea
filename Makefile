@@ -165,7 +165,7 @@ ifeq ($(BUILD), release)
 XARGOFLAGS += --release
 endif
 
-RUSTFLAGS += -Z emit-stack-sizes
+RUSTFLAGS += -Z emit-stack-sizes -Z external-macro-backtrace
 CFLAGS += --target=x86_64
 CFLAGS += -mcmodel=large -mno-red-zone
 CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
