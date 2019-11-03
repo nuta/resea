@@ -12,3 +12,60 @@ interface runtime {
     [id(2), type(call)]
     printchar(ch: char) -> ()
 }
+
+[id(2)]
+interface process {
+    [id(1), type(call)]
+    create(name: string) -> (proc: handle, pager_ch: cid)
+    [id(2), type(call)]
+    destroy(proc: handle) -> ()
+    // TODO: Use channel payload.
+    [id(3), type(call)]
+    add_pager(proc: handle, pager: cid, start: uintptr, size: size, flags: uint8)
+        -> ()
+    [id(4), type(call)]
+    send_channel(proc: handle, ch: channel)
+        -> ()
+}
+
+[id(3)]
+interface thread {
+    [id(1), type(call)]
+    spawn(proc: handle, start: uintptr, stack: uintptr, buffer: uintptr,
+          arg: uintptr) -> (thread: handle)
+
+    [id(2), type(call)]
+    destroy(thread: handle) -> ()
+}
+
+[id(4)]
+interface timer {
+    [id(1), type(call)]
+    set(ch: channel, initial: int32, interval: int32) -> (timer: handle)
+    [id(2), type(call)]
+    clear(timer: handle) -> ()
+}
+
+[id(9)]
+interface kernel {
+}
+
+[id(10)]
+interface server {
+    [id(1), type(call)]
+    connect(interface: uint8) -> (ch: channel)
+}
+
+[id(11)]
+interface memory {
+    [id(1), type(call)]
+    alloc_pages(order: size) -> (page: page)
+    [id(2), type(call)]
+    alloc_phy_pages(map_at: paddr, order: size) -> (page: page, paddr: paddr)
+}
+
+[id(12)]
+interface pager {
+    [id(1), type(call)]
+    fill(proc: handle, addr: uintptr, size: size) -> (page: page)
+}
