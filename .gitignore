@@ -1,7 +1,7 @@
 /build
+/.build.mk
 /target
 /.vscode
-/libs/common/interfaces
 /libs/resea/idl
 
 *.o
