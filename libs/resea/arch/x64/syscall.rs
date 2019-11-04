@@ -3,8 +3,17 @@ use crate::message::Message;
 
 const SYSCALL_IPC: u32 = 0;
 const SYSCALL_OPEN: u32 = 1;
+const SYSCALL_TRANSFER: u32 = 4;
 const IPC_SEND: u32 = 1 << 8;
 const IPC_RECV: u32 = 1 << 9;
+
+unsafe fn convert_error(error: i32) -> Result<(), Error> {
+    if error < 0 {
+        Err(core::mem::transmute::<u8, Error>(-error as u8))
+    } else {
+        Ok(())
+    }
+}
 
 unsafe fn ipc_syscall(cid: i32, ops: u32) -> Result<(), Error> {
     let error: i32;
@@ -16,11 +25,7 @@ unsafe fn ipc_syscall(cid: i32, ops: u32) -> Result<(), Error> {
         : "rsi", "rdx", "rcx", "r8", "r9", "r10" "r11"
     );
 
-    if error < 0 {
-        Err(core::mem::transmute::<u8, Error>(-error as u8))
-    } else {
-        Ok(())
-    }
+    convert_error(error)
 }
 
 pub unsafe fn open() -> Result<i32, Error> {
