@@ -12,7 +12,7 @@ typedef char string_t[STRING_LEN_MAX];
 struct runtime_exit_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     int32_t code;
 } PACKED;
 #define RUNTIME_EXIT_REPLY_INLINE_LEN (0)
@@ -21,7 +21,7 @@ struct runtime_exit_payload {
 struct runtime_exit_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define RUNTIME_PRINTCHAR_INLINE_LEN (sizeof(uint8_t))
 #define RUNTIME_PRINTCHAR_MSG     (         (((RUNTIME_INTERFACE << 8) | 2ULL) << MSG_TYPE_OFFSET)| (RUNTIME_PRINTCHAR_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -29,7 +29,7 @@ struct runtime_exit_reply_payload {
 struct runtime_printchar_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     uint8_t ch;
 } PACKED;
 #define RUNTIME_PRINTCHAR_REPLY_INLINE_LEN (0)
@@ -38,7 +38,7 @@ struct runtime_printchar_payload {
 struct runtime_printchar_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define PROCESS_INTERFACE  2ULL
 #define PROCESS_CREATE_INLINE_LEN (STRING_LEN_MAX)
@@ -47,7 +47,7 @@ struct runtime_printchar_reply_payload {
 struct process_create_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     string_t name;
 } PACKED;
 #define PROCESS_CREATE_REPLY_INLINE_LEN (sizeof(pid_t) + sizeof(cid_t))
@@ -56,7 +56,7 @@ struct process_create_payload {
 struct process_create_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     pid_t pid;
     cid_t pager_ch;
 } PACKED;
@@ -66,7 +66,7 @@ struct process_create_reply_payload {
 struct process_destroy_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     pid_t pid;
 } PACKED;
 #define PROCESS_DESTROY_REPLY_INLINE_LEN (0)
@@ -75,7 +75,7 @@ struct process_destroy_payload {
 struct process_destroy_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define PROCESS_ADD_PAGER_INLINE_LEN (sizeof(pid_t) + sizeof(cid_t) + sizeof(uintptr_t) + sizeof(size_t) + sizeof(uint8_t))
 #define PROCESS_ADD_PAGER_MSG     (         (((PROCESS_INTERFACE << 8) | 3ULL) << MSG_TYPE_OFFSET)| (PROCESS_ADD_PAGER_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -83,7 +83,7 @@ struct process_destroy_reply_payload {
 struct process_add_pager_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     pid_t pid;
     cid_t pager;
     uintptr_t start;
@@ -96,7 +96,7 @@ struct process_add_pager_payload {
 struct process_add_pager_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define PROCESS_SEND_CHANNEL_INLINE_LEN (sizeof(pid_t))
 #define PROCESS_SEND_CHANNEL_MSG     (         (((PROCESS_INTERFACE << 8) | 4ULL) << MSG_TYPE_OFFSET)| MSG_CHANNEL_PAYLOAD| (PROCESS_SEND_CHANNEL_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -104,7 +104,7 @@ struct process_add_pager_reply_payload {
 struct process_send_channel_payload {
     cid_t ch;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     pid_t pid;
 } PACKED;
 #define PROCESS_SEND_CHANNEL_REPLY_INLINE_LEN (0)
@@ -113,7 +113,7 @@ struct process_send_channel_payload {
 struct process_send_channel_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define THREAD_INTERFACE  3ULL
 #define THREAD_SPAWN_INLINE_LEN (sizeof(pid_t) + sizeof(uintptr_t) + sizeof(uintptr_t) + sizeof(uintptr_t) + sizeof(uintptr_t))
@@ -122,7 +122,7 @@ struct process_send_channel_reply_payload {
 struct thread_spawn_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     pid_t pid;
     uintptr_t start;
     uintptr_t stack;
@@ -135,7 +135,7 @@ struct thread_spawn_payload {
 struct thread_spawn_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     tid_t tid;
 } PACKED;
 #define THREAD_DESTROY_INLINE_LEN (sizeof(tid_t))
@@ -144,7 +144,7 @@ struct thread_spawn_reply_payload {
 struct thread_destroy_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     tid_t tid;
 } PACKED;
 #define THREAD_DESTROY_REPLY_INLINE_LEN (0)
@@ -153,7 +153,7 @@ struct thread_destroy_payload {
 struct thread_destroy_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define TIMER_INTERFACE  4ULL
 typedef int32_t timer_id_t;
@@ -163,7 +163,7 @@ typedef int32_t timer_id_t;
 struct timer_set_payload {
     cid_t ch;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     int32_t initial;
     int32_t interval;
 } PACKED;
@@ -173,7 +173,7 @@ struct timer_set_payload {
 struct timer_set_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     int32_t timer;
 } PACKED;
 #define TIMER_CLEAR_INLINE_LEN (sizeof(int32_t))
@@ -182,7 +182,7 @@ struct timer_set_reply_payload {
 struct timer_clear_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     int32_t timer;
 } PACKED;
 #define TIMER_CLEAR_REPLY_INLINE_LEN (0)
@@ -191,7 +191,7 @@ struct timer_clear_payload {
 struct timer_clear_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define KERNEL_INTERFACE  9ULL
 #define SERVER_INTERFACE  10ULL
@@ -201,7 +201,7 @@ struct timer_clear_reply_payload {
 struct server_connect_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     uint8_t interface;
 } PACKED;
 #define SERVER_CONNECT_REPLY_INLINE_LEN (0)
@@ -210,7 +210,7 @@ struct server_connect_payload {
 struct server_connect_reply_payload {
     cid_t ch;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define MEMORY_INTERFACE  11ULL
 #define MEMORY_ALLOC_PAGES_INLINE_LEN (sizeof(size_t))
@@ -219,7 +219,7 @@ struct server_connect_reply_payload {
 struct memory_alloc_pages_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     size_t order;
 } PACKED;
 #define MEMORY_ALLOC_PAGES_REPLY_INLINE_LEN (0)
@@ -228,7 +228,7 @@ struct memory_alloc_pages_payload {
 struct memory_alloc_pages_reply_payload {
     cid_t __unused_channel;
     vaddr_t page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define MEMORY_ALLOC_PHY_PAGES_INLINE_LEN (sizeof(paddr_t) + sizeof(size_t))
 #define MEMORY_ALLOC_PHY_PAGES_MSG     (         (((MEMORY_INTERFACE << 8) | 2ULL) << MSG_TYPE_OFFSET)| (MEMORY_ALLOC_PHY_PAGES_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -236,7 +236,7 @@ struct memory_alloc_pages_reply_payload {
 struct memory_alloc_phy_pages_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     paddr_t map_at;
     size_t order;
 } PACKED;
@@ -246,7 +246,7 @@ struct memory_alloc_phy_pages_payload {
 struct memory_alloc_phy_pages_reply_payload {
     cid_t __unused_channel;
     vaddr_t page;
-    size_t num_pages;
+    size_t __num_pages;
     paddr_t paddr;
 } PACKED;
 #define PAGER_INTERFACE  12ULL
@@ -256,10 +256,10 @@ struct memory_alloc_phy_pages_reply_payload {
 struct pager_fill_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     pid_t pid;
     uintptr_t addr;
-    size_t size;
+    size_t num_pages;
 } PACKED;
 #define PAGER_FILL_REPLY_INLINE_LEN (0)
 #define PAGER_FILL_REPLY_MSG     (         (((PAGER_INTERFACE << 8) | MSG_REPLY_FLAG | 1) << MSG_TYPE_OFFSET)| MSG_PAGE_PAYLOAD| (PAGER_FILL_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -267,7 +267,7 @@ struct pager_fill_payload {
 struct pager_fill_reply_payload {
     cid_t __unused_channel;
     vaddr_t page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define IO_INTERFACE  15ULL
 #define IO_ALLOW_IOMAPPED_IO_INLINE_LEN (0)
@@ -276,7 +276,7 @@ struct pager_fill_reply_payload {
 struct io_allow_iomapped_io_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define IO_ALLOW_IOMAPPED_IO_REPLY_INLINE_LEN (0)
 #define IO_ALLOW_IOMAPPED_IO_REPLY_MSG     (         (((IO_INTERFACE << 8) | MSG_REPLY_FLAG | 1) << MSG_TYPE_OFFSET)| (IO_ALLOW_IOMAPPED_IO_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -284,7 +284,7 @@ struct io_allow_iomapped_io_payload {
 struct io_allow_iomapped_io_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define IO_LISTEN_IRQ_INLINE_LEN (sizeof(uint8_t))
 #define IO_LISTEN_IRQ_MSG     (         (((IO_INTERFACE << 8) | 2ULL) << MSG_TYPE_OFFSET)| MSG_CHANNEL_PAYLOAD| (IO_LISTEN_IRQ_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -292,7 +292,7 @@ struct io_allow_iomapped_io_reply_payload {
 struct io_listen_irq_payload {
     cid_t ch;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
     uint8_t irq;
 } PACKED;
 #define IO_LISTEN_IRQ_REPLY_INLINE_LEN (0)
@@ -301,7 +301,7 @@ struct io_listen_irq_payload {
 struct io_listen_irq_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define BENCHMARK_INTERFACE  19ULL
 #define BENCHMARK_NOP_INLINE_LEN (0)
@@ -310,7 +310,7 @@ struct io_listen_irq_reply_payload {
 struct benchmark_nop_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 #define BENCHMARK_NOP_REPLY_INLINE_LEN (0)
 #define BENCHMARK_NOP_REPLY_MSG     (         (((BENCHMARK_INTERFACE << 8) | MSG_REPLY_FLAG | 1) << MSG_TYPE_OFFSET)| (BENCHMARK_NOP_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -318,7 +318,7 @@ struct benchmark_nop_payload {
 struct benchmark_nop_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
-    size_t num_pages;
+    size_t __num_pages;
 } PACKED;
 
 #define IDL_MESSAGE_PAYLOADS \
