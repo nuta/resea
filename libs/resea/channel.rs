@@ -26,6 +26,12 @@ impl Channel {
         self.cid
     }
 
+    pub fn transfer_to(&self, dest: &Channel) -> Result<(), Error> {
+        unsafe {
+            syscall::transfer(self.cid, dest.cid)
+        }
+    }
+
     pub fn recv(&mut self) -> Result<Message, Error> {
         unsafe {
             syscall::recv(self.cid).map(|_| {

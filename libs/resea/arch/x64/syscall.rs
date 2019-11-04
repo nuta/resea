@@ -44,6 +44,20 @@ pub unsafe fn open() -> Result<i32, Error> {
     }
 }
 
+pub unsafe fn transfer(src: i32, dst: i32) -> Result<(), Error> {
+    let error: i32;
+    asm!(
+        "syscall"
+        : "={eax}"(error)
+        : "{eax}"(SYSCALL_TRANSFER),
+          "{rdi}"(src),
+          "{rsi}"(dst)
+        : "rdx", "rcx", "r8", "r9", "r10" "r11"
+    );
+
+    convert_error(error)
+}
+
 pub unsafe fn send(cid: i32) -> Result<(), Error> {
     ipc_syscall(cid, IPC_SEND)
 }
