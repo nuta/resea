@@ -7,7 +7,6 @@ use core::mem::MaybeUninit;
 pub type CId = i32;
 
 #[repr(transparent)]
-#[derive(Clone)]
 pub struct Channel {
     cid: CId,
 }
