@@ -19,7 +19,7 @@ pub mod std {
         clone, pin,
     };
     pub use ::alloc::{
-        alloc, boxed, borrow, collections, fmt, rc, slice, str, string,
+        alloc, boxed, borrow, fmt, rc, slice, str, string,
         sync, vec
     };
 }
@@ -28,6 +28,7 @@ pub mod std {
 #[macro_use]
 pub mod print;
 
+pub mod collections;
 pub mod error;
 pub mod backtrace;
 pub mod channel;
