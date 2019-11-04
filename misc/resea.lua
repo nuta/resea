@@ -11,7 +11,8 @@
 --
 --  How to use:
 --
---    $ make run | grep "pcap>" > messages.log
+--    $ make run | tee boot.log
+--    $ grep "pcap>" boot.log > messages.log
 --    $ text2pcap -l 147 messages.log messages.pcap
 --    $ wireshark messages.pcap
 --
