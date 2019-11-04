@@ -31,6 +31,7 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
     m->header = PAGER_FILL_MSG;
     m->payloads.pager.fill.pid = CURRENT->process->pid;
     m->payloads.pager.fill.addr = vaddr;
+    m->payloads.pager.fill.num_pages = 1;
 
     // Invoke the user pager. This would blocks the current thread.
     error_t err = kernel_ipc(pager->cid, IPC_SEND | IPC_RECV);
