@@ -3,11 +3,15 @@ use linked_list_allocator::LockedHeap;
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
+extern "C" {
+    static __heap: u8;
+    static __heap_end: u8;
+}
+
 pub fn init() {
-    // FIXME:
-    let heap_start = 0x400_0000;
-    let heap_size  = 0x100_0000;
     unsafe {
-        ALLOCATOR.lock().init(heap_start, heap_size);
+        let heap_start = &__heap as *const u8 as usize;
+        let heap_end = &__heap_end as *const u8 as usize;
+        ALLOCATOR.lock().init(heap_start, heap_end - heap_start);
     }
 }

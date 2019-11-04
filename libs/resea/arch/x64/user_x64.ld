@@ -22,10 +22,15 @@ SECTIONS {
         *(.data.*);
     }
 
+    . = 0x030000000;
     .bss : ALIGN(8) {
         __bss = .;
         *(.bss);
         *(.bss.*);
         __bss_end = .;
     }
+
+    __heap = .;
+    . = 0x04000000;
+    __heap_end = .;
 }
