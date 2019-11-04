@@ -1,9 +1,20 @@
 use resea::PAGE_SIZE;
+use resea::message::Page;
 use resea::std::vec::Vec;
 
-pub struct Page {
-    paddr: usize,
-    num_pages: usize,
+pub struct AllocatedPage {
+    pub paddr: usize,
+    pub num_pages: usize,
+}
+
+impl AllocatedPage {
+    pub fn as_mut_ptr(&mut self) -> *mut u8 {
+        self.paddr as *mut u8
+    }
+
+    pub fn as_page_payload(&self) -> Page {
+        Page::new(self.paddr, self.num_pages)
+    }
 }
 
 pub struct FreeArea {
@@ -27,7 +38,7 @@ impl PageAllocator {
         }
     }
 
-    pub fn allocate(&mut self, num_pages: usize) -> Page {
+    pub fn allocate(&mut self, num_pages: usize) -> AllocatedPage {
         while let Some(free_area) = self.free_area.pop() {
             if num_pages <= free_area.num_pages {
                 let remaining_pages = free_area.num_pages - num_pages;
@@ -37,7 +48,7 @@ impl PageAllocator {
                         num_pages: remaining_pages,
                     });
                 }
-                return Page {
+                return AllocatedPage {
                     paddr: free_area.paddr,
                     num_pages,
                 };
