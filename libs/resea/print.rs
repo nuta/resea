@@ -11,11 +11,7 @@ impl Printer {
 
 impl Write for Printer {
     fn  write_char(&mut self, c: char) -> core::fmt::Result {
-        // Assuming that @1 is connected with a server which provides runtime
-        // interface.
-        let client = Channel::from_cid(1);
-        use crate::idl::runtime::Client;
-        client.printchar(c as u8).ok();
+        printchar(c as u8);
         Ok(())
     }
 
@@ -26,6 +22,14 @@ impl Write for Printer {
 
         Ok(())
     }
+}
+
+pub fn printchar(ch: u8) {
+    // Assuming that @1 is connected with a server which provides runtime
+    // interface.
+    let client = Channel::from_cid(1);
+    use crate::idl::runtime::Client;
+    client.printchar(ch).ok();   
 }
 
 /// Prints a string.
