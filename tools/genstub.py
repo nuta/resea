@@ -35,12 +35,12 @@ pub const {{ msg.name | upper }}_MSG: MessageHeader =
 #[repr(C, packed)]
 pub struct {{ msg.name | camelcase }}Msg {
     pub header: MessageHeader,
-    pub from: Channel,
+    pub from: CId,
     pub notification: Notification,
 {%- if msg.args.channel %}
-    pub {{ msg.args.channel.name }}: Channel,
+    pub {{ msg.args.channel.name }}: CId,
 {%- else %}
-    __unused_channel: Channel,
+    __unused_channel: CId,
 {%- endif %}
 {%- if msg.args.page %}
     pub {{ msg.args.page.name }}: Page,
@@ -69,12 +69,12 @@ pub const {{ msg.name | upper }}_REPLY_MSG: MessageHeader =
 #[repr(C, packed)]
 pub struct {{ msg.name | camelcase }}ReplyMsg {
     pub header: MessageHeader,
-    pub from: Channel,
+    pub from: CId,
     pub notification: Notification,
 {%- if msg.rets.channel %}
-    pub {{ msg.rets.channel.name }}: Channel,
+    pub {{ msg.rets.channel.name }}: CId,
 {%- else %}
-    __unused_channel: Channel,
+    __unused_channel: CId,
 {%- endif %}
 {%- if msg.rets.page %}
     pub {{ msg.rets.page.name }}: Page,
@@ -97,7 +97,7 @@ pub fn send_{{ msg.name }}({{ msg.args | arg_params("__ch: &Channel") }}) -> Res
 {% endfor -%}
 
 pub trait Client {
-    fn client_channel(&self) -> Channel;
+    fn client_channel(&self) -> &Channel;
 {% for msg in messages %}
 {%- if msg.attrs.type == "call" %}
     fn {{ msg.name }}({{ msg.args | arg_params("&self") }}) -> Result<{{ msg.rets | ret_params }}, Error> {
@@ -107,29 +107,24 @@ pub trait Client {
         let mut __m2 =
             unsafe { core::mem::transmute::<&mut Message, &mut {{ msg.name | camelcase }}Msg>(&mut __m) };
         __m2.header = {{ msg.name | upper }}_MSG;
-{%- for field in msg.args.inlines %}
-{%- if field.type == "string" %}
-        __m2.{{ field.name }} = FixedString::from_str({{ field.name }}.as_str());
-{%- else %}
-        __m2.{{ field.name }} = {{ field.name }};
+{%- if msg.args.channel %}
+        __m2.{{ msg.args.channel.name }} = {{ msg.args.channel.name }}.cid();
 {%- endif %}
+{%- for field in msg.args.inlines %}
+        __m2.{{ field.name }} = {{ field | to_payload }};
 {%- endfor %}
         __ch.call(&__m).map(|__r| {
             let __r = unsafe { core::mem::transmute::<Message, {{ msg.name | camelcase }}ReplyMsg>(__r) };
 {%- if msg.rets.fields | length == 1 %}
-{%- if msg.rets.fields[0].type == "string" %}
-            __r.{{ msg.rets.fields[0].name }}.to_string()
+            let {{ msg.rets.fields[0].name }} = __r.{{ msg.rets.fields[0].name }};
+            {{ msg.rets.fields[0] | from_payload }}
 {%- else %}
-            __r.{{ msg.rets.fields[0].name }}
-{%- endif %}
-{%- else %}
+{%- for field in msg.rets.fields -%}
+            let {{ field.name }} = __r.{{ field.name }};
+{%- endfor -%}
             (
 {%- for field in msg.rets.fields -%}
-{%- if field.type == "string" %}
-            __r.{{ field.name }}.to_string(),
-{%- else %}
-            __r.{{ field.name }},
-{%- endif %}
+            {{ field | from_payload }},
 {%- endfor -%}
             )
 {%- endif %}
@@ -140,7 +135,8 @@ pub trait Client {
 }
 
 impl Client for Channel {
-    fn client_channel(&self) -> Channel { self.clone() }
+    // FIXME: Remove this method.
+    fn client_channel(&self) -> &Channel { self }
 }
 
 pub trait Server {
@@ -157,19 +153,14 @@ pub trait Server {
                 match self.{{ msg.name }}({{ msg.args | call_args("req") }}) {
                     Some(Ok(rets)) => {
                         let resp = unsafe { core::mem::transmute::<&mut Message, &mut {{ msg.name | camelcase }}ReplyMsg>(m) };
+                        resp.header = {{ msg.name | upper }}_REPLY_MSG;
                     {%- if msg.rets.fields | length == 1 %}
-                    {%- if msg.rets.fields[0].type == "string" %}
-                        resp.{{ msg.rets.fields[0].name }} = FixedString::from_str(rets.as_str());
-                    {%- else %}
-                        resp.{{ msg.rets.fields[0].name }} = rets;
-                    {%- endif %}
+                        let {{ msg.rets.fields[0].name }} = rets;
+                        resp.{{ msg.rets.fields[0].name }} = {{ msg.rets.fields[0] | to_payload }};
                     {%- else %}
                     {%- for field in msg.rets.fields %}
-                    {%- if field.type == "string" %}
-                        resp.{{ field.name }} = FixedString::from_str(rets.{{ loop.index0 }}.as_str());
-                    {%- else %}
-                        resp.{{ field.name }} = rets.{{ loop.index0 }};
-                    {%- endif %}
+                        let {{ field.name }} = rets.{{ loop.index0 }};
+                        resp.{{ field.name }} = {{ field | to_payload }};
                     {%- endfor %}
                     {%- endif %}
                         true
@@ -205,7 +196,7 @@ builtin_types = {
     "bool":     { "name_in_msg": None, "name": "bool",     "size": "core::mem::size_of::<bool>()" },
     "char":     { "name_in_msg": None, "name": "u8",       "size": "core::mem::size_of::<u8>()" },
     "cid":      { "name_in_msg": None, "name": "CId",      "size": "core::mem::size_of::<CId>()" },
-    "handle":   { "name_in_msg": None, "name": "Handle",   "size": "core::mem::size_of::<Handle>()" },
+    "handle":   { "name_in_msg": None, "name": "HandleId", "size": "core::mem::size_of::<HandleId>()" },
     "channel":  { "name_in_msg": None, "name": "Channel",  "size": "0" },
     "page":     { "name_in_msg": None, "name": "Page",     "size": "0" },
     "intmax":   { "name_in_msg": None, "name": "isize",    "size": "core::mem::size_of::<isize>()" },
@@ -242,9 +233,10 @@ def call_args(args, msg_var):
     values = []
     for arg in args["fields"]:
         value = f"{msg_var}.{arg['name']}"
-        if arg["type"] in ["handle", "channel"]:
-            # It's possibly unsafe: https://github.com/rust-lang/rust/issues/46043
-            values.append(f"unsafe {{ {value}.clone() }}")
+        if arg["type"] == "channel":
+            values.append(f"Channel::from_cid({value})")
+        elif arg["type"] == "handle":
+            values.append(f"{value}")
         elif arg["type"] in ["string"]:
             values.append(f"{value}.to_string()")
         else:
@@ -254,7 +246,10 @@ def call_args(args, msg_var):
 def arg_params(args, first_param):
     params = [first_param]
     for arg in args["fields"]:
-        params.append(f"{arg['name']}: {resolve_type(arg['type'])}")
+        if arg["type"] in ["handle", "channel"]:
+            params.append(f"{arg['name']}: {resolve_type(arg['type'])}")
+        else:
+            params.append(f"{arg['name']}: {resolve_type(arg['type'])}")
     return ", ".join(params)
 
 def ret_params(rets):
@@ -266,6 +261,22 @@ def ret_params(rets):
     else:
         return "(" + ", ".join(params) + ")"
 
+def from_payload(field):
+    if field["type"] == "string":
+        return f"{field['name']}.to_string()"
+    elif field["type"] == "channel":
+        return f"Channel::from_cid({field['name']})"
+    else:
+        return f"{field['name']}"
+
+def to_payload(field):
+    if field["type"] == "string":
+        return f"FixedString::from_str({field['name']}.as_str())"
+    elif field["type"] == "channel":
+        return f"{field['name']}.cid()"
+    else:
+        return f"{field['name']}"
+
 def genstub(out_dir, idl):
     renderer = jinja2.Environment()
     renderer.filters["camelcase"] \
@@ -276,6 +287,8 @@ def genstub(out_dir, idl):
     renderer.filters["arg_params"] = arg_params
     renderer.filters["ret_params"] = ret_params
     renderer.filters["call_args"] = call_args
+    renderer.filters["to_payload"] = to_payload
+    renderer.filters["from_payload"] = from_payload
 
     os.makedirs(out_dir, exist_ok=True)
     with open(Path(out_dir) / "README.md", "w") as f:

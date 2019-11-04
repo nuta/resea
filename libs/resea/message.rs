@@ -91,9 +91,21 @@ impl Message {
     }
 }
 
+pub type HandleId = i32;
+
 #[repr(transparent)]
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct Handle(i32);
+#[derive(PartialEq, Eq, Hash)]
+pub struct Handle(HandleId);
+
+impl Handle {
+    pub const fn from_id(id: HandleId) -> Handle {
+        Handle(id)
+    }
+
+    pub fn id(&self) -> HandleId {
+        self.0
+    }
+}
 
 #[repr(transparent)]
 pub struct FixedString([u8; 128]);
