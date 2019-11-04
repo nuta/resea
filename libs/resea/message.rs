@@ -57,7 +57,13 @@ impl Notification {
 #[derive(Clone, Copy)]
 pub struct Page {
     pub addr: usize,
-    pub len: usize,
+    pub num_pages: usize,
+}
+
+impl Page {
+    pub const fn new(addr: usize, num_pages: usize) -> Page {
+        Page { addr, num_pages }
+    }
 }
 
 pub const MESSAGE_SIZE: usize = 256;
