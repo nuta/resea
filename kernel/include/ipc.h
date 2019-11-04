@@ -22,9 +22,9 @@
 
 /// Checks whether the message is worth tracing.
 static inline bool is_annoying_msg(header_t msg_type) {
-    return // msg_type == RUNTIME_PRINTCHAR_MSG
-           // || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
-            msg_type == BENCHMARK_NOP_MSG
+    return msg_type == RUNTIME_PRINTCHAR_MSG
+           || msg_type == RUNTIME_PRINTCHAR_REPLY_MSG
+           || msg_type == BENCHMARK_NOP_MSG
            || msg_type == BENCHMARK_NOP_REPLY_MSG
            || msg_type == PAGER_FILL_MSG
            || msg_type == PAGER_FILL_REPLY_MSG;
