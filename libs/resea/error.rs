@@ -8,4 +8,6 @@ pub enum Error {
     InvalidArg = 4,
     Unimplemented = 5,
     UnknownMessage = 6,
+    TooShort = 7,
+    InvalidData = 8,
 }
