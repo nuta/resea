@@ -30,16 +30,39 @@ static inline bool is_annoying_msg(header_t msg_type) {
            || msg_type == PAGER_FILL_REPLY_MSG;
 }
 
-static inline void dump_message(struct message *m) {
-    int len = MSG_COMMON_HEADER_LEN + INLINE_PAYLOAD_LEN(m->header);
-    for (int i = 0; i < len; i++) {
+struct packet_header {
+    char src_proc_name[32];
+    char dst_proc_name[32];
+    cid_t src_cid;
+    cid_t dst_cid;
+} PACKED;
+STATIC_ASSERT(sizeof(uint32_t) == sizeof(cid_t));
+
+/// Dumps the message for debugging with Wireshark.
+static inline void dump_message(struct channel *src, struct channel *dst, struct message *m) {
+    struct packet_header header;
+    strcpy(header.dst_proc_name, 32, dst->process->name);
+    header.dst_cid = dst->cid;
+    strcpy(header.src_proc_name, 32, src->process->name);
+    header.src_cid = src->cid;
+
+    size_t len =
+        sizeof(header) + MSG_COMMON_HEADER_LEN + INLINE_PAYLOAD_LEN(m->header);
+    for (size_t i = 0; i < len; i++) {
         if (i % 16 == 0) {
             printk("%s[kernel] pcap> %04x ", (i == 0) ? "" : "\n", i);
         }
 
-        printk("%02x ", ((uint8_t *) m)[i]);
+        uint8_t byte;
+        if (i >= sizeof(header)) {
+            byte = ((uint8_t *) m)[i - sizeof(header)];
+        } else {
+            byte = ((uint8_t *) &header)[i];
+        }
+
+        printk("%02x ", byte);
     }
-    
+
     printk("\n");
 }
 
@@ -50,10 +73,10 @@ static inline void dump_message(struct message *m) {
         }                                             \
     } while (0)
 
-#define DUMP_MESSAGE(m)                               \
+#define DUMP_MESSAGE(src, dst, m)                     \
     do {                                              \
         if (!is_annoying_msg(m->header)) {            \
-            dump_message(m);                          \
+            dump_message(src, dst, m);                \
         }                                             \
     } while (0)
 

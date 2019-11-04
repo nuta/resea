@@ -21,6 +21,10 @@ proto = Proto("resea", "Resea IPC Messages")
 function main()
     local optional_payloads = { [0] = "Not included", [1] = "Included" }
 
+    proto.fields.source =
+        ProtoField.string("resea.source", "Source")
+    proto.fields.dest =
+        ProtoField.string("resea.source", "Destination")
     proto.fields.inline_len =
         ProtoField.uint8("resea.inline_len", "Inline Payload Length", base.DEC)
     proto.fields.interface =
@@ -36,21 +40,39 @@ function main()
             optional_payloads, 0x10)
 
     function proto.dissector(buffer, pinfo, tree)
+        function msg(start, end_)
+            if start == nil then
+                start = 0
+            end
+
+            return buffer (72 + start, end_)
+        end
+
         pinfo.cols.protocol = "Resea"
-        subtree = tree:add(proto, buffer(), message)
+        subtree = tree:add(proto, msg(), message)
+
+        --
+        -- Packet Header
+        --
+        source = "@" .. buffer(0, 32):stringz() .. "." .. buffer(64, 4):le_uint()
+        dest = "@" .. buffer(32, 32):stringz() .. "." .. buffer(68, 4):le_uint()
+        subtree:add(proto.fields.source, source)
+        subtree:add(proto.fields.dest, dest)
+        pinfo.cols.src = source;
+        pinfo.cols.dst = dest;
 
         --
         --  Message Header
         --
-        local inline_len = buffer(0, 1):uint()
-        header = subtree:add(buffer(0, 4), "Header")
-        header:add(proto.fields.interface, buffer(3, 1))
-        header:add(proto.fields.message_type,  buffer(2, 2))
-        header:add(proto.fields.inline_len, inline_len)
-        header:add(proto.fields.page_included, buffer(1, 1))
-        header:add(proto.fields.channel_included, buffer(1, 1))
+        local inline_len = msg(0, 1):le_uint()
+        header = subtree:add(msg(0, 4), "Header")
+        header:add_le(proto.fields.interface, msg(3, 1))
+        header:add_le(proto.fields.message_type,  msg(2, 2))
+        header:add_le(proto.fields.inline_len, inline_len)
+        header:add_le(proto.fields.page_included, msg(1, 1))
+        header:add_le(proto.fields.channel_included, msg(1, 1))
 
-        local message_type = buffer(2, 2):le_uint()
+        local message_type = msg(2, 2):le_uint()
         local message = resea_messages[message_type]
         if message == nil then
             -- Unknown message
@@ -62,9 +84,9 @@ function main()
         --
         --  Payloads
         --
-        fields = subtree:add(buffer(5), "Payloads")
+        fields = subtree:add(msg(5), "Payloads")
         for _, field in ipairs(message["fields"]) do
-            fields:add_le(field["proto"], buffer(field["offset"], field["len"]))
+            fields:add_le(field["proto"], msg(field["offset"], field["len"]))
         end
 
 

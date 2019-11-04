@@ -162,7 +162,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 #endif
         IPC_TRACE(m, "send: %pC -> %pC => %pC (header=%p)",
                   ch, linked_with, dst, header);
-        // DUMP_MESSAGE(m);
+        // DUMP_MESSAGE(ch, dst, m);
 
         // Now we have a receiver thread. It's time to send a message!
         struct message *dst_m = receiver->ipc_buffer;
