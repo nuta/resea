@@ -1,9 +1,8 @@
 .intel_syntax noprefix
 .text
 
-.global start, _start
+.global start
 start:
-_start:
     // Clear .bss section
     mov al, 0x00
     lea rdi, [rip + __bss]
