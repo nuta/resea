@@ -81,6 +81,6 @@ Memory maps
 | Virtual Address          | Description                                           | Length       |
 | ------------------------ | ----------------------------------------------------- | ------------ |
 | `0000_0000_00f1_b000`    | Thread Information Block                              | 4KiB         |
-| `0000_0000_1000_0000`    | Executable (.text, .rodata, .data, and .bss)          | 16MiB        |
-| `0000_0000_2000_0000`    | Stack                                                 | 16MiB        |
-| `0000_0000_3000_0000`    | Heap                                                  | 16MiB        |
+| `0000_0000_0100_0000`    | Executable (.text, .rodata, .data, and .bss)          | 16MiB        |
+| `0000_0000_0200_0000`    | Stack                                                 | 16MiB        |
+| `0000_0000_0300_0000`    | Heap                                                  | 16MiB        |

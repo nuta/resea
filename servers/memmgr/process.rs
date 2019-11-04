@@ -29,11 +29,11 @@ pub struct ProcessManager {
 
 // TODO: Move to arch.
 const THREAD_INFO_ADDR: usize = 0x0000000000000f1b000;
-const APP_IMAGE_START: usize = 0x01000000;
-const APP_IMAGE_SIZE: usize = 0x01000000;
-const APP_ZEROED_PAGES_START: usize = 0x02000000;
-const APP_ZEROED_PAGES_SIZE: usize = 0x02000000;
-const APP_INITIAL_STACK_POINTER: usize = 0x03000000;
+const APP_IMAGE_START:           usize = 0x0100_0000;
+const APP_IMAGE_SIZE:            usize = 0x0100_0000;
+const APP_ZEROED_PAGES_START:    usize = 0x0200_0000;
+const APP_ZEROED_PAGES_SIZE:     usize = 0x0200_0000;
+const APP_INITIAL_STACK_POINTER: usize = 0x0300_0000;
 
 impl ProcessManager {
     pub fn new(process_server: &'static Channel) -> ProcessManager {

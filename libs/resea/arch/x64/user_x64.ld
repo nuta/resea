@@ -2,7 +2,7 @@ OUTPUT_FORMAT("elf64-x86-64");
 ENTRY(start);
 
 SECTIONS {
-    . = 0x0000000001000000;
+    . = 0x01000000;
 
     .text : ALIGN(8) {
         __text = .;
@@ -22,7 +22,7 @@ SECTIONS {
         *(.data.*);
     }
 
-    . = 0x030000000;
+    . = 0x03000000;
     .bss : ALIGN(8) {
         __bss = .;
         *(.bss);
