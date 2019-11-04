@@ -34,7 +34,7 @@ addons:
 
 install:
   - pip3 install -r tools/requirements.txt
-  - cargo install xargo
+  - "cargo install xargo || true"
 
 script:
   - make
