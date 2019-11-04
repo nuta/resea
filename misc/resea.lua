@@ -83,6 +83,7 @@ main()
 
 proto.fields.runtime_exit_code = ProtoField.int32("resea.payloads.runtime.exit.code", "code");
 proto.fields.runtime_printchar_ch = ProtoField.string("resea.payloads.runtime.printchar.ch", "ch");
+proto.fields.runtime_print_str_str = ProtoField.string("resea.payloads.runtime.print_str.str", "str");
 proto.fields.process_create_name = ProtoField.string("resea.payloads.process.create.name", "name");
 proto.fields.process_destroy_proc = ProtoField.int32("resea.payloads.process.destroy.proc", "proc");
 proto.fields.process_add_pager_proc = ProtoField.int32("resea.payloads.process.add_pager.proc", "proc");
@@ -121,6 +122,13 @@ resea_messages = {
         name = "runtime.printchar",
         fields = {
             { name="ch", proto=proto.fields.runtime_printchar_ch, offset=32, len=1 },
+        }
+    },
+    [0x103] = {
+        interface_name = "runtime",
+        name = "runtime.print_str",
+        fields = {
+            { name="str", proto=proto.fields.runtime_print_str_str, offset=32, len=128 },
         }
     },
     [0x201] = {
