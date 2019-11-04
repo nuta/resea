@@ -90,7 +90,7 @@ class IdlTransformer(Transformer):
         for msg in messages:
             msg["id"] = int(attrs["id"]) << 8 | int(msg["attrs"]["id"])
             offset = 32
-            for field in msg["args"]["fields"]:
+            for field in msg["args"]["inlines"]:
                 size = builtin_sizes[field["type"]]
                 field["offset"] = offset
                 field["len"] = size

@@ -6,7 +6,7 @@ import jinja2
 TEMPLATE = """\
 {%- for interface in interfaces %}
 {%- for msg in interface.messages %}
-{%- for field in msg.args.fields %}
+{%- for field in msg.args.inlines %}
 proto.fields.{{ interface.name }}_{{ msg.name }}_{{ field.name }} = ProtoField.{{ field.type | proto_field }}("resea.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }}", "{{ field.name }}");
 {%- endfor %}
 {%- endfor %}
@@ -19,7 +19,7 @@ resea_messages = {
         interface_name = "{{ interface.name }}",
         name = "{{ interface.name }}.{{ msg.name }}",
         fields = {
-{%- for field in msg.args.fields %}
+{%- for field in msg.args.inlines %}
             { name="{{ field.name }}", proto=proto.fields.{{ interface.name }}_{{ msg.name }}_{{ field.name }}, offset={{ field.offset }}, len={{ field.len }} },
 {%- endfor %}
         }
@@ -41,8 +41,14 @@ def proto_field(type_):
         "uint64":  "uint64",
         "intmax":  "int64",
         "uintmax": "uint64",
+        "uintptr": "uint64",
+        "paddr":   "uint64",
+        "size":    "uint64",
+        "cid":     "int32",
+        "handle":  "int32",
         "bool":    "bool",
         "char":    "string",
+        "string":  "string",
     }[type_]
 
 def main():
