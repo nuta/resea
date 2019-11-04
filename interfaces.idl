@@ -11,6 +11,8 @@ interface runtime {
     exit(code: int32) -> ()
     [id(2), type(call)]
     printchar(ch: char) -> ()
+    [id(3), type(call)]
+    print_str(str: string) -> ()
 }
 
 [id(2)]

@@ -5,6 +5,7 @@ use resea::channel::Channel;
 use resea::message::{HandleId, Page};
 use resea::std::cmp::min;
 use resea::std::ptr;
+use resea::std::string::String;
 use crate::page::PageAllocator;
 use crate::initfs::{Initfs, File};
 use crate::process::ProcessManager;
@@ -112,6 +113,11 @@ impl idl::runtime::Server for Server {
 
     fn printchar(&mut self, ch: u8) -> Option<Result<(), Error>> {
         resea::print::printchar(ch);
+        Some(Ok(()))
+    }
+
+    fn print_str(&mut self, s: String) -> Option<Result<(), Error>> {
+        resea::print::print_str(s.as_str());
         Some(Ok(()))
     }
 }

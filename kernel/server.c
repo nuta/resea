@@ -65,6 +65,14 @@ static error_t handle_runtime_printchar(struct message *m) {
     return OK;
 }
 
+static error_t handle_runtime_print_str(struct message *m) {
+    char *str = m->payloads.runtime.print_str.str;
+    for (int i = 0; str[i] != '\0' && i < STRING_LEN_MAX; i++) {
+        arch_putchar(str[i]);
+    }
+    return OK;
+}
+
 static error_t handle_runtime_exit(struct message *m) {
     process_destroy(get_sender_process(m->from));
     return DONT_REPLY;
@@ -316,6 +324,7 @@ static error_t process_message(struct message *m) {
     switch (m->header) {
     case RUNTIME_EXIT_MSG:         return handle_runtime_exit(m);
     case RUNTIME_PRINTCHAR_MSG:    return handle_runtime_printchar(m);
+    case RUNTIME_PRINT_STR_MSG:    return handle_runtime_print_str(m);
     case PROCESS_CREATE_MSG:       return handle_process_create(m);
     case PROCESS_DESTROY_MSG:      return handle_process_destroy(m);
     case PROCESS_ADD_PAGER_MSG:    return handle_process_add_pager(m);

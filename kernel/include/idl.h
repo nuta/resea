@@ -40,6 +40,17 @@ struct runtime_printchar_reply_payload {
     vaddr_t __unused_page;
     size_t __num_pages;
 } PACKED;
+
+#define RUNTIME_PRINT_STR_INLINE_LEN (STRING_LEN_MAX)
+#define RUNTIME_PRINT_STR_MSG     (         (((RUNTIME_INTERFACE << 8) | 3ULL) << MSG_TYPE_OFFSET)| (RUNTIME_PRINT_STR_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+
+struct runtime_print_str_payload {
+    cid_t __unused_channel;
+    vaddr_t __unused_page;
+    size_t __num_pages;
+    string_t str;
+} PACKED;
+
 #define PROCESS_INTERFACE  2ULL
 #define PROCESS_CREATE_INLINE_LEN (STRING_LEN_MAX)
 #define PROCESS_CREATE_MSG     (         (((PROCESS_INTERFACE << 8) | 1ULL) << MSG_TYPE_OFFSET)| (PROCESS_CREATE_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -327,6 +338,7 @@ struct benchmark_nop_reply_payload {
     struct runtime_exit_reply_payload exit_reply; \
     struct runtime_printchar_payload printchar; \
     struct runtime_printchar_reply_payload printchar_reply; \
+    struct runtime_print_str_payload print_str; \
     } runtime; \
     union { \
     struct process_create_payload create; \
