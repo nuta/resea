@@ -36,6 +36,8 @@ endif
 MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 .SUFFIXES:
 
+initfs_files :=
+
 #
 #  Build Targets
 #
@@ -130,34 +132,6 @@ $(BUILD_DIR)/compile_commands.json: $(compiled_objs)
 -include $(BUILD_DIR)/kernel/*.deps
 
 #
-# initfs
-#
-
-$(BUILD_DIR)/initfs.bin: $(initfs_files) $(BUILD_DIR)/$(INIT).bin tools/mkinitfs.py Makefile
-	$(PROGRESS) "MKINITFS" $@
-	$(PYTHON3) tools/mkinitfs.py          \
-		-o $(@:.o=.bin)               \
-		-s $(BUILD_DIR)/$(INIT).bin   \
-		--file-list "$(initfs_files)" \
-		$(BUILD_DIR)/initfs
-
-$(BUILD_DIR)/initfs/startups/%.elf: $(BUILD_DIR)/servers/%.elf
-	mkdir -p $(@D)
-	cp $< $@
-
-$(BUILD_DIR)/initfs/servers/%.elf: $(BUILD_DIR)/servers/%.elf
-	mkdir -p $(@D)
-	cp $< $@
-
-$(BUILD_DIR)/initfs/apps/%.elf: $(BUILD_DIR)/apps/%.elf
-	mkdir -p $(@D)
-	cp $< $@
-
-# Startup.
-$(BUILD_DIR)/$(INIT).bin: $(BUILD_DIR)/servers/$(INIT).elf Makefile
-	$(OBJCOPY) -j.initfs -j.text -j.data -j.rodata -j.bss -Obinary $< $@
-
-#
 #  Userland
 #
 XARGOFLAGS += --quiet
@@ -216,3 +190,30 @@ $(BUILD_DIR)/servers/$(1).elf: ldflags := \
 endef
 $(foreach server, $(INIT) $(STARTUPS), $(eval $(call server-make-rule,$(server))))
 initfs_files += $(foreach server, $(STARTUPS), $(BUILD_DIR)/initfs/startups/$(server).elf)
+
+#
+# initfs
+#
+$(BUILD_DIR)/initfs.bin: $(initfs_files) $(BUILD_DIR)/$(INIT).bin tools/mkinitfs.py Makefile
+	$(PROGRESS) "MKINITFS" $@
+	$(PYTHON3) tools/mkinitfs.py          \
+		-o $(@:.o=.bin)               \
+		-s $(BUILD_DIR)/$(INIT).bin   \
+		--file-list "$(initfs_files)" \
+		$(BUILD_DIR)/initfs
+
+$(BUILD_DIR)/initfs/startups/%.elf: $(BUILD_DIR)/servers/%.elf
+	mkdir -p $(@D)
+	cp $< $@
+
+$(BUILD_DIR)/initfs/servers/%.elf: $(BUILD_DIR)/servers/%.elf
+	mkdir -p $(@D)
+	cp $< $@
+
+$(BUILD_DIR)/initfs/apps/%.elf: $(BUILD_DIR)/apps/%.elf
+	mkdir -p $(@D)
+	cp $< $@
+
+# Startup.
+$(BUILD_DIR)/$(INIT).bin: $(BUILD_DIR)/servers/$(INIT).elf Makefile
+	$(OBJCOPY) -j.initfs -j.text -j.data -j.rodata -j.bss -Obinary $< $@
