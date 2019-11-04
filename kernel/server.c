@@ -49,7 +49,8 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
         if (type_or_error < 0) {
             WARN("user pager returned an error");
         } else {
-            WARN("user pager replied an invalid header (header=%p)", m->header);
+            WARN("user pager replied an invalid header (header=%p, expected=%p)",
+                 m->header, PAGER_FILL_REPLY_MSG);
         }
         return 0;
     }
@@ -328,6 +329,7 @@ static error_t process_message(struct message *m) {
     case SERVER_CONNECT_MSG:       return handle_server_connect(m);
     }
 
+    WARN("unknown message: header=%p", m->header);
     return ERR_UNEXPECTED_MESSAGE;
 }
 
@@ -345,6 +347,7 @@ NORETURN static void mainloop(cid_t server_ch) {
         if (err != OK) {
             m->header = ERROR_TO_HEADER(err);
         }
+
         kernel_ipc(m->from, IPC_SEND);
     }
 }
