@@ -7,7 +7,7 @@ TEMPLATE = """\
 {%- for interface in interfaces %}
 {%- for msg in interface.messages %}
 {%- for field in msg.args.inlines %}
-proto.fields.{{ interface.name }}_{{ msg.name }}_{{ field.name }} = ProtoField.{{ field.type | proto_field }}("resea.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }}", "{{ field.name }}");
+proto.fields.{{ interface.name }}_{{ msg.name }}_{{ field.name }} = ProtoField.{{ field.type | proto_field }}("resea.payloads.{{ interface.name }}.{{ msg.name }}.{{ field.name }}", "{{ field.name }}" {{ field.type | proto_base }});
 {%- endfor %}
 {%- endfor %}
 {%- endfor %}
@@ -51,6 +51,33 @@ def proto_field(type_):
         "string":  "string",
     }[type_]
 
+def proto_base(type_):
+    base = {
+        "int8":    "DEC",
+        "int16":   "DEC",
+        "int32":   "DEC",
+        "int64":   "DEC",
+        "uint8":   "DEC",
+        "uint16":  "DEC",
+        "uint32":  "DEC",
+        "uint64":  "DEC",
+        "intmax":  "DEC",
+        "uintmax": "DEC",
+        "uintptr": "HEX",
+        "paddr":   "HEX",
+        "size":    "HEX",
+        "cid":     "DEC",
+        "handle":  "DEC",
+        "bool":    None,
+        "char":    None,
+        "string":  None,
+    }[type_]
+
+    if base is not None:
+        return f", base.{base}"
+    else:
+        return ""
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generates a IDL table for the Wireshark dissector.")
@@ -61,6 +88,7 @@ def main():
     renderer = jinja2.Environment()
     renderer.filters["hex"] = hex
     renderer.filters["proto_field"] = proto_field
+    renderer.filters["proto_base"] = proto_base
     print(renderer.from_string(TEMPLATE).render(interfaces=interfaces))
 
 if __name__ == "__main__":
