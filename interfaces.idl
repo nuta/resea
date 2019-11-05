@@ -21,7 +21,6 @@ interface process {
     create(name: string) -> (proc: handle, pager_ch: channel)
     [id(2), type(call)]
     destroy(proc: handle) -> ()
-    // TODO: Use channel payload.
     [id(3), type(call)]
     add_vm_area(proc: handle, start: uintptr, size: size, flags: uint8) -> ()
     [id(4), type(call)]
