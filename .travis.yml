@@ -31,10 +31,13 @@ addons:
       - mtools
       - grub2
       - xorriso
+      - python3
+      - python3-pip
 
 install:
   - pip3 install -r tools/requirements.txt
   - "cargo install xargo || true"
+  - "rustup component add rust-src"
 
 script:
   - make
