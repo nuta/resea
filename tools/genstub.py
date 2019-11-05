@@ -124,8 +124,21 @@ fn __cast_into_message<T>(m: &T) -> &Message {
 {% for msg in messages %}
 pub fn send_{{ msg.name }}({{ msg.args | arg_params("__ch: &Channel") }})
     -> Result<(), Error> {
-    Err(Error::Unimplemented)
+    let mut __m: {{ msg.name | camelcase }}Msg =
+        unsafe { core::mem::MaybeUninit::uninit().assume_init() };
+    {{ serialize("__m", msg.name, msg.args, False) }}
+    __ch.send(__cast_into_message(&__m))
 }
+
+{%- if msg.attrs.type == "call" %}
+pub fn send_{{ msg.name }}_reply({{ msg.rets | arg_params("__ch: &Channel") }})
+    -> Result<(), Error> {
+    let mut __m: {{ msg.name | camelcase }}ReplyMsg =
+        unsafe { core::mem::MaybeUninit::uninit().assume_init() };
+    {{ serialize("__m", msg.name, msg.rets, True) }}
+    __ch.send(__cast_into_message(&__m))
+}
+{%- endif %}
 {% endfor -%}
 
 //

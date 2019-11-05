@@ -32,7 +32,7 @@ impl Channel {
         }
     }
 
-    pub fn recv(&mut self) -> Result<Message, Error> {
+    pub fn recv(&self) -> Result<Message, Error> {
         unsafe {
             syscall::recv(self.cid).map(|_| {
                 let mut recv_buf = Message::uninit();
@@ -42,14 +42,14 @@ impl Channel {
         }
     }
 
-    pub fn send(&mut self, m: &Message) -> Result<(), Error> {
+    pub fn send(&self, m: &Message) -> Result<(), Error> {
         unsafe {
             copy_to_ipc_buffer(m);
             syscall::send(self.cid)
         }
     }
 
-    pub fn send_err(&mut self, err: Error) -> Result<(), Error> {
+    pub fn send_err(&self, err: Error) -> Result<(), Error> {
         self.send(&Message::from_error(err))
     }
 
