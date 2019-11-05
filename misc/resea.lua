@@ -115,7 +115,6 @@ proto.fields.runtime_print_str_str = ProtoField.string("resea.payloads.runtime.p
 proto.fields.process_create_name = ProtoField.string("resea.payloads.process.create.name", "name" );
 proto.fields.process_destroy_proc = ProtoField.int32("resea.payloads.process.destroy.proc", "proc" , base.DEC);
 proto.fields.process_add_vm_area_proc = ProtoField.int32("resea.payloads.process.add_vm_area.proc", "proc" , base.DEC);
-proto.fields.process_add_vm_area_pager = ProtoField.int32("resea.payloads.process.add_vm_area.pager", "pager" , base.DEC);
 proto.fields.process_add_vm_area_start = ProtoField.uint64("resea.payloads.process.add_vm_area.start", "start" , base.HEX);
 proto.fields.process_add_vm_area_size = ProtoField.uint64("resea.payloads.process.add_vm_area.size", "size" , base.HEX);
 proto.fields.process_add_vm_area_flags = ProtoField.uint8("resea.payloads.process.add_vm_area.flags", "flags" , base.DEC);
@@ -138,6 +137,7 @@ proto.fields.pager_fill_addr = ProtoField.uint64("resea.payloads.pager.fill.addr
 proto.fields.pager_fill_size = ProtoField.uint64("resea.payloads.pager.fill.size", "size" , base.HEX);
 
 resea_messages = {
+    
     [0x101] = {
         interface_name = "runtime",
         name = "runtime.exit",
@@ -145,6 +145,14 @@ resea_messages = {
             { name="code", proto=proto.fields.runtime_exit_code, offset=32, len=4 },
         }
     },
+    
+    [0x181] = {
+        interface_name = "runtime",
+        name = "runtime.exit_reply",
+        fields = {
+        }
+    },
+    
     [0x102] = {
         interface_name = "runtime",
         name = "runtime.printchar",
@@ -152,6 +160,14 @@ resea_messages = {
             { name="ch", proto=proto.fields.runtime_printchar_ch, offset=32, len=1 },
         }
     },
+    
+    [0x182] = {
+        interface_name = "runtime",
+        name = "runtime.printchar_reply",
+        fields = {
+        }
+    },
+    
     [0x103] = {
         interface_name = "runtime",
         name = "runtime.print_str",
@@ -159,6 +175,14 @@ resea_messages = {
             { name="str", proto=proto.fields.runtime_print_str_str, offset=32, len=128 },
         }
     },
+    
+    [0x183] = {
+        interface_name = "runtime",
+        name = "runtime.print_str_reply",
+        fields = {
+        }
+    },
+    
     [0x201] = {
         interface_name = "process",
         name = "process.create",
@@ -166,6 +190,15 @@ resea_messages = {
             { name="name", proto=proto.fields.process_create_name, offset=32, len=128 },
         }
     },
+    
+    [0x281] = {
+        interface_name = "process",
+        name = "process.create_reply",
+        fields = {
+            { name="proc", proto=proto.fields.process_create_reply_proc, offset=160, len=4 },
+        }
+    },
+    
     [0x202] = {
         interface_name = "process",
         name = "process.destroy",
@@ -173,17 +206,32 @@ resea_messages = {
             { name="proc", proto=proto.fields.process_destroy_proc, offset=32, len=4 },
         }
     },
+    
+    [0x282] = {
+        interface_name = "process",
+        name = "process.destroy_reply",
+        fields = {
+        }
+    },
+    
     [0x203] = {
         interface_name = "process",
         name = "process.add_vm_area",
         fields = {
             { name="proc", proto=proto.fields.process_add_vm_area_proc, offset=32, len=4 },
-            { name="pager", proto=proto.fields.process_add_vm_area_pager, offset=36, len=4 },
-            { name="start", proto=proto.fields.process_add_vm_area_start, offset=40, len=8 },
-            { name="size", proto=proto.fields.process_add_vm_area_size, offset=48, len=8 },
-            { name="flags", proto=proto.fields.process_add_vm_area_flags, offset=56, len=1 },
+            { name="start", proto=proto.fields.process_add_vm_area_start, offset=36, len=8 },
+            { name="size", proto=proto.fields.process_add_vm_area_size, offset=44, len=8 },
+            { name="flags", proto=proto.fields.process_add_vm_area_flags, offset=52, len=1 },
         }
     },
+    
+    [0x283] = {
+        interface_name = "process",
+        name = "process.add_vm_area_reply",
+        fields = {
+        }
+    },
+    
     [0x204] = {
         interface_name = "process",
         name = "process.send_channel",
@@ -191,6 +239,14 @@ resea_messages = {
             { name="proc", proto=proto.fields.process_send_channel_proc, offset=32, len=4 },
         }
     },
+    
+    [0x284] = {
+        interface_name = "process",
+        name = "process.send_channel_reply",
+        fields = {
+        }
+    },
+    
     [0x301] = {
         interface_name = "thread",
         name = "thread.spawn",
@@ -202,6 +258,15 @@ resea_messages = {
             { name="arg", proto=proto.fields.thread_spawn_arg, offset=60, len=8 },
         }
     },
+    
+    [0x381] = {
+        interface_name = "thread",
+        name = "thread.spawn_reply",
+        fields = {
+            { name="thread", proto=proto.fields.thread_spawn_reply_thread, offset=68, len=4 },
+        }
+    },
+    
     [0x302] = {
         interface_name = "thread",
         name = "thread.destroy",
@@ -209,6 +274,14 @@ resea_messages = {
             { name="thread", proto=proto.fields.thread_destroy_thread, offset=32, len=4 },
         }
     },
+    
+    [0x382] = {
+        interface_name = "thread",
+        name = "thread.destroy_reply",
+        fields = {
+        }
+    },
+    
     [0x401] = {
         interface_name = "timer",
         name = "timer.set",
@@ -217,6 +290,15 @@ resea_messages = {
             { name="interval", proto=proto.fields.timer_set_interval, offset=36, len=4 },
         }
     },
+    
+    [0x481] = {
+        interface_name = "timer",
+        name = "timer.set_reply",
+        fields = {
+            { name="timer", proto=proto.fields.timer_set_reply_timer, offset=40, len=4 },
+        }
+    },
+    
     [0x402] = {
         interface_name = "timer",
         name = "timer.clear",
@@ -224,6 +306,14 @@ resea_messages = {
             { name="timer", proto=proto.fields.timer_clear_timer, offset=32, len=4 },
         }
     },
+    
+    [0x482] = {
+        interface_name = "timer",
+        name = "timer.clear_reply",
+        fields = {
+        }
+    },
+    
     [0xa01] = {
         interface_name = "server",
         name = "server.connect",
@@ -231,6 +321,14 @@ resea_messages = {
             { name="interface", proto=proto.fields.server_connect_interface, offset=32, len=1 },
         }
     },
+    
+    [0xa81] = {
+        interface_name = "server",
+        name = "server.connect_reply",
+        fields = {
+        }
+    },
+    
     [0xb01] = {
         interface_name = "memory",
         name = "memory.alloc_pages",
@@ -238,6 +336,14 @@ resea_messages = {
             { name="order", proto=proto.fields.memory_alloc_pages_order, offset=32, len=8 },
         }
     },
+    
+    [0xb81] = {
+        interface_name = "memory",
+        name = "memory.alloc_pages_reply",
+        fields = {
+        }
+    },
+    
     [0xb02] = {
         interface_name = "memory",
         name = "memory.alloc_phy_pages",
@@ -246,6 +352,15 @@ resea_messages = {
             { name="order", proto=proto.fields.memory_alloc_phy_pages_order, offset=40, len=8 },
         }
     },
+    
+    [0xb82] = {
+        interface_name = "memory",
+        name = "memory.alloc_phy_pages_reply",
+        fields = {
+            { name="paddr", proto=proto.fields.memory_alloc_phy_pages_reply_paddr, offset=48, len=8 },
+        }
+    },
+    
     [0xc01] = {
         interface_name = "pager",
         name = "pager.fill",
@@ -253,6 +368,13 @@ resea_messages = {
             { name="proc", proto=proto.fields.pager_fill_proc, offset=32, len=4 },
             { name="addr", proto=proto.fields.pager_fill_addr, offset=36, len=8 },
             { name="size", proto=proto.fields.pager_fill_size, offset=44, len=8 },
+        }
+    },
+    
+    [0xc81] = {
+        interface_name = "pager",
+        name = "pager.fill_reply",
+        fields = {
         }
     },
 }

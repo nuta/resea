@@ -12,18 +12,25 @@ proto.fields.{{ interface.name }}_{{ msg.name }}_{{ field.name }} = ProtoField.{
 {%- endfor %}
 {%- endfor %}
 
-resea_messages = {
-{%- for interface in interfaces %}
-{%- for msg in interface.messages %}
-    [{{ msg.id | hex }}] = {
-        interface_name = "{{ interface.name }}",
-        name = "{{ interface.name }}.{{ msg.name }}",
+{%- macro define_message(interface_name, msg_name, msg_id, fields) %}
+    [{{ msg_id | hex }}] = {
+        interface_name = "{{ interface_name }}",
+        name = "{{ interface_name }}.{{ msg_name }}",
         fields = {
-{%- for field in msg.args.inlines %}
-            { name="{{ field.name }}", proto=proto.fields.{{ interface.name }}_{{ msg.name }}_{{ field.name }}, offset={{ field.offset }}, len={{ field.len }} },
+{%- for field in fields.inlines %}
+            { name="{{ field.name }}", proto=proto.fields.{{ interface_name }}_{{ msg_name }}_{{ field.name }}, offset={{ field.offset }}, len={{ field.len }} },
 {%- endfor %}
         }
     },
+{%- endmacro %}
+
+resea_messages = {
+{%- for interface in interfaces %}
+{%- for msg in interface.messages %}
+    {{ define_message(interface.name, msg.name, msg.id, msg.args) }}
+{%- if msg.attrs.type == "call" %}
+    {{ define_message(interface.name, msg.name + "_reply", msg.reply_id, msg.rets) }}
+{%- endif %}
 {%- endfor %}
 {%- endfor %}
 }
