@@ -8,6 +8,8 @@
 #include <types.h>
 #include <ipc.h>
 
+#define PAGER_CID ((cid_t) 1)
+
 struct channel *kernel_server_ch = NULL;
 static struct table user_timers;
 static struct table irq_listeners;
@@ -87,24 +89,26 @@ static error_t handle_process_create(struct message *m) {
         return ERR_OUT_OF_RESOURCE;
     }
 
-    struct channel *user_ch = channel_create(proc);
-    if (!user_ch) {
+    struct channel *their_ch = channel_create(proc);
+    if (!their_ch) {
         process_destroy(proc);
         return ERR_OUT_OF_RESOURCE;
     }
 
-    struct channel *pager_ch = channel_create(get_sender_process(m->from));
-    if (!pager_ch) {
-        channel_destroy(pager_ch);
+    DEBUG_ASSERT(their_ch->cid == PAGER_CID);
+
+    struct channel *our_ch = channel_create(kernel_process);
+    if (!our_ch) {
+        channel_destroy(our_ch);
         process_destroy(proc);
         return ERR_OUT_OF_RESOURCE;
     }
 
-    channel_link(user_ch, pager_ch);
+    channel_link(our_ch, their_ch);
 
     m->header = PROCESS_CREATE_REPLY_MSG;
     m->payloads.process.create_reply.pid = proc->pid;
-    m->payloads.process.create_reply.pager_ch = pager_ch->cid;
+    m->payloads.process.create_reply.pager_ch = our_ch->cid;
     return OK;
 }
 
@@ -142,12 +146,11 @@ static error_t handle_thread_destroy(UNUSED struct message *m) {
     UNIMPLEMENTED();
 }
 
-static error_t handle_process_add_pager(struct message *m) {
-    pid_t pid       = m->payloads.process.add_pager.pid;
-    cid_t pager     = m->payloads.process.add_pager.pager;
-    uintptr_t start = m->payloads.process.add_pager.start;
-    size_t size     = m->payloads.process.add_pager.size;
-    uint8_t flags   = m->payloads.process.add_pager.flags;
+static error_t handle_process_add_vm_area(struct message *m) {
+    pid_t pid       = m->payloads.process.add_vm_area.pid;
+    uintptr_t start = m->payloads.process.add_vm_area.start;
+    size_t size     = m->payloads.process.add_vm_area.size;
+    uint8_t flags   = m->payloads.process.add_vm_area.flags;
 
     struct process *proc = table_get(&process_table, pid);
     if (!proc) {
@@ -155,9 +158,9 @@ static error_t handle_process_add_pager(struct message *m) {
         return ERR_INVALID_MESSAGE;
     }
 
-    struct channel *pager_ch = table_get(&proc->channels, pager);
+    struct channel *pager_ch = table_get(&proc->channels, PAGER_CID);
     if (!pager_ch) {
-        WARN("Invalid pager_ch @%d.", pager);
+        WARN("pager channel (@1) is closed.", PAGER_CID);
         process_destroy(proc);
         return ERR_INVALID_MESSAGE;
     }
@@ -171,7 +174,7 @@ static error_t handle_process_add_pager(struct message *m) {
     }
     channel_incref(pager_ch);
 
-    TRACE("kernel: add_pager_response()");
+    TRACE("kernel: add_vm_area_response()");
     m->header = PROCESS_ADD_PAGER_REPLY_MSG;
     return OK;
 }
@@ -327,7 +330,7 @@ static error_t process_message(struct message *m) {
     case RUNTIME_PRINT_STR_MSG:    return handle_runtime_print_str(m);
     case PROCESS_CREATE_MSG:       return handle_process_create(m);
     case PROCESS_DESTROY_MSG:      return handle_process_destroy(m);
-    case PROCESS_ADD_PAGER_MSG:    return handle_process_add_pager(m);
+    case PROCESS_ADD_PAGER_MSG:    return handle_process_add_vm_area(m);
     case PROCESS_SEND_CHANNEL_MSG: return handle_process_send_channel(m);
     case THREAD_SPAWN_MSG:         return handle_thread_spawn(m);
     case THREAD_DESTROY_MSG:       return handle_thread_destroy(m);

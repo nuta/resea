@@ -125,7 +125,6 @@ builtin_sizes = {
     "uintptr": 8,
     "intmax":  8,
     "uintmax": 8,
-    "cid":     4,
     "handle":  4,
     "string": 128,
 }

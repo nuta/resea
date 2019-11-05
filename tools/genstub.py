@@ -226,7 +226,6 @@ builtin_types = {
     "uint64":   { "name_in_msg": None, "name": "u64",      "size": "core::mem::size_of::<u64>()" },
     "bool":     { "name_in_msg": None, "name": "bool",     "size": "core::mem::size_of::<bool>()" },
     "char":     { "name_in_msg": None, "name": "u8",       "size": "core::mem::size_of::<u8>()" },
-    "cid":      { "name_in_msg": None, "name": "CId",      "size": "core::mem::size_of::<CId>()" },
     "handle":   { "name_in_msg": None, "name": "HandleId", "size": "core::mem::size_of::<HandleId>()" },
     "channel":  { "name_in_msg": None, "name": "Channel",  "size": "0" },
     "page":     { "name_in_msg": None, "name": "Page",     "size": "0" },

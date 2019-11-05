@@ -61,15 +61,14 @@ struct process_create_payload {
     size_t __num_pages;
     string_t name;
 } PACKED;
-#define PROCESS_CREATE_REPLY_INLINE_LEN (sizeof(pid_t) + sizeof(cid_t))
-#define PROCESS_CREATE_REPLY_MSG     (         (((PROCESS_INTERFACE << 8) | MSG_REPLY_FLAG | 1) << MSG_TYPE_OFFSET)| (PROCESS_CREATE_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+#define PROCESS_CREATE_REPLY_INLINE_LEN (sizeof(pid_t))
+#define PROCESS_CREATE_REPLY_MSG     (         (((PROCESS_INTERFACE << 8) | MSG_REPLY_FLAG | 1) << MSG_TYPE_OFFSET) | MSG_CHANNEL_PAYLOAD | (PROCESS_CREATE_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
 
 struct process_create_reply_payload {
-    cid_t __unused_channel;
+    cid_t pager_ch;
     vaddr_t __unused_page;
     size_t __num_pages;
     pid_t pid;
-    cid_t pager_ch;
 } PACKED;
 #define PROCESS_DESTROY_INLINE_LEN (sizeof(pid_t))
 #define PROCESS_DESTROY_MSG     (         (((PROCESS_INTERFACE << 8) | 2ULL) << MSG_TYPE_OFFSET)| (PROCESS_DESTROY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -88,15 +87,14 @@ struct process_destroy_reply_payload {
     vaddr_t __unused_page;
     size_t __num_pages;
 } PACKED;
-#define PROCESS_ADD_PAGER_INLINE_LEN (sizeof(pid_t) + sizeof(cid_t) + sizeof(uintptr_t) + sizeof(size_t) + sizeof(uint8_t))
+#define PROCESS_ADD_PAGER_INLINE_LEN (sizeof(pid_t) + sizeof(uintptr_t) + sizeof(size_t) + sizeof(uint8_t))
 #define PROCESS_ADD_PAGER_MSG     (         (((PROCESS_INTERFACE << 8) | 3ULL) << MSG_TYPE_OFFSET)| (PROCESS_ADD_PAGER_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
 
-struct process_add_pager_payload {
+struct process_add_vm_area_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
     size_t __num_pages;
     pid_t pid;
-    cid_t pager;
     uintptr_t start;
     size_t size;
     uint8_t flags;
@@ -104,7 +102,7 @@ struct process_add_pager_payload {
 #define PROCESS_ADD_PAGER_REPLY_INLINE_LEN (0)
 #define PROCESS_ADD_PAGER_REPLY_MSG     (         (((PROCESS_INTERFACE << 8) | MSG_REPLY_FLAG | 3) << MSG_TYPE_OFFSET)| (PROCESS_ADD_PAGER_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
 
-struct process_add_pager_reply_payload {
+struct process_add_vm_area_reply_payload {
     cid_t __unused_channel;
     vaddr_t __unused_page;
     size_t __num_pages;
@@ -345,8 +343,8 @@ struct benchmark_nop_reply_payload {
     struct process_create_reply_payload create_reply; \
     struct process_destroy_payload destroy; \
     struct process_destroy_reply_payload destroy_reply; \
-    struct process_add_pager_payload add_pager; \
-    struct process_add_pager_reply_payload add_pager_reply; \
+    struct process_add_vm_area_payload add_vm_area; \
+    struct process_add_vm_area_reply_payload add_vm_area_reply; \
     struct process_send_channel_payload send_channel; \
     struct process_send_channel_reply_payload send_channel_reply; \
     } process; \

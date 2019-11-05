@@ -114,11 +114,11 @@ proto.fields.runtime_printchar_ch = ProtoField.string("resea.payloads.runtime.pr
 proto.fields.runtime_print_str_str = ProtoField.string("resea.payloads.runtime.print_str.str", "str" );
 proto.fields.process_create_name = ProtoField.string("resea.payloads.process.create.name", "name" );
 proto.fields.process_destroy_proc = ProtoField.int32("resea.payloads.process.destroy.proc", "proc" , base.DEC);
-proto.fields.process_add_pager_proc = ProtoField.int32("resea.payloads.process.add_pager.proc", "proc" , base.DEC);
-proto.fields.process_add_pager_pager = ProtoField.int32("resea.payloads.process.add_pager.pager", "pager" , base.DEC);
-proto.fields.process_add_pager_start = ProtoField.uint64("resea.payloads.process.add_pager.start", "start" , base.HEX);
-proto.fields.process_add_pager_size = ProtoField.uint64("resea.payloads.process.add_pager.size", "size" , base.HEX);
-proto.fields.process_add_pager_flags = ProtoField.uint8("resea.payloads.process.add_pager.flags", "flags" , base.DEC);
+proto.fields.process_add_vm_area_proc = ProtoField.int32("resea.payloads.process.add_vm_area.proc", "proc" , base.DEC);
+proto.fields.process_add_vm_area_pager = ProtoField.int32("resea.payloads.process.add_vm_area.pager", "pager" , base.DEC);
+proto.fields.process_add_vm_area_start = ProtoField.uint64("resea.payloads.process.add_vm_area.start", "start" , base.HEX);
+proto.fields.process_add_vm_area_size = ProtoField.uint64("resea.payloads.process.add_vm_area.size", "size" , base.HEX);
+proto.fields.process_add_vm_area_flags = ProtoField.uint8("resea.payloads.process.add_vm_area.flags", "flags" , base.DEC);
 proto.fields.process_send_channel_proc = ProtoField.int32("resea.payloads.process.send_channel.proc", "proc" , base.DEC);
 proto.fields.thread_spawn_proc = ProtoField.int32("resea.payloads.thread.spawn.proc", "proc" , base.DEC);
 proto.fields.thread_spawn_start = ProtoField.uint64("resea.payloads.thread.spawn.start", "start" , base.HEX);
@@ -175,13 +175,13 @@ resea_messages = {
     },
     [0x203] = {
         interface_name = "process",
-        name = "process.add_pager",
+        name = "process.add_vm_area",
         fields = {
-            { name="proc", proto=proto.fields.process_add_pager_proc, offset=32, len=4 },
-            { name="pager", proto=proto.fields.process_add_pager_pager, offset=36, len=4 },
-            { name="start", proto=proto.fields.process_add_pager_start, offset=40, len=8 },
-            { name="size", proto=proto.fields.process_add_pager_size, offset=48, len=8 },
-            { name="flags", proto=proto.fields.process_add_pager_flags, offset=56, len=1 },
+            { name="proc", proto=proto.fields.process_add_vm_area_proc, offset=32, len=4 },
+            { name="pager", proto=proto.fields.process_add_vm_area_pager, offset=36, len=4 },
+            { name="start", proto=proto.fields.process_add_vm_area_start, offset=40, len=8 },
+            { name="size", proto=proto.fields.process_add_vm_area_size, offset=48, len=8 },
+            { name="flags", proto=proto.fields.process_add_vm_area_flags, offset=56, len=1 },
         }
     },
     [0x204] = {

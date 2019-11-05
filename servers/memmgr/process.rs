@@ -51,15 +51,15 @@ impl ProcessManager {
         let elf = ELF::parse(file.data())?;
         let kernel_ch = idl::server::Client::connect(self.process_server, 0)?;
 
-        let (proc, pager_cid) =
-            idl::process::Client::create(self.process_server, file.path().to_owned())?;
-        let pager_ch = Channel::from_cid(pager_cid);
+        use idl::process::Client;
+        let (proc, pager_ch) =
+            self.process_server.create(file.path().to_owned())?;
 
-        idl::process::Client::send_channel(self.process_server, proc, kernel_ch)?;
-        idl::process::Client::add_pager(self.process_server, proc, 1,
-            APP_IMAGE_START, APP_IMAGE_SIZE, 0x06)?;
-        idl::process::Client::add_pager(self.process_server, proc, 1,
-            APP_ZEROED_PAGES_START, APP_ZEROED_PAGES_SIZE, 0x06)?;
+        self.process_server.send_channel(proc, kernel_ch)?;
+        self.process_server.add_vm_area(proc, APP_IMAGE_START, APP_IMAGE_SIZE,
+            0x06)?;
+        self.process_server.add_vm_area(proc, APP_ZEROED_PAGES_START,
+            APP_ZEROED_PAGES_SIZE, 0x06)?;
 
         self.processes.insert(proc, Process { pid: proc, elf, file, pager_ch });
         Ok(proc)
