@@ -27,7 +27,11 @@ static inline bool is_annoying_msg(header_t msg_type) {
            || msg_type == BENCHMARK_NOP_MSG
            || msg_type == BENCHMARK_NOP_REPLY_MSG
            || msg_type == PAGER_FILL_MSG
-           || msg_type == PAGER_FILL_REPLY_MSG;
+           || msg_type == PAGER_FILL_REPLY_MSG
+           || msg_type == IO_READ_IOPORT_MSG
+           || msg_type == IO_READ_IOPORT_REPLY_MSG
+           || msg_type == IO_WRITE_IOPORT_MSG
+           || msg_type == IO_WRITE_IOPORT_REPLY_MSG;
 }
 
 struct packet_header {

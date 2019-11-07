@@ -279,22 +279,6 @@ struct pager_fill_reply_payload {
     size_t __num_pages;
 } PACKED;
 #define IO_INTERFACE  15ULL
-#define IO_ALLOW_IOMAPPED_IO_INLINE_LEN (0)
-#define IO_ALLOW_IOMAPPED_IO_MSG     (         (((IO_INTERFACE << 8) | 1ULL) << MSG_TYPE_OFFSET)| (IO_ALLOW_IOMAPPED_IO_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
-
-struct io_allow_iomapped_io_payload {
-    cid_t __unused_channel;
-    vaddr_t __unused_page;
-    size_t __num_pages;
-} PACKED;
-#define IO_ALLOW_IOMAPPED_IO_REPLY_INLINE_LEN (0)
-#define IO_ALLOW_IOMAPPED_IO_REPLY_MSG     (         (((IO_INTERFACE << 8) | MSG_REPLY_FLAG | 1) << MSG_TYPE_OFFSET)| (IO_ALLOW_IOMAPPED_IO_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
-
-struct io_allow_iomapped_io_reply_payload {
-    cid_t __unused_channel;
-    vaddr_t __unused_page;
-    size_t __num_pages;
-} PACKED;
 #define IO_LISTEN_IRQ_INLINE_LEN (sizeof(uint8_t))
 #define IO_LISTEN_IRQ_MSG     (         (((IO_INTERFACE << 8) | 2ULL) << MSG_TYPE_OFFSET)| MSG_CHANNEL_PAYLOAD| (IO_LISTEN_IRQ_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
 
@@ -312,6 +296,49 @@ struct io_listen_irq_reply_payload {
     vaddr_t __unused_page;
     size_t __num_pages;
 } PACKED;
+
+#define IO_READ_IOPORT_INLINE_LEN (sizeof(vaddr_t) + sizeof(size_t))
+#define IO_READ_IOPORT_MSG     (         (((IO_INTERFACE << 8) | 2ULL) << MSG_TYPE_OFFSET)| (IO_READ_IOPORT_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+
+struct io_read_ioport_payload {
+    cid_t __unused_channel;
+    vaddr_t __unused_page;
+    size_t __num_pages;
+    vaddr_t addr;
+    size_t size;
+} PACKED;
+
+#define IO_READ_IOPORT_REPLY_INLINE_LEN (sizeof(uint64_t))
+#define IO_READ_IOPORT_REPLY_MSG     (         (((IO_INTERFACE << 8) | MSG_REPLY_FLAG | 2) << MSG_TYPE_OFFSET)| (IO_READ_IOPORT_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+
+struct io_read_ioport_reply_payload {
+    cid_t __unused_channel;
+    vaddr_t __unused_page;
+    size_t __num_pages;
+    uint64_t data;
+} PACKED;
+
+#define IO_WRITE_IOPORT_INLINE_LEN (sizeof(vaddr_t) + sizeof(size_t) + sizeof(uint64_t))
+#define IO_WRITE_IOPORT_MSG     (         (((IO_INTERFACE << 8) | 3ULL) << MSG_TYPE_OFFSET)| (IO_WRITE_IOPORT_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+
+struct io_write_ioport_payload {
+    cid_t __unused_channel;
+    vaddr_t __unused_page;
+    size_t __num_pages;
+    vaddr_t addr;
+    size_t size;
+    uint64_t data;
+} PACKED;
+
+#define IO_WRITE_IOPORT_REPLY_INLINE_LEN (0)
+#define IO_WRITE_IOPORT_REPLY_MSG     (         (((IO_INTERFACE << 8) | MSG_REPLY_FLAG | 3) << MSG_TYPE_OFFSET)| (IO_WRITE_IOPORT_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+
+struct io_write_ioport_reply_payload {
+    cid_t __unused_channel;
+    vaddr_t __unused_page;
+    size_t __num_pages;
+} PACKED;
+
 #define BENCHMARK_INTERFACE  19ULL
 #define BENCHMARK_NOP_INLINE_LEN (0)
 #define BENCHMARK_NOP_MSG     (         (((BENCHMARK_INTERFACE << 8) | 1ULL) << MSG_TYPE_OFFSET)| (BENCHMARK_NOP_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
@@ -371,8 +398,10 @@ struct benchmark_nop_reply_payload {
     struct pager_fill_reply_payload fill_reply; \
     } pager; \
     union { \
-    struct io_allow_iomapped_io_payload allow_iomapped_io; \
-    struct io_allow_iomapped_io_reply_payload allow_iomapped_io_reply; \
+    struct io_read_ioport_payload read_ioport; \
+    struct io_read_ioport_reply_payload read_ioport_reply; \
+    struct io_write_ioport_payload write_ioport; \
+    struct io_write_ioport_reply_payload write_ioport_reply; \
     struct io_listen_irq_payload listen_irq; \
     struct io_listen_irq_reply_payload listen_irq_reply; \
     } io; \

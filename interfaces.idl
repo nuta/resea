@@ -49,6 +49,16 @@ interface timer {
 interface kernel {
 }
 
+[id(15)]
+interface io {
+    [id(1), type(call)]
+    listen_irq(ch: channel, irq: uint8) -> ()
+    [id(2), type(call)]
+    read_ioport(addr: uint64, size: size) -> (data: uint64)
+    [id(3), type(call)]
+    write_ioport(addr: uint64, size: size, data: uint64) -> ()
+}
+
 [id(10)]
 interface server {
     [id(1), type(call)]

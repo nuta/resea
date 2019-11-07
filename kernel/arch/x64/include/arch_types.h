@@ -148,4 +148,24 @@ static inline void prefetch(MAYBE_UNUSED void *ptr) {
 #endif
 }
 
+static inline uint64_t arch_read_ioport(uintmax_t addr, int size) {
+    uint64_t data = 0;
+    switch (size) {
+    case 1: data = asm_in8(addr); break;
+    case 2: data = asm_in16(addr); break;
+    case 4: data = asm_in32(addr); break;
+    default: PANIC("invalid ioport read size (%d)", size);
+    }
+    return data;
+}
+
+static inline void arch_write_ioport(uintmax_t addr, int size, uint64_t data) {
+    switch (size) {
+    case 1: asm_out8(addr, data); break;
+    case 2: asm_out16(addr, data); break;
+    case 4: asm_out32(addr, data); break;
+    default: PANIC("invalid ioport write size (%d)", size);
+    }
+}
+
 #endif

@@ -19,6 +19,8 @@ void unlink_page(struct page_table *pt, vaddr_t vaddr, int num_pages);
 paddr_t resolve_paddr_from_vaddr(struct page_table *pt,
                                  vaddr_t vaddr);
 void enable_irq(uint8_t irq);
+uint64_t arch_read_ioport(uintmax_t addr, int size);
+void arch_write_ioport(uintmax_t addr, int size, uint64_t data);
 
 struct thread;
 error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,

@@ -7,6 +7,7 @@
 #include <table.h>
 #include <types.h>
 #include <ipc.h>
+#include <arch.h>
 
 #define PAGER_CID ((cid_t) 1)
 
@@ -230,18 +231,6 @@ static error_t handle_io_listen_irq(struct message *m) {
     return OK;
 }
 
-static error_t handle_io_allow_iomapped_io(struct message *m) {
-    struct process *sender = get_sender_process(m->from);
-    TRACE("kernel: allow_io(proc=%s)", sender->name);
-
-    LIST_FOR_EACH(thread, &sender->threads, struct thread, next) {
-        thread_allow_io(thread);
-    }
-
-    m->header = IO_ALLOW_IOMAPPED_IO_REPLY_MSG;
-    return OK;
-}
-
 static error_t handle_process_send_channel(struct message *m) {
     pid_t pid = m->payloads.process.send_channel.pid;
     cid_t cid = m->payloads.process.send_channel.ch;
@@ -277,6 +266,24 @@ static void user_timer_handler(struct timer *timer) {
         channel_decref(timer->arg);
         table_free(&user_timers, timer->id);
     }
+}
+
+static error_t handle_io_read_io_port(struct message *m) {
+    vaddr_t addr = m->payloads.io.read_ioport.addr;
+    vaddr_t size = m->payloads.io.read_ioport.size;
+    uint64_t data = arch_read_ioport(addr, size);
+    m->header = IO_READ_IOPORT_REPLY_MSG;
+    m->payloads.io.read_ioport_reply.data = data;
+    return OK;
+}
+
+static error_t handle_io_write_io_port(struct message *m) {
+    vaddr_t addr = m->payloads.io.write_ioport.addr;
+    vaddr_t size = m->payloads.io.write_ioport.size;
+    uint64_t data = m->payloads.io.write_ioport.data;
+    arch_write_ioport(addr, size, data);
+    m->header = IO_WRITE_IOPORT_REPLY_MSG;
+    return OK;
 }
 
 static error_t handle_timer_set(struct message *m) {
@@ -334,8 +341,9 @@ static error_t process_message(struct message *m) {
     case PROCESS_SEND_CHANNEL_MSG: return handle_process_send_channel(m);
     case THREAD_SPAWN_MSG:         return handle_thread_spawn(m);
     case THREAD_DESTROY_MSG:       return handle_thread_destroy(m);
-    case IO_ALLOW_IOMAPPED_IO_MSG: return handle_io_allow_iomapped_io(m);
     case IO_LISTEN_IRQ_MSG:        return handle_io_listen_irq(m);
+    case IO_READ_IOPORT_MSG:       return handle_io_read_io_port(m);
+    case IO_WRITE_IOPORT_MSG:      return handle_io_write_io_port(m);
     case TIMER_SET_MSG:            return handle_timer_set(m);
     case TIMER_CLEAR_MSG:          return handle_timer_clear(m);
     case SERVER_CONNECT_MSG:       return handle_server_connect(m);
