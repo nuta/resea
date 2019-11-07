@@ -76,3 +76,9 @@ interface pager {
     [id(1), type(call)]
     fill(proc: handle, addr: uintptr, size: size) -> (page: page)
 }
+
+[id(30)]
+interface storage_device {
+    [id(1), type(call)]
+    read(sector: uintptr, num_sectors: size) -> (page: page)
+}
