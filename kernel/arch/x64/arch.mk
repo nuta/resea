@@ -7,8 +7,10 @@ HDD_DIR = $(BUILD_DIR)/hdd
 BOCHS ?= bochs
 QEMU ?= qemu-system-x86_64
 QEMUFLAGS += -smp 2 -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
-QEMUFLAGS += -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04
-QEMUFLAGS += -boot d $(if $(GUI),,-nographic)
+QEMUFLAGS += -no-reboot -boot d
+QEMUFLAGS += -drive file=$(BUILD_DIR)/hdd.img,if=ide,format=raw
+QEMUFLAGS += -device isa-debug-exit,iobase=0xf4,iosize=0x04
+QEMUFLAGS += $(if $(GUI),,-nographic)
 
 kernel_objs += \
 	$(BUILD_DIR)/kernel/arch/x64/boot.o \
@@ -24,16 +26,20 @@ kernel_objs += \
 	$(BUILD_DIR)/kernel/arch/x64/thread.o
 
 .PHONY: bochs run iso
+run: $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/hdd.img
+	cp $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/kernel.qemu.elf
+	./tools/make-bootable-in-qemu.py $(BUILD_DIR)/kernel.qemu.elf
+	$(QEMU) $(QEMUFLAGS) -kernel $(BUILD_DIR)/kernel.qemu.elf
+
+ $(BUILD_DIR)/hdd.img:
+	echo "Hello from hard disk" > $@
+
 bochs: $(BUILD_DIR)/resea.iso
 	$(PROGRESS) GEN $(BUILD_DIR)/kernel.symbols
 	$(NM) $(BUILD_DIR)/kernel.elf | awk '{ print $$1, $$3 }' \
 		> $(BUILD_DIR)/kernel.symbols
 	$(PROGRESS) BOCHS $<
 	$(BOCHS) -qf misc/bochsrc
-
-run: $(BUILD_DIR)/resea.iso
-	$(PROGRESS) QEMU $(BUILD_DIR)/kernel.iso
-	$(QEMU) $(QEMUFLAGS) -cdrom $<
 
 iso: $(BUILD_DIR)/resea.iso
 
