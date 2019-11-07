@@ -1,3 +1,4 @@
+use crate::arch::PAGE_SIZE;
 use crate::error::Error;
 use crate::channel::CId;
 use crate::std::string::String;
@@ -63,6 +64,13 @@ pub struct Page {
 impl Page {
     pub const fn new(addr: usize, num_pages: usize) -> Page {
         Page { addr, num_pages }
+    }
+
+    pub fn as_bytes_mut(&mut self) -> &mut [u8] {
+        unsafe {
+            let len = self.num_pages * PAGE_SIZE;
+            core::slice::from_raw_parts_mut(self.addr as *mut u8, len)
+        }
     }
 }
 
