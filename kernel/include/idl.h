@@ -50,6 +50,14 @@ struct runtime_print_str_payload {
     size_t __num_pages;
     string_t str;
 } PACKED;
+#define RUNTIME_PRINT_STR_REPLY_INLINE_LEN (0)
+#define RUNTIME_PRINT_STR_REPLY_MSG     (         (((RUNTIME_INTERFACE << 8) | MSG_REPLY_FLAG | 3) << MSG_TYPE_OFFSET)| (RUNTIME_PRINTCHAR_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+
+struct runtime_print_str_reply_payload {
+    cid_t __unused_channel;
+    vaddr_t __unused_page;
+    size_t __num_pages;
+} PACKED;
 
 #define PROCESS_INTERFACE  2ULL
 #define PROCESS_CREATE_INLINE_LEN (STRING_LEN_MAX)
