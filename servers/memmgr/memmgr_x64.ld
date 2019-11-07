@@ -12,7 +12,6 @@ SECTIONS {
         __text = .;
         *(.text);
         *(.text.*);
-        *(.got);
         __text_end = .;
     }
 

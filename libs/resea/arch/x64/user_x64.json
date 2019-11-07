@@ -6,6 +6,7 @@
     "target-pointer-width": "64",
     "target-c-int-width": "32",
     "arch": "x86_64",
+    "relocation-model": "static",
     "os": "none",
     "features": "-mmx,-sse,+soft-float",
     "panic-strategy": "abort",
