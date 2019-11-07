@@ -66,11 +66,9 @@ interface server {
 }
 
 [id(11)]
-interface memory {
+interface memmgr {
     [id(1), type(call)]
-    alloc_pages(order: size) -> (page: page)
-    [id(2), type(call)]
-    alloc_phy_pages(map_at: paddr, order: size) -> (page: page, paddr: paddr)
+    alloc_pages(num_pages: size) -> (page: page)
 }
 
 [id(12)]

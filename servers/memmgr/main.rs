@@ -106,6 +106,13 @@ impl idl::pager::Server for Server {
     }
 }
 
+impl idl::memmgr::Server for Server {
+    fn alloc_pages(&mut self, num_pages: usize) -> Option<Result<Page, Error>> {
+        let page = self.page_allocator.allocate(num_pages);
+        Some(Ok(page.as_page_payload()))
+    }
+}
+
 impl idl::runtime::Server for Server {
     fn exit(&mut self, _code: i32) -> Option<Result<(), Error>> {
         unimplemented!();
@@ -132,5 +139,5 @@ pub fn main() {
     server.launch_servers(initfs);
 
     info!("entering mainloop...");
-    serve_forever!(&mut server, [runtime, pager]);
+    serve_forever!(&mut server, [runtime, pager, memmgr]);
 }
