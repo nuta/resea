@@ -22,6 +22,10 @@ impl Channel {
         Channel { cid }
     }
 
+    pub unsafe fn clone(&self) -> Channel {
+        Channel::from_cid(self.cid)
+    }
+
     pub fn cid(&self) -> CId {
         self.cid
     }

@@ -2,7 +2,9 @@ use crate::error::Error;
 use crate::channel::Channel;
 use crate::message::Message;
 
-pub trait Server {}
+pub trait Server {
+    fn deferred_work(&mut self) {}
+}
 
 #[macro_export]
 macro_rules! serve_forever {
@@ -28,6 +30,8 @@ macro_rules! serve_forever {
             if has_reply {
                 reply_to.send(&m).ok();
             }
+
+            $crate::server::Server::deferred_work(server);
         }
     }};
 }

@@ -77,6 +77,14 @@ interface pager {
     fill(proc: handle, addr: uintptr, size: size) -> (page: page)
 }
 
+[id(13)]
+interface discovery {
+    [id(1), type(call)]
+    connect(interface: uint8) -> (ch: channel)
+    [id(2), type(call)]
+    register(interface: uint8, ch: channel) -> ()
+}
+
 [id(30)]
 interface storage_device {
     [id(1), type(call)]

@@ -1,8 +1,9 @@
 use resea::PAGE_SIZE;
 use resea::idl;
+use resea::collections::{HashMap, Vec};
 use resea::error::Error;
 use resea::channel::Channel;
-use resea::message::{HandleId, Page};
+use resea::message::{HandleId, Page, InterfaceId};
 use resea::std::cmp::min;
 use resea::std::ptr;
 use resea::std::string::String;
@@ -16,11 +17,22 @@ extern "C" {
 
 static KERNEL_SERVER: Channel = Channel::from_cid(1);
 
+struct RegisteredServer {
+    ch: Channel,
+}
+
+struct ConnectRequest {
+    interface: InterfaceId,
+    ch: Channel,
+}
+
 struct Server {
     ch: Channel,
     _initfs: &'static Initfs,
     process_manager: ProcessManager,
     page_allocator: PageAllocator,
+    servers: HashMap<InterfaceId, RegisteredServer>,
+    connect_requests: Vec<ConnectRequest>,
 }
 
 const FREE_MEMORY_START: usize = 0x04000000;
@@ -33,6 +45,8 @@ impl Server {
             _initfs: initfs,
             process_manager: ProcessManager::new(&KERNEL_SERVER),
             page_allocator: PageAllocator::new(FREE_MEMORY_START, FREE_MEMORY_SIZE),
+            servers: HashMap::new(),
+            connect_requests: Vec::new(),
         }
     }
 
@@ -129,6 +143,58 @@ impl idl::runtime::Server for Server {
     }
 }
 
+impl idl::discovery::Server for Server {
+    fn connect(&mut self, from: &Channel, interface: u8) -> Option<Result<Channel, Error>> {
+        self.connect_requests.push(ConnectRequest {
+            interface,
+            ch: unsafe { from.clone() }
+        });
+
+        None
+    }
+
+    fn register(&mut self, _from: &Channel, interface: u8, ch: Channel) -> Option<Result<(), Error>> {
+        // TODO: Support multiple servers with the same interface ID.
+        assert!(self.servers.get(&interface).is_none());
+
+        self.servers.insert(interface, RegisteredServer { ch });
+        Some(Ok(()))
+    }
+}
+
+impl resea::server::Server for Server {
+    fn deferred_work(&mut self) {
+        let mut pending_requests =
+            Vec::with_capacity(self.connect_requests.len());
+        for request in self.connect_requests.drain(..) {
+            match self.servers.get(&request.interface) {
+                Some(server) => {
+                    // Send a server.connect request to the registered server.
+                    //
+                    // FIXME: Use the send stub instead of call one because
+                    // there's no gruantee that the server returns the reply
+                    // immediately.
+                    info!("sending a server.connect...");
+                    use idl::server::Client;
+                    let ch = server.ch.connect(request.interface).unwrap();
+
+                    // Send a discovery.connect_reply to the client.
+                    // FIXME: Use the non-blocking option in order not to be
+                    // blocked by a malicious client.
+                    idl::discovery::send_connect_reply(&request.ch, ch).unwrap();
+                }
+                None => {
+                    // The server with the desired interface does not yet exist.
+                    // Try later.
+                    pending_requests.push(request);
+                }
+            }
+        }
+
+        self.connect_requests = pending_requests;
+    }
+}
+
 #[no_mangle]
 pub fn main() {
     info!("hello from memmgr!");
@@ -139,5 +205,5 @@ pub fn main() {
     server.launch_servers(initfs);
 
     info!("entering mainloop...");
-    serve_forever!(&mut server, [runtime, pager, memmgr]);
+    serve_forever!(&mut server, [runtime, pager, memmgr, discovery]);
 }
