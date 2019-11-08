@@ -223,6 +223,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 if (receiver->info->num_pages < num_pages
                     || !is_valid_page_base_addr(page_base_addr)) {
                     receiver->abort_reason = ERR_NEEDS_RETRY;
+                    WARN("invalid page payload or the receiver does not accept it");
                     return ERR_INVALID_PAGE_PAYLOAD;
                 }
 
