@@ -14,6 +14,9 @@ pub const MSG_TYPE_OFFSET: u32 = 16;
 pub const MSG_PAGE_PAYLOAD: u32 = 1 << 11;
 pub const MSG_CHANNEL_PAYLOAD: u32 = 1 << 12;
 
+pub type InterfaceId = u8;
+pub type MessageType = u16;
+
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct MessageHeader(u32);
@@ -27,11 +30,11 @@ impl MessageHeader {
         MessageHeader(err as u32)
     }
 
-    pub fn interface_id(self) -> u8 {
+    pub fn interface_id(self) -> InterfaceId {
         ((self.msg_type() >> 8) & 0xff) as u8
     }
 
-    pub fn msg_type(self) -> u16 {
+    pub fn msg_type(self) -> MessageType {
         ((self.0 >> MSG_TYPE_OFFSET) & 0xffff) as u16
     }
 
