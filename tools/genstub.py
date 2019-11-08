@@ -46,7 +46,7 @@ pub struct {{ msg.name | camelcase }}{{ "Reply" if reply }}Msg {
     pub {{ field.name }}: {{ field.type | resolve_type_in_msg_struct }},
 {%- endfor %}
     __unused_data: [u8;
-        INLINE_PAYLOAD_LEN_MAX - 
+        INLINE_PAYLOAD_LEN_MAX -
             {{ msg.name | upper }}{{ "_REPLY" if reply }}_MSG_INLINE_LEN]
 }
 {% endmacro %}
@@ -172,7 +172,7 @@ impl Client for Channel {
 pub trait Server {
 {%- for msg in messages %}
 {%- if msg.attrs.type == "call" %}
-    fn {{ msg.name }}({{ msg.args | arg_params("&mut self") }})
+    fn {{ msg.name }}({{ msg.args | arg_params("&mut self, _from: &Channel") }})
         -> Option<Result<{{ msg.rets | ret_params }}, Error>>;
 {%- endif %}
 {%- endfor %}
@@ -182,6 +182,7 @@ pub trait Server {
             {{ msg.name | upper }}_MSG => {
                 let req: &mut {{ msg.name | camelcase }}Msg =
                     __cast_from_message_mut(m);
+                let from = Channel::from_cid(req.from);
                 match self.{{ msg.name }}({{ msg.args | call_args("req") }}) {
                     Some(Ok(rets)) => {
                         let __resp: &mut {{ msg.name | camelcase }}ReplyMsg
@@ -260,7 +261,7 @@ def inline_len(params):
         return " + ".join(sizes)
 
 def call_args(args, msg_var):
-    values = []
+    values = ["&from"]
     for arg in args["fields"]:
         value = f"{msg_var}.{arg['name']}"
         if arg["type"] == "channel":

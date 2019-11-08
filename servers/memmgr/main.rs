@@ -58,7 +58,7 @@ impl Server {
 }
 
 impl idl::pager::Server for Server {
-    fn fill(&mut self, pid: HandleId, addr: usize, num_pages: usize) -> Option<Result<Page, Error>> {
+    fn fill(&mut self, _from: &Channel, pid: HandleId, addr: usize, num_pages: usize) -> Option<Result<Page, Error>> {
         // TODO: Support filling multiple pages.
         assert_eq!(num_pages, 1);
 
@@ -107,23 +107,23 @@ impl idl::pager::Server for Server {
 }
 
 impl idl::memmgr::Server for Server {
-    fn alloc_pages(&mut self, num_pages: usize) -> Option<Result<Page, Error>> {
+    fn alloc_pages(&mut self, _from: &Channel, num_pages: usize) -> Option<Result<Page, Error>> {
         let page = self.page_allocator.allocate(num_pages);
         Some(Ok(page.as_page_payload()))
     }
 }
 
 impl idl::runtime::Server for Server {
-    fn exit(&mut self, _code: i32) -> Option<Result<(), Error>> {
+    fn exit(&mut self, _from: &Channel, _code: i32) -> Option<Result<(), Error>> {
         unimplemented!();
     }
 
-    fn printchar(&mut self, ch: u8) -> Option<Result<(), Error>> {
+    fn printchar(&mut self, _from: &Channel, ch: u8) -> Option<Result<(), Error>> {
         resea::print::printchar(ch);
         Some(Ok(()))
     }
 
-    fn print_str(&mut self, s: String) -> Option<Result<(), Error>> {
+    fn print_str(&mut self, _from: &Channel, s: String) -> Option<Result<(), Error>> {
         resea::print::print_str(s.as_str());
         Some(Ok(()))
     }

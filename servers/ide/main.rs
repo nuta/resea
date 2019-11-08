@@ -23,7 +23,7 @@ impl Server {
 }
 
 impl idl::storage_device::Server for Server {
-    fn read(&mut self, sector: usize, num_sectors: usize) -> Option<Result<Page, Error>> {
+    fn read(&mut self, _from: &Channel, sector: usize, num_sectors: usize) -> Option<Result<Page, Error>> {
         use idl::memmgr::Client;
         let num_pages = (num_sectors * self.device.sector_size()) / PAGE_SIZE;
         let mut page = MEMMGR_SERVER.alloc_pages(num_pages).unwrap();
