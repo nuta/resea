@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::result::Error;
 use crate::message::Message;
 
 const SYSCALL_IPC: u32 = 0;

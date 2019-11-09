@@ -11,3 +11,5 @@ pub enum Error {
     TooShort = 7,
     InvalidData = 8,
 }
+
+pub type Result<T> = core::result::Result<T, Error>;

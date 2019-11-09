@@ -1,4 +1,4 @@
-use resea::error::Error;
+use resea::result::Error;
 use resea::std::slice;
 use resea::std::mem::size_of;
 

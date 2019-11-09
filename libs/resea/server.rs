@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::result::Error;
 use crate::channel::Channel;
 use crate::message::{Message, Notification, InterfaceId};
 
@@ -33,7 +33,7 @@ macro_rules! serve_forever {
                     warn!("unknown message");
                     m.header =
                         $crate::message::MessageHeader::from_error(
-                            $crate::error::Error::UnknownMessage);
+                            $crate::result::Error::UnknownMessage);
                     true
                 }
             };

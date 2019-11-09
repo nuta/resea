@@ -1,4 +1,4 @@
-use resea::error::Error;
+use resea::result::Error;
 use resea::idl;
 use resea::idl::storage_device::INTERFACE_ID;
 use resea::PAGE_SIZE;

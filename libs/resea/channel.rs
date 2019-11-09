@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::result::Error;
 use crate::arch::syscall;
 use crate::arch::thread_info::{copy_from_ipc_buffer, copy_to_ipc_buffer};
 use crate::message::Message;

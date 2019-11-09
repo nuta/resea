@@ -1,4 +1,4 @@
-use resea::error::Error;
+use resea::result::Error;
 use resea::channel::Channel;
 use resea::idl;
 use resea::std::borrow::ToOwned;

@@ -1,5 +1,5 @@
 use crate::arch::PAGE_SIZE;
-use crate::error::Error;
+use crate::result::Error;
 use crate::channel::CId;
 use crate::std::string::String;
 

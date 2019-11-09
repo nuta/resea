@@ -1,4 +1,4 @@
-use resea::error::Error;
+use resea::result::Error;
 use resea::channel::Channel;
 use resea::idl::io::Client;
 use resea::std::slice;

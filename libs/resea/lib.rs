@@ -29,7 +29,6 @@ pub mod std {
 pub mod print;
 
 pub mod collections;
-pub mod error;
 pub mod backtrace;
 pub mod channel;
 pub mod thread_info;
@@ -39,6 +38,7 @@ pub mod message;
 pub mod utils;
 pub mod allocator;
 pub mod lazy_static;
+pub mod result;
 
 mod arch;
 mod init;

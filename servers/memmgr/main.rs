@@ -1,7 +1,7 @@
 use resea::PAGE_SIZE;
 use resea::idl;
 use resea::collections::{HashMap, Vec};
-use resea::error::Error;
+use resea::result::Error;
 use resea::channel::Channel;
 use resea::message::{HandleId, Page, InterfaceId};
 use resea::std::cmp::min;
