@@ -195,22 +195,28 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         }
 
         // Handle the page payload.
+        // TODO: Needs refactoring.
         if (header & MSG_PAGE_PAYLOAD) {
             vaddr_t page_addr       = m->payloads.page;
             size_t  num_pages       = m->payloads.num_pages;
             vaddr_t page_base_addr  = receiver->info->page_addr;
 
-            // Resolve the physical address referenced by the page payload.
-            struct page_table *page_table = &current->process->page_table;
-            paddr_t paddr = resolve_paddr_from_vaddr(page_table, page_addr);
-            if (!paddr) {
-                // The page does not exist in the page table. Invoke the page
-                // fault handler since perhaps it is just not filled by the
-                // pager (i.e., not yet accessed by the user). Note that
-                // page_fault_handler always returns a valid paddr;  if the
-                // vaddr is invalid, it kills the current thread and won't
-                // return.
-                paddr = page_fault_handler(page_addr, PF_USER);
+            paddr_t paddr;
+            if (current->ipc_buffer == current->kernel_ipc_buffer) {
+                paddr = page_addr;
+            } else {
+                // Resolve the physical address referenced by the page payload.
+                struct page_table *page_table = &current->process->page_table;
+                paddr = resolve_paddr_from_vaddr(page_table, page_addr);
+                if (!paddr) {
+                    // The page does not exist in the page table. Invoke the page
+                    // fault handler since perhaps it is just not filled by the
+                    // pager (i.e., not yet accessed by the user). Note that
+                    // page_fault_handler always returns a valid paddr;  if the
+                    // vaddr is invalid, it kills the current thread and won't
+                    // return.
+                    paddr = page_fault_handler(page_addr, PF_USER);
+                }
             }
 
             if (receiver->ipc_buffer == receiver->kernel_ipc_buffer) {
@@ -233,9 +239,11 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 dst_m->payloads.num_pages = num_pages;
             }
 
-            // Unlink the pages from the current (sender) process.
-            unlink_page(&current->process->page_table, page_addr,
-                        num_pages);
+            if (current->ipc_buffer != current->kernel_ipc_buffer) {
+                // Unlink the pages from the current (sender) process.
+                unlink_page(&current->process->page_table, page_addr,
+                            num_pages);
+            }
         }
 
         thread_resume(receiver);
