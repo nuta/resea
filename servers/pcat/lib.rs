@@ -4,4 +4,6 @@
 extern crate resea;
 
 mod main;
-mod pcat;
+mod screen;
+mod keyboard;
+mod keymap;

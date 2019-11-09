@@ -4,31 +4,31 @@ use resea::message::Page;
 use resea::idl::io::Client;
 use resea::std::mem::size_of;
 
+const KEYBOARD_IRQ: u8 = 1;
 const DEFAULT_COLOR: u16 = 0x0f;
 const SCREEN_HEIGHT: usize = 25;
 const SCREEN_WIDTH: usize = 80;
 
-pub struct Device {
+pub struct Screen {
     kernel_server: &'static Channel,
     screen: Page,
     cursor_x: usize,
     cursor_y: usize,
 }
 
-impl Device {
-    pub fn new(kernel_server: &'static Channel) -> Device {
+impl Screen {
+    pub fn new(kernel_server: &'static Channel) -> Screen {
         use resea::idl::kernel::Client;
         let screen = kernel_server.get_screen_buffer()
             .expect("failed to get the screen page");
 
-        Device {
+        Screen {
             kernel_server,
             screen,
             cursor_x: 0,
             cursor_y: 0,
         }
     }
-
 
     pub fn clear(&mut self) {
         let screen: &mut [u16] = self.screen.as_slice_mut();
@@ -79,5 +79,6 @@ impl Device {
     }
 
     pub fn update_cursor(&self) {
+        // TODO:
     }
 }
