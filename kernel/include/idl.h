@@ -288,7 +288,7 @@ struct pager_fill_reply_payload {
 } PACKED;
 #define IO_INTERFACE  15ULL
 #define IO_LISTEN_IRQ_INLINE_LEN (sizeof(uint8_t))
-#define IO_LISTEN_IRQ_MSG     (         (((IO_INTERFACE << 8) | 2ULL) << MSG_TYPE_OFFSET)| MSG_CHANNEL_PAYLOAD| (IO_LISTEN_IRQ_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+#define IO_LISTEN_IRQ_MSG     (         (((IO_INTERFACE << 8) | 1ULL) << MSG_TYPE_OFFSET)| MSG_CHANNEL_PAYLOAD| (IO_LISTEN_IRQ_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
 
 struct io_listen_irq_payload {
     cid_t ch;
@@ -297,7 +297,7 @@ struct io_listen_irq_payload {
     uint8_t irq;
 } PACKED;
 #define IO_LISTEN_IRQ_REPLY_INLINE_LEN (0)
-#define IO_LISTEN_IRQ_REPLY_MSG     (         (((IO_INTERFACE << 8) | MSG_REPLY_FLAG | 2) << MSG_TYPE_OFFSET)| (IO_LISTEN_IRQ_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+#define IO_LISTEN_IRQ_REPLY_MSG     (         (((IO_INTERFACE << 8) | MSG_REPLY_FLAG | 1) << MSG_TYPE_OFFSET)| (IO_LISTEN_IRQ_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
 
 struct io_listen_irq_reply_payload {
     cid_t __unused_channel;
