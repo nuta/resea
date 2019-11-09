@@ -32,13 +32,15 @@ pub mod collections;
 pub mod error;
 pub mod backtrace;
 pub mod channel;
+pub mod thread_info;
 pub mod server;
 pub mod idl;
 pub mod message;
 pub mod utils;
+pub mod allocator;
+pub mod lazy_static;
 
 mod arch;
-mod allocator;
 mod init;
 mod lang_items;
 

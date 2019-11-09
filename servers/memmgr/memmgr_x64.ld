@@ -37,4 +37,9 @@ SECTIONS {
     __heap = .;
     . = 0x04000000;
     __heap_end = .;
+
+    . = 0xa0000000;
+    __valloc = .;
+    . = 0xb0000000;
+    __valloc_end = .;
 }

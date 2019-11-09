@@ -84,3 +84,4 @@ Memory maps
 | `0000_0000_0100_0000`    | Executable (.text, .rodata, .data, and .bss)          | 16MiB        |
 | `0000_0000_0200_0000`    | Stack                                                 | 16MiB        |
 | `0000_0000_0300_0000`    | Heap                                                  | 16MiB        |
+| `0000_0000_a000_0000`    | Valloc Area for received page payloads                | 16MiB        |

@@ -4,15 +4,15 @@ use crate::message::Message;
 #[repr(C, packed)]
 pub struct ThreadInfo {
     /// The pointer to itself in the userspace. This field must be the first.
-    this: *mut ThreadInfo,
+    pub this: *mut ThreadInfo,
     /// The user-provided argument.
-    arg: usize,
+    pub arg: usize,
     /// The page base set by the user.
-    page_addr: usize,
+    pub page_addr: usize,
     /// The maximum number of pages to receive page payloads.
-    num_pages: usize,
+    pub num_pages: usize,
     /// The thread-local user IPC buffer.
-    ipc_buffer: Message,
+    pub ipc_buffer: Message,
 }
 
 pub unsafe fn get_thread_info() -> &'static mut ThreadInfo {

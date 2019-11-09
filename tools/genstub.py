@@ -152,11 +152,20 @@ pub trait Client {
         -> Result<{{ msg.rets | ret_params }}, Error> {
         let mut __m: {{ msg.name | camelcase }}Msg =
             unsafe { core::mem::MaybeUninit::uninit().assume_init() };
+{%- if msg.rets.page %}
+        crate::thread_info::alloc_and_set_page_base();
+
+{%- endif %}
         {{ serialize("__m", msg.name, msg.args, False) }}
-        self.__server().call(__cast_into_message(&__m)).map(|__r| {
-            let __r: &{{ msg.name | camelcase }}ReplyMsg = __cast_from_message(&__r);
-            {{ deserialize("__r", msg.name, msg.rets) }}
-        })
+        self.__server().call(__cast_into_message(&__m))
+            .map(|__r| {
+                let __r: &{{ msg.name | camelcase }}ReplyMsg = __cast_from_message(&__r);
+                {{ deserialize("__r", msg.name, msg.rets) }}
+            })
+            .map_err(|err| {
+                // TODO: Free allocated pages.
+                err
+            })
     }
 {%- endif %}
 {% endfor -%}

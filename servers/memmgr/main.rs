@@ -7,7 +7,7 @@ use resea::message::{HandleId, Page, InterfaceId};
 use resea::std::cmp::min;
 use resea::std::ptr;
 use resea::std::string::String;
-use crate::page::PageAllocator;
+use resea::allocator::PageAllocator;
 use crate::initfs::{Initfs, File};
 use crate::process::ProcessManager;
 
