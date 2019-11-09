@@ -82,7 +82,7 @@ static error_t handle_runtime_exit(struct message *m) {
 }
 
 static error_t handle_process_create(struct message *m) {
-    const char *name = m->payloads.process.create.name;
+    const char *name = m->payloads.kernel.create_process.name;
     TRACE("kernel: create_process(name=%s)", name);
 
     struct process *proc = process_create(name);
@@ -107,9 +107,9 @@ static error_t handle_process_create(struct message *m) {
 
     channel_link(our_ch, their_ch);
 
-    m->header = PROCESS_CREATE_REPLY_MSG;
-    m->payloads.process.create_reply.proc = proc->pid;
-    m->payloads.process.create_reply.pager_ch = our_ch->cid;
+    m->header = KERNEL_CREATE_PROCESS_REPLY_MSG;
+    m->payloads.kernel.create_process_reply.proc = proc->pid;
+    m->payloads.kernel.create_process_reply.pager_ch = our_ch->cid;
     return OK;
 }
 
@@ -118,11 +118,11 @@ static error_t handle_process_destroy(UNUSED struct message *m) {
 }
 
 static error_t handle_thread_spawn(struct message *m) {
-    pid_t pid        = m->payloads.thread.spawn.proc;
-    uintptr_t start  = m->payloads.thread.spawn.start;
-    uintptr_t stack  = m->payloads.thread.spawn.stack;
-    uintptr_t buffer = m->payloads.thread.spawn.buffer;
-    uintptr_t arg    = m->payloads.thread.spawn.arg;
+    pid_t pid        = m->payloads.kernel.spawn_thread.proc;
+    uintptr_t start  = m->payloads.kernel.spawn_thread.start;
+    uintptr_t stack  = m->payloads.kernel.spawn_thread.stack;
+    uintptr_t buffer = m->payloads.kernel.spawn_thread.buffer;
+    uintptr_t arg    = m->payloads.kernel.spawn_thread.arg;
 
     struct process *proc = table_get(&process_table, pid);
     if (!proc) {
@@ -138,8 +138,8 @@ static error_t handle_thread_spawn(struct message *m) {
     thread_resume(thread);
 
     TRACE("kernel: spawn_thread_response(tid=%d)", thread->tid);
-    m->header = THREAD_SPAWN_REPLY_MSG;
-    m->payloads.thread.spawn_reply.thread = thread->tid;
+    m->header = KERNEL_SPAWN_THREAD_REPLY_MSG;
+    m->payloads.kernel.spawn_thread_reply.thread = thread->tid;
     return OK;
 }
 
@@ -148,10 +148,10 @@ static error_t handle_thread_destroy(UNUSED struct message *m) {
 }
 
 static error_t handle_process_add_vm_area(struct message *m) {
-    pid_t pid       = m->payloads.process.add_vm_area.proc;
-    uintptr_t start = m->payloads.process.add_vm_area.start;
-    size_t size     = m->payloads.process.add_vm_area.size;
-    uint8_t flags   = m->payloads.process.add_vm_area.flags;
+    pid_t pid       = m->payloads.kernel.add_vm_area.proc;
+    uintptr_t start = m->payloads.kernel.add_vm_area.start;
+    size_t size     = m->payloads.kernel.add_vm_area.size;
+    uint8_t flags   = m->payloads.kernel.add_vm_area.flags;
 
     struct process *proc = table_get(&process_table, pid);
     if (!proc) {
@@ -176,7 +176,7 @@ static error_t handle_process_add_vm_area(struct message *m) {
     channel_incref(pager_ch);
 
     TRACE("kernel: add_vm_area_response()");
-    m->header = PROCESS_ADD_VM_AREA_REPLY_MSG;
+    m->header = KERNEL_ADD_VM_AREA_REPLY_MSG;
     return OK;
 }
 
@@ -201,8 +201,8 @@ void deliver_interrupt(uint8_t irq) {
 }
 
 static error_t handle_io_listen_irq(struct message *m) {
-    cid_t cid   = m->payloads.io.listen_irq.ch;
-    uint8_t irq = m->payloads.io.listen_irq.irq;
+    cid_t cid   = m->payloads.kernel.listen_irq.ch;
+    uint8_t irq = m->payloads.kernel.listen_irq.irq;
 
     struct channel *ch = table_get(&CURRENT->process->channels, cid);
     ASSERT(ch);
@@ -227,14 +227,14 @@ static error_t handle_io_listen_irq(struct message *m) {
     list_push_back(&active_irq_listeners, &listener->next);
     enable_irq(irq);
 
-    m->header = IO_LISTEN_IRQ_REPLY_MSG;
+    m->header = KERNEL_LISTEN_IRQ_REPLY_MSG;
     return OK;
 }
 
-static error_t handle_process_send_channel(struct message *m) {
-    pid_t pid = m->payloads.process.send_channel.proc;
-    cid_t cid = m->payloads.process.send_channel.ch;
-    TRACE("kernel: send_channel_to_pid(pid=%d)", pid);
+static error_t handle_process_thrust_channel(struct message *m) {
+    pid_t pid = m->payloads.kernel.thrust_channel.proc;
+    cid_t cid = m->payloads.kernel.thrust_channel.ch;
+    TRACE("kernel: thrust_channel_to_pid(pid=%d)", pid);
 
     struct process *proc = table_get(&process_table, pid);
     if (!proc) {
@@ -254,8 +254,8 @@ static error_t handle_process_send_channel(struct message *m) {
     channel_link(ch->linked_with, dst_ch);
     channel_destroy(ch);
 
-    TRACE("kernel: send_channel_to_pid: created %pC", dst_ch);
-    m->header = PROCESS_SEND_CHANNEL_REPLY_MSG;
+    TRACE("kernel: thrust_channel_to_pid: created %pC", dst_ch);
+    m->header = KERNEL_THRUST_CHANNEL_REPLY_MSG;
     return OK;
 }
 
@@ -269,20 +269,20 @@ static void user_timer_handler(struct timer *timer) {
 }
 
 static error_t handle_io_read_io_port(struct message *m) {
-    vaddr_t addr = m->payloads.io.read_ioport.addr;
-    vaddr_t size = m->payloads.io.read_ioport.size;
+    vaddr_t addr = m->payloads.kernel.read_ioport.addr;
+    vaddr_t size = m->payloads.kernel.read_ioport.size;
     uint64_t data = arch_read_ioport(addr, size);
-    m->header = IO_READ_IOPORT_REPLY_MSG;
-    m->payloads.io.read_ioport_reply.data = data;
+    m->header = KERNEL_READ_IOPORT_REPLY_MSG;
+    m->payloads.kernel.read_ioport_reply.data = data;
     return OK;
 }
 
 static error_t handle_io_write_io_port(struct message *m) {
-    vaddr_t addr = m->payloads.io.write_ioport.addr;
-    vaddr_t size = m->payloads.io.write_ioport.size;
-    uint64_t data = m->payloads.io.write_ioport.data;
+    vaddr_t addr = m->payloads.kernel.write_ioport.addr;
+    vaddr_t size = m->payloads.kernel.write_ioport.size;
+    uint64_t data = m->payloads.kernel.write_ioport.data;
     arch_write_ioport(addr, size, data);
-    m->header = IO_WRITE_IOPORT_REPLY_MSG;
+    m->header = KERNEL_WRITE_IOPORT_REPLY_MSG;
     return OK;
 }
 
@@ -297,9 +297,9 @@ static error_t handle_kernel_get_screen_buffer(struct message *m) {
 }
 
 static error_t handle_timer_set(struct message *m) {
-    cid_t cid = m->payloads.timer.set.ch;
-    int32_t initial = m->payloads.timer.set.initial;
-    int32_t interval = m->payloads.timer.set.interval;
+    cid_t cid = m->payloads.kernel.set_timer.ch;
+    int32_t initial = m->payloads.kernel.set_timer.initial;
+    int32_t interval = m->payloads.kernel.set_timer.interval;
 
     struct channel *ch = table_get(&CURRENT->process->channels, cid);
     ASSERT(ch);
@@ -319,13 +319,13 @@ static error_t handle_timer_set(struct message *m) {
 
     table_set(&user_timers, timer_id, timer);
 
-    m->header = TIMER_SET_REPLY_MSG;
-    m->payloads.timer.set_reply.timer = timer_id;
+    m->header = KERNEL_SET_TIMER_REPLY_MSG;
+    m->payloads.kernel.set_timer_reply.timer = timer_id;
     return OK;
 }
 
 static error_t handle_timer_clear(UNUSED struct message *m) {
-    int timer_id = m->payloads.timer.clear.timer;
+    int timer_id = m->payloads.kernel.clear_timer.timer;
 
     struct timer *timer = table_get(&user_timers, timer_id);
     if (!timer) {
@@ -336,28 +336,28 @@ static error_t handle_timer_clear(UNUSED struct message *m) {
     table_free(&user_timers, timer->id);
     timer_destroy(timer);
 
-    m->header = TIMER_CLEAR_REPLY_MSG;
+    m->header = KERNEL_CLEAR_TIMER_REPLY_MSG;
     return OK;
 }
 
 static error_t process_message(struct message *m) {
     switch (m->header) {
-    case RUNTIME_EXIT_MSG:         return handle_runtime_exit(m);
-    case RUNTIME_PRINTCHAR_MSG:    return handle_runtime_printchar(m);
-    case RUNTIME_PRINT_STR_MSG:    return handle_runtime_print_str(m);
-    case PROCESS_CREATE_MSG:       return handle_process_create(m);
-    case PROCESS_DESTROY_MSG:      return handle_process_destroy(m);
-    case PROCESS_ADD_VM_AREA_MSG:  return handle_process_add_vm_area(m);
-    case PROCESS_SEND_CHANNEL_MSG: return handle_process_send_channel(m);
-    case THREAD_SPAWN_MSG:         return handle_thread_spawn(m);
-    case THREAD_DESTROY_MSG:       return handle_thread_destroy(m);
-    case IO_LISTEN_IRQ_MSG:        return handle_io_listen_irq(m);
-    case IO_READ_IOPORT_MSG:       return handle_io_read_io_port(m);
-    case IO_WRITE_IOPORT_MSG:      return handle_io_write_io_port(m);
+    case RUNTIME_EXIT_MSG:             return handle_runtime_exit(m);
+    case RUNTIME_PRINTCHAR_MSG:        return handle_runtime_printchar(m);
+    case RUNTIME_PRINT_STR_MSG:        return handle_runtime_print_str(m);
+    case KERNEL_CREATE_PROCESS_MSG:    return handle_process_create(m);
+    case KERNEL_DESTROY_PROCESS_MSG:   return handle_process_destroy(m);
+    case KERNEL_ADD_VM_AREA_MSG:       return handle_process_add_vm_area(m);
+    case KERNEL_THRUST_CHANNEL_MSG:    return handle_process_thrust_channel(m);
+    case KERNEL_SPAWN_THREAD_MSG:      return handle_thread_spawn(m);
+    case KERNEL_DESTROY_THREAD_MSG:    return handle_thread_destroy(m);
+    case KERNEL_LISTEN_IRQ_MSG:        return handle_io_listen_irq(m);
+    case KERNEL_READ_IOPORT_MSG:       return handle_io_read_io_port(m);
+    case KERNEL_WRITE_IOPORT_MSG:      return handle_io_write_io_port(m);
     case KERNEL_GET_SCREEN_BUFFER_MSG: return handle_kernel_get_screen_buffer(m);
-    case TIMER_SET_MSG:            return handle_timer_set(m);
-    case TIMER_CLEAR_MSG:          return handle_timer_clear(m);
-    case SERVER_CONNECT_MSG:       return handle_server_connect(m);
+    case KERNEL_SET_TIMER_MSG:         return handle_timer_set(m);
+    case KERNEL_CLEAR_TIMER_MSG:       return handle_timer_clear(m);
+    case SERVER_CONNECT_MSG:           return handle_server_connect(m);
     }
 
     WARN("unknown message: header=%p", m->header);

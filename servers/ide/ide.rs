@@ -1,6 +1,6 @@
 use resea::result::Error;
 use resea::channel::Channel;
-use resea::idl::io::Client;
+use resea::idl::kernel::Client;
 use resea::std::slice;
 
 const STATUS_DRQ: u8 = 0x08;

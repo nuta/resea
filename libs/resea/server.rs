@@ -2,8 +2,6 @@ use crate::result::Error;
 use crate::channel::Channel;
 use crate::message::{Message, Notification, InterfaceId};
 
-const NOTIFICATION_INTERFACE_ID: InterfaceId = 100;
-
 pub trait Server {
     fn deferred_work(&mut self) {}
     fn notification(&mut self, notification: Notification) {}
@@ -25,7 +23,7 @@ macro_rules! serve_forever {
             let has_reply = match m.header.interface_id() {
                 $( $crate::idl::$interface::INTERFACE_ID =>
                     $crate::idl::$interface::Server::__handle(server, &mut m), )*
-                NOTIFICATION_INTERFACE_ID => {
+                $crate::idl::notification::INTERFACE_ID => {
                     $crate::server::Server::notification(server, m.notification);
                     false
                 }

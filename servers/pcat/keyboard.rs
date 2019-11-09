@@ -1,7 +1,7 @@
 use resea::result::Error;
 use resea::channel::Channel;
 use resea::message::Page;
-use resea::idl::io::Client;
+use resea::idl::kernel::Client;
 use resea::std::mem::size_of;
 use resea::collections::VecDeque;
 use crate::keymap::*;
@@ -28,7 +28,7 @@ pub struct Keyboard {
 
 impl Keyboard {
     pub fn new(server_ch: &Channel, kernel_server: &'static Channel) -> Keyboard {
-        use resea::idl::io::Client;
+        use resea::idl::kernel::Client;
 
         let kbd_irq_ch = Channel::create().unwrap();
         kbd_irq_ch.transfer_to(server_ch).unwrap();
@@ -56,7 +56,7 @@ impl Keyboard {
     }
 
     pub fn read_input(&mut self) {
-        use resea::idl::io::Client;
+        use resea::idl::kernel::Client;
         loop {
             let status =
                 self.kernel_server.read_ioport(IOPORT_STATUS, 1).unwrap() as u8;

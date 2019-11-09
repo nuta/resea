@@ -37,9 +37,6 @@ typedef uint32_t header_t;
 //
 //  Notification.
 //
-#define NOTIFICATION_INTERFACE  100ULL
-#define NOTIFICATION_MSG        (((NOTIFICATION_INTERFACE << 8) | 1) << MSG_TYPE_OFFSET)
-
 typedef uint32_t notification_t;
 #define NOTIFY_INTERRUPT (1UL << 0)
 #define NOTIFY_TIMER     (1UL << 1)

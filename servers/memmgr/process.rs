@@ -16,7 +16,8 @@ pub struct Process {
 
 impl Process {
     pub fn start(&self, thread_server: &Channel) -> Result<(), Error> {
-        idl::thread::Client::spawn(thread_server, self.pid, self.elf.entry,
+        use idl::kernel::Client;
+        thread_server.spawn_thread(self.pid, self.elf.entry,
             APP_INITIAL_STACK_POINTER, THREAD_INFO_ADDR, 0 /* arg */)?;
         Ok(())
     }
@@ -51,11 +52,11 @@ impl ProcessManager {
         let elf = ELF::parse(file.data())?;
         let kernel_ch = idl::server::Client::connect(self.process_server, 0)?;
 
-        use idl::process::Client;
+        use idl::kernel::Client;
         let (proc, pager_ch) =
-            self.process_server.create(file.path().to_owned())?;
+            self.process_server.create_process(file.path().to_owned())?;
 
-        self.process_server.send_channel(proc, kernel_ch)?;
+        self.process_server.thrust_channel(proc, kernel_ch)?;
         self.process_server.add_vm_area(proc, APP_IMAGE_START, APP_IMAGE_SIZE,
             0x06)?;
         self.process_server.add_vm_area(proc, APP_ZEROED_PAGES_START,

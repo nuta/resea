@@ -1,7 +1,7 @@
 use resea::result::Error;
 use resea::channel::Channel;
 use resea::message::Page;
-use resea::idl::io::Client;
+use resea::idl::kernel::Client;
 use resea::std::mem::size_of;
 
 const KEYBOARD_IRQ: u8 = 1;
