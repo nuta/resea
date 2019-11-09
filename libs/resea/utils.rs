@@ -15,3 +15,11 @@ pub fn c_str_to_str<'a>(c_str: *const u8) -> &'a str {
         core::str::from_utf8_unchecked(slice)
     }
 }
+
+pub fn align_down(value: usize, align: usize) -> usize {
+    value & !(align - 1)
+}
+
+pub fn align_up(value: usize, align: usize) -> usize {
+    align_down(value + (align - 1), align)
+}
