@@ -47,6 +47,8 @@ interface timer {
 
 [id(9)]
 interface kernel {
+    [id(1), type(call)]
+    get_screen_buffer() -> (page: page)
 }
 
 [id(15)]

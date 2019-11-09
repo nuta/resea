@@ -286,6 +286,16 @@ static error_t handle_io_write_io_port(struct message *m) {
     return OK;
 }
 
+static error_t handle_kernel_get_screen_buffer(struct message *m) {
+    paddr_t page;
+    size_t num_pages;
+    error_t err = arch_get_screen_buffer(&page, &num_pages);
+    m->header = KERNEL_GET_SCREEN_BUFFER_REPLY_MSG;
+    m->payloads.kernel.get_screen_buffer_reply.page = page;
+    m->payloads.kernel.get_screen_buffer_reply.num_pages = num_pages;
+    return err;
+}
+
 static error_t handle_timer_set(struct message *m) {
     cid_t cid = m->payloads.timer.set.ch;
     int32_t initial = m->payloads.timer.set.initial;
@@ -344,6 +354,7 @@ static error_t process_message(struct message *m) {
     case IO_LISTEN_IRQ_MSG:        return handle_io_listen_irq(m);
     case IO_READ_IOPORT_MSG:       return handle_io_read_io_port(m);
     case IO_WRITE_IOPORT_MSG:      return handle_io_write_io_port(m);
+    case KERNEL_GET_SCREEN_BUFFER_MSG: return handle_kernel_get_screen_buffer(m);
     case TIMER_SET_MSG:            return handle_timer_set(m);
     case TIMER_CLEAR_MSG:          return handle_timer_clear(m);
     case SERVER_CONNECT_MSG:       return handle_server_connect(m);

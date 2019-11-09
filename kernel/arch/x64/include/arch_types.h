@@ -138,9 +138,17 @@ static inline void arch_putchar(char ch) {
         x64_serial_putchar('\r');
     }
 
-    x64_screen_putchar(ch);
+    // FIXME: The pcat driver uses the screen buffer.
+    // x64_screen_putchar(ch);
     x64_serial_putchar(ch);
 }
+
+static inline error_t arch_get_screen_buffer(paddr_t *page, size_t *num_pages) {
+    *page = 0xb8000;
+    *num_pages = 1;
+    return OK;
+}
+
 
 static inline void prefetch(MAYBE_UNUSED void *ptr) {
 #ifdef CONFIG_PREFETCH

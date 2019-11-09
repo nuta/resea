@@ -365,6 +365,24 @@ struct benchmark_nop_reply_payload {
     size_t __num_pages;
 } PACKED;
 
+#define KERNEL_INTERFACE  9ULL
+#define KERNEL_GET_SCREEN_BUFFER_INLINE_LEN (0)
+#define KERNEL_GET_SCREEN_BUFFER_MSG     (         (((KERNEL_INTERFACE << 8) | 1ULL) << MSG_TYPE_OFFSET)| (KERNEL_GET_SCREEN_BUFFER_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+
+struct kernel_get_screen_buffer_payload {
+    cid_t __unused_channel;
+    vaddr_t __unused_page;
+    size_t __num_pages;
+} PACKED;
+#define KERNEL_GET_SCREEN_BUFFER_REPLY_INLINE_LEN (0)
+#define KERNEL_GET_SCREEN_BUFFER_REPLY_MSG     (         (((KERNEL_INTERFACE << 8) | MSG_REPLY_FLAG | 1) << MSG_TYPE_OFFSET)| MSG_PAGE_PAYLOAD | (KERNEL_GET_SCREEN_BUFFER_REPLY_INLINE_LEN << MSG_INLINE_LEN_OFFSET)     )
+
+struct kernel_get_screen_buffer_reply_payload {
+    cid_t __unused_channel;
+    vaddr_t page;
+    size_t num_pages;
+} PACKED;
+
 #define IDL_MESSAGE_PAYLOADS \
     union { \
     struct runtime_exit_payload exit; \
@@ -396,8 +414,6 @@ struct benchmark_nop_reply_payload {
     struct timer_clear_reply_payload clear_reply; \
     } timer; \
     union { \
-    } kernel; \
-    union { \
     struct server_connect_payload connect; \
     struct server_connect_reply_payload connect_reply; \
     } server; \
@@ -413,5 +429,9 @@ struct benchmark_nop_reply_payload {
     struct io_listen_irq_payload listen_irq; \
     struct io_listen_irq_reply_payload listen_irq_reply; \
     } io; \
+    union { \
+    struct kernel_get_screen_buffer_payload get_screen_buffer; \
+    struct kernel_get_screen_buffer_reply_payload get_screen_buffer_reply; \
+    } kernel; \
 
 #endif
