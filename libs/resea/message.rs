@@ -80,8 +80,19 @@ impl Page {
         }
     }
 
+    pub fn as_slice<T>(&self) -> &[T] {
+        unsafe {
+            let num = (self.num_pages * PAGE_SIZE) / core::mem::size_of::<T>();
+            core::slice::from_raw_parts(self.addr as *const T, num)
+        }
+    }
+
     pub fn as_bytes_mut(&mut self) -> &mut [u8] {
         self.as_slice_mut()
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        self.as_slice()
     }
 }
 
