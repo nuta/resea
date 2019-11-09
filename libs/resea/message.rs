@@ -69,11 +69,15 @@ impl Page {
         Page { addr, num_pages }
     }
 
-    pub fn as_bytes_mut(&mut self) -> &mut [u8] {
+    pub fn as_slice_mut<T>(&mut self) -> &mut [T] {
         unsafe {
-            let len = self.num_pages * PAGE_SIZE;
-            core::slice::from_raw_parts_mut(self.addr as *mut u8, len)
+            let num = (self.num_pages * PAGE_SIZE) / core::mem::size_of::<T>();
+            core::slice::from_raw_parts_mut(self.addr as *mut T, num)
         }
+    }
+
+    pub fn as_bytes_mut(&mut self) -> &mut [u8] {
+        self.as_slice_mut()
     }
 }
 
