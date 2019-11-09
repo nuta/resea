@@ -76,7 +76,7 @@ interface memmgr {
 [id(12)]
 interface pager {
     [id(1), type(call)]
-    fill(proc: handle, addr: uintptr, size: size) -> (page: page)
+    fill(proc: handle, addr: uintptr, num_pages: size) -> (page: page)
 }
 
 [id(13)]
@@ -84,7 +84,7 @@ interface discovery {
     [id(1), type(call)]
     connect(interface: uint8) -> (ch: channel)
     [id(2), type(call)]
-    register(interface: uint8, ch: channel) -> ()
+    publish(interface: uint8, ch: channel) -> ()
 }
 
 [id(14)]

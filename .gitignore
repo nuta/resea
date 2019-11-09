@@ -3,6 +3,7 @@ Cargo.lock
 /.build.mk
 /target
 /.vscode
+/kernel/include/idl.h
 /libs/resea/idl
 
 *.o

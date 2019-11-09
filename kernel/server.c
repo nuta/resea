@@ -32,7 +32,7 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
 
     // Construct a pager.fill message.
     m->header = PAGER_FILL_MSG;
-    m->payloads.pager.fill.pid = CURRENT->process->pid;
+    m->payloads.pager.fill.proc = CURRENT->process->pid;
     m->payloads.pager.fill.addr = vaddr;
     m->payloads.pager.fill.num_pages = 1;
 
@@ -108,7 +108,7 @@ static error_t handle_process_create(struct message *m) {
     channel_link(our_ch, their_ch);
 
     m->header = PROCESS_CREATE_REPLY_MSG;
-    m->payloads.process.create_reply.pid = proc->pid;
+    m->payloads.process.create_reply.proc = proc->pid;
     m->payloads.process.create_reply.pager_ch = our_ch->cid;
     return OK;
 }
@@ -118,7 +118,7 @@ static error_t handle_process_destroy(UNUSED struct message *m) {
 }
 
 static error_t handle_thread_spawn(struct message *m) {
-    pid_t pid        = m->payloads.thread.spawn.pid;
+    pid_t pid        = m->payloads.thread.spawn.proc;
     uintptr_t start  = m->payloads.thread.spawn.start;
     uintptr_t stack  = m->payloads.thread.spawn.stack;
     uintptr_t buffer = m->payloads.thread.spawn.buffer;
@@ -139,7 +139,7 @@ static error_t handle_thread_spawn(struct message *m) {
 
     TRACE("kernel: spawn_thread_response(tid=%d)", thread->tid);
     m->header = THREAD_SPAWN_REPLY_MSG;
-    m->payloads.thread.spawn_reply.tid = thread->tid;
+    m->payloads.thread.spawn_reply.thread = thread->tid;
     return OK;
 }
 
@@ -148,7 +148,7 @@ static error_t handle_thread_destroy(UNUSED struct message *m) {
 }
 
 static error_t handle_process_add_vm_area(struct message *m) {
-    pid_t pid       = m->payloads.process.add_vm_area.pid;
+    pid_t pid       = m->payloads.process.add_vm_area.proc;
     uintptr_t start = m->payloads.process.add_vm_area.start;
     size_t size     = m->payloads.process.add_vm_area.size;
     uint8_t flags   = m->payloads.process.add_vm_area.flags;
@@ -176,7 +176,7 @@ static error_t handle_process_add_vm_area(struct message *m) {
     channel_incref(pager_ch);
 
     TRACE("kernel: add_vm_area_response()");
-    m->header = PROCESS_ADD_PAGER_REPLY_MSG;
+    m->header = PROCESS_ADD_VM_AREA_REPLY_MSG;
     return OK;
 }
 
@@ -232,7 +232,7 @@ static error_t handle_io_listen_irq(struct message *m) {
 }
 
 static error_t handle_process_send_channel(struct message *m) {
-    pid_t pid = m->payloads.process.send_channel.pid;
+    pid_t pid = m->payloads.process.send_channel.proc;
     cid_t cid = m->payloads.process.send_channel.ch;
     TRACE("kernel: send_channel_to_pid(pid=%d)", pid);
 
@@ -347,7 +347,7 @@ static error_t process_message(struct message *m) {
     case RUNTIME_PRINT_STR_MSG:    return handle_runtime_print_str(m);
     case PROCESS_CREATE_MSG:       return handle_process_create(m);
     case PROCESS_DESTROY_MSG:      return handle_process_destroy(m);
-    case PROCESS_ADD_PAGER_MSG:    return handle_process_add_vm_area(m);
+    case PROCESS_ADD_VM_AREA_MSG:  return handle_process_add_vm_area(m);
     case PROCESS_SEND_CHANNEL_MSG: return handle_process_send_channel(m);
     case THREAD_SPAWN_MSG:         return handle_thread_spawn(m);
     case THREAD_DESTROY_MSG:       return handle_thread_destroy(m);

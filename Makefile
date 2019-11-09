@@ -111,7 +111,7 @@ $(BUILD_DIR)/kernel.elf: $(kernel_objs) $(arch_dir)/$(ARCH).ld tools/link.py Mak
 $(BUILD_DIR)/kernel/initfs.o: $(BUILD_DIR)/initfs.bin
 
 # C/assembly source file build rules.
-$(BUILD_DIR)/%.o: %.c
+$(BUILD_DIR)/%.o: %.c kernel/include/idl.h
 	$(PROGRESS) "CC" $@
 	mkdir -p $(@D)
 	$(CC) $(KERNEL_CFLAGS) -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json) -c -o $@ $<
@@ -153,6 +153,10 @@ $(BUILD_DIR)/idl.json: interfaces.idl tools/parse-idl-file.py
 libs/resea/idl/mod.rs: $(BUILD_DIR)/idl.json tools/genstub.py
 	$(PROGRESS) "GENSTUB" libs/resea/idl
 	$(PYTHON3) tools/genstub.py $< libs/resea/idl
+
+kernel/include/idl.h: $(BUILD_DIR)/idl.json tools/kgenstub.py
+	$(PROGRESS) "KGENSTUB" $@
+	$(PYTHON3) tools/kgenstub.py $< $@
 
 # Server executables.
 $(BUILD_DIR)/servers/%.elf: libs/resea/idl/mod.rs tools/link.py Makefile

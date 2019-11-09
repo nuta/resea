@@ -157,7 +157,7 @@ impl idl::discovery::Server for Server {
         None
     }
 
-    fn register(&mut self, _from: &Channel, interface: u8, ch: Channel) -> Option<Result<(), Error>> {
+    fn publish(&mut self, _from: &Channel, interface: u8, ch: Channel) -> Option<Result<(), Error>> {
         // TODO: Support multiple servers with the same interface ID.
         assert!(self.servers.get(&interface).is_none());
 

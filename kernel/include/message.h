@@ -47,6 +47,11 @@ typedef uint32_t notification_t;
 //
 //  Message
 //
+#define MSG_REPLY_FLAG (1ULL << 7)
+#define STRING_LEN_MAX 128
+typedef char string_t[STRING_LEN_MAX];
+typedef int32_t handle_t;
+
 #include <idl.h>
 
 struct message {

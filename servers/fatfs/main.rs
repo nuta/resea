@@ -53,7 +53,7 @@ pub fn main() {
 
     // let ch = Channel::create().unwrap();
     // ch.transfer_to(&server.ch).unwrap();
-    // idl::discovery::Client::register(&MEMMGR_SERVER, idl::fs::INTERFACE_ID, ch).unwrap();
+    // idl::discovery::Client::publish(&MEMMGR_SERVER, idl::fs::INTERFACE_ID, ch).unwrap();
 
     serve_forever!(&mut server, [server]);
 }
