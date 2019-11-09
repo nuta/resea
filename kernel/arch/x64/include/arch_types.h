@@ -1,7 +1,6 @@
 #ifndef __ARCH_TYPES_H__
 #define __ARCH_TYPES_H__
 
-#include <config.h>
 #include <printk.h>
 #include <x64/screen.h>
 #include <x64/serial.h>

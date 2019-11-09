@@ -1,7 +1,6 @@
 #ifndef __X64_H__
 #define __X64_H__
 
-#include <config.h>
 #include <types.h>
 
 //

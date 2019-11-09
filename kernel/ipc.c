@@ -1,4 +1,3 @@
-#include <config.h>
 #include <channel.h>
 #include <process.h>
 #include <channel.h>

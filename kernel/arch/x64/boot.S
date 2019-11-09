@@ -1,4 +1,3 @@
-#include <config.h>
 .section ".boot", "ax"
 .intel_syntax noprefix
 
