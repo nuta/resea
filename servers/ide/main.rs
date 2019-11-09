@@ -4,6 +4,7 @@ use resea::idl::storage_device::INTERFACE_ID;
 use resea::PAGE_SIZE;
 use resea::message::Page;
 use resea::channel::Channel;
+use resea::utils::align_up;
 use crate::ide::IdeDevice;
 
 static MEMMGR_SERVER: Channel = Channel::from_cid(1);
@@ -25,8 +26,12 @@ impl Server {
 
 impl idl::storage_device::Server for Server {
     fn read(&mut self, _from: &Channel, sector: usize, num_sectors: usize) -> Option<Result<Page, Error>> {
+        if num_sectors == 0 {
+            return Some(Err(Error::InvalidArg));
+        }
+
         use idl::memmgr::Client;
-        let num_pages = (num_sectors * self.device.sector_size()) / PAGE_SIZE;
+        let num_pages = align_up(num_sectors * self.device.sector_size(), PAGE_SIZE) / PAGE_SIZE;
         let mut page = MEMMGR_SERVER.alloc_pages(num_pages).unwrap();
         self.device.read_sectors(sector, num_sectors, page.as_bytes_mut()).unwrap();
         Some(Ok(page))

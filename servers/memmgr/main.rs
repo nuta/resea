@@ -122,6 +122,10 @@ impl idl::pager::Server for Server {
 
 impl idl::memmgr::Server for Server {
     fn alloc_pages(&mut self, _from: &Channel, num_pages: usize) -> Option<Result<Page, Error>> {
+        if num_pages == 0 {
+            return Some(Err(Error::InvalidArg));
+        }
+
         let page = self.page_allocator.allocate(num_pages);
         Some(Ok(page.as_page_payload()))
     }
