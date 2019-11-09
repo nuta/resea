@@ -32,7 +32,14 @@ run: $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/hdd.img
 	$(QEMU) $(QEMUFLAGS) -kernel $(BUILD_DIR)/kernel.qemu.elf
 
  $(BUILD_DIR)/hdd.img:
-	echo "Hello from hard disk" > $@
+	$(PROGRESS) DD $@
+	dd if=/dev/zero of=$@.tmp bs=1048576 count=64
+	$(PROGRESS) MFORMAT $@
+	mformat -i $@.tmp -F -h 32 -t 32 -n 128 -c 1 ::
+	$(PROGRESS) MCOPY hello.txt
+	echo "Hello from hard disk" > $(BUILD_DIR)/hello.txt
+	mcopy -i $@.tmp $(BUILD_DIR)/hello.txt ::/hello.txt
+	mv $@.tmp $@
 
 bochs: $(BUILD_DIR)/resea.iso
 	$(PROGRESS) GEN $(BUILD_DIR)/kernel.symbols
