@@ -173,19 +173,18 @@ impl resea::server::Server for Server {
         for request in self.connect_requests.drain(..) {
             match self.servers.get(&request.interface) {
                 Some(server) => {
-                    // Send a server.connect request to the registered server.
+                    // XXX: Send a server.connect request to the registered
+                    //      server instead.
                     //
                     // FIXME: Use the send stub instead of call one because
                     // there's no gruantee that the server returns the reply
                     // immediately.
-                    info!("sending a server.connect...");
-                    use idl::server::Client;
-                    let ch = server.ch.connect(request.interface).unwrap();
-
-                    // Send a discovery.connect_reply to the client.
-                    // FIXME: Use the non-blocking option in order not to be
-                    // blocked by a malicious client.
-                    idl::discovery::send_connect_reply(&request.ch, ch).unwrap();
+                    //
+                    // info!("sending a server.connect...");
+                    // use idl::server::Client;
+                    // let ch = server.ch.connect(request.interface).unwrap();
+                    idl::discovery::send_connect_reply(&request.ch,
+                        unsafe { server.ch.clone() }).unwrap();
                 }
                 None => {
                     // The server with the desired interface does not yet exist.
