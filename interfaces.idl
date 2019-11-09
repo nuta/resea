@@ -87,6 +87,18 @@ interface discovery {
     register(interface: uint8, ch: channel) -> ()
 }
 
+[id(14)]
+interface fs {
+    [id(1), type(call)]
+    open(path: string) -> (file: handle)
+    [id(2), type(call)]
+    close(handle: handle) -> ()
+    [id(3), type(call)]
+    read(file: handle, offset: size, len: size) -> (page: page)
+    [id(4), type(call)]
+    write(file: handle, page: page, len: size) -> ()
+}
+
 [id(30)]
 interface storage_device {
     [id(1), type(call)]
