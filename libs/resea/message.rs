@@ -55,6 +55,10 @@ impl Notification {
     pub const fn empty() -> Notification {
         Notification::new(0)
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.0 == 0
+    }
 }
 
 #[repr(C, packed)]
