@@ -91,7 +91,11 @@ kernel_objs +=  \
 	$(BUILD_DIR)/kernel/initfs.o \
 	$(BUILD_DIR)/kernel/support/printk.o \
 	$(BUILD_DIR)/kernel/support/string.o \
-	$(BUILD_DIR)/kernel/support/debug.o
+	$(BUILD_DIR)/kernel/support/stack_protector.o \
+	$(BUILD_DIR)/kernel/support/backtrace.o \
+	$(BUILD_DIR)/kernel/support/kdebug.o \
+	$(BUILD_DIR)/kernel/support/kasan.o \
+	$(BUILD_DIR)/kernel/support/ubsan.o
 
 $(BUILD_DIR)/kernel.elf: $(kernel_objs) $(arch_dir)/$(ARCH).ld tools/link.py Makefile
 	$(PROGRESS) "LINK" $@

@@ -15,7 +15,7 @@ QEMUFLAGS += $(if $(GUI),,-nographic)
 kernel_objs += \
 	$(BUILD_DIR)/kernel/arch/x64/boot.o \
 	$(BUILD_DIR)/kernel/arch/x64/apic.o \
-	$(BUILD_DIR)/kernel/arch/x64/asan.o \
+	$(BUILD_DIR)/kernel/arch/x64/kasan.o \
 	$(BUILD_DIR)/kernel/arch/x64/handler.o \
 	$(BUILD_DIR)/kernel/arch/x64/interrupt.o \
 	$(BUILD_DIR)/kernel/arch/x64/paging.o \

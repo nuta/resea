@@ -1,6 +1,6 @@
 #include <arch.h>
 #include <x64/apic.h>
-#include <debug.h>
+#include <support/kasan.h>
 
 #ifdef DEBUG_BUILD
 
@@ -15,24 +15,24 @@ void arch_asan_init(void) {
                        - (size_t) __kernel_image_start;
 
     // Kernel image.
-    asan_init_area(ASAN_VALID, (void *) __kernel_image_start, image_len);
+    kasan_init_area(ASAN_VALID, (void *) __kernel_image_start, image_len);
     // AP boot code.
-    asan_init_area(ASAN_VALID, from_paddr(AP_BOOT_CODE_PADDR), 0x1000);
+    kasan_init_area(ASAN_VALID, from_paddr(AP_BOOT_CODE_PADDR), 0x1000);
     // QEMU multiboot info.
-    asan_init_area(ASAN_VALID, from_paddr(0x9000), 0x1000);
+    kasan_init_area(ASAN_VALID, from_paddr(0x9000), 0x1000);
     // GRUB multiboot info.
-    asan_init_area(ASAN_VALID, from_paddr(0x10000), 0x1000);
+    kasan_init_area(ASAN_VALID, from_paddr(0x10000), 0x1000);
     // Text-mode VGA.
-    asan_init_area(ASAN_VALID, from_paddr(0xb8000), 0x1000);
+    kasan_init_area(ASAN_VALID, from_paddr(0xb8000), 0x1000);
     // MP table.
-    asan_init_area(ASAN_VALID, from_paddr(0xe0000), 0x20000);
+    kasan_init_area(ASAN_VALID, from_paddr(0xe0000), 0x20000);
     // Kernel's page table (maps above 0xffff8000_00000000).
-    asan_init_area(ASAN_VALID, from_paddr(0x700000), 0x30000);
+    kasan_init_area(ASAN_VALID, from_paddr(0x700000), 0x30000);
     // Kernel boot stacks.
-    asan_init_area(ASAN_VALID, (void *) KERNEL_BOOT_STACKS_ADDR,
+    kasan_init_area(ASAN_VALID, (void *) KERNEL_BOOT_STACKS_ADDR,
                   KERNEL_BOOT_STACKS_LEN);
     // CPUVARs.
-    asan_init_area(ASAN_VALID, (void *) CPU_VAR_ADDR, CPU_VAR_LEN);
+    kasan_init_area(ASAN_VALID, (void *) CPU_VAR_ADDR, CPU_VAR_LEN);
 }
 
 #endif // DEBUG_BUILD

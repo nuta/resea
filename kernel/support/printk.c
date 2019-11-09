@@ -1,9 +1,9 @@
 #include <arch.h>
 #include <types.h>
 #include <channel.h>
-#include <debug.h>
 #include <thread.h>
 #include <process.h>
+#include <support/backtrace.h>
 
 static void print_str(const char *s) {
     while (*s != '\0') {

@@ -1,4 +1,3 @@
-#include <debug.h>
 #include <printk.h>
 #include <timer.h>
 #include <server.h>
@@ -7,6 +6,7 @@
 #include <x64/x64.h>
 #include <x64/serial.h>
 #include <x64/thread.h>
+#include <support/kdebug.h>
 
 static void print_regs(struct interrupt_regs *regs) {
     WARN("RIP = %p    CS  = %p    RFL = %p", regs->rip, regs->cs, regs->rflags);

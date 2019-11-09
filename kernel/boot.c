@@ -1,6 +1,5 @@
 #include <arch.h>
 #include <init_args.h>
-#include <debug.h>
 #include <channel.h>
 #include <memory.h>
 #include <printk.h>
@@ -8,6 +7,8 @@
 #include <server.h>
 #include <thread.h>
 #include <timer.h>
+#include <support/stack_protector.h>
+#include <support/kasan.h>
 
 static void userland(struct init_args *args);
 
@@ -15,9 +16,11 @@ static void userland(struct init_args *args);
 void boot(void) {
     struct init_args init_args;
     init_boot_stack_canary();
+#ifdef DEBUG_BUILD
+    kasan_init();
+#endif
 
     INFO("Booting Resea...");
-    debug_init();
     memory_init();
     arch_init(&init_args);
     timer_init();

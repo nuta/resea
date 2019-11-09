@@ -1,5 +1,5 @@
 #include <arch.h>
-#include <debug.h>
+#include <support/kasan.h>
 #include <memory.h>
 #include <printk.h>
 #include <x64/x64.h>
@@ -18,7 +18,7 @@ void page_table_init(struct page_table *pt) {
     pml4[0] = 0;
 
 #ifdef DEBUG_BUILD
-    asan_init_area(ASAN_VALID, pml4, PAGE_SIZE);
+    kasan_init_area(ASAN_VALID, pml4, PAGE_SIZE);
 #endif
     pt->pml4 = (paddr_t) into_paddr(pml4);
 }
@@ -45,7 +45,7 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
                 }
 
 #ifdef DEBUG_BUILD
-                asan_init_area(ASAN_VALID, page, PAGE_SIZE);
+                kasan_init_area(ASAN_VALID, page, PAGE_SIZE);
 #endif
                 inlined_memset(page, 0, PAGE_SIZE);
                 table[index] = (uint64_t) into_paddr(page);

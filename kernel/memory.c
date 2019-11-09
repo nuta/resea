@@ -1,11 +1,11 @@
 #include <arch.h>
-#include <debug.h>
 #include <list.h>
 #include <memory.h>
 #include <printk.h>
 #include <process.h>
 #include <table.h>
 #include <thread.h>
+#include <support/kasan.h>
 
 /// The PAGE_SIZE-sized memory pool.
 struct kmalloc_arena page_arena;
@@ -16,9 +16,9 @@ static void add_free_list(struct kmalloc_arena *arena, vaddr_t addr,
                           size_t num_objects) {
     struct free_list *free_list = (struct free_list *) addr;
 #ifdef DEBUG_BUILD
-    asan_check_double_free(free_list);
+    kasan_check_double_free(free_list);
     // Fill the shadow memory to access `free_list`.
-    asan_init_area(ASAN_UNINITIALIZED, free_list, sizeof(*free_list));
+    kasan_init_area(ASAN_UNINITIALIZED, free_list, sizeof(*free_list));
     free_list->magic1 = FREE_LIST_MAGIC1;
     free_list->magic2 = FREE_LIST_MAGIC2;
 #endif
@@ -27,7 +27,7 @@ static void add_free_list(struct kmalloc_arena *arena, vaddr_t addr,
     list_push_back(&arena->free_list, &free_list->next);
 
 #ifdef DEBUG_BUILD
-    asan_init_area(ASAN_FREED, free_list->padding, sizeof(free_list->padding));
+    kasan_init_area(ASAN_FREED, free_list->padding, sizeof(free_list->padding));
 #endif
 }
 
@@ -66,7 +66,7 @@ void *kmalloc_from(struct kmalloc_arena *arena) {
     vaddr_t allocated =
         (vaddr_t) free_list + free_list->num_objects * arena->object_size;
 #ifdef DEBUG_BUILD
-    asan_init_area(ASAN_UNINITIALIZED, (void *) allocated, arena->object_size);
+    kasan_init_area(ASAN_UNINITIALIZED, (void *) allocated, arena->object_size);
 #endif
     return (void *) allocated;
 }

@@ -1,11 +1,12 @@
 #include <arch.h>
-#include <debug.h>
 #include <memory.h>
 #include <printk.h>
 #include <process.h>
 #include <table.h>
 #include <thread.h>
 #include <timer.h>
+#include <support/kasan.h>
+#include <support/stack_protector.h>
 
 /// Creates a new thread. If `process` is `kernel_process`, it creates a kernel
 /// thread, which is a special thread which runs only in the kernel land. In
@@ -85,9 +86,9 @@ struct thread *thread_create(struct process *process, vaddr_t start,
     table_set(&process_table, tid, (void *) thread);
 
 #ifdef DEBUG_BUILD
-    asan_init_area(ASAN_VALID, thread_info, PAGE_SIZE);
-    asan_init_area(ASAN_VALID, (void *) kernel_stack, PAGE_SIZE);
-    asan_init_area(ASAN_VALID, (void *) kernel_ipc_buffer, PAGE_SIZE);
+    kasan_init_area(ASAN_VALID, thread_info, PAGE_SIZE);
+    kasan_init_area(ASAN_VALID, (void *) kernel_stack, PAGE_SIZE);
+    kasan_init_area(ASAN_VALID, (void *) kernel_ipc_buffer, PAGE_SIZE);
 #endif
 
     TRACE("new thread: pid=%d, tid=%d", process->pid, tid);
