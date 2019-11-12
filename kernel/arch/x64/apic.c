@@ -110,7 +110,7 @@ void x64_apic_timer_init(void) {
     x64_write_apic(APIC_REG_LVT_TIMER, APIC_TIMER_VECTOR | 0x20000);
     x64_write_apic(APIC_REG_TIMER_DIV, APIC_TIMER_DIV);
 
-    if (x64_read_cpu_id() == 0) {
+    if (arch_get_cpu_id() == 0) {
         calibrate_apic_timer();
     }
 

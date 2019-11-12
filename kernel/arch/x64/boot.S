@@ -2,11 +2,7 @@
 .intel_syntax noprefix
 
 .set MULTIBOOT_MAGIC,    0x1badb002
-#ifdef CONFIG_TEXT_UI
 .set MULTIBOOT_FLAGS,    0x00000002 // memory map
-#else
-.set MULTIBOOT_FLAGS,    0x00000006 // memory map and video info
-#endif
 .set MULTIBOOT_CHECKSUM, -(MULTIBOOT_MAGIC + MULTIBOOT_FLAGS)
 
 .code32
@@ -16,11 +12,6 @@
 .long MULTIBOOT_MAGIC
 .long MULTIBOOT_FLAGS
 .long MULTIBOOT_CHECKSUM
-#ifndef CONFIG_TEXT_UI
-.long 0, 0, 0, 0, 0  // Unused values.
-.long 0              // Set graphics mode.
-.long 640, 480, 32   // Width, height, and depth.
-#endif
 
 // The entry point jumped from the bootloader.
 .code32
@@ -103,7 +94,6 @@ write_pd_entry:
 
     jmp enable_long_mode
 
-#ifdef CONFIG_MP
 //
 //  AP boot code. x64_ap_boot is located at 0x5000 (copied to the address by the
 //  kernel later).
@@ -148,7 +138,6 @@ ap_protected_mode:
     lea eax, [enable_long_mode]
     jmp eax
 x64_ap_boot_end:
-#endif
 
 //
 //  Common boot code for both BSP and APs.
@@ -219,7 +208,6 @@ long_mode_in_low_address:
 .code64
 .text
 long_mode:
-#ifdef CONFIG_MP
     // Determine the current CPU is BSP or AP.
     mov edi, 0xfee00020
     mov eax, [edi]
@@ -230,7 +218,6 @@ setup_ap:
     lea  rax, [rip + x64_ap_setup]
     call rax
     jmp  halt
-#endif
 
 setup_bsp:
     // Clear .bss section

@@ -4,7 +4,6 @@
 #include <x64/mp.h>
 #include <x64/x64.h>
 
-#ifdef CONFIG_MP
 static void udelay(int usec) {
     while (usec-- > 0) {
         __asm__ __volatile__("inb $0x80, %%al" ::: "%rax");
@@ -29,7 +28,7 @@ static void start_aps() {
         (size_t) x64_ap_boot_end - (size_t) x64_ap_boot);
 
     for (unsigned apic_id = 1; apic_id < x64_num_cpus(); apic_id++) {
-        INFO("Processor #%d", apic_id);
+        INFO("booting CPU #%d", arch_get_cpu_id());
 
         x64_send_ipi(0, IPI_DEST_UNICAST, apic_id, IPI_MODE_INIT);
         udelay(20000);
@@ -45,7 +44,6 @@ static void start_aps() {
 void arch_mp_init(void) {
     start_aps();
 }
-#endif
 
 static struct mp_float_ptr *look_for_floatptr_table(paddr_t start,
                                                     paddr_t end) {
@@ -94,12 +92,10 @@ void x64_read_mp_table(void) {
             break;
         case MP_BASETABLE_PROCESSOR_ENTRY:
             size = sizeof(struct mp_processor_entry);
-#ifdef CONFIG_MP
             struct mp_processor_entry *entry = (void *) entry_ptr;
-            if (entry->localapic_id != x64_read_cpu_id()) {
+            if (entry->localapic_id != arch_get_cpu_id()) {
                 num_cpus++;
             }
-#endif
             break;
         case MP_BASETABLE_IOINT_ASSIGN_ENTRY:
             size = sizeof(struct mp_ioint_assign_entry);

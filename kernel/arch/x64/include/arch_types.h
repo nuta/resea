@@ -30,15 +30,11 @@
 #define PF_PRESENT    (1 << 0)
 #define PF_WRITE      (1 << 1)
 #define PF_USER       (1 << 2)
-#define CPUVAR            (x64_get_cpuvar(x64_read_cpu_id()))
+#define CPUVAR            (x64_get_cpuvar(arch_get_cpu_id()))
 #define CPUVAR_OF(cpu_id) (x64_get_cpuvar(cpu_id))
 
-#ifdef CONFIG_MP
 unsigned x64_num_cpus(void);
 #define NUM_CPUS  (x64_num_cpus())
-#else
-#define NUM_CPUS  1
-#endif
 
 struct thread;
 struct cpuvar {
@@ -77,7 +73,7 @@ static inline paddr_t into_paddr(void *addr) {
     return (paddr_t)((uintmax_t) addr - KERNEL_BASE_ADDR);
 }
 
-static inline uint8_t x64_read_cpu_id(void) {
+static inline uint8_t arch_get_cpu_id(void) {
     uint64_t apic_reg_id = 0xfee00020 + KERNEL_BASE_ADDR;
     return *((volatile uint32_t *) apic_reg_id) >> 24;
 }
@@ -95,11 +91,7 @@ static inline vaddr_t arch_get_stack_pointer(void) {
 
 static inline struct thread *get_current_thread(void) {
     struct thread *thread;
-#ifdef CONFIG_X86_FSGSBASE
     __asm__ __volatile__("rdgsbase %0" : "=r"(thread));
-#else
-    thread = (struct thread *) asm_rdmsr(MSR_GS_BASE);
-#endif
     return thread;
 }
 
@@ -148,11 +140,8 @@ static inline error_t arch_get_screen_buffer(paddr_t *page, size_t *num_pages) {
     return OK;
 }
 
-
 static inline void prefetch(MAYBE_UNUSED void *ptr) {
-#ifdef CONFIG_PREFETCH
     __asm__ __volatile__("prefetcht0 (%0)" :: "r"(ptr));
-#endif
 }
 
 static inline uint64_t arch_read_ioport(uintmax_t addr, int size) {

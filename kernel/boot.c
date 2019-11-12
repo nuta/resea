@@ -28,9 +28,7 @@ void boot(void) {
     thread_init();
     kernel_server_init();
     userland(&init_args);
-#ifdef CONFIG_MP
     arch_mp_init();
-#endif
 
     thread_first_switch();
     while (1) {
@@ -38,16 +36,17 @@ void boot(void) {
     }
 }
 
-#ifdef CONFIG_MP
 /// The entry point for application processors (processors other than the CPU
 /// which booted the system).
 void boot_ap(void) {
-    thread_first_switch();
+    INFO("successfully booted CPU #%d", arch_get_cpu_id());
+
+    // TODO: Fix locking bugs and enable threading!
+
     while (1) {
         arch_idle();
     }
 }
-#endif
 
 extern char __initfs[];
 

@@ -83,22 +83,6 @@ static void parse_multiboot_info(struct init_args *init_args) {
     }
 
     init_args->num_memory_maps = j;
-
-#ifdef CONFIG_TEXT_UI
-    init_args->framebuffer.available = false;
-#else
-    TRACE("Framebuffer:");
-    TRACE("    %dx%d, addr = %p, bpp = %d",
-          multiboot_info->framebuffer_width,
-          multiboot_info->framebuffer_height,
-          multiboot_info->framebuffer_paddr,
-          multiboot_info->framebuffer_bpp);
-    init_args->framebuffer.available = true;
-    init_args->framebuffer.width = multiboot_info->framebuffer_width;
-    init_args->framebuffer.height = multiboot_info->framebuffer_height;
-    init_args->framebuffer.paddr = multiboot_info->framebuffer_paddr;
-    init_args->framebuffer.bpp = multiboot_info->framebuffer_bpp;
-#endif
 }
 
 // Checks if a bit in the specified CPUID field is set. If not, do panic.
@@ -123,12 +107,10 @@ static void cpu_features_init(void) {
               ebx, ecx, edx);
     }
 
-#ifdef CONFIG_X86_FSGSBASE
     // Activate RDGSBASE/WRGSBASE instructions.
     CHECK_CPUID_BIT(CPUID_EXT_FEATURES, 0, ebx,
                     CPUID_EXT_FEATURES_EBX_FSGSBASE);
     asm_write_cr4(asm_read_cr4() | CR4_FSGSBASE);
-#endif
 
     // Make sure that XSAVE area is smaller than PAGE_SIZE.
     asm_cpuid_count(CPUID_EXT_STATE_ENUM, 0, &eax, &ebx, &ecx, &edx);
@@ -252,13 +234,11 @@ void x64_bsp_setup(paddr_t multiboot_info_addr) {
     boot();
 }
 
-#ifdef CONFIG_MP
 void x64_ap_setup(void) {
-    INFO("Initializing CPU #%d", x64_read_cpu_id());
+    INFO("initializing CPU #%d", arch_get_cpu_id());
     common_cpu_setup();
     boot_ap();
 }
-#endif
 
 void arch_init(struct init_args *init_args) {
     parse_multiboot_info(init_args);

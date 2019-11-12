@@ -200,11 +200,8 @@ static inline void asm_pause(void) {
 }
 
 static inline void asm_wrgsbase(uint64_t gsbase) {
-#ifdef CONFIG_X86_FSGSBASE
     __asm__ __volatile__("wrgsbase %0" ::"r"(gsbase));
-#else
     asm_wrmsr(MSR_GS_BASE, gsbase);
-#endif
 }
 
 static inline void asm_swapgs(void) {
