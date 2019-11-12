@@ -16,9 +16,9 @@ __initfs:
     // The initfs_file entry for "memmgr.bin".
     .align 256
 
-    // struct init_args
-.global __init_args
-__init_args:
+    // struct bootinfo
+.global __bootinfo
+__bootinfo:
     .space 1024
 
 .section .text

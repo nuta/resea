@@ -1,5 +1,5 @@
 #include <arch.h>
-#include <init_args.h>
+#include <bootinfo.h>
 #include <channel.h>
 #include <memory.h>
 #include <printk.h>
@@ -10,11 +10,11 @@
 #include <support/stack_protector.h>
 #include <support/kasan.h>
 
-static void userland(struct init_args *args);
+static void userland(struct bootinfo *args);
 
 /// Initializes the kernel and starts the first userland process.
 void boot(void) {
-    struct init_args init_args;
+    struct bootinfo bootinfo;
     init_boot_stack_canary();
 #ifdef DEBUG_BUILD
     kasan_init();
@@ -22,12 +22,12 @@ void boot(void) {
 
     INFO("Booting Resea...");
     memory_init();
-    arch_init(&init_args);
+    arch_init(&bootinfo);
     timer_init();
     process_init();
     thread_init();
     kernel_server_init();
-    userland(&init_args);
+    userland(&bootinfo);
     arch_mp_init();
 
     thread_first_switch();
@@ -65,7 +65,7 @@ static paddr_t straight_map_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
 }
 
 // Spawns the first user process from the initfs.
-static void userland(struct init_args *args) {
+static void userland(struct bootinfo *args) {
     // Create the very first user process and thread.
     init_process = process_create("memmgr");
     ASSERT(init_process);
@@ -94,8 +94,8 @@ static void userland(struct init_args *args) {
                         straight_map_pager, NULL, flags);
     ASSERT(err == OK);
 
-    // Fill init_args.
-    inlined_memcpy(__initfs + INIT_ARGS_OFFSET, args, sizeof(*args));
+    // Fill bootinfo.
+    inlined_memcpy(__initfs + BOOTINFO_OFFSET, args, sizeof(*args));
 
     // Enqueue the thread into the run queue.
     thread_resume(thread);

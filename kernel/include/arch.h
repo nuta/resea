@@ -4,8 +4,8 @@
 #include <arch_types.h>
 #include <types.h>
 
-struct init_args;
-void arch_init(struct init_args *args);
+struct bootinfo;
+void arch_init(struct bootinfo *args);
 void arch_idle(void);
 void arch_putchar(char ch);
 NORETURN void arch_panic(void);

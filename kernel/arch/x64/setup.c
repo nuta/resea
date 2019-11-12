@@ -1,5 +1,5 @@
 #include <arch.h>
-#include <init_args.h>
+#include <bootinfo.h>
 #include <boot.h>
 #include <printk.h>
 #include <x64/apic.h>
@@ -26,7 +26,7 @@ extern paddr_t multiboot_info_addr;
 
 static struct multiboot_info *multiboot_info = NULL;
 
-static void parse_multiboot_info(struct init_args *init_args) {
+static void parse_multiboot_info(struct bootinfo *bootinfo) {
     TRACE("multiboot info is located at %p", multiboot_info);
     TRACE("multiboot flags = %x", multiboot_info->flags);
 
@@ -34,7 +34,7 @@ static void parse_multiboot_info(struct init_args *init_args) {
         (struct multiboot_mmap *) from_paddr(multiboot_info->mmap_paddr);
     int num_mmaps =
         (int) (multiboot_info->mmap_len / sizeof(struct multiboot_mmap));
-    ASSERT(num_mmaps <= INIT_ARGS_MEMORY_MAPS_MAX - 1);
+    ASSERT(num_mmaps <= BOOTINFO_MEMORY_MAPS_MAX - 1);
     TRACE("Memory map:");
     int j = 0;
     for (int i = 0; i < num_mmaps; i++) {
@@ -76,13 +76,13 @@ static void parse_multiboot_info(struct init_args *init_args) {
             continue;
         }
 
-        init_args->memory_maps[j].start = MAX(start, STRAIGHT_MAP_ADDR);
-        init_args->memory_maps[j].end = MIN(end, 0x10000000 /*FIXME: ASan shadow memory */);
-        init_args->memory_maps[j].type = type;
+        bootinfo->memory_maps[j].start = MAX(start, STRAIGHT_MAP_ADDR);
+        bootinfo->memory_maps[j].end = MIN(end, 0x10000000 /*FIXME: ASan shadow memory */);
+        bootinfo->memory_maps[j].type = type;
         j++;
     }
 
-    init_args->num_memory_maps = j;
+    bootinfo->num_memory_maps = j;
 }
 
 // Checks if a bit in the specified CPUID field is set. If not, do panic.
@@ -240,8 +240,8 @@ void x64_ap_setup(void) {
     boot_ap();
 }
 
-void arch_init(struct init_args *init_args) {
-    parse_multiboot_info(init_args);
+void arch_init(struct bootinfo *bootinfo) {
+    parse_multiboot_info(bootinfo);
     pic_init();
     x64_read_mp_table();
     common_cpu_setup();
