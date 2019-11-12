@@ -1,4 +1,4 @@
-use resea::result::Error;
+use resea::result::Result;
 use resea::channel::Channel;
 use resea::idl;
 use resea::std::borrow::ToOwned;
@@ -15,7 +15,7 @@ pub struct Process {
 }
 
 impl Process {
-    pub fn start(&self, thread_server: &Channel) -> Result<(), Error> {
+    pub fn start(&self, thread_server: &Channel) -> Result<()> {
         use idl::kernel::Client;
         thread_server.spawn_thread(self.pid, self.elf.entry,
             APP_INITIAL_STACK_POINTER, THREAD_INFO_ADDR, 0 /* arg */)?;
@@ -48,7 +48,7 @@ impl ProcessManager {
         self.processes.get(&pid)
     }
 
-    pub fn create(&mut self, file: &'static File) -> Result<HandleId, Error> {
+    pub fn create(&mut self, file: &'static File) -> Result<HandleId> {
         let elf = ELF::parse(file.data())?;
         let kernel_ch = idl::server::Client::connect(self.process_server, 0)?;
 

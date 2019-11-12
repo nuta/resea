@@ -1,7 +1,8 @@
 use resea::PAGE_SIZE;
 use resea::idl;
 use resea::collections::{HashMap, Vec};
-use resea::result::Error;
+use resea::result::{Result, Error};
+use resea::server::ServerResult;
 use resea::channel::Channel;
 use resea::message::{HandleId, Page, InterfaceId};
 use resea::std::cmp::min;
@@ -62,7 +63,7 @@ impl Server {
         }
     }
 
-    pub fn execute(&mut self, file: &'static File) -> Result<(), Error> {
+    pub fn execute(&mut self, file: &'static File) -> Result<()> {
         let pid = self.process_manager.create(file)?;
         let proc = self.process_manager.get(pid).unwrap();
         proc.pager_ch.transfer_to(&self.ch)?;
@@ -72,7 +73,7 @@ impl Server {
 }
 
 impl idl::pager::Server for Server {
-    fn fill(&mut self, _from: &Channel, pid: HandleId, addr: usize, num_pages: usize) -> Option<Result<Page, Error>> {
+    fn fill(&mut self, _from: &Channel, pid: HandleId, addr: usize, num_pages: usize) -> ServerResult<Page> {
         // TODO: Support filling multiple pages.
         assert_eq!(num_pages, 1);
 
@@ -116,53 +117,53 @@ impl idl::pager::Server for Server {
             }
         }
 
-        Some(Ok(page.as_page_payload()))
+        ServerResult::Ok(page.as_page_payload())
     }
 }
 
 impl idl::memmgr::Server for Server {
-    fn alloc_pages(&mut self, _from: &Channel, num_pages: usize) -> Option<Result<Page, Error>> {
+    fn alloc_pages(&mut self, _from: &Channel, num_pages: usize) -> ServerResult<Page> {
         if num_pages == 0 {
-            return Some(Err(Error::InvalidArg));
+            return ServerResult::Err(Error::InvalidArg);
         }
 
         let page = self.page_allocator.allocate(num_pages);
-        Some(Ok(page.as_page_payload()))
+        ServerResult::Ok(page.as_page_payload())
     }
 }
 
 impl idl::runtime::Server for Server {
-    fn exit(&mut self, _from: &Channel, _code: i32) -> Option<Result<(), Error>> {
+    fn exit(&mut self, _from: &Channel, _code: i32) -> ServerResult<()> {
         unimplemented!();
     }
 
-    fn printchar(&mut self, _from: &Channel, ch: u8) -> Option<Result<(), Error>> {
+    fn printchar(&mut self, _from: &Channel, ch: u8) -> ServerResult<()> {
         resea::print::printchar(ch);
-        Some(Ok(()))
+        ServerResult::Ok(())
     }
 
-    fn print_str(&mut self, _from: &Channel, s: String) -> Option<Result<(), Error>> {
+    fn print_str(&mut self, _from: &Channel, s: String) -> ServerResult<()> {
         resea::print::print_str(s.as_str());
-        Some(Ok(()))
+        ServerResult::Ok(())
     }
 }
 
 impl idl::discovery::Server for Server {
-    fn connect(&mut self, from: &Channel, interface: u8) -> Option<Result<Channel, Error>> {
+    fn connect(&mut self, from: &Channel, interface: u8) -> ServerResult<Channel> {
         self.connect_requests.push(ConnectRequest {
             interface,
             ch: unsafe { from.clone() }
         });
 
-        None
+        ServerResult::NoReply
     }
 
-    fn publish(&mut self, _from: &Channel, interface: u8, ch: Channel) -> Option<Result<(), Error>> {
+    fn publish(&mut self, _from: &Channel, interface: u8, ch: Channel) -> ServerResult<()> {
         // TODO: Support multiple servers with the same interface ID.
         assert!(self.servers.get(&interface).is_none());
 
         self.servers.insert(interface, RegisteredServer { ch });
-        Some(Ok(()))
+        ServerResult::Ok(())
     }
 }
 

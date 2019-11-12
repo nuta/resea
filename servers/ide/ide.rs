@@ -1,4 +1,4 @@
-use resea::result::Error;
+use resea::result::{Result, Error};
 use resea::channel::Channel;
 use resea::idl::kernel::Client;
 use resea::std::slice;
@@ -19,7 +19,7 @@ impl IdeDevice {
         }
     }
 
-    pub fn read_sectors(&self, sector: usize, num_sectors: usize, buf: &mut [u8]) -> Result<(), Error> {
+    pub fn read_sectors(&self, sector: usize, num_sectors: usize, buf: &mut [u8]) -> Result<()> {
         // Send a read command to the device.
         self.wait_device();
         self.select_num_sectors(num_sectors)?;
@@ -47,13 +47,13 @@ impl IdeDevice {
         0
     }
 
-    fn select_num_sectors(&self, num_sectors: usize) -> Result<(), Error> {
+    fn select_num_sectors(&self, num_sectors: usize) -> Result<()> {
         assert!(num_sectors <= 0xff);
         self.io_server.write_ioport(0x1f2, 1, num_sectors as u64)?;
         Ok(())
     }
 
-    fn select_sector(&self, sector: usize) -> Result<(), Error> {
+    fn select_sector(&self, sector: usize) -> Result<()> {
         let sector_low = sector & 0xff;
         let sector_mid = (sector >> 8) & 0xff;
         let sector_high = (sector >> 16) & 0xff;
@@ -68,11 +68,11 @@ impl IdeDevice {
         Ok(())
     }
 
-    fn select_command(&self, command: u8) -> Result<(), Error> {
+    fn select_command(&self, command: u8) -> Result<()> {
         self.io_server.write_ioport(0x1f7, 1, command as u64)
     }
 
-    fn read_status(&self) -> Result<u8, Error> {
+    fn read_status(&self) -> Result<u8> {
         self.io_server.read_ioport(0x1f7, 1).map(|data| data as u8)
     }
 

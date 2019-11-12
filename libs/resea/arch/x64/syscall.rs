@@ -1,4 +1,4 @@
-use crate::result::Error;
+use crate::result::{Result, Error};
 use crate::message::Message;
 
 const SYSCALL_IPC: u32 = 0;
@@ -7,7 +7,7 @@ const SYSCALL_TRANSFER: u32 = 4;
 const IPC_SEND: u32 = 1 << 8;
 const IPC_RECV: u32 = 1 << 9;
 
-unsafe fn convert_error(error: i32) -> Result<(), Error> {
+unsafe fn convert_error(error: i32) -> Result<()> {
     if error < 0 {
         Err(core::mem::transmute::<u8, Error>(-error as u8))
     } else {
@@ -15,7 +15,7 @@ unsafe fn convert_error(error: i32) -> Result<(), Error> {
     }
 }
 
-unsafe fn ipc_syscall(cid: i32, ops: u32) -> Result<(), Error> {
+unsafe fn ipc_syscall(cid: i32, ops: u32) -> Result<()> {
     let error: i32;
     asm!(
         "syscall"
@@ -28,7 +28,7 @@ unsafe fn ipc_syscall(cid: i32, ops: u32) -> Result<(), Error> {
     convert_error(error)
 }
 
-pub unsafe fn open() -> Result<i32, Error> {
+pub unsafe fn open() -> Result<i32> {
     let cid_or_error: i32;
     asm!(
         "syscall"
@@ -44,7 +44,7 @@ pub unsafe fn open() -> Result<i32, Error> {
     }
 }
 
-pub unsafe fn transfer(src: i32, dst: i32) -> Result<(), Error> {
+pub unsafe fn transfer(src: i32, dst: i32) -> Result<()> {
     let error: i32;
     asm!(
         "syscall"
@@ -58,14 +58,14 @@ pub unsafe fn transfer(src: i32, dst: i32) -> Result<(), Error> {
     convert_error(error)
 }
 
-pub unsafe fn send(cid: i32) -> Result<(), Error> {
+pub unsafe fn send(cid: i32) -> Result<()> {
     ipc_syscall(cid, IPC_SEND)
 }
 
-pub unsafe fn recv(cid: i32) -> Result<(), Error> {
+pub unsafe fn recv(cid: i32) -> Result<()> {
     ipc_syscall(cid, IPC_RECV)
 }
 
-pub unsafe fn call(cid: i32) -> Result<(), Error> {
+pub unsafe fn call(cid: i32) -> Result<()> {
     ipc_syscall(cid, IPC_SEND | IPC_RECV)
 }

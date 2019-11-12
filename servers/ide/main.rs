@@ -1,4 +1,5 @@
-use resea::result::Error;
+use resea::result::{Result, Error};
+use resea::server::ServerResult;
 use resea::idl;
 use resea::idl::storage_device::INTERFACE_ID;
 use resea::PAGE_SIZE;
@@ -25,25 +26,25 @@ impl Server {
 }
 
 impl idl::storage_device::Server for Server {
-    fn read(&mut self, _from: &Channel, sector: usize, num_sectors: usize) -> Option<Result<Page, Error>> {
+    fn read(&mut self, _from: &Channel, sector: usize, num_sectors: usize) -> ServerResult<Page> {
         if num_sectors == 0 {
-            return Some(Err(Error::InvalidArg));
+            return ServerResult::Err(Error::InvalidArg);
         }
 
         use idl::memmgr::Client;
         let num_pages = align_up(num_sectors * self.device.sector_size(), PAGE_SIZE) / PAGE_SIZE;
         let mut page = MEMMGR_SERVER.alloc_pages(num_pages).unwrap();
         self.device.read_sectors(sector, num_sectors, page.as_bytes_mut()).unwrap();
-        Some(Ok(page))
+        ServerResult::Ok(page)
     }
 }
 
 impl idl::server::Server for Server {
-    fn connect(&mut self, _from: &Channel, interface_id: u8) -> Option<Result<Channel, Error>> {
+    fn connect(&mut self, _from: &Channel, interface_id: u8) -> ServerResult<Channel> {
         assert_eq!(interface_id, INTERFACE_ID);
         let ch = Channel::create().unwrap();
         ch.transfer_to(&self.ch).unwrap();
-        Some(Ok(ch))
+        ServerResult::Ok(ch)
     }
 }
 

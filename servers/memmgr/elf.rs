@@ -1,4 +1,4 @@
-use resea::result::Error;
+use resea::result::{Result, Error};
 use resea::std::slice;
 use resea::std::mem::size_of;
 
@@ -38,7 +38,7 @@ pub struct ELF<'a> {
 }
 
 impl<'a> ELF<'a> {
-    pub fn parse(image: &'a [u8]) -> Result<ELF<'a>, Error> {
+    pub fn parse(image: &'a [u8]) -> Result<ELF<'a>> {
         if image.len() < size_of::<ELF64Ehdr>() {
             return Err(Error::TooShort);
         }

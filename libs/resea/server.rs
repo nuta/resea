@@ -2,6 +2,12 @@ use crate::result::Error;
 use crate::channel::Channel;
 use crate::message::{Message, Notification, InterfaceId};
 
+pub enum ServerResult<T> {
+    Ok(T),
+    Err(Error),
+    NoReply,
+}
+
 pub trait Server {
     fn deferred_work(&mut self) {}
     fn notification(&mut self, notification: Notification) {}

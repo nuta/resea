@@ -26,7 +26,7 @@ impl Server {
 // }
 
 impl idl::server::Server for Server {
-    fn connect(&mut self, _from: &Channel, interface_id: u8) -> Option<Result<Channel, Error>> {
+    fn connect(&mut self, _from: &Channel, interface_id: u8) -> ServerResult<Channel> {
         assert_eq!(interface_id, idl::fs::INTERFACE_ID);
         let ch = Channel::create().unwrap();
         ch.transfer_to(&self.ch).unwrap();
