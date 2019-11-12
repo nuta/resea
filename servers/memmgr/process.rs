@@ -56,7 +56,7 @@ impl ProcessManager {
         let (proc, pager_ch) =
             self.process_server.create_process(file.path().to_owned())?;
 
-        self.process_server.thrust_channel(proc, kernel_ch)?;
+        self.process_server.inject_channel(proc, kernel_ch)?;
         self.process_server.add_vm_area(proc, APP_IMAGE_START, APP_IMAGE_SIZE,
             0x06)?;
         self.process_server.add_vm_area(proc, APP_ZEROED_PAGES_START,

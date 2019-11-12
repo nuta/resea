@@ -35,7 +35,7 @@ interface kernel {
     [id(3), type(call)]
     add_vm_area(proc: handle, start: uintptr, size: size, flags: uint8) -> ()
     [id(4), type(call)]
-    thrust_channel(proc: handle, ch: channel) -> ()
+    inject_channel(proc: handle, ch: channel) -> ()
 
     [id(5), type(call)]
     spawn_thread(proc: handle, start: uintptr, stack: uintptr, buffer: uintptr,

@@ -231,10 +231,10 @@ static error_t handle_io_listen_irq(struct message *m) {
     return OK;
 }
 
-static error_t handle_process_thrust_channel(struct message *m) {
-    pid_t pid = m->payloads.kernel.thrust_channel.proc;
-    cid_t cid = m->payloads.kernel.thrust_channel.ch;
-    TRACE("kernel: thrust_channel_to_pid(pid=%d)", pid);
+static error_t handle_process_inject_channel(struct message *m) {
+    pid_t pid = m->payloads.kernel.inject_channel.proc;
+    cid_t cid = m->payloads.kernel.inject_channel.ch;
+    TRACE("kernel: inject_channel_to_pid(pid=%d)", pid);
 
     struct process *proc = table_get(&process_table, pid);
     if (!proc) {
@@ -254,8 +254,8 @@ static error_t handle_process_thrust_channel(struct message *m) {
     channel_link(ch->linked_with, dst_ch);
     channel_destroy(ch);
 
-    TRACE("kernel: thrust_channel_to_pid: created %pC", dst_ch);
-    m->header = KERNEL_THRUST_CHANNEL_REPLY_MSG;
+    TRACE("kernel: inject_channel_to_pid: created %pC", dst_ch);
+    m->header = KERNEL_INJECT_CHANNEL_REPLY_MSG;
     return OK;
 }
 
@@ -348,7 +348,7 @@ static error_t process_message(struct message *m) {
     case KERNEL_CREATE_PROCESS_MSG:    return handle_process_create(m);
     case KERNEL_DESTROY_PROCESS_MSG:   return handle_process_destroy(m);
     case KERNEL_ADD_VM_AREA_MSG:       return handle_process_add_vm_area(m);
-    case KERNEL_THRUST_CHANNEL_MSG:    return handle_process_thrust_channel(m);
+    case KERNEL_INJECT_CHANNEL_MSG:    return handle_process_inject_channel(m);
     case KERNEL_SPAWN_THREAD_MSG:      return handle_thread_spawn(m);
     case KERNEL_DESTROY_THREAD_MSG:    return handle_thread_destroy(m);
     case KERNEL_LISTEN_IRQ_MSG:        return handle_io_listen_irq(m);
