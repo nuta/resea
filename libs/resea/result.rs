@@ -10,6 +10,8 @@ pub enum Error {
     UnknownMessage = 6,
     TooShort = 7,
     InvalidData = 8,
+    NotFound = 9,
+    InvalidHandle = 10,
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

@@ -2,7 +2,7 @@ use resea::collections::Vec;
 use resea::channel::Channel;
 use resea::message::Page;
 use resea::std::cmp::min;
-use resea::std::mem::{size_of, transmute};
+use resea::std::mem::size_of;
 use resea::std::str;
 use resea::result::Result;
 
@@ -65,16 +65,14 @@ struct Bpb {
     cluster_size: usize, /* sector_size * sectors_per_cluster */
     root_dir_cluster: Cluster,
     sector_size: usize,
-    sectors_per_cluster: usize,
     cluster_start_offset: usize,
     fat_table_offset: usize,
 }
 
 fn parse_mbr(mbr: &[u8], part_begin: usize) -> Bpb {
-    let bpb = unsafe { mbr.as_ptr() as *const Mbr };
+    let bpb = mbr.as_ptr() as *const Mbr;
     let sector_size = unsafe { (*bpb).sector_size as usize };
     let cluster_size = unsafe { sector_size * (*bpb).sectors_per_cluster as usize };
-    let sectors_per_cluster = unsafe { (*bpb).sectors_per_cluster as usize };
     let fat_table_sector_start = unsafe { (*bpb).reserved_sectors as usize };
     let fat_table_offset = part_begin + fat_table_sector_start * sector_size;
     let number_of_fats = unsafe { (*bpb).number_of_fats as usize };
@@ -86,7 +84,6 @@ fn parse_mbr(mbr: &[u8], part_begin: usize) -> Bpb {
         cluster_size,
         root_dir_cluster,
         sector_size,
-        sectors_per_cluster,
         cluster_start_offset,
         fat_table_offset,
     }
@@ -117,11 +114,11 @@ impl FileSystem {
 
     fn read_disk(&self, offset: usize, len: usize) -> Result<Page> {
         use resea::idl::storage_device::Client;
-        self.storage_device.read(offset / SECTOR_SIZE, 1)
+        self.storage_device.read(self.part_begin + offset / SECTOR_SIZE, len / SECTOR_SIZE)
     }
 
     /// Opens a file.
-    pub fn open_file<'a>(&'a self, path: &str) -> Option<File<'a>> {
+    pub fn open_file(&self, path: &str) -> Option<File> {
         for frag in path.split('/') {
             // Parse the file name as: name='MAIN    ', ext='RS '
             let mut s = frag.split('.');
@@ -149,7 +146,7 @@ impl FileSystem {
                     if let Ok(entry_name) = str::from_utf8(&entry.name) {
                         if let Ok(entry_ext) = str::from_utf8(&entry.ext) {
                             if entry_name == name && entry_ext == ext {
-                                return Some(File::new(self, entry.cluster()));
+                                return Some(File::new(entry.cluster()));
                             }
                         }
                     }
@@ -187,27 +184,25 @@ impl FileSystem {
     }
 }
 
-pub struct File<'a> {
-    fs: &'a FileSystem,
-    offset: usize,
+pub struct File {
     first_cluster: Cluster,
 }
 
-impl<'a> File<'a> {
-    pub fn new(fs: &'a FileSystem, first_cluster: Cluster) -> File<'a> {
-        File { fs, first_cluster, offset: 0 }
+impl File {
+    pub fn new(first_cluster: Cluster) -> File {
+        File { first_cluster }
     }
 
-    pub fn read(&self, buf: &mut Vec<u8>, offset: usize, len: usize) -> Result<usize> {
+    pub fn read(&self, fs: &FileSystem, buf: &mut [u8], offset: usize, len: usize) -> Result<usize> {
         let mut current = self.first_cluster;
         let mut data = Vec::new();
         let mut total_len = 0;
         let mut remaining = len;
         let mut off = offset;
-        while let Some(next) = self.fs.read_cluster(&mut data, current) {
-            if off < self.fs.bpb.cluster_size {
-                let read_len = min(self.fs.bpb.cluster_size - off, len);
-                buf.extend_from_slice(&data[off..(off + read_len)]);
+        while let Some(next) = fs.read_cluster(&mut data, current) {
+            if off < fs.bpb.cluster_size {
+                let read_len = min(fs.bpb.cluster_size - off, len);
+                buf.copy_from_slice(&data[off..(off + read_len)]);
                 off = 0;
                 remaining -= read_len;
                 total_len += read_len;
@@ -217,7 +212,7 @@ impl<'a> File<'a> {
                 }
             }
 
-            off -= self.fs.bpb.cluster_size;
+            off -= fs.bpb.cluster_size;
             current = next;
         }
 
