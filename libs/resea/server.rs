@@ -1,6 +1,5 @@
 use crate::result::Error;
-use crate::channel::Channel;
-use crate::message::{Message, Notification, InterfaceId};
+use crate::message::Notification;
 
 pub enum ServerResult<T> {
     Ok(T),
@@ -10,7 +9,7 @@ pub enum ServerResult<T> {
 
 pub trait Server {
     fn deferred_work(&mut self) {}
-    fn notification(&mut self, notification: Notification) {}
+    fn notification(&mut self, _notification: Notification) {}
 }
 
 #[macro_export]

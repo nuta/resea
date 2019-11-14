@@ -2,7 +2,6 @@ use crate::PAGE_SIZE;
 use crate::message::Page;
 use crate::std::vec::Vec;
 use crate::lazy_static::LazyStatic;
-use core::mem::MaybeUninit;
 use core::cell::RefCell;
 use linked_list_allocator::LockedHeap;
 

@@ -5,7 +5,6 @@
 #![feature(core_panic_info)]
 #![feature(alloc_error_handler)]
 
-#![allow(unused)]
 #![allow(clippy::missing_safety_doc)]
 
 #[macro_use]
@@ -45,7 +44,7 @@ mod arch;
 mod init;
 mod lang_items;
 
-pub use arch::PAGE_SIZE;
+pub use arch::{PAGE_SIZE, breakpoint};
 
 #[cfg(target_os = "resea")]
 pub fn program_name() -> &'static str {

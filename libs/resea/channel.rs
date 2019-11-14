@@ -2,7 +2,6 @@ use crate::result::{Result, Error};
 use crate::arch::syscall;
 use crate::arch::thread_info::{copy_from_ipc_buffer, copy_to_ipc_buffer};
 use crate::message::Message;
-use core::mem::MaybeUninit;
 
 pub type CId = i32;
 

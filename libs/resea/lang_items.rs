@@ -16,9 +16,7 @@ pub fn eh_personality() {
 pub fn panic(info: &panic::PanicInfo) -> ! {
     error!("PANIC: {}", info);
     loop {
-        unsafe {
-            crate::arch::breakpoint();
-        }
+        crate::arch::breakpoint();
     }
 }
 

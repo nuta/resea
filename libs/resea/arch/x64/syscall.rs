@@ -1,5 +1,4 @@
 use crate::result::{Result, Error};
-use crate::message::Message;
 
 const SYSCALL_IPC: u32 = 0;
 const SYSCALL_OPEN: u32 = 1;
