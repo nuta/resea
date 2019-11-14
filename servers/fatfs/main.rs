@@ -1,7 +1,5 @@
-use resea::result::Error;
+use resea::server::ServerResult;
 use resea::idl;
-use resea::PAGE_SIZE;
-use resea::message::Page;
 use resea::channel::Channel;
 use crate::fat::FileSystem;
 
@@ -30,7 +28,7 @@ impl idl::server::Server for Server {
         assert_eq!(interface_id, idl::fs::INTERFACE_ID);
         let ch = Channel::create().unwrap();
         ch.transfer_to(&self.ch).unwrap();
-        Some(Ok(ch))
+        ServerResult::Ok(ch)
     }
 }
 

@@ -1,8 +1,4 @@
-use resea::result::Error;
 use resea::channel::Channel;
-use resea::message::Page;
-use resea::idl::kernel::Client;
-use resea::std::mem::size_of;
 use resea::collections::VecDeque;
 use crate::keymap::*;
 
@@ -15,14 +11,14 @@ pub struct Keyboard {
     kernel_server: &'static Channel,
     /// Received characters.
     buffer: VecDeque<u8>,
-    ctrl_left: bool,
-    ctrl_right: bool,
-    alt_left: bool,
-    alt_right: bool,
+    _ctrl_left: bool,
+    _ctrl_right: bool,
+    _alt_left: bool,
+    _alt_right: bool,
     shift_left: bool,
     shift_right: bool,
-    super_left: bool,
-    super_right: bool,
+    _super_left: bool,
+    _super_right: bool,
     caps_lock: bool,
 }
 
@@ -39,14 +35,14 @@ impl Keyboard {
         Keyboard {
             kernel_server,
             buffer: VecDeque::with_capacity(16),
-            ctrl_left: false,
-            ctrl_right: false,
-            alt_left: false,
-            alt_right: false,
+            _ctrl_left: false,
+            _ctrl_right: false,
+            _alt_left: false,
+            _alt_right: false,
             shift_left: false,
             shift_right: false,
-            super_left: false,
-            super_right: false,
+            _super_left: false,
+            _super_right: false,
             caps_lock: false,
         }
     }

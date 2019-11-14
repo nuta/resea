@@ -1,16 +1,12 @@
-use resea::result::Error;
 use resea::channel::Channel;
 use resea::message::Page;
-use resea::idl::kernel::Client;
 use resea::std::mem::size_of;
 
-const KEYBOARD_IRQ: u8 = 1;
 const DEFAULT_COLOR: u16 = 0x0f;
 const SCREEN_HEIGHT: usize = 25;
 const SCREEN_WIDTH: usize = 80;
 
 pub struct Screen {
-    kernel_server: &'static Channel,
     screen: Page,
     cursor_x: usize,
     cursor_y: usize,
@@ -23,7 +19,6 @@ impl Screen {
             .expect("failed to get the screen page");
 
         Screen {
-            kernel_server,
             screen,
             cursor_x: 0,
             cursor_y: 0,

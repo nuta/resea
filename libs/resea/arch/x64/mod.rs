@@ -7,3 +7,9 @@ pub mod thread_info;
 mod main;
 
 pub const PAGE_SIZE: usize = 0x1000;
+
+pub fn breakpoint() {
+    unsafe {
+        asm!("int $$3");
+    }
+}

@@ -1,4 +1,4 @@
-use resea::result::{Result, Error};
+use resea::result::Error;
 use resea::server::ServerResult;
 use resea::idl;
 use resea::idl::storage_device::INTERFACE_ID;

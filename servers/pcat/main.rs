@@ -1,4 +1,3 @@
-use resea::idl;
 use resea::channel::Channel;
 use resea::message::Notification;
 use crate::screen::Screen;

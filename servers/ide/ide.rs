@@ -1,11 +1,10 @@
-use resea::result::{Result, Error};
+use resea::result::Result;
 use resea::channel::Channel;
 use resea::idl::kernel::Client;
 use resea::std::slice;
 
 const STATUS_DRQ: u8 = 0x08;
 const STATUS_BSY: u8 = 0x80;
-const STATUS_RDY: u8 = 0x40;
 const COMMAND_READ: u8 = 0x20;
 
 pub struct IdeDevice {

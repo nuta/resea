@@ -28,7 +28,9 @@ impl File {
     }
 
     pub fn path(&self) -> &str {
-        c_str_to_str(self.path.as_ptr())
+        unsafe {
+            c_str_to_str(self.path.as_ptr())
+        }
     }
 
     pub fn data(&self) -> &[u8] {

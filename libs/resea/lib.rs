@@ -45,3 +45,13 @@ mod init;
 mod lang_items;
 
 pub use arch::PAGE_SIZE;
+
+#[cfg(target_vendor = "resea")]
+pub fn program_name() -> &'static str {
+    env!("PROGRAM_NAME")
+}
+
+#[cfg(not(target_vendor = "resea"))]
+pub fn program_name() -> &'static str {
+    "(test program)"
+}

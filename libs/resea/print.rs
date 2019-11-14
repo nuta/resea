@@ -43,7 +43,7 @@ pub fn print_str(s: &str) {
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => {{
-        #[allow(unused_import)]
+        #![allow(unused_import)]
         use core::fmt::Write;
         write!($crate::print::Printer::new(), "{}", format_args!($($arg)*)).ok();
     }};
@@ -60,10 +60,10 @@ macro_rules! println {
 #[macro_export]
 macro_rules! info {
     ($fmt:expr) => {
-        $crate::println!(concat!("\x1b[0;94m", "[{}] ", $fmt, "\x1b[0m"), env!("PROGRAM_NAME"));
+        $crate::println!(concat!("\x1b[0;94m", "[{}] ", $fmt, "\x1b[0m"), $crate::program_name());
     };
     ($fmt:expr, $($arg:tt)*) => {
-        $crate::println!(concat!("\x1b[0;94m", "[{}] ", $fmt, "\x1b[0m"), env!("PROGRAM_NAME"), $($arg)*);
+        $crate::println!(concat!("\x1b[0;94m", "[{}] ", $fmt, "\x1b[0m"), $crate::program_name(), $($arg)*);
     };
 }
 
@@ -71,10 +71,10 @@ macro_rules! info {
 #[macro_export]
 macro_rules! warn {
     ($fmt:expr) => {
-        $crate::println!(concat!("\x1b[0;33m", "[{}] WARN: ", $fmt, "\x1b[0m"), env!("PROGRAM_NAME"));
+        $crate::println!(concat!("\x1b[0;33m", "[{}] WARN: ", $fmt, "\x1b[0m"), $crate::program_name());
     };
     ($fmt:expr, $($arg:tt)*) => {
-        $crate::println!(concat!("\x1b[0;33m", "[{}] WARN: ", $fmt, "\x1b[0m"), env!("PROGRAM_NAME"), $($arg)*);
+        $crate::println!(concat!("\x1b[0;33m", "[{}] WARN: ", $fmt, "\x1b[0m"), $crate::program_name(), $($arg)*);
     };
 }
 
@@ -82,11 +82,11 @@ macro_rules! warn {
 #[macro_export]
 macro_rules! oops {
     ($fmt:expr) => {
-        $crate::println!(concat!("\x1b[0;33m", "[{}] Oops: ", $fmt, "\x1b[0m"), env!("PROGRAM_NAME"));
+        $crate::println!(concat!("\x1b[0;33m", "[{}] Oops: ", $fmt, "\x1b[0m"), $crate::program_name());
         $crate::backtrace::backtrace();
     };
     ($fmt:expr, $($arg:tt)*) => {
-        $crate::println!(concat!("\x1b[0;33m", "[{}] Oops: ", $fmt, "\x1b[0m"), env!("PROGRAM_NAME"), $($arg)*);
+        $crate::println!(concat!("\x1b[0;33m", "[{}] Oops: ", $fmt, "\x1b[0m"), $crate::program_name(), $($arg)*);
         $crate::backtrace::backtrace();
     };
 }
@@ -95,11 +95,11 @@ macro_rules! oops {
 #[macro_export]
 macro_rules! error {
     ($fmt:expr) => {
-        $crate::println!(concat!("\x1b[1;91m", "[{}] Error: ", $fmt, "\x1b[0m"), env!("PROGRAM_NAME"));
+        $crate::println!(concat!("\x1b[1;91m", "[{}] Error: ", $fmt, "\x1b[0m"), $crate::program_name());
         $crate::backtrace::backtrace();
     };
     ($fmt:expr, $($arg:tt)*) => {
-        $crate::println!(concat!("\x1b[1;91m", "[{}] Error: ", $fmt, "\x1b[0m"), env!("PROGRAM_NAME"), $($arg)*);
+        $crate::println!(concat!("\x1b[1;91m", "[{}] Error: ", $fmt, "\x1b[0m"), $crate::program_name(), $($arg)*);
         $crate::backtrace::backtrace();
     };
 }
