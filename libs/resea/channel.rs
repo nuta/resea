@@ -22,6 +22,7 @@ impl Channel {
         Channel { cid }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub unsafe fn clone(&self) -> Channel {
         Channel::from_cid(self.cid)
     }

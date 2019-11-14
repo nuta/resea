@@ -36,8 +36,8 @@ struct Server {
     connect_requests: Vec<ConnectRequest>,
 }
 
-const FREE_MEMORY_START: usize = 0x04000000;
-const FREE_MEMORY_SIZE: usize  = 0x10000000;
+const FREE_MEMORY_START: usize = 0x0400_0000;
+const FREE_MEMORY_SIZE: usize  = 0x1000_0000;
 
 impl Server {
     pub fn new(initfs: &'static Initfs) -> Server {

@@ -3,6 +3,13 @@ use core::panic;
 #[cfg(not(test))]
 use core::alloc::Layout;
 
+#[lang="eh_personality"]
+#[no_mangle]
+#[cfg(not(test))]
+pub fn eh_personality() {
+    unreachable!();
+}
+
 #[panic_handler]
 #[no_mangle]
 #[cfg(not(test))]

@@ -29,7 +29,7 @@ pub struct ProcessManager {
 }
 
 // TODO: Move to arch.
-const THREAD_INFO_ADDR: usize = 0x0000000000000f1b000;
+const THREAD_INFO_ADDR:          usize = 0x00f1_b000;
 const APP_IMAGE_START:           usize = 0x0100_0000;
 const APP_IMAGE_SIZE:            usize = 0x0100_0000;
 const APP_ZEROED_PAGES_START:    usize = 0x0200_0000;

@@ -7,7 +7,7 @@ use resea::std::str;
 use resea::result::Result;
 
 #[repr(C, packed)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy)]
 pub struct FatEntry {
     name: [u8; 8],
     ext: [u8; 3],
@@ -71,7 +71,7 @@ struct Bpb {
 }
 
 fn parse_mbr(mbr: &[u8], part_begin: usize) -> Bpb {
-    let bpb = unsafe { transmute::<*const u8, *const Mbr>(mbr.as_ptr()) };
+    let bpb = unsafe { mbr.as_ptr() as *const Mbr };
     let sector_size = unsafe { (*bpb).sector_size as usize };
     let cluster_size = unsafe { sector_size * (*bpb).sectors_per_cluster as usize };
     let sectors_per_cluster = unsafe { (*bpb).sectors_per_cluster as usize };
@@ -83,12 +83,12 @@ fn parse_mbr(mbr: &[u8], part_begin: usize) -> Bpb {
         part_begin + (fat_table_sector_start + number_of_fats * sectors_per_fat) * sector_size;
     let root_dir_cluster = unsafe { (*bpb).root_dir_cluster };
     Bpb {
-        cluster_size: cluster_size,
-        root_dir_cluster: root_dir_cluster,
-        sector_size: sector_size,
-        sectors_per_cluster: sectors_per_cluster,
-        cluster_start_offset: cluster_start_offset,
-        fat_table_offset: fat_table_offset,
+        cluster_size,
+        root_dir_cluster,
+        sector_size,
+        sectors_per_cluster,
+        cluster_start_offset,
+        fat_table_offset,
     }
 }
 
@@ -122,9 +122,9 @@ impl FileSystem {
 
     /// Opens a file.
     pub fn open_file<'a>(&'a self, path: &str) -> Option<File<'a>> {
-        for frag in path.split("/") {
+        for frag in path.split('/') {
             // Parse the file name as: name='MAIN    ', ext='RS '
-            let mut s = frag.split(".");
+            let mut s = frag.split('.');
             let name =
                 format!("{:<8}", s.nth(0).unwrap_or("").to_ascii_uppercase());
             let ext =
@@ -136,8 +136,10 @@ impl FileSystem {
             while let Some(next) = self.read_cluster(&mut buf, current) {
                 for i in 0..(self.bpb.cluster_size / size_of::<FatEntry>()) {
                     // FIXME:
-                    let entries = unsafe { transmute::<&[u8], &[FatEntry]>(buf.as_slice()) };
-                    let entry = entries[i].clone();
+                    let entries = unsafe {
+                        &*(buf.as_slice() as *const [u8] as *const [FatEntry])
+                    };
+                    let entry = entries[i];
 
                     if entry.name[0] == 0x00 {
                         // End of entries.
@@ -162,7 +164,7 @@ impl FileSystem {
 
     /// Reads a cluster data and returns the next cluster.
     fn read_cluster(&self, buf: &mut Vec<u8>, cluster: Cluster) -> Option<Cluster> {
-        if cluster == 0xffffff00 {
+        if cluster == 0xffff_ff00 {
             return None;
         }
 
@@ -174,7 +176,9 @@ impl FileSystem {
         let entry_offset = (size_of::<Cluster>() * cluster as usize) % self.bpb.sector_size;
         let fat_offset = (self.bpb.fat_table_offset + entry_offset) % self.bpb.sector_size;
         let fat_data = self.read_disk(fat_offset, self.bpb.sector_size).unwrap();
-        let table = unsafe { transmute::<&[u8], &[Cluster]>(fat_data.as_slice()) };
+        let table = unsafe {
+            &*(fat_data.as_slice() as *const [u8] as *const [Cluster])
+        };
         let next = table[entry_offset];
 
         *buf = data.as_bytes().to_vec();

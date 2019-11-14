@@ -6,6 +6,7 @@
 #![feature(alloc_error_handler)]
 
 #![allow(unused)]
+#![allow(clippy::missing_safety_doc)]
 
 #[macro_use]
 extern crate alloc;
@@ -46,12 +47,12 @@ mod lang_items;
 
 pub use arch::PAGE_SIZE;
 
-#[cfg(target_vendor = "resea")]
+#[cfg(target_os = "resea")]
 pub fn program_name() -> &'static str {
     env!("PROGRAM_NAME")
 }
 
-#[cfg(not(target_vendor = "resea"))]
+#[cfg(not(target_os = "resea"))]
 pub fn program_name() -> &'static str {
     "(test program)"
 }

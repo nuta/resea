@@ -1,6 +1,6 @@
 use crate::arch::stackframe::StackFrame;
 
-const SYMBOL_TABLE_MAGIC: u32 = 0x2b012b01;
+const SYMBOL_TABLE_MAGIC: u32 = 0x2b01_2b01;
 const BACKTRACE_MAX: u32 = 16;
 
 #[repr(C, packed)]

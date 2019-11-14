@@ -56,7 +56,7 @@ impl Notification {
         Notification::new(0)
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub fn is_empty(self) -> bool {
         self.0 == 0
     }
 }
@@ -141,9 +141,11 @@ impl Handle {
 pub struct FixedString([u8; 128]);
 
 impl FixedString {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(from: &str) -> FixedString {
         unsafe {
             use core::{mem::MaybeUninit, cmp::min, ptr::copy_nonoverlapping};
+            #[allow(clippy::uninit_assumed_init)]
             let mut string: FixedString = MaybeUninit::uninit().assume_init();
             let copy_len = min(from.len(), 127);
             copy_nonoverlapping(from.as_ptr(), string.0.as_mut_ptr(), copy_len);
@@ -153,6 +155,7 @@ impl FixedString {
         }
     }
 
+    #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         let s = unsafe { crate::utils::c_str_to_str(self.0.as_ptr()) };
         String::from(s)

@@ -1,3 +1,6 @@
+#![allow(clippy::implicit_hasher)]
+#![allow(clippy::new_without_default)]
+
 pub use alloc::collections::{
     BTreeMap, BTreeSet, BinaryHeap, LinkedList, VecDeque
 };
