@@ -10,6 +10,7 @@ memory: guest=512, host=512
 boot: cdrom
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
 ata0-slave: type=cdrom, path=build/resea.iso, status=inserted
+e1000: enabled=1, mac=52:54:00:12:34:56, ethmod=vnet
 
 mouse: enabled=1, type=ps2
 
