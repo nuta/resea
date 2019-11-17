@@ -78,6 +78,17 @@ macro_rules! warn {
     };
 }
 
+/// Prints a trace message.
+#[macro_export]
+macro_rules! trace {
+    ($fmt:expr) => {
+        $crate::println!(concat!("[{}] ", $fmt), $crate::program_name());
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        $crate::println!(concat!("[{}] ", $fmt), $crate::program_name(), $($arg)*);
+    };
+}
+
 /// Prints a warning message with backtrace.
 #[macro_export]
 macro_rules! oops {
