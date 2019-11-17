@@ -7,7 +7,7 @@ ARCH := $(TARGET)
 BUILD  ?= debug
 BUILD_DIR := build
 INIT := memmgr
-STARTUPS := e1000 net
+STARTUPS := fatfs net pcat ide e1000
 LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
 GRUB_PREFIX ?= i386-elf-
 
