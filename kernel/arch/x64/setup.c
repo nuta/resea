@@ -201,7 +201,6 @@ static void tss_init(void) {
     asm_ltr(TSS_SEG);
 }
 
-
 // SYSRET constraints.
 STATIC_ASSERT(USER_CS32 + 8 == USER_DS);
 STATIC_ASSERT(USER_CS32 + 16 == USER_CS64);

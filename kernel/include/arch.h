@@ -34,9 +34,6 @@ void arch_thread_switch(struct thread *prev, struct thread *next);
 
 inline bool is_valid_page_base_addr(vaddr_t page_base);
 
-char *strcpy(char *dst, size_t dst_len, const char *src);
-int strcmp(const char *s1, const char *s2);
-
 // ASan requries memset/memcpy to be compatible with the C standard library. We
 // prepend "inlined_" to avoid the issue.
 inline void *inlined_memset(void *dst, int ch, size_t len);

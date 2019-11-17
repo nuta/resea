@@ -99,7 +99,6 @@ kernel_objs +=  \
 	$(BUILD_DIR)/kernel/timer.o \
 	$(BUILD_DIR)/kernel/initfs.o \
 	$(BUILD_DIR)/kernel/support/printk.o \
-	$(BUILD_DIR)/kernel/support/string.o \
 	$(BUILD_DIR)/kernel/support/stack_protector.o \
 	$(BUILD_DIR)/kernel/support/backtrace.o \
 	$(BUILD_DIR)/kernel/support/kdebug.o \

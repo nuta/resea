@@ -8,7 +8,7 @@ extern struct symbol_table __symtable;
 /// Resolves a symbol name and the offset from the beginning of symbol.
 /// This function returns "(invalid address)" if the symbol does not
 /// exist in the symbol table.
-const char *find_symbol(vaddr_t vaddr, size_t *offset) {
+static const char *find_symbol(vaddr_t vaddr, size_t *offset) {
     ASSERT(__symtable.magic == SYMBOL_TABLE_MAGIC
            && "invalid symbol table magic");
 
@@ -21,11 +21,6 @@ const char *find_symbol(vaddr_t vaddr, size_t *offset) {
     int32_t l = -1;
     int32_t r = num_symbols;
     while (r - l > 1) {
-        // We don't have to care about integer overflow here because
-        // `INT32_MIN < -1 <= l + r < UINT16_MAX * 2 < INT32_MAX` always holds.
-        //
-        // Read this article if you are not familiar with a famous overflow bug:
-        // https://ai.googleblog.com/2006/06/extra-extra-read-all-about-it-nearly.html
         int32_t mid = (l + r) / 2;
         if (vaddr >= symbols[mid].addr) {
             l = mid;

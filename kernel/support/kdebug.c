@@ -7,6 +7,15 @@
 
 #define DPRINTK(fmt, ...) printk(COLOR_BOLD fmt COLOR_RESET, ##__VA_ARGS__)
 
+static int strcmp(const char *s1, const char *s2) {
+    while (*s1 != '\0' && *s2 != '\0' && *s1 == *s2) {
+        s1++;
+        s2++;
+    }
+
+    return *s1 - *s2;
+}
+
 static void dump_process(struct process *proc) {
     DPRINTK("Process #%d: %s\n", proc->pid, proc->name);
     LIST_FOR_EACH(thread, &proc->threads, struct thread, next) {

@@ -13,6 +13,20 @@ struct process *kernel_process;
 /// THe first userland process (typically memmgr).
 struct process *init_process;
 
+static char *strcpy(char *dst, size_t dst_len, const char *src) {
+    DEBUG_ASSERT(dst != NULL && "copy to NULL");
+    DEBUG_ASSERT(src != NULL && "copy from NULL");
+
+    size_t i = 0;
+    while (i < dst_len - 1 && src[i] != '\0') {
+        dst[i] = src[i];
+        i++;
+    }
+
+    dst[i] = '\0';
+    return dst;
+}
+
 /// Creates a new process. `name` is used for just debugging use.
 struct process *process_create(const char *name) {
     int pid = table_alloc(&process_table);

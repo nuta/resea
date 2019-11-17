@@ -20,7 +20,6 @@ struct symbol_table {
     uint32_t strbuf_len;
 } PACKED;
 
-const char *find_symbol(vaddr_t vaddr, size_t *offset);
 void backtrace(void);
 
 #endif

@@ -45,9 +45,9 @@ STATIC_ASSERT(sizeof(uint32_t) == sizeof(cid_t));
 /// Dumps the message for debugging with Wireshark.
 static inline void dump_message(struct channel *src, struct channel *dst, struct message *m) {
     struct packet_header header;
-    strcpy(header.dst_proc_name, 32, dst->process->name);
+    inlined_memcpy(header.dst_proc_name, dst->process->name, sizeof(header.dst_proc_name));
     header.dst_cid = dst->cid;
-    strcpy(header.src_proc_name, 32, src->process->name);
+    inlined_memcpy(header.src_proc_name, src->process->name, sizeof(header.src_proc_name));
     header.src_cid = src->cid;
 
     size_t len =
