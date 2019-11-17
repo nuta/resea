@@ -1,5 +1,5 @@
 use crate::result::Error;
-use crate::message::Notification;
+use crate::message::{Message, MessageHeader, Notification};
 
 pub enum ServerResult<T> {
     Ok(T),
@@ -10,6 +10,11 @@ pub enum ServerResult<T> {
 pub trait Server {
     fn deferred_work(&mut self) {}
     fn notification(&mut self, _notification: Notification) {}
+    fn unknown_message(&mut self, m: &mut Message) -> bool {
+        warn!("unknown message");
+        m.header = MessageHeader::from_error(Error::UnknownMessage);
+        true
+    }
 }
 
 #[macro_export]
@@ -33,11 +38,7 @@ macro_rules! serve_forever {
                     false
                 }
                 _ => {
-                    warn!("unknown message");
-                    m.header =
-                        $crate::message::MessageHeader::from_error(
-                            $crate::result::Error::UnknownMessage);
-                    true
+                    $crate::server::Server::unknown_message(server, &mut m)
                 }
             };
 
