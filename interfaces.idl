@@ -114,3 +114,14 @@ interface storage_device {
     [id(1), type(call)]
     read(sector: uintptr, num_sectors: size) -> (page: page)
 }
+
+[id(31)]
+interface network_device {
+    [id(1), type(call)]
+    listen(ch: channel) -> ()
+    [id(2), type(call)]
+    transmit(packet: page, len: size) -> ()
+
+    [id(3), type(event)]
+    received(packet: page, len: size) -> ()
+}
