@@ -1,3 +1,23 @@
+//
+//  Resea Interface Definitions.
+//
+//  Every server provides at least one services which definied as "interface",
+//  a set of messages that implementors must accept and respond.
+//
+//  This file defines the interfaces in our own domain specific language. We
+//  haven't yet documented the language specification, but it should be pretty
+//  straightforward to understand. We use this definition to generate IPC stubs
+//  (`resea::idl` module in the Resea userland library in Rust).
+//
+//  Message Types
+//  -------------
+//  call     - Send a request & Reply a response (client to server)
+//  upcall   - Send a request & Reply a response (server to client)
+//  sendonly - Send a request (client to server)
+//  event    - Send a data (server to client)
+//
+//  TODO: upcall is not yet supported.
+//
 [id(1)]
 interface notification {
     [id(1), type(call)]
