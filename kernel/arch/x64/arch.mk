@@ -10,6 +10,9 @@ QEMU ?= qemu-system-x86_64
 QEMUFLAGS += -smp 2 -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
 QEMUFLAGS += -no-reboot -boot d
 QEMUFLAGS += -drive file=$(BUILD_DIR)/hdd.img,if=ide,format=raw
+QEMUFLAGS += -netdev user,id=net0,hostfwd=tcp:127.0.0.1:1234-:80
+QEMUFLAGS += -device e1000,netdev=net0,mac=52:54:00:12:34:56
+QEMUFLAGS += -object filter-dump,id=fiter0,netdev=net0,file=network.pcap
 QEMUFLAGS += -device isa-debug-exit,iobase=0xf4,iosize=0x04
 QEMUFLAGS += $(if $(GUI),,-nographic)
 
