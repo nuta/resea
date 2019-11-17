@@ -39,12 +39,15 @@ void boot(void) {
 /// The entry point for application processors (processors other than the CPU
 /// which booted the system).
 void boot_ap(void) {
+    init_boot_stack_canary();
     INFO("successfully booted CPU #%d", arch_get_cpu_id());
 
     // TODO: Fix locking bugs and enable threading!
 
     while (1) {
-        arch_idle();
+        // TODO:
+        // arch_idle();
+        __asm__ __volatile__("hlt");
     }
 }
 
