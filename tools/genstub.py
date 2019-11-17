@@ -190,6 +190,7 @@ pub trait Server {
     fn __handle(&mut self, m: &mut Message) -> bool {
         match m.header {
 {%- for msg in messages %}
+{%- if msg.attrs.type == "call" %}
             {{ msg.name | upper }}_MSG => {
                 let req: &mut {{ msg.name | camelcase }}Msg =
                     __cast_from_message_mut(m);
@@ -217,6 +218,7 @@ pub trait Server {
                     }
                 }
             }
+{%- endif %}
 {%- endfor %}
             _ => {
                 m.header = MessageHeader::from_error(Error::UnknownMessage);
