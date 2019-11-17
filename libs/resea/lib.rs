@@ -16,12 +16,15 @@ pub mod std {
     pub use core::{
         u8, u16, u32, u64, i8, i16, i32, i64, char, isize, usize,
         result, mem, ptr, array, cell, hash, marker, cmp, ops, convert, default,
-        clone, pin,
+        clone, pin, num,
     };
     pub use ::alloc::{
-        alloc, boxed, borrow, fmt, rc, slice, str, string,
-        sync, vec
+        alloc, boxed, borrow, fmt, rc, slice, str, string, vec
     };
+    pub mod sync {
+        pub use ::alloc::sync::{Arc, Weak};
+        pub use ::core::sync::atomic;
+    }
 }
 
 
