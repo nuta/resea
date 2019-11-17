@@ -2,33 +2,19 @@ Resea
 =====
 [![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
 
-Resea *[ríːseə]* is an operating system written from scratch based on a *pure*
-microkernel: the kernel provides only primitives such as process/thread
-management and channel-based IPC (message passing). Major features like physical
-memory manager, file system, device drivers are implemented as isolated
-userspace programs.
+Resea *[ríːseə]* is a microkernel-based operating system written from scratch featuring:
+
+- **A *pure* microkernel written in C:** provides only primitive services:
+  process/thread/memory management and channel-based message passing.
+- **Userland applications entirely written in Rust:** TCP/IP server,
+  FAT32 file system driver, device drivers, and other userland applications are written in Rust.
+- PS/2 keyboard, text-mode screen, e1000 network card, IDE (hard disk)
+  are currently supported. Other CPU architecture support (such as ARM and RISC-V) are in the todo list yet.
 
 Resea aims to provide an attractive developer experience and be *hackable*:
-intuitive to understand the whole design, easy to customize the system, and fun
-to extend the functionality.
+intuitive to understand the whole design, easy to customize the system, and fun to extend the functionality.
 
 See **[Documentation](#documentation)** for details.
-
-Road Map
---------
-- [x] Kernel for x86_64
-- [x] IPC benchmark app
-- [x] The user-level memory management server
-- [ ] virtio-blk device driver **(WIP)**
-- [ ] FAT file system server
-- [ ] GUI server **(WIP)**
-- [ ] virtio-net device driver
-- [ ] TCP/IP server
-- [ ] Rust support in userspace
-- [ ] SMP support
-- [ ] ARM support
-- [ ] Port Doom
-- [ ] Write documentation
 
 Prerequisites
 -------------
@@ -51,8 +37,6 @@ $ pip3 install -r tools/requirements.txt
 Building
 --------
 ```bash
-$ make menuconfig    # Edit build configuration.
-
 $ make build         # Build a kernel executable.
 $ make build V=1     # Build a kernel executable with verbose command output.
 
