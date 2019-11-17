@@ -5,7 +5,7 @@ use crate::lazy_static::LazyStatic;
 use core::cell::RefCell;
 use linked_list_allocator::LockedHeap;
 
-#[global_allocator]
+#[cfg_attr(target_os = "resea", global_allocator)]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 static VALLOC_ALLOCATOR: LazyStatic<RefCell<PageAllocator>> = LazyStatic::new();
 

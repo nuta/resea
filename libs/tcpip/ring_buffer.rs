@@ -27,11 +27,13 @@ impl RingBuffer {
             return Err(Error::BufferFull);
         }
 
+        /*
         warn!("ringbuf[r={}, w={}, rl={}, wl={}]: write {}",
         self.read_offset, self.write_offset,
         self.readable_len(), self.writable_len(),
         len
         );
+        */
 
         let end = min(self.write_offset + len, self.capacity);
         let copy_len = end - self.write_offset;
@@ -53,10 +55,12 @@ impl RingBuffer {
 
     pub fn peek(&mut self, len: usize, buf: &mut Vec<u8>) {
         assert!(len <= self.readable_len());
+        /*
         warn!("ringbuf[r={}, w={}, rl={}, wl={}]: read {}",
             self.read_offset, self.write_offset,
             self.readable_len(), self.writable_len(),
             len);
+        */
 
         let end = min(self.read_offset + len, self.capacity);
         let copy_len = end - self.read_offset;
@@ -80,7 +84,9 @@ impl RingBuffer {
         if self.read_offset > self.write_offset {
             self.read_offset - self.write_offset
         } else {
-            self.read_offset + (self.capacity - self.write_offset)
+            // Subtract by 1 so that write_offset won't be equal to
+            // read_offset.
+            self.read_offset + (self.capacity - self.write_offset - 1)
         }
     }
 
@@ -90,5 +96,44 @@ impl RingBuffer {
         } else {
             self.write_offset + (self.capacity - self.read_offset)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let mut buf = RingBuffer::new(4);
+        assert_eq!(buf.writable_len(), 3);
+        assert_eq!(buf.readable_len(), 0);
+
+        assert_eq!(buf.write(b"ABC"), Ok(()));
+        assert_eq!(buf.writable_len(), 0);
+        assert_eq!(buf.readable_len(), 3);
+
+        assert_eq!(buf.write(b"XYZ"), Err(Error::BufferFull));
+        assert_eq!(buf.writable_len(), 0);
+        assert_eq!(buf.readable_len(), 3);
+
+        let mut read_buf = Vec::new();
+        buf.peek(2, &mut read_buf);
+        assert_eq!(&read_buf, b"AB");
+        assert_eq!(buf.writable_len(), 0);
+        assert_eq!(buf.readable_len(), 3);
+
+        read_buf.clear();
+        buf.read(3, &mut read_buf);
+        assert_eq!(&read_buf, b"ABC");
+        assert_eq!(buf.writable_len(), 3);
+        assert_eq!(buf.readable_len(), 0);
+
+        assert_eq!(buf.write(b"DEF"), Ok(()));
+        read_buf.clear();
+        buf.read(3, &mut read_buf);
+        assert_eq!(&read_buf, b"DEF");
+        assert_eq!(buf.writable_len(), 3);
+        assert_eq!(buf.readable_len(), 0);
     }
 }

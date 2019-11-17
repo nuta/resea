@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_std)]
+#![no_std]
 #![feature(asm)]
 #![feature(global_asm)]
 #![feature(lang_items)]
@@ -45,6 +45,8 @@ pub mod result;
 
 mod arch;
 mod init;
+
+#[cfg(target_os = "resea")]
 mod lang_items;
 
 pub use arch::{PAGE_SIZE, breakpoint};

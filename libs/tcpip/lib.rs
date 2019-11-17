@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_std)]
+#![no_std]
 #![allow(unused)]
 
 #[macro_use]
