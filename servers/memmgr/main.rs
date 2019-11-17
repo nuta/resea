@@ -130,6 +130,24 @@ impl idl::memmgr::Server for Server {
         let page = self.page_allocator.allocate(num_pages);
         ServerResult::Ok(page.as_page_payload())
     }
+
+    fn alloc_phy_pages(&mut self, _from: &Channel, num_pages: usize) -> ServerResult<(usize, Page)> {
+        if num_pages == 0 {
+            return ServerResult::Err(Error::InvalidArg);
+        }
+
+        let page = self.page_allocator.allocate(num_pages);
+        ServerResult::Ok((page.addr, page.as_page_payload()))
+    }
+
+    fn map_phy_pages(&mut self, _from: &Channel, paddr: usize, num_pages: usize) -> ServerResult<Page> {
+        // TODO: Check whether the given paddr is already allocated.
+        if paddr == 0 || num_pages == 0 {
+            return ServerResult::Err(Error::InvalidArg);
+        }
+
+        ServerResult::Ok(Page::new(paddr, num_pages))
+    }
 }
 
 impl idl::runtime::Server for Server {

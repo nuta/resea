@@ -83,6 +83,10 @@ interface kernel {
 interface memmgr {
     [id(1), type(call)]
     alloc_pages(num_pages: size) -> (page: page)
+    [id(2), type(call)]
+    alloc_phy_pages(num_pages: size) -> (paddr: paddr, page: page)
+    [id(3), type(call)]
+    map_phy_pages(paddr: paddr, num_pages: size) -> (page: page)
 }
 
 [id(12)]
