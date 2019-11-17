@@ -19,6 +19,39 @@ NM       := $(LLVM_PREFIX)llvm-nm
 OBJCOPY  := $(LLVM_PREFIX)llvm-objcopy
 PROGRESS := printf "  \\033[1;35m%8s  \\033[1;m%s\\033[m\\n"
 
+ifeq ($(BUILD), debug)
+COMMON_CFLAGS += -O1 -fsanitize=undefined -DDEBUG_BUILD
+else
+COMMON_CFLAGS += -O3 -DRELEASE_BUILD
+XARGOFLAGS += --release
+endif
+
+# Clang options (kernel).
+KERNEL_CFLAGS += $(COMMON_CFLAGS)
+KERNEL_CFLAGS += -std=c11 -ffreestanding -fno-builtin -nostdlib
+KERNEL_CFLAGS += -fno-omit-frame-pointer
+KERNEL_CFLAGS += -g3 -fstack-size-section
+KERNEL_CFLAGS += -Wall -Wextra
+KERNEL_CFLAGS += -Werror=implicit-function-declaration
+KERNEL_CFLAGS += -Werror=int-conversion
+KERNEL_CFLAGS += -Werror=incompatible-pointer-types
+KERNEL_CFLAGS += -Werror=shift-count-overflow
+KERNEL_CFLAGS += -Werror=return-type
+KERNEL_CFLAGS += -Werror=pointer-integer-compare
+KERNEL_CFLAGS += -Werror=tautological-constant-out-of-range-compare
+KERNEL_CFLAGS += -Ikernel/include -I$(arch_dir)/include
+KERNEL_CFLAGS += -DKERNEL -DINITFS_BIN='"$(BUILD_DIR)/initfs.bin"'
+
+# LLD options (kernel).
+KERNEL_LDFLAGS += --script=$(arch_dir)/$(ARCH).ld
+
+# Cargo/rustc options (userland).
+XARGOFLAGS += --quiet
+RUSTFLAGS += -Z emit-stack-sizes -Z external-macro-backtrace
+
+# Clang options (userland: use only for compiling the symbol table)
+USER_CFLAGS += $(COMMON_CFLAGS)
+
 # Your own local build configuration.
 -include .build.mk
 
@@ -54,30 +87,6 @@ clean:
 #
 arch_dir := kernel/arch/$(ARCH)
 include $(arch_dir)/arch.mk
-
-# LLD options.
-KERNEL_LDFLAGS += --script=$(arch_dir)/$(ARCH).ld
-
-ifeq ($(BUILD), debug)
-KERNEL_CFLAGS += -O1 -fsanitize=undefined -DDEBUG_BUILD
-else
-KERNEL_CFLAGS += -O3 -DRELEASE_BUILD
-endif
-
-# Clang options.
-KERNEL_CFLAGS += -std=c11 -ffreestanding -fno-builtin -nostdlib
-KERNEL_CFLAGS += -fno-omit-frame-pointer
-KERNEL_CFLAGS += -g3 -fstack-size-section
-KERNEL_CFLAGS += -Wall -Wextra
-KERNEL_CFLAGS += -Werror=implicit-function-declaration
-KERNEL_CFLAGS += -Werror=int-conversion
-KERNEL_CFLAGS += -Werror=incompatible-pointer-types
-KERNEL_CFLAGS += -Werror=shift-count-overflow
-KERNEL_CFLAGS += -Werror=return-type
-KERNEL_CFLAGS += -Werror=pointer-integer-compare
-KERNEL_CFLAGS += -Werror=tautological-constant-out-of-range-compare
-KERNEL_CFLAGS += -Ikernel/include -I$(arch_dir)/include
-KERNEL_CFLAGS += -DKERNEL -DINITFS_BIN='"$(BUILD_DIR)/initfs.bin"'
 
 kernel_objs +=  \
 	$(BUILD_DIR)/kernel/boot.o \
@@ -127,40 +136,17 @@ $(BUILD_DIR)/%.o: %.S
 
 # The JSON compilation database.
 # https://clang.llvm.org/docs/JSONCompilationDatabase.html
-$(BUILD_DIR)/compile_commands.json: $(compiled_objs)
+$(BUILD_DIR)/compile_commands.json: $(kernel_objs)
 	$(PROGRESS) "GEN" $(BUILD_DIR)/compile_commands.json
 	$(PYTHON3) tools/merge-compile-commands.py \
 		-o $(BUILD_DIR)/compile_commands.json \
-		$(shell find $(BUILD_DIR) -type f -name "*.json" \
-			| grep -v compile_commands.json)
+		$(shell find $(BUILD_DIR)/kernel -type f -name "*.json")
 
 -include $(BUILD_DIR)/kernel/*.deps
 
 #
 #  Userland
 #
-XARGOFLAGS += --quiet
-ifeq ($(BUILD), release)
-XARGOFLAGS += --release
-endif
-
-RUSTFLAGS += -Z emit-stack-sizes -Z external-macro-backtrace
-CFLAGS += --target=x86_64
-CFLAGS += -mcmodel=large -mno-red-zone
-CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
-
-# IDL stub.
-$(BUILD_DIR)/idl.json: interfaces.idl tools/parse-idl-file.py
-	$(PROGRESS) "PARSEIDL" $@
-	$(PYTHON3) tools/parse-idl-file.py $< $@
-
-libs/resea/idl/mod.rs: $(BUILD_DIR)/idl.json tools/genstub.py
-	$(PROGRESS) "GENSTUB" libs/resea/idl
-	$(PYTHON3) tools/genstub.py $< libs/resea/idl
-
-kernel/include/idl.h: $(BUILD_DIR)/idl.json tools/kgenstub.py
-	$(PROGRESS) "KGENSTUB" $@
-	$(PYTHON3) tools/kgenstub.py $< $@
 
 # Server executables.
 $(BUILD_DIR)/servers/%.elf: libs/resea/idl/mod.rs tools/link.py Makefile
@@ -178,7 +164,7 @@ $(BUILD_DIR)/servers/%.elf: libs/resea/idl/mod.rs tools/link.py Makefile
 	$(PROGRESS) "LINK" $@
 	$(PYTHON3) tools/link.py                          \
 		--cc="$(CC)"                              \
-		--cflags="$(CFLAGS)"                      \
+		--cflags="$(USER_CFLAGS)"                 \
 		--ld="$(LD)"                              \
 		--ldflags="$(ldflags)"                    \
 		--nm="$(NM)"                              \
@@ -199,6 +185,21 @@ $(BUILD_DIR)/servers/$(1).elf: ldflags := \
 endef
 $(foreach server, $(INIT) $(STARTUPS), $(eval $(call server-make-rule,$(server))))
 initfs_files += $(foreach server, $(STARTUPS), $(BUILD_DIR)/initfs/startups/$(server).elf)
+
+#
+#  IPC stubs.
+#
+$(BUILD_DIR)/idl.json: interfaces.idl tools/parse-idl-file.py
+	$(PROGRESS) "PARSEIDL" $@
+	$(PYTHON3) tools/parse-idl-file.py $< $@
+
+libs/resea/idl/mod.rs: $(BUILD_DIR)/idl.json tools/genstub.py
+	$(PROGRESS) "GENSTUB" libs/resea/idl
+	$(PYTHON3) tools/genstub.py $< libs/resea/idl
+
+kernel/include/idl.h: $(BUILD_DIR)/idl.json tools/kgenstub.py
+	$(PROGRESS) "KGENSTUB" $@
+	$(PYTHON3) tools/kgenstub.py $< $@
 
 #
 # initfs
