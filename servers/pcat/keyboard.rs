@@ -65,14 +65,17 @@ impl Keyboard {
             let scancode = ScanCode::new(raw_scancode);
 
             let shifted = self.shift_left || self.shift_right || self.caps_lock;
-            match scancode.as_ascii(shifted) {
+            let ascii = scancode.as_ascii(shifted);
+            match ascii {
                 KEY_SHIFT_LEFT => self.shift_left = scancode.is_press(),
                 KEY_SHIFT_RIGHT => self.shift_right = scancode.is_press(),
                 KEY_CAPS_LOCK => self.caps_lock = scancode.is_press(),
-                _ => (),
+                _ if scancode.is_press() => {
+                    trace!("key pressed: '{}'", ascii as char);
+                    self.buffer.push_back(ascii);    
+                },
+                _ => {}
             }
-
-            info!("key input: {}", scancode.as_ascii(shifted) as char);
         }
     }
 }

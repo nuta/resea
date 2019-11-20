@@ -42,11 +42,19 @@ impl Screen {
         self.update_cursor();
     }
 
+    pub fn print_char(&mut self, ch: char) {
+        self.draw_char(ch);
+        self.update_cursor();
+    }
+
     fn draw_char(&mut self, ch: char) {
         let screen: &mut [u16] = self.screen.as_slice_mut();
         if ch == '\n' || self.cursor_x >= SCREEN_WIDTH {
             self.cursor_y += 1;
             self.cursor_x = 0;
+            if ch == '\n' {
+                return;
+            }
         }
 
         if self.cursor_y >= SCREEN_HEIGHT {

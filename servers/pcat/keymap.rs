@@ -2,7 +2,6 @@
 
 pub const KEY_RELEASE: u8     = 0x80;
 
-pub const KEY_ENTER: u8       = 0x00;
 pub const KEY_BACKSPACE: u8   = 0x01;
 pub const KEY_CTRL_LEFT: u8   = 0x02;
 pub const KEY_CTRL_RIGHT: u8  = 0x03;
@@ -35,7 +34,7 @@ pub const KEY_F12: u8         = 0x1c;
 const US_KEY_MAP: [u8; 128] = [
     0, KEY_ESC, b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', b'0', b'-', b'=',
     KEY_BACKSPACE,
-    b'\t', b'q', b'w', b'e', b'r', b't', b'y', b'u', b'i', b'o', b'p', b'[', b']', KEY_ENTER,
+    b'\t', b'q', b'w', b'e', b'r', b't', b'y', b'u', b'i', b'o', b'p', b'[', b']', b'\n',
     KEY_CTRL_LEFT, b'a', b's', b'd', b'f', b'g', b'h', b'j', b'k', b'l', b';', b'\'', b'`',
     KEY_SHIFT_LEFT, b'\\', b'z', b'x', b'c', b'v', b'b', b'n', b'm', b',', b'.', b'/',
     KEY_SHIFT_RIGHT,
@@ -49,7 +48,7 @@ const US_KEY_MAP: [u8; 128] = [
 const US_SHIFTED_KEYMAP: [u8; 128] = [
     0, KEY_ESC, b'!', b'@', b'#', b'$', b'%', b'^', b'&', b'*', b'(', b')', b'_', b'+',
     KEY_BACKSPACE,
-    b'\t', b'Q', b'W', b'E', b'R', b'T', b'Y', b'U', b'I', b'O', b'P', b'{', b'}', KEY_ENTER,
+    b'\t', b'Q', b'W', b'E', b'R', b'T', b'Y', b'U', b'I', b'O', b'P', b'{', b'}', b'\n',
     KEY_CTRL_LEFT, b'A', b'S', b'D', b'F', b'G', b'H', b'J', b'K', b'L', b':', b'"', b'~',
     KEY_SHIFT_LEFT, b'|', b'Z', b'X', b'C', b'V', b'B', b'N', b'M', b'<', b'>', b'?',
     KEY_SHIFT_RIGHT,

@@ -13,6 +13,7 @@ struct Server {
     ch: Channel,
     screen: Screen,
     keyboard: Keyboard,
+    keyboard_listener: Option<Channel>,
 }
 
 impl Server {
@@ -24,11 +25,42 @@ impl Server {
             ch,
             screen,
             keyboard,
+            keyboard_listener: None,
        }
     }
 }
 
+impl text_screen_device::Server for Server {
+    fn print_str(&mut self, _from: &Channel, str: String)
+        -> ServerResult<()> {
+            self.screen.print_str(&str);
+            ServerResult::Ok(())
+    }
+
+    fn print_char(&mut self, _from: &Channel, ch: u8)
+        -> ServerResult<()> {
+        self.screen.print_char(ch as char);
+        ServerResult::Ok(())
+    }
+}
+
+impl keyboard_device::Server for Server {
+    fn listen(&mut self, _from: &Channel, ch: Channel) -> ServerResult<()> {
+        self.keyboard_listener = Some(ch);
+        ServerResult::Ok(())
+    }
+}
+
 impl resea::server::Server for Server {
+    fn deferred_work(&mut self) {
+        if let Some(ref listener) = self.keyboard_listener {
+            use resea::idl::keyboard_device::send_pressed;
+            while let Some(ch) = self.keyboard.buffer().pop_front() {
+                send_pressed(listener, ch).ok();
+            }
+        }
+    }
+
     fn notification(&mut self, _notification: Notification) {
         self.keyboard.read_input();
     }
