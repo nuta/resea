@@ -125,3 +125,11 @@ interface network_device {
     [id(3), type(event)]
     received(packet: page, len: size) -> ()
 }
+
+[id(32)]
+interface text_screen_device {
+    [id(1), type(call)]
+    print_str(str: string) -> ()
+    [id(2), type(call)]
+    print_char(ch: char) -> ()
+}
