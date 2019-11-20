@@ -1,5 +1,5 @@
 use resea::result::Error;
-use resea::server::ServerResult;
+use resea::server::{ServerResult, publish_server};
 use resea::idl;
 use resea::idl::storage_device::INTERFACE_ID;
 use resea::PAGE_SIZE;
@@ -56,9 +56,6 @@ pub fn main() {
     info!("starting...");
     let mut server = Server::new();
 
-    let ch = Channel::create().unwrap();
-    ch.transfer_to(&server.ch).unwrap();
-    idl::discovery::Client::publish(&MEMMGR_SERVER, INTERFACE_ID, ch).unwrap();
-
+    publish_server(INTERFACE_ID, &server.ch).unwrap();
     serve_forever!(&mut server, [storage_device, server]);
 }

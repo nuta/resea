@@ -1,5 +1,5 @@
 use resea::result::Error;
-use resea::server::ServerResult;
+use resea::server::{ServerResult, connect_to_server};
 use resea::message::{HandleId, Page};
 use resea::idl;
 use resea::channel::Channel;
@@ -86,9 +86,8 @@ impl resea::server::Server for Server {
 pub fn main() {
     info!("starting...");
 
-    use idl::discovery::Client;
     let storage_device =
-        MEMMGR_SERVER.connect(idl::storage_device::INTERFACE_ID)
+        connect_to_server(idl::storage_device::INTERFACE_ID)
             .expect("failed to connect to a storage_device server");
 
     let fs = FileSystem::new(storage_device, 0)

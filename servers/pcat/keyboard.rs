@@ -29,7 +29,7 @@ impl Keyboard {
         let kbd_irq_ch = Channel::create().unwrap();
         kbd_irq_ch.transfer_to(server_ch).unwrap();
         kernel_server.listen_irq(kbd_irq_ch, KEYBOARD_IRQ)
-        .expect("failed to register the keyboard IRQ handler");
+            .expect("failed to register the keyboard IRQ handler");
 
         // FIXME: kbd_irq_ch is not closed.
         Keyboard {

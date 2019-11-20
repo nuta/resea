@@ -1,5 +1,20 @@
-use crate::result::Error;
-use crate::message::{Message, MessageHeader, Notification};
+use crate::result::{Result, Error};
+use crate::channel::Channel;
+use crate::message::{Message, InterfaceId, MessageHeader, Notification};
+
+pub fn publish_server(interface_id: InterfaceId, server_ch: &Channel) -> Result<()> {
+    use crate::idl::discovery;
+    let discovery_server = Channel::from_cid(1);
+    let ch = Channel::create().unwrap();
+    ch.transfer_to(&server_ch).unwrap();
+    discovery::Client::publish(&discovery_server, interface_id, ch)
+}
+
+pub fn connect_to_server(interface_id: InterfaceId) -> Result<Channel> {
+    use crate::idl::discovery;
+    let discovery_server = Channel::from_cid(1);
+    discovery::Client::connect(&discovery_server, interface_id)
+}
 
 pub enum ServerResult<T> {
     Ok(T),

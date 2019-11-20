@@ -1,5 +1,8 @@
+use resea::idl::{text_screen_device, keyboard_device};
 use resea::channel::Channel;
 use resea::message::Notification;
+use resea::server::{ServerResult, publish_server};
+use resea::std::string::String;
 use crate::screen::Screen;
 use crate::keyboard::Keyboard;
 
@@ -36,6 +39,8 @@ pub fn main() {
     info!("starting...");
     let mut server = Server::new();
     server.screen.clear();
-    server.screen.print_str("Hello world from pcat driver!");
-    serve_forever!(&mut server, []);
+
+    publish_server(text_screen_device::INTERFACE_ID, &server.ch).unwrap();
+    publish_server(keyboard_device::INTERFACE_ID, &server.ch).unwrap();
+    serve_forever!(&mut server, [text_screen_device, keyboard_device]);
 }

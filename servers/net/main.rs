@@ -3,6 +3,7 @@ use resea::std::string::String;
 use resea::idl;
 use resea::channel::Channel;
 use resea::message::Message;
+use resea::server::connect_to_server;
 use tcpip::{Instance, IpAddr, Ipv4Addr, Ipv4Network, Port, SocketHandle, MacAddr};
 use resea::PAGE_SIZE;
 use resea::utils::align_up;
@@ -109,8 +110,9 @@ pub fn main() {
     let listener_ch = Channel::create().unwrap();
     listener_ch.transfer_to(&server_ch).unwrap();
 
-    let network_device = idl::discovery::Client::connect(&MEMMGR_SERVER, idl::network_device::INTERFACE_ID)
-        .expect("failed to connect to a network_device");
+    let network_device =
+        connect_to_server(idl::network_device::INTERFACE_ID)
+            .expect("failed to connect to a network_device");
     
     idl::network_device::Client::listen(&network_device, listener_ch).unwrap();
 
