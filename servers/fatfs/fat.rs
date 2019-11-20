@@ -1,10 +1,10 @@
-use resea::collections::Vec;
 use resea::channel::Channel;
+use resea::collections::Vec;
 use resea::message::Page;
+use resea::result::Result;
 use resea::std::cmp::min;
 use resea::std::mem::size_of;
 use resea::std::str;
-use resea::result::Result;
 
 #[repr(C, packed)]
 #[derive(Clone, Copy)]
@@ -114,7 +114,8 @@ impl FileSystem {
 
     fn read_disk(&self, offset: usize, len: usize) -> Result<Page> {
         use resea::idl::storage_device::Client;
-        self.storage_device.read(self.part_begin + offset / SECTOR_SIZE, len / SECTOR_SIZE)
+        self.storage_device
+            .read(self.part_begin + offset / SECTOR_SIZE, len / SECTOR_SIZE)
     }
 
     /// Opens a file.
@@ -122,10 +123,8 @@ impl FileSystem {
         for frag in path.split('/') {
             // Parse the file name as: name='MAIN    ', ext='RS '
             let mut s = frag.split('.');
-            let name =
-                format!("{:<8}", s.nth(0).unwrap_or("").to_ascii_uppercase());
-            let ext =
-                format!("{:<3}", s.nth(0).unwrap_or("").to_ascii_uppercase());
+            let name = format!("{:<8}", s.nth(0).unwrap_or("").to_ascii_uppercase());
+            let ext = format!("{:<3}", s.nth(0).unwrap_or("").to_ascii_uppercase());
 
             let mut current = self.bpb.root_dir_cluster;
             let mut buf = Vec::new();
@@ -133,9 +132,7 @@ impl FileSystem {
             while let Some(next) = self.read_cluster(&mut buf, current) {
                 for i in 0..(self.bpb.cluster_size / size_of::<FatEntry>()) {
                     // FIXME:
-                    let entries = unsafe {
-                        &*(buf.as_slice() as *const [u8] as *const [FatEntry])
-                    };
+                    let entries = unsafe { &*(buf.as_slice() as *const [u8] as *const [FatEntry]) };
                     let entry = entries[i];
 
                     if entry.name[0] == 0x00 {
@@ -168,14 +165,14 @@ impl FileSystem {
         let cluster_start = 2; // XXX: FAT32
         let cluster_offset = self.bpb.cluster_start_offset
             + ((cluster as usize - cluster_start) * self.bpb.cluster_size);
-        let data = self.read_disk(cluster_offset, self.bpb.cluster_size).unwrap();
+        let data = self
+            .read_disk(cluster_offset, self.bpb.cluster_size)
+            .unwrap();
 
         let entry_offset = (size_of::<Cluster>() * cluster as usize) % self.bpb.sector_size;
         let fat_offset = (self.bpb.fat_table_offset + entry_offset) % self.bpb.sector_size;
         let fat_data = self.read_disk(fat_offset, self.bpb.sector_size).unwrap();
-        let table = unsafe {
-            &*(fat_data.as_slice() as *const [u8] as *const [Cluster])
-        };
+        let table = unsafe { &*(fat_data.as_slice() as *const [u8] as *const [Cluster]) };
         let next = table[entry_offset];
 
         *buf = data.as_bytes().to_vec();
@@ -193,7 +190,13 @@ impl File {
         File { first_cluster }
     }
 
-    pub fn read(&self, fs: &FileSystem, buf: &mut [u8], offset: usize, len: usize) -> Result<usize> {
+    pub fn read(
+        &self,
+        fs: &FileSystem,
+        buf: &mut [u8],
+        offset: usize,
+        len: usize,
+    ) -> Result<usize> {
         let mut current = self.first_cluster;
         let mut data = Vec::new();
         let mut total_len = 0;

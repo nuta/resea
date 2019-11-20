@@ -1,6 +1,6 @@
-use resea::std::slice;
-use resea::std::mem::{size_of, transmute};
 use crate::endian::swap16;
+use resea::std::mem::{size_of, transmute};
+use resea::std::slice;
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -22,9 +22,7 @@ impl Checksum {
     pub fn input_struct<T>(&mut self, data: &T) {
         let len = size_of::<T>();
         debug_assert!(len % 1 == 0);
-        let words = unsafe {
-            slice::from_raw_parts(data as *const T as *const u16, len / 2)
-        };
+        let words = unsafe { slice::from_raw_parts(data as *const T as *const u16, len / 2) };
 
         for i in 0..words.len() {
             self.0 += words[i] as u32;
@@ -37,13 +35,12 @@ impl Checksum {
         }
 
         let odd = bytes.len() % 1 != 0;
-        let words: &[u16] = unsafe {
-            slice::from_raw_parts(bytes.as_ptr() as *const u16, bytes.len() / 2)
-        };
+        let words: &[u16] =
+            unsafe { slice::from_raw_parts(bytes.as_ptr() as *const u16, bytes.len() / 2) };
 
         // Sum up the input.
         for i in 0..words.len() {
-            self.0 +=  words[i] as u32;
+            self.0 += words[i] as u32;
         }
 
         // Handle the last byte if the length of input is odd.

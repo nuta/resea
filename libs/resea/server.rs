@@ -1,6 +1,6 @@
-use crate::result::{Result, Error};
 use crate::channel::Channel;
-use crate::message::{Message, InterfaceId, MessageHeader, Notification};
+use crate::message::{InterfaceId, Message, MessageHeader, Notification};
+use crate::result::{Error, Result};
 
 pub fn publish_server(interface_id: InterfaceId, server_ch: &Channel) -> Result<()> {
     use crate::idl::discovery;

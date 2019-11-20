@@ -1,9 +1,9 @@
-use resea::std::cell::RefCell;
-use resea::std::rc::Rc;
-use resea::std::fmt;
+use crate::device::Device;
 use crate::ipv4::{Ipv4Addr, Ipv4Network};
 use crate::transport::Port;
-use crate::device::Device;
+use resea::std::cell::RefCell;
+use resea::std::fmt;
+use resea::std::rc::Rc;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum NetworkProtocol {
@@ -30,7 +30,11 @@ pub struct Route {
 }
 
 impl Route {
-    pub fn new(ipv4_network: Ipv4Network, our_ipv4_addr: Ipv4Addr, device: Rc<RefCell<dyn Device>>) -> Route {
+    pub fn new(
+        ipv4_network: Ipv4Network,
+        our_ipv4_addr: Ipv4Addr,
+        device: Rc<RefCell<dyn Device>>,
+    ) -> Route {
         Route {
             ipv4_network,
             our_ipv4_addr,

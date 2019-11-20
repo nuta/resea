@@ -1,9 +1,9 @@
-use resea::collections::Vec;
-use resea::std::fmt;
-use crate::Result;
 use crate::ip::IpAddr;
 use crate::mbuf::Mbuf;
 use crate::tcp::{TcpFlags, TcpSocket};
+use crate::Result;
+use resea::collections::Vec;
+use resea::std::fmt;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Port(u16);
@@ -41,11 +41,7 @@ pub struct BindTo {
 
 impl BindTo {
     pub const fn new(trans: TransportProtocol, addr: IpAddr, port: Port) -> BindTo {
-        BindTo {
-            trans,
-            addr,
-            port,
-        }
+        BindTo { trans, addr, port }
     }
 }
 

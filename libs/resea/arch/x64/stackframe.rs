@@ -15,9 +15,7 @@ impl StackFrame {
     }
 
     pub fn return_addr(&self) -> usize {
-        unsafe {
-            (*self.0).return_addr
-        }
+        unsafe { (*self.0).return_addr }
     }
 
     pub fn prev(&self) -> Option<StackFrame> {

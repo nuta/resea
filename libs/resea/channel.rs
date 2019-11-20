@@ -1,7 +1,7 @@
-use crate::result::{Result, Error};
 use crate::arch::syscall;
 use crate::arch::thread_info::{copy_from_ipc_buffer, copy_to_ipc_buffer};
 use crate::message::Message;
+use crate::result::{Error, Result};
 
 pub type CId = i32;
 
@@ -12,9 +12,7 @@ pub struct Channel {
 
 impl Channel {
     pub fn create() -> Result<Channel> {
-        unsafe {
-            syscall::open().map(Channel::from_cid)
-        }
+        unsafe { syscall::open().map(Channel::from_cid) }
     }
 
     pub const fn from_cid(cid: CId) -> Channel {
@@ -31,9 +29,7 @@ impl Channel {
     }
 
     pub fn transfer_to(&self, dest: &Channel) -> Result<()> {
-        unsafe {
-            syscall::transfer(self.cid, dest.cid)
-        }
+        unsafe { syscall::transfer(self.cid, dest.cid) }
     }
 
     pub fn recv(&self) -> Result<Message> {

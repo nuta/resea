@@ -1,13 +1,13 @@
-use resea::result::Error;
-use resea::server::{ServerResult, connect_to_server};
-use resea::message::{HandleId, Page};
-use resea::idl;
+use crate::fat::{File, FileSystem};
 use resea::channel::Channel;
-use resea::std::string::String;
 use resea::collections::HashMap;
+use resea::idl;
+use resea::message::{HandleId, Page};
+use resea::result::Error;
+use resea::server::{connect_to_server, ServerResult};
+use resea::std::string::String;
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
-use crate::fat::{FileSystem, File};
 
 static MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static _KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -41,9 +41,7 @@ impl idl::fs::Server for Server {
                 self.opened_files.insert(handle_id, file);
                 ServerResult::Ok(handle_id)
             }
-            None => {
-                ServerResult::Err(Error::NotFound)
-            }
+            None => ServerResult::Err(Error::NotFound),
         }
     }
 
@@ -52,19 +50,34 @@ impl idl::fs::Server for Server {
         ServerResult::Err(Error::Unimplemented)
     }
 
-    fn read(&mut self, _from: &Channel, file: HandleId, offset: usize, len: usize) -> ServerResult<Page> {
+    fn read(
+        &mut self,
+        _from: &Channel,
+        file: HandleId,
+        offset: usize,
+        len: usize,
+    ) -> ServerResult<Page> {
         let file = match self.opened_files.get(&file) {
             Some(file) => file,
             None => return ServerResult::Err(Error::InvalidHandle),
         };
 
         use idl::memmgr::Client;
-        let mut page = MEMMGR_SERVER.alloc_pages(align_up(len, PAGE_SIZE) / PAGE_SIZE).unwrap();
-        file.read(&self.fs, page.as_bytes_mut(), offset, len).unwrap();
+        let mut page = MEMMGR_SERVER
+            .alloc_pages(align_up(len, PAGE_SIZE) / PAGE_SIZE)
+            .unwrap();
+        file.read(&self.fs, page.as_bytes_mut(), offset, len)
+            .unwrap();
         ServerResult::Ok(page)
     }
 
-    fn write(&mut self, _from: &Channel, _file: HandleId, _page: Page, _len: usize) -> ServerResult<()> {
+    fn write(
+        &mut self,
+        _from: &Channel,
+        _file: HandleId,
+        _page: Page,
+        _len: usize,
+    ) -> ServerResult<()> {
         // TODO:
         ServerResult::Err(Error::Unimplemented)
     }
@@ -79,19 +92,16 @@ impl idl::server::Server for Server {
     }
 }
 
-impl resea::server::Server for Server {
-}
+impl resea::server::Server for Server {}
 
 #[no_mangle]
 pub fn main() {
     info!("starting...");
 
-    let storage_device =
-        connect_to_server(idl::storage_device::INTERFACE_ID)
-            .expect("failed to connect to a storage_device server");
+    let storage_device = connect_to_server(idl::storage_device::INTERFACE_ID)
+        .expect("failed to connect to a storage_device server");
 
-    let fs = FileSystem::new(storage_device, 0)
-        .expect("failed to load the file system");
+    let fs = FileSystem::new(storage_device, 0).expect("failed to load the file system");
 
     let mut server = Server::new(fs);
 

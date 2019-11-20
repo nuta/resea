@@ -1,10 +1,10 @@
-use resea::collections::HashMap;
-use resea::collections::Vec;
-use crate::mbuf::Mbuf;
+use crate::endian::NetEndian;
 use crate::ethernet::MacAddr;
 use crate::ipv4::Ipv4Addr;
-use crate::endian::NetEndian;
+use crate::mbuf::Mbuf;
 use crate::packet::Packet;
+use resea::collections::HashMap;
+use resea::collections::Vec;
 
 pub enum ArpEntry {
     /// The MAC address of the IP address.
@@ -48,12 +48,20 @@ impl ArpTable {
             Some(ArpEntry::Resolved(_)) => unreachable!(),
             Some(ArpEntry::UnResolved(pending)) => pending.push((ether_type, pkt)),
             None => {
-                self.table.insert(addr, ArpEntry::UnResolved(vec![(ether_type, pkt)]));
-            },
+                self.table
+                    .insert(addr, ArpEntry::UnResolved(vec![(ether_type, pkt)]));
+            }
         }
 
         let mut mbuf = Mbuf::new();
-        build(&mut mbuf, OPCODE_REQUEST, MacAddr::BROADCAST, addr, self.mac_addr, self.ipv4_addr);
+        build(
+            &mut mbuf,
+            OPCODE_REQUEST,
+            MacAddr::BROADCAST,
+            addr,
+            self.mac_addr,
+            self.ipv4_addr,
+        );
         mbuf
     }
 
@@ -71,7 +79,7 @@ impl ArpTable {
                 trace!("received arp request");
                 let mut mbuf = Mbuf::new();
                 mbuf.prepend(&ArpPacket {
-                    hw_type: 1.into(), // Ethernet
+                    hw_type: 1.into(),         // Ethernet
                     proto_type: 0x0800.into(), // IPv4
                     hw_size: 6,
                     proto_size: 4,
@@ -115,9 +123,16 @@ struct ArpPacket {
 const OPCODE_REQUEST: u16 = 1;
 const OPCODE_REPLY: u16 = 2;
 
-fn build(pkt: &mut Mbuf, opcode: u16, dst: MacAddr, dst_addr: Ipv4Addr, src: MacAddr, src_addr: Ipv4Addr) {
+fn build(
+    pkt: &mut Mbuf,
+    opcode: u16,
+    dst: MacAddr,
+    dst_addr: Ipv4Addr,
+    src: MacAddr,
+    src_addr: Ipv4Addr,
+) {
     pkt.prepend(&ArpPacket {
-        hw_type: 1.into(), // Ethernet
+        hw_type: 1.into(),         // Ethernet
         proto_type: 0x0800.into(), // IPv4
         hw_size: 6,
         proto_size: 4,
