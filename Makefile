@@ -1,13 +1,14 @@
 #
 #  Build options
 #
-V ?=
-TARGET := x64
-ARCH := $(TARGET)
-BUILD  ?= debug
-BUILD_DIR := build
-INIT := memmgr
-STARTUPS := fatfs net pcat ide e1000
+V           ?=
+TARGET      ?= x64
+ARCH        ?= $(TARGET)
+BUILD       ?= debug
+BUILD_DIR   ?= build
+INIT        ?= memmgr
+STARTUPS    ?= appmgr fatfs net pcat ide e1000
+APPS        ?= utils
 LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
 GRUB_PREFIX ?= i386-elf-
 
