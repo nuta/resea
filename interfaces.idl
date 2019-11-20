@@ -133,3 +133,12 @@ interface text_screen_device {
     [id(2), type(call)]
     print_char(ch: char) -> ()
 }
+
+[id(33)]
+interface keyboard_device {
+    [id(1), type(call)]
+    listen(ch: channel) -> ()
+
+    [id(2), type(event)]
+    pressed(ch: char) -> ()
+}
