@@ -7,8 +7,7 @@ ARCH        ?= $(TARGET)
 BUILD       ?= debug
 BUILD_DIR   ?= build
 INIT        ?= memmgr
-STARTUPS    ?= appmgr fatfs net pcat ide e1000
-APPS        ?= utils
+STARTUPS    ?= fatfs net pcat ide e1000
 LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
 GRUB_PREFIX ?= i386-elf-
 
@@ -174,6 +173,8 @@ $(BUILD_DIR)/servers/%.elf: libs/resea/idl/mod.rs tools/link.py Makefile
 		--outfile="$(BUILD_DIR)/servers/$(name).elf" \
 		$(BUILD_DIR)/servers/$(name)/user_$(TARGET)/$(BUILD)/lib$(name).a
 	$(NM) $@ | awk '{ print $$1, $$3 }' > $(@:.elf=.symbols)
+	$(PROGRESS) "STRIP" $@
+	$(OBJCOPY) --strip-all-gnu --strip-debug $@ $(@:.elf=.stripped.elf)
 
 define server-make-rule
 $(BUILD_DIR)/servers/$(1).elf: name := $(1)
@@ -212,18 +213,9 @@ $(BUILD_DIR)/initfs.bin: $(initfs_files) $(BUILD_DIR)/$(INIT).bin tools/mkinitfs
 		--file-list "$(initfs_files)" \
 		$(BUILD_DIR)/initfs
 
-$(BUILD_DIR)/initfs/startups/%.elf: $(BUILD_DIR)/servers/%.elf
-	mkdir -p $(@D)
-	cp $< $@
-
-$(BUILD_DIR)/initfs/servers/%.elf: $(BUILD_DIR)/servers/%.elf
-	mkdir -p $(@D)
-	cp $< $@
-
-$(BUILD_DIR)/initfs/apps/%.elf: $(BUILD_DIR)/apps/%.elf
-	mkdir -p $(@D)
-	cp $< $@
-
-# Startup.
 $(BUILD_DIR)/$(INIT).bin: $(BUILD_DIR)/servers/$(INIT).elf Makefile
 	$(OBJCOPY) -j.initfs -j.text -j.data -j.rodata -j.bss -Obinary $< $@
+
+$(BUILD_DIR)/initfs/startups/%.elf: $(BUILD_DIR)/servers/%.elf
+	mkdir -p $(@D)
+	cp $(<:.elf=.stripped.elf) $@
