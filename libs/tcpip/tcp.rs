@@ -1,22 +1,22 @@
-use crate::checksum::Checksum;
-use crate::endian::{swap16, swap32, NetEndian};
-use crate::ip::IpAddr;
-use crate::ipv4::IPV4_PROTO_TCP;
-use crate::mbuf::Mbuf;
-use crate::packet::Packet;
-use crate::ring_buffer::RingBuffer;
-use crate::transport::{
-    BindTo, Port, Socket, TcpTransportHeader, TransportHeader, TransportProtocol,
-};
-use crate::wrapping::WrappingU32;
-use crate::{Error, Result};
 use resea::collections::{Vec, VecDeque};
-use resea::std::boxed::Box;
-use resea::std::cell::RefCell;
 use resea::std::cmp::min;
 use resea::std::fmt;
 use resea::std::mem::size_of;
+use resea::std::cell::RefCell;
 use resea::std::rc::Rc;
+use resea::std::boxed::Box;
+use crate::{Result, Error};
+use crate::mbuf::Mbuf;
+use crate::checksum::Checksum;
+use crate::ring_buffer::RingBuffer;
+use crate::packet::Packet;
+use crate::ip::IpAddr;
+use crate::ipv4::IPV4_PROTO_TCP;
+use crate::transport::{
+    Socket, BindTo, Port, TransportProtocol, TransportHeader, TcpTransportHeader
+};
+use crate::endian::{NetEndian, swap16, swap32};
+use crate::wrapping::WrappingU32;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum TcpState {
@@ -81,46 +81,39 @@ impl TcpSocket {
     }
 
     pub fn is_connected_with(&self, remote_addr: IpAddr, remote_port: Port) -> bool {
-        self.remote_addr.unwrap() == remote_addr && self.remote_port.unwrap() == remote_port
+        self.remote_addr.unwrap() == remote_addr
+            && self.remote_port.unwrap() == remote_port
     }
 
     fn receive_on_established<'a>(&mut self, header: &TcpTransportHeader<'a>) {
-        trace!(
-            "tcp: data_len={}, seq={}, ack={}, last_ack={}, last_seq={} [{}]",
-            header.payload.len(),
-            header.seq_no,
-            header.ack_no,
-            self.local_ack_no.as_u32(),
-            self.local_seq_no.as_u32(),
-            header.flags
-        );
+        trace!("tcp: data_len={}, seq={}, ack={}, last_ack={}, last_seq={} [{}]",
+            header.payload.len(), header.seq_no, header.ack_no,
+            self.local_ack_no.as_u32(), self.local_seq_no.as_u32(), 
+            header.flags);
 
         if header.flags.contains(FLAG_RST) || header.flags.contains(FLAG_SYN) {
-            self.state = TcpState::Closed;
+            self.state = TcpState::Closed;            
             self.pending_flags.add(FLAG_RST);
             return;
         }
-
+        
         if header.flags.contains(FLAG_FIN) {
             info!("received fin");
-            self.state = TcpState::Closed;
+            self.state = TcpState::Closed;            
             self.pending_flags.add(FLAG_FIN | FLAG_ACK);
             self.local_ack_no.add(1);
         }
-
+        
         self.remote_win_size = header.win_size as usize;
 
         if header.flags.contains(FLAG_ACK) {
             self.remote_ack_no = header.ack_no.into();
-            let len_received_by_remote = self.remote_ack_no.abs_diff(self.local_seq_no) as usize;
+            let len_received_by_remote =
+                self.remote_ack_no.abs_diff(self.local_seq_no) as usize;
             // Check if the ack number is valid.
             if len_received_by_remote <= self.tx.readable_len() {
                 self.tx.discard(len_received_by_remote);
-                warn!(
-                    "local_se_no: {}, add={}",
-                    self.local_seq_no.as_u32(),
-                    len_received_by_remote
-                );
+                warn!("local_se_no: {}, add={}", self.local_seq_no.as_u32(), len_received_by_remote);
                 self.local_seq_no.add(len_received_by_remote as u32);
                 warn!("new_local_se_no: {}", self.local_seq_no.as_u32());
                 self.bytes_not_acked -= len_received_by_remote;
@@ -132,11 +125,8 @@ impl TcpSocket {
             if header.seq_no == self.local_ack_no.as_u32() {
                 match self.rx.write(header.payload) {
                     Ok(()) => {
-                        warn!(
-                            "received payload: {} bytes ({:x?})",
-                            header.payload.len(),
-                            &header.payload[0..5]
-                        );
+                        warn!("received payload: {} bytes ({:x?})",
+                        header.payload.len(), &header.payload[0..5]);
                         self.local_ack_no.add(header.payload.len() as u32);
                     }
                     Err(Error::BufferFull) => {
@@ -172,8 +162,8 @@ impl Socket for TcpSocket {
                     let header_words = 5;
                     backlog.state = TcpState::SynReceived;
                     warn!("rx.writable_len = {}", backlog.rx.writable_len());
-                    assert!(backlog.remote_addr.is_some());
-                    assert!(backlog.remote_port.is_some());
+                    assert!(backlog.remote_addr.is_some());                    
+                    assert!(backlog.remote_port.is_some());                    
                     let mut mbuf = Mbuf::new();
                     let mut header = TcpHeader {
                         dst_port: backlog.remote_port.unwrap().as_u16().into(),
@@ -188,17 +178,11 @@ impl Socket for TcpSocket {
                     };
 
                     let mut checksum = Checksum::new();
-                    compute_header_checksum(
-                        &mut checksum,
-                        backlog.bind_to.addr,
-                        backlog.remote_addr.unwrap(),
-                        &header,
-                        0,
-                    );
+                    compute_header_checksum(&mut checksum, backlog.bind_to.addr, backlog.remote_addr.unwrap(), &header, 0);
                     header.checksum = checksum.finish().into();
 
                     mbuf.append(&header);
-                    return Some((backlog.remote_addr.unwrap(), mbuf));
+                    return Some((backlog.remote_addr.unwrap(), mbuf));                                
                 }
                 TcpState::SynReceived | TcpState::Established => (),
                 _ => unreachable!(),
@@ -227,33 +211,21 @@ impl Socket for TcpSocket {
             checksum: 0.into(),
             urgent_pointer: 0.into(),
         };
-
+        
         let mut checksum = Checksum::new();
         if send_payload {
             let len = min(self.tx.readable_len(), self.remote_win_size);
             let mut data = Vec::with_capacity(len);
             self.tx.peek(len, &mut data);
             mbuf.append_bytes(&data);
-            compute_header_checksum(
-                &mut checksum,
-                self.bind_to.addr,
-                self.remote_addr.unwrap(),
-                &header,
-                data.len(),
-            );
+            compute_header_checksum(&mut checksum, self.bind_to.addr, self.remote_addr.unwrap(), &header, data.len());
             checksum.input_bytes(&data);
             self.bytes_not_acked += len;
             self.remote_win_size -= len;
         } else {
-            compute_header_checksum(
-                &mut checksum,
-                self.bind_to.addr,
-                self.remote_addr.unwrap(),
-                &header,
-                0,
-            );
+            compute_header_checksum(&mut checksum, self.bind_to.addr, self.remote_addr.unwrap(), &header, 0);
         }
-
+        
         header.checksum = checksum.finish().into();
         mbuf.prepend(&header);
 
@@ -322,13 +294,8 @@ impl Socket for TcpSocket {
                 self.receive_on_established(header);
             }
             TcpState::Listen if header.flags.contains(FLAG_SYN) => {
-                trace!(
-                    "SYN: {}:{} <- {}:{}",
-                    self.bind_to.addr,
-                    self.bind_to.port,
-                    src_addr,
-                    src_port
-                );
+                trace!("SYN: {}:{} <- {}:{}",
+                    self.bind_to.addr, self.bind_to.port, src_addr, src_port);
                 // The client wants to connect to this socket. Create a new
                 // socket for it.
                 let mut client = TcpSocket::new_with_bind_to(self.bind_to);
@@ -360,19 +327,15 @@ impl Socket for TcpSocket {
     }
 }
 
-fn compute_header_checksum(
-    checksum: &mut Checksum,
-    remote_addr: IpAddr,
-    local_addr: IpAddr,
-    header: &TcpHeader,
-    data_len: usize,
-) {
+fn compute_header_checksum(checksum: &mut Checksum, remote_addr: IpAddr, local_addr: IpAddr, header: &TcpHeader, data_len: usize) {
     // Pseudo header.
     match remote_addr {
-        IpAddr::Ipv4(ipv4_addr) => checksum.input_u32(swap32(ipv4_addr.as_u32())),
+        IpAddr::Ipv4(ipv4_addr) =>
+            checksum.input_u32(swap32(ipv4_addr.as_u32())),
     }
     match local_addr {
-        IpAddr::Ipv4(ipv4_addr) => checksum.input_u32(swap32(ipv4_addr.as_u32())),
+        IpAddr::Ipv4(ipv4_addr) =>
+            checksum.input_u32(swap32(ipv4_addr.as_u32())),    
     }
     checksum.input_u16(swap16(IPV4_PROTO_TCP.into()));
     checksum.input_u16(swap16((size_of::<TcpHeader>() + data_len) as u16));
@@ -395,15 +358,15 @@ impl TcpFlags {
     pub fn new(flags: u8) -> TcpFlags {
         TcpFlags(flags)
     }
-
+    
     pub fn empty() -> TcpFlags {
         TcpFlags(0)
     }
-
+    
     pub fn contains(self, flags: u8) -> bool {
         self.0 & flags == flags
     }
-
+    
     pub fn is_empty(self) -> bool {
         self.0 == 0
     }
@@ -441,7 +404,7 @@ impl fmt::Display for TcpFlags {
 
 #[repr(C, packed)]
 struct TcpHeader {
-    src_port: NetEndian<u16>,
+    src_port: NetEndian<u16>, 
     dst_port: NetEndian<u16>,
     seq_no: NetEndian<u32>,
     ack_no: NetEndian<u32>,

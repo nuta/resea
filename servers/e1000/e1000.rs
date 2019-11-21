@@ -1,11 +1,11 @@
-use crate::pci::Pci;
 use resea::channel::Channel;
-use resea::collections::{Vec, VecDeque};
 use resea::message::Page;
+use resea::PAGE_SIZE;
+use resea::utils::align_up;
 use resea::std::mem::size_of;
 use resea::std::sync::atomic::{fence, Ordering};
-use resea::utils::align_up;
-use resea::PAGE_SIZE;
+use resea::collections::{Vec, VecDeque};
+use crate::pci::Pci;
 
 /// Controls the device features and states.
 const REG_CTRL: u32 = 0x0000;
@@ -126,27 +126,21 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn new(
-        server_ch: &Channel,
-        pci: &Pci,
-        kernel_server: &'static Channel,
-        memmgr: &'static Channel,
-    ) -> Device {
-        let pci_device = pci
-            .find_device(0x8086, 0x100e)
+    pub fn new(server_ch: &Channel, pci: &Pci, kernel_server: &'static Channel, memmgr: &'static Channel) -> Device {
+        let pci_device = pci.find_device(0x8086, 0x100e)
             .expect("failed to locate an e1000 device in PCI");
         pci.enable_bus_master(&pci_device);
 
         use resea::idl::kernel::Client as KernelClient;
         let irq_ch = Channel::create().unwrap();
         irq_ch.transfer_to(server_ch).unwrap();
-        kernel_server
-            .listen_irq(irq_ch, pci_device.interrupt_line)
+        kernel_server.listen_irq(irq_ch, pci_device.interrupt_line)
             .expect("failed to register the keyboard IRQ handler");
 
         // Map memory-mapped registers.
         use resea::idl::memmgr::Client;
-        let regs_page = memmgr.map_phy_pages(pci_device.bar0 as usize, 8).unwrap();
+        let regs_page =
+            memmgr.map_phy_pages(pci_device.bar0 as usize, 8).unwrap();
 
         // Allocate pages for RX/TX descriptors.
         let rx_desc_len = align_up(size_of::<RxDesc>() * NUM_RX_DESCS, PAGE_SIZE);
@@ -188,7 +182,8 @@ impl Device {
         while self.read_reg32(REG_CTRL) & CTRL_RST != 0 {}
 
         // Link up!
-        self.write_reg32(REG_CTRL, self.read_reg32(REG_CTRL) | CTRL_SLU | CTRL_ASDE);
+        self.write_reg32(REG_CTRL,
+            self.read_reg32(REG_CTRL) | CTRL_SLU | CTRL_ASDE);
 
         // Fill Multicast Table Array with zeros.
         for i in 0..0x80 {
@@ -306,14 +301,22 @@ impl Device {
     fn read_reg32(&self, offset: u32) -> u32 {
         fence(Ordering::Acquire);
         unsafe {
-            let ptr = self.regs_page.as_bytes().as_ptr().offset(offset as isize) as *const u32;
+            let ptr = self.regs_page
+                .as_bytes()
+                .as_ptr()
+                .offset(offset as isize)
+                as *const u32;
             *ptr
         }
     }
 
     fn write_reg32(&self, offset: u32, value: u32) {
         unsafe {
-            let ptr = self.regs_page.as_bytes().as_ptr().offset(offset as isize) as *mut u32;
+            let ptr = self.regs_page
+                .as_bytes()
+                .as_ptr()
+                .offset(offset as isize)
+                as *mut u32;
             *ptr = value;
         }
 

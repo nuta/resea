@@ -1,5 +1,5 @@
-use crate::allocator::valloc;
 use crate::arch::thread_info::get_thread_info;
+use crate::allocator::valloc;
 
 const DEFAULT_NUM_PAGES: usize = 64; /* 256KiB */
 

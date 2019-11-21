@@ -34,12 +34,12 @@ pub fn find_symbol(addr: usize) -> Option<Symbol> {
     debug_assert_eq!(unsafe { __symtable.magic }, SYMBOL_TABLE_MAGIC);
 
     let num_symbols = unsafe { __symtable.num_symbols };
-    let symbols = unsafe { core::slice::from_raw_parts(__symtable.symbols, num_symbols as usize) };
+    let symbols = unsafe {
+        core::slice::from_raw_parts(__symtable.symbols, num_symbols as usize)
+    };
     let strbuf = unsafe {
         core::str::from_utf8_unchecked(core::slice::from_raw_parts(
-            __symtable.strbuf,
-            __symtable.strbuf_len as usize,
-        ))
+            __symtable.strbuf, __symtable.strbuf_len as usize))
     };
 
     // Do a binary search. Since `num_symbols` is unsigned 16-bit integer, we
@@ -62,10 +62,7 @@ pub fn find_symbol(addr: usize) -> Option<Symbol> {
         let str_start = symbol.offset as usize;
         let str_end = symbol.offset as usize + symbol.name_len as usize;
         let name = &strbuf[str_start..str_end];
-        Some(Symbol {
-            name,
-            addr: symbol.addr as usize,
-        })
+        Some(Symbol { name, addr: symbol.addr as usize })
     }
 }
 
@@ -76,17 +73,12 @@ pub fn backtrace() {
     for i in 0..BACKTRACE_MAX {
         let symbol = match find_symbol(frame.return_addr()) {
             Some(symbol) => symbol,
-            None => break,
+            None => break
         };
 
         let offset = frame.return_addr() - symbol.addr;
-        info!(
-            "    #{}: {:p} {}()+0x{:x}",
-            i,
-            frame.return_addr() as *const u8,
-            symbol.name,
-            offset
-        );
+        info!("    #{}: {:p} {}()+0x{:x}",
+              i, frame.return_addr() as *const u8, symbol.name, offset);
 
         frame = match frame.prev() {
             Some(frame) => frame,

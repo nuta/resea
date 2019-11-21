@@ -1,20 +1,21 @@
-use crate::arp::ArpTable;
-use crate::device::Device;
-use crate::endian::NetEndian;
-use crate::ip::{IpAddr, NetworkProtocol};
-use crate::ipv4::Ipv4Addr;
-use crate::mbuf::Mbuf;
-use crate::packet::Packet;
 use crate::Result;
 use resea::collections::Vec;
 use resea::collections::VecDeque;
+use crate::device::Device;
+use crate::mbuf::Mbuf;
+use crate::packet::Packet;
+use crate::ip::{IpAddr, NetworkProtocol};
+use crate::ipv4::Ipv4Addr;
+use crate::arp::ArpTable;
+use crate::endian::NetEndian;
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct MacAddr([u8; 6]);
 
 impl MacAddr {
-    pub const BROADCAST: MacAddr = MacAddr::new([0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
+    pub const BROADCAST: MacAddr =
+        MacAddr::new([0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
 
     pub const fn new(addr: [u8; 6]) -> MacAddr {
         MacAddr(addr)
@@ -42,13 +43,7 @@ impl EthernetDevice {
         self.arp_table.process_arp_packet(pkt)
     }
 
-    fn do_enqueue(
-        &mut self,
-        queue: &mut VecDeque<Mbuf>,
-        dst_macaddr: MacAddr,
-        ether_type: u16,
-        mut pkt: Mbuf,
-    ) {
+    fn do_enqueue(&mut self, queue: &mut VecDeque<Mbuf>, dst_macaddr: MacAddr, ether_type: u16, mut pkt: Mbuf) {
         build(&mut pkt, dst_macaddr, self.mac_addr, ether_type);
         queue.push_back(pkt);
     }
@@ -75,23 +70,22 @@ impl Device for EthernetDevice {
         Ok(())
     }
 
-    fn receive(
-        &mut self,
-        tx_queue: &mut VecDeque<Mbuf>,
-        pkt: &mut Packet,
-    ) -> Option<NetworkProtocol> {
+    fn receive(&mut self, tx_queue: &mut VecDeque<Mbuf>, pkt: &mut Packet) -> Option<NetworkProtocol> {
         let header = match pkt.consume::<EthernetHeader>() {
             Some(header) => header,
             None => return None,
         };
-
+        
         let proto = match header.ether_type.into() {
-            ETHERTYPE_IPV4 => NetworkProtocol::Ipv4,
+            ETHERTYPE_IPV4 => {
+                NetworkProtocol::Ipv4
+            }
             ETHERTYPE_ARP => {
-                let (dst_macaddr, pending_packets) = match self.receive_arp_packet(pkt) {
-                    Some(values) => values,
-                    None => return None,
-                };
+                let (dst_macaddr, pending_packets) =
+                    match self.receive_arp_packet(pkt) {
+                        Some(values) => values,
+                        None => return None,
+                    };
 
                 for (ether_type, packet) in pending_packets {
                     self.do_enqueue(tx_queue, dst_macaddr, ether_type, packet);

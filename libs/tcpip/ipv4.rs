@@ -1,11 +1,11 @@
-use crate::checksum::Checksum;
-use crate::endian::NetEndian;
-use crate::mbuf::Mbuf;
-use crate::packet::Packet;
-use crate::transport::TransportProtocol;
-use crate::Result;
 use resea::std::fmt;
 use resea::std::mem::size_of;
+use crate::Result;
+use crate::transport::TransportProtocol;
+use crate::packet::Packet;
+use crate::mbuf::Mbuf;
+use crate::endian::NetEndian;
+use crate::checksum::Checksum;
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -20,7 +20,12 @@ impl Ipv4Addr {
     }
 
     pub const fn new(a0: u8, a1: u8, a2: u8, a3: u8) -> Ipv4Addr {
-        Ipv4Addr(((a0 as u32) << 24) | ((a1 as u32) << 16) | ((a2 as u32) << 8) | (a3 as u32))
+        Ipv4Addr(
+              ((a0 as u32) << 24)
+            | ((a1 as u32) << 16)
+            | ((a2 as u32) << 8)
+            | (a3 as u32)
+        )
     }
 
     pub fn as_u32(&self) -> u32 {
@@ -30,14 +35,9 @@ impl Ipv4Addr {
 
 impl fmt::Display for Ipv4Addr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}.{}.{}.{}",
-            self.0 >> 24,
-            (self.0 >> 16) & 0xff,
-            (self.0 >> 8) & 0xff,
-            self.0 & 0xff
-        )
+        write!(f, "{}.{}.{}.{}",
+            self.0 >> 24, (self.0 >> 16) & 0xff, (self.0 >> 8) & 0xff,
+            self.0 & 0xff)
     }
 }
 
@@ -49,12 +49,16 @@ pub struct Ipv4Network {
 
 impl Ipv4Network {
     pub const fn new(a0: u8, a1: u8, a2: u8, a3: u8, netmask: u32) -> Ipv4Network {
-        Ipv4Network {
-            addr: ((a0 as u32) << 24) | ((a1 as u32) << 16) | ((a2 as u32) << 8) | (a3 as u32),
-            netmask,
-        }
+            Ipv4Network {
+                addr:
+                      ((a0 as u32) << 24)
+                    | ((a1 as u32) << 16)
+                    | ((a2 as u32) << 8)
+                    | (a3 as u32),
+                netmask
+            }
     }
-
+   
     pub fn contains(&self, addr: Ipv4Addr) -> bool {
         self.addr == addr.as_u32() & self.netmask
     }

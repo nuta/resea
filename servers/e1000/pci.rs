@@ -6,7 +6,7 @@ const PCI_ANY: u16 = 0;
 
 const PCI_CONFIG_VENDOR_ID: u16 = 0x00;
 const PCI_CONFIG_DEVICE_ID: u16 = 0x02;
-const PCI_CONFIG_BAR0: u16 = 0x10;
+const PCI_CONFIG_BAR0: u16      = 0x10;
 const PCI_CONFIG_INTR_LINE: u16 = 0x3c;
 
 pub struct PciDevice {
@@ -25,7 +25,9 @@ pub struct Pci {
 
 impl Pci {
     pub fn new(kernel_server: &'static Channel) -> Pci {
-        Pci { kernel_server }
+        Pci {
+            kernel_server,
+        }
     }
 
     pub fn find_device(&self, vendor: u16, device: u16) -> Option<PciDevice> {
@@ -74,12 +76,13 @@ impl Pci {
         // Make sure the offset is aligned.
         assert!((offset & 0x3) == 0);
 
-        let addr = (1 << 31) | ((bus as u32) << 16) | ((slot as u32) << 11) | offset as u32;
+        let addr = (1 << 31)
+            | ((bus as u32) << 16)
+            | ((slot as u32) << 11)
+            | offset as u32;
 
         use resea::idl::kernel::Client;
-        self.kernel_server
-            .write_ioport(PCI_IOPORT_ADDR, 4, addr as u64)
-            .unwrap();
+        self.kernel_server.write_ioport(PCI_IOPORT_ADDR, 4, addr as u64).unwrap();
         self.kernel_server.read_ioport(PCI_IOPORT_DATA, 4).unwrap() as u32
     }
 
@@ -87,14 +90,13 @@ impl Pci {
         // Make sure the offset is aligned.
         assert!((offset & 0x3) == 0);
 
-        let addr = (1 << 31) | ((bus as u32) << 16) | ((slot as u32) << 11) | offset as u32;
+        let addr = (1 << 31)
+            | ((bus as u32) << 16)
+            | ((slot as u32) << 11)
+            | offset as u32;
 
         use resea::idl::kernel::Client;
-        self.kernel_server
-            .write_ioport(PCI_IOPORT_ADDR, 4, addr as u64)
-            .unwrap();
-        self.kernel_server
-            .write_ioport(PCI_IOPORT_DATA, 4, value as u64)
-            .unwrap();
+        self.kernel_server.write_ioport(PCI_IOPORT_ADDR, 4, addr as u64).unwrap();
+        self.kernel_server.write_ioport(PCI_IOPORT_DATA, 4, value as u64).unwrap();
     }
 }

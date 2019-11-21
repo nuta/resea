@@ -1,10 +1,10 @@
-use crate::keyboard::Keyboard;
-use crate::screen::Screen;
+use resea::idl::{text_screen_device, keyboard_device};
 use resea::channel::Channel;
-use resea::idl::{keyboard_device, text_screen_device};
 use resea::message::Notification;
-use resea::server::{publish_server, ServerResult};
+use resea::server::{ServerResult, publish_server};
 use resea::std::string::String;
+use crate::screen::Screen;
+use crate::keyboard::Keyboard;
 
 static _MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -26,17 +26,19 @@ impl Server {
             screen,
             keyboard,
             keyboard_listener: None,
-        }
+       }
     }
 }
 
 impl text_screen_device::Server for Server {
-    fn print_str(&mut self, _from: &Channel, str: String) -> ServerResult<()> {
-        self.screen.print_str(&str);
-        ServerResult::Ok(())
+    fn print_str(&mut self, _from: &Channel, str: String)
+        -> ServerResult<()> {
+            self.screen.print_str(&str);
+            ServerResult::Ok(())
     }
 
-    fn print_char(&mut self, _from: &Channel, ch: u8) -> ServerResult<()> {
+    fn print_char(&mut self, _from: &Channel, ch: u8)
+        -> ServerResult<()> {
         self.screen.print_char(ch as char);
         ServerResult::Ok(())
     }

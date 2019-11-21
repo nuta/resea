@@ -1,7 +1,7 @@
-use crate::lazy_static::LazyStatic;
+use crate::PAGE_SIZE;
 use crate::message::Page;
 use crate::std::vec::Vec;
-use crate::PAGE_SIZE;
+use crate::lazy_static::LazyStatic;
 use core::cell::RefCell;
 use linked_list_allocator::LockedHeap;
 
@@ -67,7 +67,7 @@ impl PageAllocator {
                     num_pages,
                 };
             }
-        }
+        };
 
         panic!("out of memory");
     }
@@ -85,9 +85,7 @@ pub fn init() {
 
         let valloc_start = &__valloc as *const u8 as usize;
         let valloc_end = &__valloc_end as *const u8 as usize;
-        VALLOC_ALLOCATOR.init(RefCell::new(PageAllocator::new(
-            valloc_start,
-            valloc_end - valloc_start,
-        )));
+        VALLOC_ALLOCATOR.init(
+            RefCell::new(PageAllocator::new(valloc_start, valloc_end - valloc_start)));
     }
 }

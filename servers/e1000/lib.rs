@@ -3,6 +3,6 @@
 #[macro_use]
 extern crate resea;
 
-mod e1000;
 mod main;
+mod e1000;
 mod pci;

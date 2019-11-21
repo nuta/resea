@@ -1,12 +1,12 @@
-use crate::ide::IdeDevice;
-use resea::channel::Channel;
+use resea::result::Error;
+use resea::server::{ServerResult, publish_server};
 use resea::idl;
 use resea::idl::storage_device::INTERFACE_ID;
-use resea::message::Page;
-use resea::result::Error;
-use resea::server::{publish_server, ServerResult};
-use resea::utils::align_up;
 use resea::PAGE_SIZE;
+use resea::message::Page;
+use resea::channel::Channel;
+use resea::utils::align_up;
+use crate::ide::IdeDevice;
 
 static MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -34,9 +34,7 @@ impl idl::storage_device::Server for Server {
         use idl::memmgr::Client;
         let num_pages = align_up(num_sectors * self.device.sector_size(), PAGE_SIZE) / PAGE_SIZE;
         let mut page = MEMMGR_SERVER.alloc_pages(num_pages).unwrap();
-        self.device
-            .read_sectors(sector, num_sectors, page.as_bytes_mut())
-            .unwrap();
+        self.device.read_sectors(sector, num_sectors, page.as_bytes_mut()).unwrap();
         ServerResult::Ok(page)
     }
 }
@@ -50,7 +48,8 @@ impl idl::server::Server for Server {
     }
 }
 
-impl resea::server::Server for Server {}
+impl resea::server::Server for Server {
+}
 
 #[no_mangle]
 pub fn main() {

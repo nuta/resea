@@ -1,6 +1,6 @@
+use resea::result::Result;
 use resea::channel::Channel;
 use resea::idl::kernel::Client;
-use resea::result::Result;
 use resea::std::slice;
 
 const STATUS_DRQ: u8 = 0x08;
@@ -13,7 +13,9 @@ pub struct IdeDevice {
 
 impl IdeDevice {
     pub fn new(io_server: &'static Channel) -> IdeDevice {
-        IdeDevice { io_server }
+        IdeDevice {
+            io_server,
+        }
     }
 
     pub fn read_sectors(&self, sector: usize, num_sectors: usize, buf: &mut [u8]) -> Result<()> {
@@ -26,8 +28,9 @@ impl IdeDevice {
 
         // Read the data.
         let read_len = num_sectors * self.sector_size();
-        let buf_32: &mut [u32] =
-            unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u32, buf.len() / 4) };
+        let buf_32: &mut [u32] = unsafe {
+            slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u32, buf.len() / 4)
+        };
         for i in 0..(read_len / 4) {
             buf_32[i] = self.io_server.read_ioport(0x1f0, 4)? as u32;
         }
@@ -58,7 +61,8 @@ impl IdeDevice {
         self.io_server.write_ioport(0x1f3, 1, sector_low as u64)?;
         self.io_server.write_ioport(0x1f4, 1, sector_mid as u64)?;
         self.io_server.write_ioport(0x1f5, 1, sector_high as u64)?;
-        let drive_reg = 0xe0 /* Use LBA */ | (self.drive_no() << 4) | sector_highhigh as u8;
+        let drive_reg =
+            0xe0 /* Use LBA */ | (self.drive_no() << 4) | sector_highhigh as u8;
         self.io_server.write_ioport(0x1f6, 1, drive_reg as u64)?;
         Ok(())
     }

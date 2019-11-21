@@ -5,7 +5,7 @@
 extern crate resea;
 
 mod arch;
-mod elf;
-mod initfs;
 mod main;
+mod initfs;
 mod process;
+mod elf;

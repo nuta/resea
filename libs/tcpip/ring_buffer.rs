@@ -1,6 +1,6 @@
-use crate::{Error, Result};
 use resea::collections::Vec;
 use resea::std::cmp::min;
+use crate::{Result, Error};
 
 pub struct RingBuffer {
     buffer: Vec<u8>,
@@ -73,14 +73,10 @@ impl RingBuffer {
     }
 
     pub fn discard(&mut self, len: usize) {
-        warn!(
-            "ringbuf[r={}, w={}, rl={}, wl={}]: discard {}",
-            self.read_offset,
-            self.write_offset,
-            self.readable_len(),
-            self.writable_len(),
-            len
-        );
+        warn!("ringbuf[r={}, w={}, rl={}, wl={}]: discard {}",
+            self.read_offset, self.write_offset,
+            self.readable_len(), self.writable_len(),
+            len);
         self.read_offset = (self.read_offset + len) % self.capacity;
     }
 

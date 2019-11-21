@@ -26,14 +26,14 @@ mod tests {
 
     #[test]
     fn test_strlen() {
-        assert_eq!(unsafe { strlen(b"\0" as *const u8) }, 0);
-        assert_eq!(unsafe { strlen(b"abc\0" as *const u8) }, 3);
+        assert_eq!(unsafe{ strlen(b"\0" as *const u8) }, 0);
+        assert_eq!(unsafe{ strlen(b"abc\0" as *const u8) }, 3);
     }
 
     #[test]
     fn test_cstr_to_str() {
-        assert_eq!(unsafe { c_str_to_str(b"\0" as *const u8) }, "");
-        assert_eq!(unsafe { c_str_to_str(b"abc\0" as *const u8) }, "abc");
+        assert_eq!(unsafe{ c_str_to_str(b"\0" as *const u8) }, "");
+        assert_eq!(unsafe{ c_str_to_str(b"abc\0" as *const u8) }, "abc");
     }
 
     #[test]

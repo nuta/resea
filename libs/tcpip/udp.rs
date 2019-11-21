@@ -1,18 +1,18 @@
-use crate::endian::NetEndian;
-use crate::ip::IpAddr;
-use crate::mbuf::Mbuf;
-use crate::packet::Packet;
-use crate::tcp::TcpSocket;
-use crate::transport::{
-    BindTo, Port, Socket, TransportHeader, TransportProtocol, UdpTransportHeader,
-};
-use crate::Result;
 use resea::collections::Vec;
 use resea::collections::VecDeque;
 use resea::std::boxed::Box;
 use resea::std::cell::RefCell;
-use resea::std::mem::size_of;
 use resea::std::rc::Rc;
+use resea::std::mem::size_of;
+use crate::Result;
+use crate::mbuf::Mbuf;
+use crate::packet::Packet;
+use crate::ip::IpAddr;
+use crate::tcp::TcpSocket;
+use crate::transport::{
+    Socket, BindTo, Port, TransportProtocol, TransportHeader, UdpTransportHeader
+};
+use crate::endian::NetEndian;
 
 struct TxPacket {
     dst_addr: IpAddr,
@@ -55,9 +55,9 @@ impl Socket for UdpSocket {
     fn receive<'a>(&mut self, src_addr: IpAddr, header: &TransportHeader<'a>) {
         let header = match header {
             TransportHeader::Udp(header) => header,
-            _ => unreachable!(),
+            _ => unreachable!()
         };
-
+        
         let rx_data = RxPacket {
             src_addr,
             src_port: header.src_port,
@@ -112,7 +112,10 @@ pub fn parse<'a>(pkt: &'a mut Packet) -> Option<(Port, Port, TransportHeader<'a>
     let payload_len = (total_len as usize) - size_of::<UdpHeader>();
     let payload = unwrap_or_return!(pkt.consume_bytes(payload_len), None);
 
-    let parsed_header = TransportHeader::Udp(UdpTransportHeader { src_port, payload });
+    let parsed_header = TransportHeader::Udp(UdpTransportHeader {
+        src_port,
+        payload,
+    });
 
     Some((src_port, dst_port, parsed_header))
 }

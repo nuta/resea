@@ -1,7 +1,7 @@
-use resea::channel::Channel;
 use resea::idl;
-use resea::message::Message;
 use resea::server::connect_to_server;
+use resea::channel::Channel;
+use resea::message::Message;
 use resea::std::string::String;
 
 static _MEMMGR_SERVER: Channel = Channel::from_cid(1);
@@ -16,20 +16,20 @@ struct Server {
 impl Server {
     pub fn new() -> Server {
         // Connect to the dependent servers...
-        let screen = connect_to_server(idl::text_screen_device::INTERFACE_ID)
-            .expect("failed to connect to a text_screen_device server");
-        let keyboard = connect_to_server(idl::keyboard_device::INTERFACE_ID)
-            .expect("failed to connect to a keyboard_device server");
+        let screen =
+            connect_to_server(idl::text_screen_device::INTERFACE_ID)
+                .expect("failed to connect to a text_screen_device server");
+        let keyboard =
+            connect_to_server(idl::keyboard_device::INTERFACE_ID)
+                .expect("failed to connect to a keyboard_device server");
 
         // Print the welcome message.
-        use crate::resea::std::borrow::ToOwned;
         use idl::text_screen_device::Client;
+        use crate::resea::std::borrow::ToOwned;
         screen.print_str("Resea Version \n".to_owned()).unwrap();
-        screen
-            .print_str("Type 'help' for usage.\n".to_owned())
-            .unwrap();
+        screen.print_str("Type 'help' for usage.\n".to_owned()).unwrap();
         screen.print_str(">>> ".to_owned()).unwrap();
-
+        
         // Start receiving keyboard inputs from the driver.
         use idl::keyboard_device::Client as KeyboardClient;
         let server_ch = Channel::create().unwrap();
@@ -56,14 +56,14 @@ impl Server {
     }
 
     fn print_string(&self, string: &str) {
-        use crate::resea::std::borrow::ToOwned;
         use idl::text_screen_device::Client;
+        use crate::resea::std::borrow::ToOwned;
         self.screen.print_str(string.to_owned()).unwrap();
     }
 
     fn print_prompt(&self) {
-        use crate::resea::std::borrow::ToOwned;
         use idl::text_screen_device::Client;
+        use crate::resea::std::borrow::ToOwned;
         self.screen.print_str(">>> ".to_owned()).unwrap();
     }
 

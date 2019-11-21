@@ -1,16 +1,16 @@
-use crate::initfs::{File, Initfs};
-use crate::process::ProcessManager;
-use resea::allocator::PageAllocator;
-use resea::channel::Channel;
-use resea::collections::{HashMap, Vec};
+use resea::PAGE_SIZE;
 use resea::idl;
-use resea::message::{HandleId, InterfaceId, Page};
-use resea::result::{Error, Result};
+use resea::collections::{HashMap, Vec};
+use resea::result::{Result, Error};
 use resea::server::ServerResult;
+use resea::channel::Channel;
+use resea::message::{HandleId, Page, InterfaceId};
 use resea::std::cmp::min;
 use resea::std::ptr;
 use resea::std::string::String;
-use resea::PAGE_SIZE;
+use resea::allocator::PageAllocator;
+use crate::initfs::{Initfs, File};
+use crate::process::ProcessManager;
 
 extern "C" {
     static __initfs: Initfs;
@@ -37,7 +37,7 @@ struct Server {
 }
 
 const FREE_MEMORY_START: usize = 0x0400_0000;
-const FREE_MEMORY_SIZE: usize = 0x1000_0000;
+const FREE_MEMORY_SIZE: usize  = 0x1000_0000;
 
 impl Server {
     pub fn new(initfs: &'static Initfs) -> Server {
@@ -55,11 +55,8 @@ impl Server {
     pub fn launch_servers(&mut self, initfs: &Initfs) {
         let mut dir = initfs.open_dir();
         while let Some(file) = dir.readdir() {
-            info!(
-                "initfs: path='{}', len={}KiB",
-                file.path(),
-                file.len() / 1024
-            );
+            info!("initfs: path='{}', len={}KiB",
+                  file.path(), file.len() / 1024);
             if file.path().starts_with("startups/") {
                 self.execute(file).expect("failed to launch a server");
             }
@@ -76,13 +73,7 @@ impl Server {
 }
 
 impl idl::pager::Server for Server {
-    fn fill(
-        &mut self,
-        _from: &Channel,
-        pid: HandleId,
-        addr: usize,
-        num_pages: usize,
-    ) -> ServerResult<Page> {
+    fn fill(&mut self, _from: &Channel, pid: HandleId, addr: usize, num_pages: usize) -> ServerResult<Page> {
         // TODO: Support filling multiple pages.
         assert_eq!(num_pages, 1);
 
@@ -106,10 +97,8 @@ impl idl::pager::Server for Server {
 
                 // Found the appropriate segment. Fill the page with the file
                 // contents.
-                let copy_len = min(
-                    min(PAGE_SIZE as u64, file_size - fileoff),
-                    phdr.p_filesz - offset,
-                ) as usize;
+                let copy_len = min(min(PAGE_SIZE as u64, file_size - fileoff),
+                                   phdr.p_filesz - offset) as usize;
                 unsafe {
                     let src = proc.file.data().as_ptr().add(fileoff as usize);
                     let dst = page.as_mut_ptr();
@@ -142,11 +131,7 @@ impl idl::memmgr::Server for Server {
         ServerResult::Ok(page.as_page_payload())
     }
 
-    fn alloc_phy_pages(
-        &mut self,
-        _from: &Channel,
-        num_pages: usize,
-    ) -> ServerResult<(usize, Page)> {
+    fn alloc_phy_pages(&mut self, _from: &Channel, num_pages: usize) -> ServerResult<(usize, Page)> {
         if num_pages == 0 {
             return ServerResult::Err(Error::InvalidArg);
         }
@@ -155,12 +140,7 @@ impl idl::memmgr::Server for Server {
         ServerResult::Ok((page.addr, page.as_page_payload()))
     }
 
-    fn map_phy_pages(
-        &mut self,
-        _from: &Channel,
-        paddr: usize,
-        num_pages: usize,
-    ) -> ServerResult<Page> {
+    fn map_phy_pages(&mut self, _from: &Channel, paddr: usize, num_pages: usize) -> ServerResult<Page> {
         // TODO: Check whether the given paddr is already allocated.
         if paddr == 0 || num_pages == 0 {
             return ServerResult::Err(Error::InvalidArg);
@@ -190,7 +170,7 @@ impl idl::discovery::Server for Server {
     fn connect(&mut self, from: &Channel, interface: u8) -> ServerResult<Channel> {
         self.connect_requests.push(ConnectRequest {
             interface,
-            ch: unsafe { from.clone() },
+            ch: unsafe { from.clone() }
         });
 
         ServerResult::NoReply
@@ -207,7 +187,8 @@ impl idl::discovery::Server for Server {
 
 impl resea::server::Server for Server {
     fn deferred_work(&mut self) {
-        let mut pending_requests = Vec::with_capacity(self.connect_requests.len());
+        let mut pending_requests =
+            Vec::with_capacity(self.connect_requests.len());
         for request in self.connect_requests.drain(..) {
             match self.servers.get(&request.interface) {
                 Some(server) => {
@@ -221,8 +202,8 @@ impl resea::server::Server for Server {
                     // info!("sending a server.connect...");
                     // use idl::server::Client;
                     // let ch = server.ch.connect(request.interface).unwrap();
-                    idl::discovery::send_connect_reply(&request.ch, unsafe { server.ch.clone() })
-                        .unwrap();
+                    idl::discovery::send_connect_reply(&request.ch,
+                        unsafe { server.ch.clone() }).unwrap();
                 }
                 None => {
                     // The server with the desired interface does not yet exist.

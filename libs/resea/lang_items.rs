@@ -1,9 +1,9 @@
 #[cfg(not(test))]
-use core::alloc::Layout;
-#[cfg(not(test))]
 use core::panic;
+#[cfg(not(test))]
+use core::alloc::Layout;
 
-#[lang = "eh_personality"]
+#[lang="eh_personality"]
 #[no_mangle]
 #[cfg(not(test))]
 pub fn eh_personality() {

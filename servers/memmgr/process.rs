@@ -1,11 +1,11 @@
-use crate::elf::ELF;
-use crate::initfs::File;
-use resea::channel::Channel;
-use resea::collections::HashMap;
-use resea::idl;
-use resea::message::HandleId;
 use resea::result::Result;
+use resea::channel::Channel;
+use resea::idl;
 use resea::std::borrow::ToOwned;
+use resea::collections::HashMap;
+use crate::initfs::File;
+use resea::message::HandleId;
+use crate::elf::ELF;
 
 pub struct Process {
     pub pid: HandleId,
@@ -17,13 +17,8 @@ pub struct Process {
 impl Process {
     pub fn start(&self, thread_server: &Channel) -> Result<()> {
         use idl::kernel::Client;
-        thread_server.spawn_thread(
-            self.pid,
-            self.elf.entry,
-            APP_INITIAL_STACK_POINTER,
-            THREAD_INFO_ADDR,
-            0, /* arg */
-        )?;
+        thread_server.spawn_thread(self.pid, self.elf.entry,
+            APP_INITIAL_STACK_POINTER, THREAD_INFO_ADDR, 0 /* arg */)?;
         Ok(())
     }
 }
@@ -34,11 +29,11 @@ pub struct ProcessManager {
 }
 
 // TODO: Move to arch.
-const THREAD_INFO_ADDR: usize = 0x00f1_b000;
-const APP_IMAGE_START: usize = 0x0100_0000;
-const APP_IMAGE_SIZE: usize = 0x0100_0000;
-const APP_ZEROED_PAGES_START: usize = 0x0200_0000;
-const APP_ZEROED_PAGES_SIZE: usize = 0x0200_0000;
+const THREAD_INFO_ADDR:          usize = 0x00f1_b000;
+const APP_IMAGE_START:           usize = 0x0100_0000;
+const APP_IMAGE_SIZE:            usize = 0x0100_0000;
+const APP_ZEROED_PAGES_START:    usize = 0x0200_0000;
+const APP_ZEROED_PAGES_SIZE:     usize = 0x0200_0000;
 const APP_INITIAL_STACK_POINTER: usize = 0x0300_0000;
 
 impl ProcessManager {
@@ -58,27 +53,16 @@ impl ProcessManager {
         let kernel_ch = idl::server::Client::connect(self.process_server, 0)?;
 
         use idl::kernel::Client;
-        let (proc, pager_ch) = self.process_server.create_process(file.path().to_owned())?;
+        let (proc, pager_ch) =
+            self.process_server.create_process(file.path().to_owned())?;
 
         self.process_server.inject_channel(proc, kernel_ch)?;
-        self.process_server
-            .add_vm_area(proc, APP_IMAGE_START, APP_IMAGE_SIZE, 0x06)?;
-        self.process_server.add_vm_area(
-            proc,
-            APP_ZEROED_PAGES_START,
-            APP_ZEROED_PAGES_SIZE,
-            0x06,
-        )?;
+        self.process_server.add_vm_area(proc, APP_IMAGE_START, APP_IMAGE_SIZE,
+            0x06)?;
+        self.process_server.add_vm_area(proc, APP_ZEROED_PAGES_START,
+            APP_ZEROED_PAGES_SIZE, 0x06)?;
 
-        self.processes.insert(
-            proc,
-            Process {
-                pid: proc,
-                elf,
-                file,
-                pager_ch,
-            },
-        );
+        self.processes.insert(proc, Process { pid: proc, elf, file, pager_ch });
         Ok(proc)
     }
 }

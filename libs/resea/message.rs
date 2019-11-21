@@ -1,6 +1,6 @@
 use crate::arch::PAGE_SIZE;
-use crate::channel::CId;
 use crate::result::Error;
+use crate::channel::CId;
 use crate::std::string::String;
 
 pub const SYSCALL_IPC: u32 = 0;
@@ -144,7 +144,7 @@ impl FixedString {
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(from: &str) -> FixedString {
         unsafe {
-            use core::{cmp::min, mem::MaybeUninit, ptr::copy_nonoverlapping};
+            use core::{mem::MaybeUninit, cmp::min, ptr::copy_nonoverlapping};
             #[allow(clippy::uninit_assumed_init)]
             let mut string: FixedString = MaybeUninit::uninit().assume_init();
             let copy_len = min(from.len(), 127);

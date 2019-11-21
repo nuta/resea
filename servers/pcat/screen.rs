@@ -15,8 +15,7 @@ pub struct Screen {
 impl Screen {
     pub fn new(kernel_server: &'static Channel) -> Screen {
         use resea::idl::kernel::Client;
-        let screen = kernel_server
-            .get_screen_buffer()
+        let screen = kernel_server.get_screen_buffer()
             .expect("failed to get the screen page");
 
         Screen {

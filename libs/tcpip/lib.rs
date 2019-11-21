@@ -6,28 +6,28 @@ extern crate resea;
 
 #[macro_use]
 mod macros;
-mod arp;
-mod checksum;
-mod device;
-mod endian;
-mod ethernet;
 mod instance;
+mod arp;
+mod device;
+mod ethernet;
 mod ip;
 mod ipv4;
-mod mbuf;
-mod packet;
-mod ring_buffer;
-mod tcp;
 mod transport;
 mod udp;
+mod tcp;
+mod packet;
+mod checksum;
+mod endian;
 mod wrapping;
+mod mbuf;
+mod ring_buffer;
 
-pub use ethernet::MacAddr;
 pub use instance::{Instance, SocketHandle};
 pub use ip::IpAddr;
+pub use transport::Port;
 pub use ipv4::{Ipv4Addr, Ipv4Network};
 pub use mbuf::Mbuf;
-pub use transport::Port;
+pub use ethernet::MacAddr;
 
 pub type Result<T> = core::result::Result<T, Error>;
 

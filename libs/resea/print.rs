@@ -1,5 +1,5 @@
-use crate::channel::Channel;
 use core::fmt::Write;
+use crate::channel::Channel;
 
 pub struct Printer();
 
@@ -10,12 +10,12 @@ impl Printer {
 }
 
 impl Write for Printer {
-    fn write_char(&mut self, c: char) -> core::fmt::Result {
+    fn  write_char(&mut self, c: char) -> core::fmt::Result {
         printchar(c as u8);
         Ok(())
     }
 
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+    fn  write_str(&mut self, s: &str) -> core::fmt::Result {
         print_str(s);
         Ok(())
     }
