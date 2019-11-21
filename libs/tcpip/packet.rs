@@ -7,10 +7,7 @@ pub struct Packet<'a> {
 
 impl<'a> Packet<'a> {
     pub const fn new(data: &'a [u8]) -> Packet<'a> {
-        Packet {
-            data,
-            offset: 0,
-        }
+        Packet { data, offset: 0 }
     }
 
     pub fn consume<T>(&mut self) -> Option<&T> {
@@ -23,9 +20,8 @@ impl<'a> Packet<'a> {
 
         let offset = self.offset;
         self.offset += consume_len;
-        let reference = unsafe {
-            &*transmute::<*const u8, *const T>(self.data.as_ptr().add(offset))
-        };
+        let reference =
+            unsafe { &*transmute::<*const u8, *const T>(self.data.as_ptr().add(offset)) };
         Some(reference)
     }
 

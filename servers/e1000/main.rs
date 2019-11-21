@@ -1,12 +1,12 @@
-use resea::idl;
-use resea::server::{ServerResult, publish_server};
-use resea::result::Error;
-use resea::channel::Channel;
-use resea::message::{Page, Notification};
-use resea::PAGE_SIZE;
-use resea::utils::align_up;
 use crate::e1000::Device;
 use crate::pci::Pci;
+use resea::channel::Channel;
+use resea::idl;
+use resea::message::{Notification, Page};
+use resea::result::Error;
+use resea::server::{publish_server, ServerResult};
+use resea::utils::align_up;
+use resea::PAGE_SIZE;
 
 static MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -41,7 +41,7 @@ impl idl::network_device::Server for Server {
         self.listener = Some(ch);
         ServerResult::Ok(())
     }
-    
+
     fn transmit(&mut self, _from: &Channel, packet: Page, len: usize) -> ServerResult<()> {
         let data = packet.as_bytes();
         if len > data.len() {

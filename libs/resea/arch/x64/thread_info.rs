@@ -26,15 +26,11 @@ pub unsafe fn copy_to_ipc_buffer(m: &Message) {
     core::ptr::copy_nonoverlapping(
         m as *const _,
         &mut get_thread_info().ipc_buffer as *mut _,
-        1
+        1,
     );
 }
 
 pub unsafe fn copy_from_ipc_buffer(m: &mut Message) {
     // TODO: Read the length of the inline payload not to copy the whole message.
-    core::ptr::copy_nonoverlapping(
-        &get_thread_info().ipc_buffer as *const _,
-        m as *mut _,
-        1
-    );
+    core::ptr::copy_nonoverlapping(&get_thread_info().ipc_buffer as *const _, m as *mut _, 1);
 }

@@ -3,5 +3,5 @@
 #[macro_use]
 extern crate resea;
 
-mod main;
 mod fat;
+mod main;

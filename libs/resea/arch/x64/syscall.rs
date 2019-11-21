@@ -1,4 +1,4 @@
-use crate::result::{Result, Error};
+use crate::result::{Error, Result};
 
 const SYSCALL_IPC: u32 = 0;
 const SYSCALL_OPEN: u32 = 1;

@@ -1,5 +1,5 @@
-use resea::utils::c_str_to_str;
 use resea::std::mem::size_of;
+use resea::utils::c_str_to_str;
 
 #[repr(C, packed)]
 pub struct File {
@@ -28,16 +28,11 @@ impl File {
     }
 
     pub fn path(&self) -> &str {
-        unsafe {
-            c_str_to_str(self.path.as_ptr())
-        }
+        unsafe { c_str_to_str(self.path.as_ptr()) }
     }
 
     pub fn data(&self) -> &[u8] {
-        unsafe {
-            resea::std::slice::from_raw_parts(
-                self.content.as_ptr(), self.len as usize)
-        }
+        unsafe { resea::std::slice::from_raw_parts(self.content.as_ptr(), self.len as usize) }
     }
 }
 
@@ -85,8 +80,8 @@ impl Dir {
                 file = &*self.next;
                 self.index += 1;
                 if self.index < self.num_files {
-                    let next_addr = self.next as usize + size_of::<File>()
-                        + file.len() + file.padding_len();
+                    let next_addr =
+                        self.next as usize + size_of::<File>() + file.len() + file.padding_len();
                     self.next = next_addr as *const File;
                 }
             }

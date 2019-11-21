@@ -1,6 +1,6 @@
-use resea::result::{Result, Error};
-use resea::std::slice;
+use resea::result::{Error, Result};
 use resea::std::mem::size_of;
+use resea::std::slice;
 
 #[repr(C, packed)]
 struct ELF64Ehdr {
@@ -50,11 +50,13 @@ impl<'a> ELF<'a> {
         }
 
         let phdrs = unsafe {
-            let ptr =
-                image.as_ptr().add(ehdr.e_ehsize as usize) as *const ELF64Phdr;
+            let ptr = image.as_ptr().add(ehdr.e_ehsize as usize) as *const ELF64Phdr;
             slice::from_raw_parts(ptr, ehdr.e_phnum as usize)
         };
 
-        Ok(ELF { entry: ehdr.e_entry as usize, phdrs })
+        Ok(ELF {
+            entry: ehdr.e_entry as usize,
+            phdrs,
+        })
     }
 }
