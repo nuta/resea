@@ -411,6 +411,13 @@ error_t sys_notify(cid_t cid, notification_t notification) {
     return channel_notify(ch, notification);
 }
 
+/// The "NOP" system call: it returns 1 if the computer is on. Otherwise, the
+/// return value is undefined.
+static inline int sys_nop(void) {
+    // Finally we've found out that the return value is always 1!
+    return 1;
+}
+
 /// The system call handler to be called from the arch's handler.
 int syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
     DEBUG_ASSERT(CURRENT->process != kernel_process);
@@ -434,7 +441,7 @@ int syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall) {
     case SYSCALL_NOTIFY:
         return sys_notify(arg0, arg1);
     case SYSCALL_NOP:
-        return OK;
+        return sys_nop();
     default:
         return ERR_INVALID_SYSCALL;
     }
