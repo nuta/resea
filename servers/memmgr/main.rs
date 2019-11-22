@@ -4,9 +4,9 @@ use resea::allocator::PageAllocator;
 use resea::channel::Channel;
 use resea::collections::{HashMap, Vec};
 use resea::idl;
-use resea::message::{HandleId, InterfaceId, Page};
+use resea::message::{HandleId, InterfaceId, Message, Page};
 use resea::result::{Error, Result};
-use resea::server::ServerResult;
+use resea::server::{DeferredWorkResult, ServerResult};
 use resea::std::cmp::min;
 use resea::std::ptr;
 use resea::std::string::String;
@@ -19,7 +19,8 @@ extern "C" {
 static KERNEL_SERVER: Channel = Channel::from_cid(1);
 
 struct RegisteredServer {
-    ch: Channel,
+    server_ch: Channel,
+    client_ch: Option<Channel>,
 }
 
 struct ConnectRequest {
@@ -186,8 +187,39 @@ impl idl::runtime::Server for Server {
     }
 }
 
+impl idl::timer::Server for Server {
+    fn create(
+        &mut self,
+        _from: &Channel,
+        ch: Channel,
+        initial: i32,
+        interval: i32,
+    ) -> ServerResult<HandleId> {
+        use idl::timer::Client;
+        // FIXME: Don't use unwrap
+        ServerResult::Ok(KERNEL_SERVER.create(ch, initial, interval).unwrap())
+    }
+
+    fn reset(
+        &mut self,
+        _from: &Channel,
+        timer: HandleId,
+        initial: i32,
+        interval: i32,
+    ) -> ServerResult<()> {
+        use idl::timer::Client;
+        ServerResult::Ok(KERNEL_SERVER.reset(timer, initial, interval).unwrap())
+    }
+
+    fn clear(&mut self, _from: &Channel, timer: HandleId) -> ServerResult<()> {
+        use idl::timer::Client;
+        ServerResult::Ok(KERNEL_SERVER.clear(timer).unwrap())
+    }
+}
+
 impl idl::discovery::Server for Server {
     fn connect(&mut self, from: &Channel, interface: u8) -> ServerResult<Channel> {
+        warn!("accepted a connect request = {}", interface);
         self.connect_requests.push(ConnectRequest {
             interface,
             ch: unsafe { from.clone() },
@@ -200,39 +232,97 @@ impl idl::discovery::Server for Server {
         // TODO: Support multiple servers with the same interface ID.
         assert!(self.servers.get(&interface).is_none());
 
-        self.servers.insert(interface, RegisteredServer { ch });
+        warn!("accepted a new server = {}", interface);
+        ch.transfer_to(&self.ch).unwrap();
+        let server = RegisteredServer {
+            server_ch: ch,
+            client_ch: None,
+        };
+
+        self.servers.insert(interface, server);
         ServerResult::Ok(())
     }
 }
 
 impl resea::server::Server for Server {
-    fn deferred_work(&mut self) {
+    fn deferred_work(&mut self) -> DeferredWorkResult {
         let mut pending_requests = Vec::with_capacity(self.connect_requests.len());
+        let mut result = DeferredWorkResult::Done;
         for request in self.connect_requests.drain(..) {
-            match self.servers.get(&request.interface) {
+            let needs_retry = match self.servers.get_mut(&request.interface) {
                 Some(server) => {
-                    // XXX: Send a server.connect request to the registered
-                    //      server instead.
-                    //
-                    // FIXME: Use the send stub instead of call one because
-                    // there's no gruantee that the server returns the reply
-                    // immediately.
-                    //
-                    // info!("sending a server.connect...");
-                    // use idl::server::Client;
-                    // let ch = server.ch.connect(request.interface).unwrap();
-                    idl::discovery::send_connect_reply(&request.ch, unsafe { server.ch.clone() })
-                        .unwrap();
+                    match server.client_ch.take() {
+                        Some(client_ch) => {
+                            // Now we have a valid client channel. Try send it to the
+                            // awaiting client...
+                            warn!("sending a connect_reply");
+                            match idl::discovery::nbsend_connect_reply(&request.ch, client_ch) {
+                                Ok(_) => false,
+                                Err(Error::NeedsRetry) => {
+                                    warn!("failed to send a connect_reply");
+                                    true
+                                }
+                                Err(_) => {
+                                    warn!("an unexpected error occurred during sending a discovery.connect_reply");
+                                    false
+                                }
+                            }
+                        }
+                        None => {
+                            // Try sending a server.connect request to the registered
+                            // server...
+                            warn!("sending a connect request");
+                            let reply =
+                                idl::server::nbsend_connect(&server.server_ch, request.interface);
+                            match reply {
+                                Ok(()) => true,
+                                Err(Error::NeedsRetry) => {
+                                    // The server is not ready. Try later.
+                                    warn!("failed to send a connect");
+                                    true
+                                }
+                                Err(_) => {
+                                    // The server returned an unexpected error.
+                                    warn!("error occurred during receiving a server.connect");
+                                    true
+                                }
+                            }
+                        }
+                    }
                 }
-                None => {
-                    // The server with the desired interface does not yet exist.
-                    // Try later.
-                    pending_requests.push(request);
-                }
+                None => true,
+            };
+
+            if needs_retry {
+                result = DeferredWorkResult::NeedsRetry;
+                pending_requests.push(request);
             }
         }
 
         self.connect_requests = pending_requests;
+        result
+    }
+
+    fn unknown_message(&mut self, m: &mut Message) -> bool {
+        if m.header == idl::server::CONNECT_REPLY_MSG {
+            let m = unsafe {
+                resea::std::mem::transmute::<&mut Message, &mut idl::server::ConnectReplyMsg>(m)
+            };
+
+            // Successfully created a new client channel.
+            info!(
+                "received a server.connect_reply for interface={}",
+                m.interface
+            );
+            match self.servers.get_mut(&m.interface) {
+                Some(server) => server.client_ch = Some(Channel::from_cid(m.ch)),
+                None => {
+                    warn!("received server.connect_reply from an unexpected channel");
+                }
+            }
+        }
+
+        false
     }
 }
 
@@ -246,5 +336,5 @@ pub fn main() {
     server.launch_servers(initfs);
 
     info!("entering mainloop...");
-    serve_forever!(&mut server, [runtime, pager, memmgr, discovery]);
+    serve_forever!(&mut server, [runtime, pager, timer, memmgr, discovery]);
 }
