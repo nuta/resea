@@ -246,8 +246,8 @@ impl Device {
         // TODO: Wait until trasmission finish.
     }
 
-    pub fn receive_ethernet_packet(&mut self) -> Option<Vec<u8>> {
-        self.rx_queue.pop_front()
+    pub fn rx_queue(&mut self) -> &mut VecDeque<Vec<u8>> {
+        &mut self.rx_queue
     }
 
     pub fn handle_interrupt(&mut self) {

@@ -69,13 +69,24 @@ impl idl::server::Server for Server {
 impl resea::server::Server for Server {
     fn notification(&mut self, _notification: Notification) {
         self.device.handle_interrupt();
-        while let Some(pkt) = self.device.receive_ethernet_packet() {
+        let rx_queue = self.device.rx_queue();
+        while let Some(pkt) = rx_queue.front() {
             if let Some(ref listener) = self.listener {
                 use idl::memmgr::Client;
                 let num_pages = align_up(pkt.len(), PAGE_SIZE) / PAGE_SIZE;
                 let mut page = MEMMGR_SERVER.alloc_pages(num_pages).unwrap();
                 (&mut page.as_bytes_mut()[..pkt.len()]).copy_from_slice(&pkt);
-                idl::network_device::send_received(listener, page, pkt.len()).ok();
+                let reply = idl::network_device::nbsend_received(listener, page, pkt.len());
+                match reply {
+                    // Try later.
+                    Err(Error::NeedsRetry) => (),
+                    _ => {
+                        rx_queue.pop_front();
+                    }
+                }
+            } else {
+                // No listeners. Drop the received packets.
+                rx_queue.pop_front();
             }
         }
     }
