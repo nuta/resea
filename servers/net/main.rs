@@ -2,7 +2,7 @@ use resea::channel::Channel;
 use resea::collections::Vec;
 use resea::idl;
 use resea::message::Message;
-use resea::server::connect_to_server;
+use resea::server::{connect_to_server, DeferredWorkResult};
 use resea::std::string::String;
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
@@ -45,7 +45,7 @@ impl Server {
 }
 
 impl resea::server::Server for Server {
-    fn deferred_work(&mut self) {
+    fn deferred_work(&mut self) -> DeferredWorkResult {
         loop {
             let mut new_resp = false;
             self.tcpip.interval_work().unwrap();
@@ -87,6 +87,8 @@ impl resea::server::Server for Server {
                 break;
             }
         }
+
+        DeferredWorkResult::Done
     }
 
     // FIXME:
