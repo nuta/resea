@@ -1,9 +1,10 @@
 use crate::keyboard::Keyboard;
 use crate::screen::Screen;
 use resea::channel::Channel;
-use resea::idl::{keyboard_device, text_screen_device};
-use resea::message::Notification;
-use resea::server::{publish_server, ServerResult};
+use resea::idl::{self, keyboard_device, text_screen_device};
+use resea::message::{InterfaceId, Notification};
+use resea::result::Error;
+use resea::server::{publish_server, DeferredWorkResult, ServerResult};
 use resea::std::string::String;
 
 static _MEMMGR_SERVER: Channel = Channel::from_cid(1);
@@ -49,14 +50,42 @@ impl keyboard_device::Server for Server {
     }
 }
 
+impl idl::server::Server for Server {
+    fn connect(
+        &mut self,
+        _from: &Channel,
+        interface: InterfaceId,
+    ) -> ServerResult<(InterfaceId, Channel)> {
+        assert!(
+            interface == keyboard_device::INTERFACE_ID
+                || interface == text_screen_device::INTERFACE_ID
+        );
+        let client_ch = Channel::create().unwrap();
+        client_ch.transfer_to(&self.ch).unwrap();
+        ServerResult::Ok((interface, client_ch))
+    }
+}
+
 impl resea::server::Server for Server {
-    fn deferred_work(&mut self) {
+    fn deferred_work(&mut self) -> DeferredWorkResult {
         if let Some(ref listener) = self.keyboard_listener {
-            use resea::idl::keyboard_device::send_pressed;
-            while let Some(ch) = self.keyboard.buffer().pop_front() {
-                send_pressed(listener, ch).ok();
+            while let Some(ch) = self.keyboard.buffer().front() {
+                use resea::idl::keyboard_device::nbsend_pressed;
+                match nbsend_pressed(listener, *ch) {
+                    Err(Error::NeedsRetry) => {
+                        return DeferredWorkResult::NeedsRetry;
+                    }
+                    Err(_) => {
+                        panic!("failed to send a key event");
+                    }
+                    Ok(_) => {
+                        self.keyboard.buffer().pop_front();
+                    }
+                }
             }
         }
+
+        DeferredWorkResult::Done
     }
 
     fn notification(&mut self, _notification: Notification) {
@@ -72,5 +101,7 @@ pub fn main() {
 
     publish_server(text_screen_device::INTERFACE_ID, &server.ch).unwrap();
     publish_server(keyboard_device::INTERFACE_ID, &server.ch).unwrap();
-    serve_forever!(&mut server, [text_screen_device, keyboard_device]);
+
+    info!("ready");
+    serve_forever!(&mut server, [server, text_screen_device, keyboard_device]);
 }
