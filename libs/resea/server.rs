@@ -22,8 +22,15 @@ pub enum ServerResult<T> {
     NoReply,
 }
 
+pub enum DeferredWorkResult {
+    Done,
+    NeedsRetry,
+}
+
 pub trait Server {
-    fn deferred_work(&mut self) {}
+    fn deferred_work(&mut self) -> DeferredWorkResult {
+        DeferredWorkResult::Done
+    }
     fn notification(&mut self, _notification: Notification) {}
     fn unknown_message(&mut self, m: &mut Message) -> bool {
         warn!("unknown message");
@@ -35,16 +42,29 @@ pub trait Server {
 #[macro_export]
 macro_rules! serve_forever {
     ($server:expr, [$($interface:ident), *]) => {{
+        use $crate::server::DeferredWorkResult;
+
         // The server struct must have 'ch' field.
         debug_assert!($server.ch.cid() != 0);
         let mut server = $server;
+
+        // Assuming that @1 provides the timer interface.
+        let timer_server = Channel::from_cid(1);
+        let timer_client = Channel::create().unwrap();
+        timer_client.transfer_to(&server.ch).unwrap();
+
+        use $crate::idl::timer::Client;
+        let timer_handle = timer_server.create(timer_client, 0, 0).unwrap();
+
+        const DELAY_RESET: i32 = 20;
+        const DELAY_MAX: i32 = 3000;
+        let mut delay = DELAY_RESET;
+        let mut needs_retry = false;
+
         loop {
             let mut m = server.ch.recv().expect("failed to receive");
-            if unsafe { !m.notification.is_empty() } {
-                $crate::server::Server::notification(server, m.notification);
-            }
-
             let mut reply_to = Channel::from_cid(m.from);
+
             let has_reply = match m.header.interface_id() {
                 $( $crate::idl::$interface::INTERFACE_ID =>
                     $crate::idl::$interface::Server::__handle(server, &mut m), )*
@@ -61,7 +81,19 @@ macro_rules! serve_forever {
                 reply_to.send(&m).ok();
             }
 
-            $crate::server::Server::deferred_work(server);
+            match $crate::server::Server::deferred_work(server) {
+                DeferredWorkResult::Done => {
+                    // needs_retry = false;
+                    delay = DELAY_RESET;
+                }
+                DeferredWorkResult::NeedsRetry => {
+                    // Set a timer to retry the deferred work later.
+                    info!("retrying later...");
+                    timer_server.reset(timer_handle, delay, 0).unwrap();
+                    needs_retry = true;
+                    delay =  $crate::std::cmp::min(delay << 1, DELAY_MAX);
+                }
+            }
         }
     }};
 }
