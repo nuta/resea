@@ -98,6 +98,8 @@ impl resea::server::Server for Server {
 
 #[no_mangle]
 pub fn main() {
+    info!("starting...");
     let mut server = Server::new();
+    info!("ready");
     serve_forever!(&mut server, []);
 }
