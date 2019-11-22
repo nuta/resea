@@ -11,13 +11,16 @@ static struct list_head active_timers;
 /// The timer interrupt handler.
 void timer_interrupt_handler(int ticks) {
     LIST_FOR_EACH(timer, &active_timers, struct timer, next) {
+        if (timer->current <= 0) {
+            // The timer is disabled or is an already expired oneshot one.
+            continue;
+        }
+
         timer->current -= ticks;
-        if (timer->current < 0) {
+        if (timer->current <= 0) {
             timer->handler(timer);
             if (timer->interval) {
                 timer->current = timer->interval;
-            } else {
-                timer_destroy(timer);
             }
         }
     }
@@ -36,7 +39,7 @@ struct timer *timer_create(int initial, int interval,
         return NULL;
     }
 
-    TRACE("timer_create: id=%d initial=%d, intrerval=%d",
+    TRACE("timer_create: id=%d initial=%d, interval=%d",
           timer_id, initial, interval);
     timer->id = timer_id;
     timer->current = initial;
@@ -46,6 +49,13 @@ struct timer *timer_create(int initial, int interval,
     list_push_back(&active_timers, &timer->next);
     table_set(&timers, timer_id, timer);
     return timer;
+}
+
+void timer_reset(struct timer *timer, int initial, int interval) {
+    TRACE("timer_reset: id=%d initial=%d, interval=%d",
+          timer->id, initial, interval);
+    timer->interval = interval;
+    timer->current = initial;
 }
 
 void timer_destroy(struct timer *timer) {

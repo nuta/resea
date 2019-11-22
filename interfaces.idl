@@ -46,6 +46,16 @@ interface pager {
     fill(proc: handle, addr: uintptr, num_pages: size) -> (page: page)
 }
 
+[id(5)]
+interface timer {
+    [id(1), type(call)]
+    create(ch: channel, initial: int32, interval: int32) -> (timer: handle)
+    [id(2), type(call)]
+    reset(timer: handle, initial: int32, interval: int32) -> ()
+    [id(3), type(call)]
+    clear(timer: handle) -> ()
+}
+
 [id(10)]
 interface kernel {
     [id(1), type(call)]
@@ -64,18 +74,13 @@ interface kernel {
     destroy_thread(thread: handle) -> ()
 
     [id(7), type(call)]
-    set_timer(ch: channel, initial: int32, interval: int32) -> (timer: handle)
-    [id(8), type(call)]
-    clear_timer(timer: handle) -> ()
-
-    [id(9), type(call)]
     listen_irq(ch: channel, irq: uint8) -> ()
-    [id(10), type(call)]
+    [id(8), type(call)]
     read_ioport(addr: uint64, size: size) -> (data: uint64)
-    [id(11), type(call)]
+    [id(9), type(call)]
     write_ioport(addr: uint64, size: size, data: uint64) -> ()
 
-    [id(12), type(call)]
+    [id(10), type(call)]
     get_screen_buffer() -> (page: page)
 }
 

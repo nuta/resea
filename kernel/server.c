@@ -262,10 +262,7 @@ static error_t handle_process_inject_channel(struct message *m) {
 static void user_timer_handler(struct timer *timer) {
     struct channel *ch = timer->arg;
     channel_notify(ch, NOTIFY_TIMER);
-    if (!timer->interval) {
-        channel_decref(timer->arg);
-        table_free(&user_timers, timer->id);
-    }
+    WARN("timer expire notified");
 }
 
 static error_t handle_io_read_io_port(struct message *m) {
@@ -296,10 +293,10 @@ static error_t handle_kernel_get_screen_buffer(struct message *m) {
     return err;
 }
 
-static error_t handle_timer_set(struct message *m) {
-    cid_t cid = m->payloads.kernel.set_timer.ch;
-    int32_t initial = m->payloads.kernel.set_timer.initial;
-    int32_t interval = m->payloads.kernel.set_timer.interval;
+static error_t handle_timer_create(struct message *m) {
+    cid_t cid = m->payloads.timer.create.ch;
+    int32_t initial = m->payloads.timer.create.initial;
+    int32_t interval = m->payloads.timer.create.interval;
 
     struct channel *ch = table_get(&CURRENT->process->channels, cid);
     ASSERT(ch);
@@ -319,13 +316,28 @@ static error_t handle_timer_set(struct message *m) {
 
     table_set(&user_timers, timer_id, timer);
 
-    m->header = KERNEL_SET_TIMER_REPLY_MSG;
-    m->payloads.kernel.set_timer_reply.timer = timer_id;
+    m->header = TIMER_CREATE_REPLY_MSG;
+    m->payloads.timer.create_reply.timer = timer_id;
+    return OK;
+}
+
+static error_t handle_timer_reset(struct message *m) {
+    handle_t handle = m->payloads.timer.reset.timer;
+    int32_t initial = m->payloads.timer.reset.initial;
+    int32_t interval = m->payloads.timer.reset.interval;
+
+    struct timer *timer = table_get(&user_timers, handle);
+    if (!timer) {
+        return ERR_NOT_FOUND;
+    }
+
+    timer_reset(timer, initial, interval);
+    m->header = TIMER_RESET_REPLY_MSG;
     return OK;
 }
 
 static error_t handle_timer_clear(UNUSED struct message *m) {
-    int timer_id = m->payloads.kernel.clear_timer.timer;
+    int timer_id = m->payloads.timer.clear.timer;
 
     struct timer *timer = table_get(&user_timers, timer_id);
     if (!timer) {
@@ -336,7 +348,7 @@ static error_t handle_timer_clear(UNUSED struct message *m) {
     table_free(&user_timers, timer->id);
     timer_destroy(timer);
 
-    m->header = KERNEL_CLEAR_TIMER_REPLY_MSG;
+    m->header = TIMER_CLEAR_REPLY_MSG;
     return OK;
 }
 
@@ -355,8 +367,9 @@ static error_t process_message(struct message *m) {
     case KERNEL_READ_IOPORT_MSG:       return handle_io_read_io_port(m);
     case KERNEL_WRITE_IOPORT_MSG:      return handle_io_write_io_port(m);
     case KERNEL_GET_SCREEN_BUFFER_MSG: return handle_kernel_get_screen_buffer(m);
-    case KERNEL_SET_TIMER_MSG:         return handle_timer_set(m);
-    case KERNEL_CLEAR_TIMER_MSG:       return handle_timer_clear(m);
+    case TIMER_CREATE_MSG:             return handle_timer_create(m);
+    case TIMER_RESET_MSG:              return handle_timer_reset(m);
+    case TIMER_CLEAR_MSG:              return handle_timer_clear(m);
     case SERVER_CONNECT_MSG:           return handle_server_connect(m);
     }
 
