@@ -49,6 +49,13 @@ impl Channel {
         }
     }
 
+    pub fn send_noblock(&self, m: &Message) -> Result<()> {
+        unsafe {
+            copy_to_ipc_buffer(m);
+            syscall::send_noblock(self.cid)
+        }
+    }
+
     pub fn send_err(&self, err: Error) -> Result<()> {
         self.send(&Message::from_error(err))
     }

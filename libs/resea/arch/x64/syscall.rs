@@ -5,6 +5,7 @@ const SYSCALL_OPEN: u32 = 1;
 const SYSCALL_TRANSFER: u32 = 4;
 const IPC_SEND: u32 = 1 << 8;
 const IPC_RECV: u32 = 1 << 9;
+const IPC_NOBLOCK: u32 = 1 << 10;
 
 unsafe fn convert_error(error: i32) -> Result<()> {
     if error < 0 {
@@ -59,6 +60,10 @@ pub unsafe fn transfer(src: i32, dst: i32) -> Result<()> {
 
 pub unsafe fn send(cid: i32) -> Result<()> {
     ipc_syscall(cid, IPC_SEND)
+}
+
+pub unsafe fn send_noblock(cid: i32) -> Result<()> {
+    ipc_syscall(cid, IPC_SEND | IPC_NOBLOCK)
 }
 
 pub unsafe fn recv(cid: i32) -> Result<()> {
