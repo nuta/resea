@@ -2,7 +2,7 @@ use crate::fat::{File, FileSystem};
 use resea::channel::Channel;
 use resea::collections::HashMap;
 use resea::idl;
-use resea::message::{HandleId, Page};
+use resea::message::{HandleId, InterfaceId, Page};
 use resea::result::Error;
 use resea::server::{connect_to_server, ServerResult};
 use resea::std::string::String;
@@ -84,11 +84,15 @@ impl idl::fs::Server for Server {
 }
 
 impl idl::server::Server for Server {
-    fn connect(&mut self, _from: &Channel, interface_id: u8) -> ServerResult<Channel> {
-        assert_eq!(interface_id, idl::fs::INTERFACE_ID);
-        let ch = Channel::create().unwrap();
-        ch.transfer_to(&self.ch).unwrap();
-        ServerResult::Ok(ch)
+    fn connect(
+        &mut self,
+        _from: &Channel,
+        interface: InterfaceId,
+    ) -> ServerResult<(InterfaceId, Channel)> {
+        assert!(interface == idl::storage_device::INTERFACE_ID);
+        let client_ch = Channel::create().unwrap();
+        client_ch.transfer_to(&self.ch).unwrap();
+        ServerResult::Ok((interface, client_ch))
     }
 }
 

@@ -2,7 +2,7 @@ use crate::ide::IdeDevice;
 use resea::channel::Channel;
 use resea::idl;
 use resea::idl::storage_device::INTERFACE_ID;
-use resea::message::Page;
+use resea::message::{InterfaceId, Page};
 use resea::result::Error;
 use resea::server::{publish_server, ServerResult};
 use resea::utils::align_up;
@@ -42,11 +42,15 @@ impl idl::storage_device::Server for Server {
 }
 
 impl idl::server::Server for Server {
-    fn connect(&mut self, _from: &Channel, interface_id: u8) -> ServerResult<Channel> {
-        assert_eq!(interface_id, INTERFACE_ID);
-        let ch = Channel::create().unwrap();
-        ch.transfer_to(&self.ch).unwrap();
-        ServerResult::Ok(ch)
+    fn connect(
+        &mut self,
+        _from: &Channel,
+        interface: InterfaceId,
+    ) -> ServerResult<(InterfaceId, Channel)> {
+        assert!(interface == idl::storage_device::INTERFACE_ID);
+        let client_ch = Channel::create().unwrap();
+        client_ch.transfer_to(&self.ch).unwrap();
+        ServerResult::Ok((interface, client_ch))
     }
 }
 

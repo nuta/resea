@@ -2,7 +2,7 @@ use crate::e1000::Device;
 use crate::pci::Pci;
 use resea::channel::Channel;
 use resea::idl;
-use resea::message::{Notification, Page};
+use resea::message::{InterfaceId, Notification, Page};
 use resea::result::Error;
 use resea::server::{publish_server, ServerResult};
 use resea::utils::align_up;
@@ -53,6 +53,19 @@ impl idl::network_device::Server for Server {
     }
 }
 
+impl idl::server::Server for Server {
+    fn connect(
+        &mut self,
+        _from: &Channel,
+        interface: InterfaceId,
+    ) -> ServerResult<(InterfaceId, Channel)> {
+        assert!(interface == idl::network_device::INTERFACE_ID);
+        let client_ch = Channel::create().unwrap();
+        client_ch.transfer_to(&self.ch).unwrap();
+        ServerResult::Ok((interface, client_ch))
+    }
+}
+
 impl resea::server::Server for Server {
     fn notification(&mut self, _notification: Notification) {
         self.device.handle_interrupt();
@@ -74,5 +87,5 @@ pub fn main() {
     let mut server = Server::new();
 
     publish_server(idl::network_device::INTERFACE_ID, &server.ch).unwrap();
-    serve_forever!(&mut server, [network_device]);
+    serve_forever!(&mut server, [server, network_device]);
 }

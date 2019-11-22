@@ -37,7 +37,7 @@ interface runtime {
 [id(3)]
 interface server {
     [id(1), type(call)]
-    connect(interface: uint8) -> (ch: channel)
+    connect(interface: uint8) -> (interface: uint8, ch: channel)
 }
 
 [id(4)]

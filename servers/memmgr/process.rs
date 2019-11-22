@@ -55,7 +55,7 @@ impl ProcessManager {
 
     pub fn create(&mut self, file: &'static File) -> Result<HandleId> {
         let elf = ELF::parse(file.data())?;
-        let kernel_ch = idl::server::Client::connect(self.process_server, 0)?;
+        let (_, kernel_ch) = idl::server::Client::connect(self.process_server, 0)?;
 
         use idl::kernel::Client;
         let (proc, pager_ch) = self.process_server.create_process(file.path().to_owned())?;
