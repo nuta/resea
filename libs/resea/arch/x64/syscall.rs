@@ -22,10 +22,23 @@ unsafe fn ipc_syscall(cid: i32, ops: u32) -> Result<()> {
         : "={eax}"(error)
         : "{eax}"(SYSCALL_IPC | ops),
           "{rdi}"(cid)
-        : "rsi", "rdx", "rcx", "r8", "r9", "r10" "r11"
+        : "memory", "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"
+        : "volatile"
     );
 
     convert_error(error)
+}
+
+pub unsafe fn nop() {
+    let error: i32;
+    asm!(
+        "nop"
+        : "={eax}"(error)
+        : "{eax}"(6),
+          "{rdi}"(0xdead)
+        : // "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"
+        : "volatile"
+    );
 }
 
 pub unsafe fn open() -> Result<i32> {
@@ -34,7 +47,8 @@ pub unsafe fn open() -> Result<i32> {
         "syscall"
         : "={eax}"(cid_or_error)
         : "{eax}"(SYSCALL_OPEN)
-        : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10" "r11"
+        : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"
+        : "volatile"
     );
 
     if cid_or_error < 0 {
@@ -52,7 +66,8 @@ pub unsafe fn transfer(src: i32, dst: i32) -> Result<()> {
         : "{eax}"(SYSCALL_TRANSFER),
           "{rdi}"(src),
           "{rsi}"(dst)
-        : "rdx", "rcx", "r8", "r9", "r10" "r11"
+        : "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"
+        : "volatile"
     );
 
     convert_error(error)

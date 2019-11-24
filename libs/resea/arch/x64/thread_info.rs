@@ -17,7 +17,7 @@ pub struct ThreadInfo {
 
 pub unsafe fn get_thread_info() -> &'static mut ThreadInfo {
     let info: *mut ThreadInfo;
-    asm!("movq %gs:(0), $0" : "={rax}"(info));
+    asm!("movq %gs:(0), $0" : "={rax}"(info) ::: "volatile");
     &mut *info
 }
 
