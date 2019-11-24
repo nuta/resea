@@ -22,13 +22,12 @@ impl Server {
             .expect("failed to connect to a keyboard_device server");
 
         // Print the welcome message.
-        use crate::resea::std::borrow::ToOwned;
         use idl::text_screen_device::Client;
-        screen.print_str("Resea Version \n".to_owned()).unwrap();
+        screen.print_str("Resea Version \n").unwrap();
         screen
-            .print_str("Type 'help' for usage.\n".to_owned())
+            .print_str("Type 'help' for usage.\n")
             .unwrap();
-        screen.print_str(">>> ".to_owned()).unwrap();
+        screen.print_str(">>> ").unwrap();
 
         // Start receiving keyboard inputs from the driver.
         use idl::keyboard_device::Client as KeyboardClient;
@@ -56,15 +55,13 @@ impl Server {
     }
 
     fn print_string(&self, string: &str) {
-        use crate::resea::std::borrow::ToOwned;
         use idl::text_screen_device::Client;
-        self.screen.print_str(string.to_owned()).unwrap();
+        self.screen.print_str(string).unwrap();
     }
 
     fn print_prompt(&self) {
-        use crate::resea::std::borrow::ToOwned;
         use idl::text_screen_device::Client;
-        self.screen.print_str(">>> ".to_owned()).unwrap();
+        self.screen.print_str(">>> ").unwrap();
     }
 
     fn readchar(&mut self, ch: char) {

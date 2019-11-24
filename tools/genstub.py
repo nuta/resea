@@ -244,25 +244,25 @@ pub trait Server {
 """
 
 builtin_types = {
-    "int8":     { "name_in_msg": None, "name": "i8",       "size": "core::mem::size_of::<i8>()" },
-    "int16":    { "name_in_msg": None, "name": "i16",      "size": "core::mem::size_of::<i16>()" },
-    "int32":    { "name_in_msg": None, "name": "i32",      "size": "core::mem::size_of::<i32>()" },
-    "int64":    { "name_in_msg": None, "name": "i64",      "size": "core::mem::size_of::<i64>()" },
-    "uint8":    { "name_in_msg": None, "name": "u8",       "size": "core::mem::size_of::<u8>()" },
-    "uint16":   { "name_in_msg": None, "name": "u16",      "size": "core::mem::size_of::<u16>()" },
-    "uint32":   { "name_in_msg": None, "name": "u32",      "size": "core::mem::size_of::<u32>()" },
-    "uint64":   { "name_in_msg": None, "name": "u64",      "size": "core::mem::size_of::<u64>()" },
-    "bool":     { "name_in_msg": None, "name": "bool",     "size": "core::mem::size_of::<bool>()" },
-    "char":     { "name_in_msg": None, "name": "u8",       "size": "core::mem::size_of::<u8>()" },
-    "handle":   { "name_in_msg": None, "name": "HandleId", "size": "core::mem::size_of::<HandleId>()" },
-    "channel":  { "name_in_msg": None, "name": "Channel",  "size": "0" },
-    "page":     { "name_in_msg": None, "name": "Page",     "size": "0" },
-    "intmax":   { "name_in_msg": None, "name": "isize",    "size": "core::mem::size_of::<isize>()" },
-    "uintmax":  { "name_in_msg": None, "name": "usize",    "size": "core::mem::size_of::<usize>()" },
-    "uintptr":  { "name_in_msg": None, "name": "usize",    "size": "core::mem::size_of::<usize>()" },
-    "paddr":    { "name_in_msg": None, "name": "usize",    "size": "core::mem::size_of::<usize>()" },
-    "size":     { "name_in_msg": None, "name": "usize",    "size": "core::mem::size_of::<usize>()" },
-    "string":   { "name_in_msg": "FixedString", "name": "String", "size": "core::mem::size_of::<FixedString>()" },
+    "int8":     { "type_in_msg": None,          "name": "i8",       "size": "core::mem::size_of::<i8>()" },
+    "int16":    { "type_in_msg": None,          "name": "i16",      "size": "core::mem::size_of::<i16>()" },
+    "int32":    { "type_in_msg": None,          "name": "i32",      "size": "core::mem::size_of::<i32>()" },
+    "int64":    { "type_in_msg": None,          "name": "i64",      "size": "core::mem::size_of::<i64>()" },
+    "uint8":    { "type_in_msg": None,          "name": "u8",       "size": "core::mem::size_of::<u8>()" },
+    "uint16":   { "type_in_msg": None,          "name": "u16",      "size": "core::mem::size_of::<u16>()" },
+    "uint32":   { "type_in_msg": None,          "name": "u32",      "size": "core::mem::size_of::<u32>()" },
+    "uint64":   { "type_in_msg": None,          "name": "u64",      "size": "core::mem::size_of::<u64>()" },
+    "bool":     { "type_in_msg": None,          "name": "bool",     "size": "core::mem::size_of::<bool>()" },
+    "char":     { "type_in_msg": None,          "name": "u8",       "size": "core::mem::size_of::<u8>()" },
+    "handle":   { "type_in_msg": None,          "name": "HandleId", "size": "core::mem::size_of::<HandleId>()" },
+    "channel":  { "type_in_msg": None,          "name": "Channel",  "size": "0" },
+    "page":     { "type_in_msg": None,          "name": "Page",     "size": "0" },
+    "intmax":   { "type_in_msg": None,          "name": "isize",    "size": "core::mem::size_of::<isize>()" },
+    "uintmax":  { "type_in_msg": None,          "name": "usize",    "size": "core::mem::size_of::<usize>()" },
+    "uintptr":  { "type_in_msg": None,          "name": "usize",    "size": "core::mem::size_of::<usize>()" },
+    "paddr":    { "type_in_msg": None,          "name": "usize",    "size": "core::mem::size_of::<usize>()" },
+    "size":     { "type_in_msg": None,          "name": "usize",    "size": "core::mem::size_of::<usize>()" },
+    "string":   { "type_in_msg": "FixedString", "name": "&str",     "size": "core::mem::size_of::<FixedString>()" },
 }
 
 # Resolves a type name to a corresponding builtin type.
@@ -270,10 +270,17 @@ def resolve_type(type_name):
     assert type_name in builtin_types
     return builtin_types[type_name]["name"]
 
+def resolve_type_in_arg(type_name):
+    assert type_name in builtin_types
+    if builtin_types[type_name]["type_in_arg"] is not None:
+        return builtin_types[type_name]["type_in_arg"]
+    else:
+        return builtin_types[type_name]["name"]
+
 def resolve_type_in_msg_struct(type_name):
     assert type_name in builtin_types
-    if builtin_types[type_name]["name_in_msg"] is not None:
-        return builtin_types[type_name]["name_in_msg"]
+    if builtin_types[type_name]["type_in_msg"] is not None:
+        return builtin_types[type_name]["type_in_msg"]
     else:
         return builtin_types[type_name]["name"]
 
@@ -296,7 +303,7 @@ def call_args(args, msg_var):
         elif arg["type"] == "handle":
             values.append(f"{value}")
         elif arg["type"] in ["string"]:
-            values.append(f"{value}.to_string()")
+            values.append(f"{value}.to_str()")
         else:
             values.append(f"{value}")
     return ", ".join(values)
@@ -304,10 +311,7 @@ def call_args(args, msg_var):
 def arg_params(args, first_param):
     params = [first_param]
     for arg in args["fields"]:
-        if arg["type"] in ["handle", "channel"]:
-            params.append(f"{arg['name']}: {resolve_type(arg['type'])}")
-        else:
-            params.append(f"{arg['name']}: {resolve_type(arg['type'])}")
+        params.append(f"{arg['name']}: {resolve_type(arg['type'])}")
     return ", ".join(params)
 
 def ret_params(rets):
@@ -321,7 +325,7 @@ def ret_params(rets):
 
 def from_payload(field):
     if field["type"] == "string":
-        return f"{field['name']}.to_string()"
+        return f"{field['name']}.to_str()"
     elif field["type"] == "channel":
         return f"Channel::from_cid({field['name']})"
     else:
@@ -329,7 +333,7 @@ def from_payload(field):
 
 def to_payload(field):
     if field["type"] == "string":
-        return f"FixedString::from_str({field['name']}.as_str())"
+        return f"FixedString::from_str({field['name']})"
     elif field["type"] == "channel":
         return f"{field['name']}.cid()"
     else:

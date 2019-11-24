@@ -5,7 +5,6 @@ use resea::idl::{self, keyboard_device, text_screen_device};
 use resea::message::{InterfaceId, Notification};
 use resea::result::Error;
 use resea::server::{publish_server, DeferredWorkResult, ServerResult};
-use resea::std::string::String;
 
 static _MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -32,8 +31,8 @@ impl Server {
 }
 
 impl text_screen_device::Server for Server {
-    fn print_str(&mut self, _from: &Channel, str: String) -> ServerResult<()> {
-        self.screen.print_str(&str);
+    fn print_str(&mut self, _from: &Channel, str: &str) -> ServerResult<()> {
+        self.screen.print_str(str);
         ServerResult::Ok(())
     }
 

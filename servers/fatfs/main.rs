@@ -5,7 +5,6 @@ use resea::idl;
 use resea::message::{HandleId, InterfaceId, Page};
 use resea::result::Error;
 use resea::server::{connect_to_server, ServerResult};
-use resea::std::string::String;
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
 
@@ -31,7 +30,7 @@ impl Server {
 }
 
 impl idl::fs::Server for Server {
-    fn open(&mut self, _from: &Channel, path: String) -> ServerResult<HandleId> {
+    fn open(&mut self, _from: &Channel, path: &str) -> ServerResult<HandleId> {
         match self.fs.open_file(&path) {
             Some(file) => {
                 // TODO: Support freeing and reusing handle IDs.

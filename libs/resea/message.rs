@@ -157,8 +157,13 @@ impl FixedString {
 
     #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
-        let s = unsafe { crate::utils::c_str_to_str(self.0.as_ptr()) };
-        String::from(s)
+        String::from(self.to_str())
+    }
+
+    pub fn to_str(&self) -> &str {
+        unsafe {
+            crate::utils::c_str_to_str(self.0.as_ptr())
+        }
     }
 }
 

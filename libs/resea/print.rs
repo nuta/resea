@@ -30,13 +30,11 @@ pub fn printchar(ch: u8) {
 }
 
 pub fn print_str(s: &str) {
-    use crate::std::borrow::ToOwned;
-
     // Assuming that @1 is connected with a server which provides runtime
     // interface.
     let client = Channel::from_cid(1);
     use crate::idl::runtime::Client;
-    client.print_str(s.to_owned()).ok();
+    client.print_str(s).ok();
 }
 
 /// Prints a string.

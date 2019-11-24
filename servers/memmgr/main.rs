@@ -9,7 +9,6 @@ use resea::result::{Error, Result};
 use resea::server::{DeferredWorkResult, ServerResult};
 use resea::std::cmp::min;
 use resea::std::ptr;
-use resea::std::string::String;
 use resea::PAGE_SIZE;
 
 extern "C" {
@@ -181,8 +180,8 @@ impl idl::runtime::Server for Server {
         ServerResult::Ok(())
     }
 
-    fn print_str(&mut self, _from: &Channel, s: String) -> ServerResult<()> {
-        resea::print::print_str(s.as_str());
+    fn print_str(&mut self, _from: &Channel, string: &str) -> ServerResult<()> {
+        resea::print::print_str(string);
         ServerResult::Ok(())
     }
 }

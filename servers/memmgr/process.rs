@@ -5,7 +5,6 @@ use resea::collections::HashMap;
 use resea::idl;
 use resea::message::HandleId;
 use resea::result::Result;
-use resea::std::borrow::ToOwned;
 
 pub struct Process {
     pub pid: HandleId,
@@ -58,7 +57,7 @@ impl ProcessManager {
         let (_, kernel_ch) = idl::server::Client::connect(self.process_server, 0)?;
 
         use idl::kernel::Client;
-        let (proc, pager_ch) = self.process_server.create_process(file.path().to_owned())?;
+        let (proc, pager_ch) = self.process_server.create_process(file.path())?;
 
         self.process_server.inject_channel(proc, kernel_ch)?;
         self.process_server
