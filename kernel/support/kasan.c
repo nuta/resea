@@ -14,6 +14,8 @@
 #include <memory.h>
 #include <support/kasan.h>
 
+#ifdef DEBUG_BUILD
+
 static bool kasan_enabled = false;
 
 static inline uint8_t *get_asan_shadow_memory(vaddr_t addr) {
@@ -150,3 +152,5 @@ void kasan_init(void) {
 
     set_kasan_enabled(true);
 }
+
+#endif // DEBUG_BUILD

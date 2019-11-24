@@ -5,6 +5,8 @@
 #include <thread.h>
 #include <support/kdebug.h>
 
+#ifdef DEBUG_BUILD
+
 #define DPRINTK(fmt, ...) printk(COLOR_BOLD fmt COLOR_RESET, ##__VA_ARGS__)
 
 static int strcmp(const char *s1, const char *s2) {
@@ -108,3 +110,5 @@ void debugger_oninterrupt(void) {
         }
     }
 }
+
+#endif // DEBUG_BUILD
