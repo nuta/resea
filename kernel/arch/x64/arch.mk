@@ -1,8 +1,8 @@
 # Common clang options for both the kernel and userland. Use "linux" toolchain
 # to use the KASan.
 COMMON_CFLAGS += --target=x86_64-pc-linux-elf
-COMMON_CFLAGS += -mcmodel=large -mno-red-zone
 COMMON_CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
+KERNEL_CFLAGS += -mcmodel=large -mno-red-zone
 
 HDD_DIR = $(BUILD_DIR)/hdd
 BOCHS ?= bochs
