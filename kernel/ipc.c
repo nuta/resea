@@ -179,12 +179,15 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             struct channel *payload_ch = table_get(&current->process->channels,
                                                    m->payloads.channel);
             if (!payload_ch) {
+                WARN("IPC abort: given channel ID is invalid (cid=%d)",
+                     m->payloads.channel);
                 receiver->abort_reason = ERR_NEEDS_RETRY;
                 return ERR_INVALID_PAYLOAD;
             }
 
             struct channel *dst_ch = channel_create(receiver->process);
             if (!dst_ch) {
+                WARN("IPC abort: failed to create a channel in the destination process");
                 receiver->abort_reason = ERR_NEEDS_RETRY;
                 return ERR_OUT_OF_MEMORY;
             }
@@ -255,11 +258,13 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     if (syscall & IPC_RECV) {
         struct channel *recv_ch = ch->transfer_to;
         if (recv_ch->destructed) {
+            WARN("destructed");
             return ERR_CHANNEL_CLOSED;
         }
 
         // Try to get the receiver right.
         if (recv_ch->receiver != NULL) {
+            WARN("already receiving");
             return ERR_ALREADY_RECEVING;
         }
 
@@ -285,7 +290,12 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Received a message or a notification, or the IPC operation is
         // aborted.
 
+#ifdef DEBUG_BUILD
+        current->debug.receive_from = NULL;
+#endif
+
         if (current->abort_reason != OK) {
+            WARN("aborted IPC!");
             return atomic_swap(&current->abort_reason, OK);
         }
 
@@ -294,10 +304,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
         IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
                   recv_ch, m->from, m->header, m->notification);
-
-#ifdef DEBUG_BUILD
-        current->debug.receive_from = NULL;
-#endif
     }
 
     return OK;

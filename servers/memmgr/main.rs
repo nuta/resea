@@ -320,6 +320,8 @@ impl resea::server::Server for Server {
                     warn!("received server.connect_reply from an unexpected channel");
                 }
             }
+        } else {
+            warn!("unknown message");
         }
 
         false
