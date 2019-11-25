@@ -7,7 +7,6 @@ use resea::idl;
 use resea::message::{HandleId, InterfaceId, Message, Page};
 use resea::result::{Error, Result};
 use resea::server::{DeferredWorkResult, ServerResult};
-use resea::std::cmp::min;
 use resea::std::ptr;
 use resea::PAGE_SIZE;
 
@@ -89,43 +88,20 @@ impl idl::pager::Server for Server {
         // Search the process table. It should never fail.
         let proc = self.process_manager.get(pid).unwrap();
 
-        // Look for the segment for `addr`.
         let mut page = self.page_allocator.allocate(1);
-        let mut filled_page = false;
-        let addr = addr as u64;
-        let file_size = proc.file.len() as u64;
-        for phdr in proc.elf.phdrs {
-            if phdr.p_vaddr <= addr && addr < phdr.p_vaddr + phdr.p_memsz {
-                let offset = addr - phdr.p_vaddr;
-                let fileoff = phdr.p_offset + offset;
-                if fileoff >= file_size {
-                    // The file offset is beyond the file size. Ignore the
-                    // segment for now.
-                    continue;
-                }
-
-                // Found the appropriate segment. Fill the page with the file
-                // contents.
-                let copy_len = min(
-                    min(PAGE_SIZE as u64, file_size - fileoff),
-                    phdr.p_filesz - offset,
-                ) as usize;
+        match self.process_manager.try_filling_page(&mut page, proc, addr) {
+            Ok(()) => (),
+            Err(Error::NotFound) => {
+                // `addr` is not in the ELF segments. It should be a zeroed pages
+                // such as stack and heap. Fill the page with zeros.
+                //
+                // TODO: Make sure that the address is in the range of
+                // stack/heap.
                 unsafe {
-                    let src = proc.file.data().as_ptr().add(fileoff as usize);
-                    let dst = page.as_mut_ptr();
-                    ptr::copy_nonoverlapping(src, dst, copy_len);
+                    ptr::write_bytes(page.as_mut_ptr(), 0, PAGE_SIZE);
                 }
-                filled_page = true;
-                break;
             }
-        }
-
-        if !filled_page {
-            // `addr` is not in the ELF segments. It should be a zeroed pages
-            // such as stack and heap. Fill the page with zeros.
-            unsafe {
-                ptr::write_bytes(page.as_mut_ptr(), 0, PAGE_SIZE);
-            }
+            _ => unreachable!(),
         }
 
         ServerResult::Ok(page.as_page_payload())

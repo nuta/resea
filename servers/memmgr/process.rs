@@ -1,10 +1,14 @@
 use crate::elf::ELF;
 use crate::initfs::File;
+use resea::allocator::AllocatedPage;
 use resea::channel::Channel;
 use resea::collections::HashMap;
 use resea::idl;
 use resea::message::HandleId;
-use resea::result::Result;
+use resea::result::{Error, Result};
+use resea::std::cmp::min;
+use resea::std::ptr;
+use resea::PAGE_SIZE;
 
 pub struct Process {
     pub pid: HandleId,
@@ -79,5 +83,44 @@ impl ProcessManager {
             },
         );
         Ok(proc)
+    }
+
+    pub fn try_filling_page(
+        &self,
+        page: &mut AllocatedPage,
+        proc: &Process,
+        addr: usize,
+    ) -> Result<()> {
+        let addr = addr as u64;
+        let file_size = proc.file.len() as u64;
+
+        // Look for the segment for `addr`.
+        for phdr in proc.elf.phdrs {
+            if phdr.p_vaddr <= addr && addr < phdr.p_vaddr + phdr.p_memsz {
+                let offset = addr - phdr.p_vaddr;
+                let fileoff = phdr.p_offset + offset;
+                if fileoff >= file_size {
+                    // The file offset is beyond the file size. Ignore the
+                    // segment for now.
+                    continue;
+                }
+
+                // Found the appropriate segment. Fill the page with the file
+                // contents.
+                let copy_len = min(
+                    min(PAGE_SIZE as u64, file_size - fileoff),
+                    phdr.p_filesz - offset,
+                ) as usize;
+                unsafe {
+                    let src = proc.file.data().as_ptr().add(fileoff as usize);
+                    let dst = page.as_mut_ptr();
+                    ptr::copy_nonoverlapping(src, dst, copy_len);
+                }
+
+                return Ok(());
+            }
+        }
+
+        Err(Error::NotFound)
     }
 }
