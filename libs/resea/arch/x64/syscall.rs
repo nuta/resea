@@ -29,18 +29,6 @@ unsafe fn ipc_syscall(cid: i32, ops: u32) -> Result<()> {
     convert_error(error)
 }
 
-pub unsafe fn nop() {
-    let error: i32;
-    asm!(
-        "nop"
-        : "={eax}"(error)
-        : "{eax}"(6),
-          "{rdi}"(0xdead)
-        : // "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"
-        : "volatile"
-    );
-}
-
 pub unsafe fn open() -> Result<i32> {
     let cid_or_error: i32;
     asm!(
