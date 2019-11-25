@@ -1,4 +1,3 @@
-use crate::arch::PAGE_SIZE;
 use crate::channel::CId;
 use crate::result::Error;
 use crate::std::string::String;
@@ -65,24 +64,28 @@ impl Notification {
 #[derive(Clone, Copy)]
 pub struct Page {
     pub addr: usize,
-    pub num_pages: usize,
+    pub len: usize,
 }
 
 impl Page {
-    pub const fn new(addr: usize, num_pages: usize) -> Page {
-        Page { addr, num_pages }
+    pub const fn new(addr: usize, len: usize) -> Page {
+        Page { addr, len }
+    }
+
+    pub fn len(&self) -> usize {
+        self.len
     }
 
     pub fn as_slice_mut<T>(&mut self) -> &mut [T] {
         unsafe {
-            let num = (self.num_pages * PAGE_SIZE) / core::mem::size_of::<T>();
+            let num = self.len / core::mem::size_of::<T>();
             core::slice::from_raw_parts_mut(self.addr as *mut T, num)
         }
     }
 
     pub fn as_slice<T>(&self) -> &[T] {
         unsafe {
-            let num = (self.num_pages * PAGE_SIZE) / core::mem::size_of::<T>();
+            let num = self.len / core::mem::size_of::<T>();
             core::slice::from_raw_parts(self.addr as *const T, num)
         }
     }
@@ -93,6 +96,12 @@ impl Page {
 
     pub fn as_bytes(&self) -> &[u8] {
         self.as_slice()
+    }
+
+    pub fn copy_from_slice(&mut self, data: &[u8]) {
+        let len = data.len();
+        self.len = len;
+        (&mut self.as_bytes_mut()[..len]).copy_from_slice(data);
     }
 }
 

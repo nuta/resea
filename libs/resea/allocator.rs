@@ -27,7 +27,7 @@ impl AllocatedPage {
     }
 
     pub fn as_page_payload(&self) -> Page {
-        Page::new(self.addr, self.num_pages)
+        Page::new(self.addr, self.num_pages * PAGE_SIZE)
     }
 }
 

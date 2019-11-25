@@ -199,9 +199,10 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Handle the page payload.
         // TODO: Needs refactoring.
         if (header & MSG_PAGE_PAYLOAD) {
-            vaddr_t page_addr       = m->payloads.page;
-            size_t  num_pages       = m->payloads.num_pages;
-            vaddr_t page_base_addr  = receiver->info->page_addr;
+            vaddr_t page_addr = m->payloads.page_addr;
+            size_t  page_len = m->payloads.page_len;
+            size_t  num_pages = ALIGN_UP(page_len, PAGE_SIZE) / PAGE_SIZE;
+            vaddr_t page_base_addr = receiver->info->page_addr;
 
             paddr_t paddr;
             if (current->ipc_buffer == current->kernel_ipc_buffer) {
@@ -224,7 +225,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             if (receiver->ipc_buffer == receiver->kernel_ipc_buffer) {
                 // Kernel threads prefers the physical address (e.g, receiving a
                 // pager.fill_request reply).
-                dst_m->payloads.page = paddr;
+                dst_m->payloads.page_addr = paddr;
             } else {
                 // Make sure that the receiver accepts a page payload and its
                 // base address is valid.
@@ -236,10 +237,11 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                     return ERR_INVALID_PAGE_PAYLOAD;
                 }
 
+                // TODO: Abort if the virutal address is already mapped.
                 link_page(&receiver->process->page_table, page_base_addr, paddr,
                           num_pages, PAGE_USER | PAGE_WRITABLE);
-                dst_m->payloads.page = page_base_addr;
-                dst_m->payloads.num_pages = num_pages;
+                dst_m->payloads.page_addr = page_base_addr;
+                dst_m->payloads.page_len = page_len;
             }
 
             if (current->ipc_buffer != current->kernel_ipc_buffer) {

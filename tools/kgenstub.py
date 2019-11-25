@@ -30,10 +30,10 @@ struct {{ interface.name }}_{{ msg.name }}{{ "_reply" if reply }}_payload {
 {%- endif %}
 {%- if fields.page %}
     vaddr_t {{ fields.page.name }};
-    size_t num_pages;
+    size_t page_len;
 {%- else %}
     vaddr_t __unused_page_addr;
-    size_t __unused_num_pages;
+    size_t __unused_page_len;
 {%- endif %}
 {%- for field in fields.inlines %}
     {{ field.type | resolve_type }} {{ field.name }};

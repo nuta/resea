@@ -59,8 +59,8 @@ struct message {
         // The standard layout of payloads.
         struct {
             cid_t channel;
-            vaddr_t page;
-            size_t num_pages;
+            vaddr_t page_addr;
+            size_t page_len;
             uint8_t data[INLINE_PAYLOAD_LEN_MAX];
         } PACKED;
 
@@ -73,8 +73,8 @@ STATIC_ASSERT(offsetof(struct message, header)              == 0);
 STATIC_ASSERT(offsetof(struct message, from)                == 4);
 STATIC_ASSERT(offsetof(struct message, notification)        == 8);
 STATIC_ASSERT(offsetof(struct message, payloads.channel)    == 12);
-STATIC_ASSERT(offsetof(struct message, payloads.page)       == 16);
-STATIC_ASSERT(offsetof(struct message, payloads.num_pages)  == 24);
+STATIC_ASSERT(offsetof(struct message, payloads.page_addr)  == 16);
+STATIC_ASSERT(offsetof(struct message, payloads.page_len)   == 24);
 STATIC_ASSERT(offsetof(struct message, payloads.data)       == MSG_COMMON_HEADER_LEN);
 
 //

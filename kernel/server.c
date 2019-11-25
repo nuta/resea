@@ -289,7 +289,7 @@ static error_t handle_kernel_get_screen_buffer(struct message *m) {
     error_t err = arch_get_screen_buffer(&page, &num_pages);
     m->header = KERNEL_GET_SCREEN_BUFFER_REPLY_MSG;
     m->payloads.kernel.get_screen_buffer_reply.page = page;
-    m->payloads.kernel.get_screen_buffer_reply.num_pages = num_pages;
+    m->payloads.kernel.get_screen_buffer_reply.page_len = num_pages * PAGE_SIZE;
     return err;
 }
 

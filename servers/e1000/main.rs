@@ -42,13 +42,13 @@ impl idl::network_device::Server for Server {
         ServerResult::Ok(())
     }
 
-    fn transmit(&mut self, _from: &Channel, packet: Page, len: usize) -> ServerResult<()> {
+    fn transmit(&mut self, _from: &Channel, packet: Page) -> ServerResult<()> {
         let data = packet.as_bytes();
-        if len > data.len() {
+        if packet.len() > data.len() {
             return ServerResult::Err(Error::InvalidArg);
         }
 
-        self.device.send_ethernet_packet(&data[..len]);
+        self.device.send_ethernet_packet(&data[..packet.len()]);
         ServerResult::Ok(())
     }
 }
@@ -75,8 +75,8 @@ impl resea::server::Server for Server {
                 use idl::memmgr::Client;
                 let num_pages = align_up(pkt.len(), PAGE_SIZE) / PAGE_SIZE;
                 let mut page = MEMMGR_SERVER.alloc_pages(num_pages).unwrap();
-                (&mut page.as_bytes_mut()[..pkt.len()]).copy_from_slice(&pkt);
-                let reply = idl::network_device::nbsend_received(listener, page, pkt.len());
+                page.copy_from_slice(&pkt);
+                let reply = idl::network_device::nbsend_received(listener, page);
                 match reply {
                     // Try later.
                     Err(Error::NeedsRetry) => (),

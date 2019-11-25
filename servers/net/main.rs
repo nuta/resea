@@ -55,8 +55,8 @@ impl resea::server::Server for Server {
                 let frame = mbuf.as_bytes();
                 let num_pages = align_up(frame.len(), PAGE_SIZE) / PAGE_SIZE;
                 let mut page = idl::memmgr::Client::alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
-                (&mut page.as_bytes_mut()[..frame.len()]).copy_from_slice(frame);
-                self.network_device.transmit(page, frame.len()).unwrap();
+                page.copy_from_slice(frame);
+                self.network_device.transmit(page).unwrap();
             }
 
             if let Some(client) = self.tcpip.tcp_accept(&self.test_sock) {
@@ -100,7 +100,7 @@ impl resea::server::Server for Server {
                 resea::std::mem::transmute::<&mut Message, &mut idl::network_device::ReceivedMsg>(m)
             };
 
-            self.tcpip.receive("net0", &m.packet.as_bytes()[..m.len]);
+            self.tcpip.receive("net0", &m.packet.as_bytes()[..m.packet.len()]);
             resea::thread_info::alloc_and_set_page_base();
         }
 

@@ -142,7 +142,7 @@ impl idl::memmgr::Server for Server {
             return ServerResult::Err(Error::InvalidArg);
         }
 
-        ServerResult::Ok(Page::new(paddr, num_pages))
+        ServerResult::Ok(Page::new(paddr, num_pages * PAGE_SIZE))
     }
 }
 

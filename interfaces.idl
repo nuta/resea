@@ -125,10 +125,10 @@ interface network_device {
     [id(1), type(call)]
     listen(ch: channel) -> ()
     [id(2), type(call)]
-    transmit(packet: page, len: size) -> ()
+    transmit(packet: page) -> ()
 
     [id(3), type(event)]
-    received(packet: page, len: size) -> ()
+    received(packet: page) -> ()
 }
 
 [id(32)]
