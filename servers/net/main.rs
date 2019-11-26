@@ -6,7 +6,7 @@ use resea::server::{connect_to_server, DeferredWorkResult};
 use resea::std::string::String;
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
-use tcpip::{Instance, IpAddr, Ipv4Addr, Ipv4Network, MacAddr, Port, SocketHandle};
+use tcpip::{Instance, DeviceIpAddr, MacAddr, Port, SocketHandle};
 
 static MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static _KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -22,17 +22,20 @@ struct Server {
 impl Server {
     pub fn new(server_ch: Channel, network_device: Channel) -> Server {
         let mut tcpip = Instance::new();
-        let test_sock = tcpip.tcp_listen(IpAddr::Ipv4(Ipv4Addr::new(10, 0, 2, 15)), Port::new(80));
+        let test_sock = tcpip.tcp_listen(Port::new(80));
         tcpip.add_ethernet_device(
             "net0",
             MacAddr::new([0x52, 0x54, 0x0, 0x12, 0x34, 0x56]), /* TODO: */
-            Some(Ipv4Addr::new(10, 0, 2, 15)),
+            DeviceIpAddr::Dhcp
         );
+        tcpip.interval_work().unwrap();
+        /*
         tcpip.add_route(
             "net0",
             Ipv4Network::new(10, 0, 2, 0, 0xffffff00),
             Ipv4Addr::new(10, 0, 2, 15),
         );
+        */
 
         Server {
             ch: server_ch,
@@ -42,6 +45,17 @@ impl Server {
             clients: Vec::new(),
         }
     }
+
+    pub fn flush(&mut self) {
+        while let Some(mbuf) = self.tcpip.pop_tx_packet() {
+            use resea::idl::network_device::Client;
+            let frame = mbuf.as_bytes();
+            let num_pages = align_up(frame.len(), PAGE_SIZE) / PAGE_SIZE;
+            let mut page = idl::memmgr::Client::alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
+            page.copy_from_slice(frame);
+            self.network_device.transmit(page).unwrap();
+        }
+    }
 }
 
 impl resea::server::Server for Server {
@@ -49,15 +63,7 @@ impl resea::server::Server for Server {
         loop {
             let mut new_resp = false;
             self.tcpip.interval_work().unwrap();
-
-            while let Some(mbuf) = self.tcpip.pop_tx_packet() {
-                use resea::idl::network_device::Client;
-                let frame = mbuf.as_bytes();
-                let num_pages = align_up(frame.len(), PAGE_SIZE) / PAGE_SIZE;
-                let mut page = idl::memmgr::Client::alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
-                page.copy_from_slice(frame);
-                self.network_device.transmit(page).unwrap();
-            }
+            self.flush();
 
             if let Some(client) = self.tcpip.tcp_accept(&self.test_sock) {
                 info!("new client!");
@@ -121,6 +127,7 @@ pub fn main() {
     idl::network_device::Client::listen(&network_device, listener_ch).unwrap();
 
     let mut server = Server::new(server_ch, network_device);
+    server.flush();
 
     info!("ready");
     resea::thread_info::alloc_and_set_page_base();
