@@ -79,14 +79,14 @@ impl Page {
     pub fn as_slice_mut<T>(&mut self) -> &mut [T] {
         unsafe {
             let num = self.len / core::mem::size_of::<T>();
-            core::slice::from_raw_parts_mut(self.addr as *mut T, num)
+            core::slice::from_raw_parts_mut(self.as_mut_ptr(), num)
         }
     }
 
     pub fn as_slice<T>(&self) -> &[T] {
         unsafe {
             let num = self.len / core::mem::size_of::<T>();
-            core::slice::from_raw_parts(self.addr as *const T, num)
+            core::slice::from_raw_parts(self.as_ptr(), num)
         }
     }
 
@@ -96,6 +96,14 @@ impl Page {
 
     pub fn as_bytes(&self) -> &[u8] {
         self.as_slice()
+    }
+
+    pub unsafe fn as_ptr<T>(&self) -> *const T {
+        self.addr as *const T
+    }
+
+    pub unsafe fn as_mut_ptr<T>(&self) -> *mut T {
+        self.addr as *mut T
     }
 
     pub fn copy_from_slice(&mut self, data: &[u8]) {
