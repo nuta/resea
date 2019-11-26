@@ -2,6 +2,7 @@ use resea::channel::Channel;
 use resea::message::Page;
 
 const DEFAULT_COLOR: u16 = 0x0f;
+const BLANK_CHAR: u16 = 0x0f20 /* whitespace */;
 const SCREEN_HEIGHT: usize = 25;
 const SCREEN_WIDTH: usize = 80;
 
@@ -31,7 +32,7 @@ impl Screen {
         let screen: &mut [u16] = self.screen.as_slice_mut();
         for y in 0..SCREEN_HEIGHT {
             for x in 0..SCREEN_WIDTH {
-                screen[y * SCREEN_WIDTH + x] = 0;
+                screen[y * SCREEN_WIDTH + x] = BLANK_CHAR;
             }
         }
     }
@@ -70,7 +71,7 @@ impl Screen {
 
             // Clear the last line.
             for i in 0..SCREEN_WIDTH {
-                screen[(SCREEN_HEIGHT - diff) * SCREEN_WIDTH + i] = 0;
+                screen[(SCREEN_HEIGHT - diff) * SCREEN_WIDTH + i] =  BLANK_CHAR;
             }
 
             self.cursor_y = SCREEN_HEIGHT - 1;
