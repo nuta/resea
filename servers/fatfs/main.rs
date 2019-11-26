@@ -4,7 +4,7 @@ use resea::collections::HashMap;
 use resea::idl;
 use resea::message::{HandleId, InterfaceId, Page};
 use resea::result::Error;
-use resea::server::{connect_to_server, ServerResult};
+use resea::server::{connect_to_server, publish_server, ServerResult};
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
 
@@ -36,11 +36,12 @@ impl idl::fs::Server for Server {
                 // TODO: Support freeing and reusing handle IDs.
                 let handle_id = self.next_handle_id;
                 self.next_handle_id += 1;
-
                 self.opened_files.insert(handle_id, file);
                 ServerResult::Ok(handle_id)
             }
-            None => ServerResult::Err(Error::NotFound),
+            None => {
+                ServerResult::Err(Error::NotFound)
+            },
         }
     }
 
@@ -88,7 +89,7 @@ impl idl::server::Server for Server {
         _from: &Channel,
         interface: InterfaceId,
     ) -> ServerResult<(InterfaceId, Channel)> {
-        assert!(interface == idl::storage_device::INTERFACE_ID);
+        assert!(interface == idl::fs::INTERFACE_ID);
         let client_ch = Channel::create().unwrap();
         client_ch.transfer_to(&self.ch).unwrap();
         ServerResult::Ok((interface, client_ch))
@@ -100,17 +101,11 @@ impl resea::server::Server for Server {}
 #[no_mangle]
 pub fn main() {
     info!("starting...");
-
     let storage_device = connect_to_server(idl::storage_device::INTERFACE_ID)
         .expect("failed to connect to a storage_device server");
-
-    let fs = FileSystem::new(storage_device, 0).expect("failed to load the file system");
-
+    let fs = FileSystem::new(storage_device, 0 /* TODO: */)
+        .expect("failed to load the file system");
     let mut server = Server::new(fs);
-
-    // let ch = Channel::create().unwrap();
-    // ch.transfer_to(&server.ch).unwrap();
-    // idl::discovery::Client::publish(&MEMMGR_SERVER, idl::fs::INTERFACE_ID, ch).unwrap();
-
+    publish_server(idl::fs::INTERFACE_ID, &server.ch).unwrap();
     serve_forever!(&mut server, [server, fs]);
 }

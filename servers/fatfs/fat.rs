@@ -1,6 +1,5 @@
 use resea::channel::Channel;
 use resea::collections::Vec;
-use resea::message::Page;
 use resea::result::Result;
 use resea::std::cmp::min;
 use resea::std::mem::size_of;
@@ -59,33 +58,37 @@ impl FatEntry {
     }
 }
 
+const END_OF_CLUSTER_CHAIN: u32 = 0x0fff_ffff;
 type Cluster = u32;
 
 struct Bpb {
-    cluster_size: usize, /* sector_size * sectors_per_cluster */
+    sectors_per_cluster: usize,
     root_dir_cluster: Cluster,
     sector_size: usize,
-    cluster_start_offset: usize,
-    fat_table_offset: usize,
+    fat_table_sector_start: usize,
+    cluster_start_sector: usize,
 }
 
-fn parse_mbr(mbr: &[u8], part_begin: usize) -> Bpb {
+fn parse_mbr(mbr: &[u8]) -> Bpb {
     let bpb = mbr.as_ptr() as *const Mbr;
     let sector_size = unsafe { (*bpb).sector_size as usize };
-    let cluster_size = unsafe { sector_size * (*bpb).sectors_per_cluster as usize };
+    let sectors_per_cluster = unsafe { (*bpb).sectors_per_cluster as usize };
     let fat_table_sector_start = unsafe { (*bpb).reserved_sectors as usize };
-    let fat_table_offset = part_begin + fat_table_sector_start * sector_size;
     let number_of_fats = unsafe { (*bpb).number_of_fats as usize };
     let sectors_per_fat = unsafe { (*bpb).sectors_per_fat32 as usize };
-    let cluster_start_offset =
-        part_begin + (fat_table_sector_start + number_of_fats * sectors_per_fat) * sector_size;
+    let cluster_start_sector =
+        fat_table_sector_start + number_of_fats * sectors_per_fat;
     let root_dir_cluster = unsafe { (*bpb).root_dir_cluster };
+
+    trace!("FAT: root_dir_cluster = {}", root_dir_cluster);
+    trace!("FAT: sectors_per_cluster = {}", sectors_per_cluster);
+
     Bpb {
-        cluster_size,
+        sectors_per_cluster,
         root_dir_cluster,
         sector_size,
-        cluster_start_offset,
-        fat_table_offset,
+        fat_table_sector_start,
+        cluster_start_sector,
     }
 }
 
@@ -95,14 +98,12 @@ pub struct FileSystem {
     bpb: Bpb,
 }
 
-const SECTOR_SIZE: usize = 512;
-
 impl FileSystem {
     pub fn new(storage_device: Channel, part_begin: usize) -> Result<FileSystem> {
         let bpb = {
             use resea::idl::storage_device::Client;
             let mbr = storage_device.read(part_begin, 1)?;
-            parse_mbr(mbr.as_bytes(), part_begin)
+            parse_mbr(mbr.as_bytes())
         };
 
         Ok(FileSystem {
@@ -110,12 +111,6 @@ impl FileSystem {
             bpb: bpb,
             part_begin,
         })
-    }
-
-    fn read_disk(&self, offset: usize, len: usize) -> Result<Page> {
-        use resea::idl::storage_device::Client;
-        self.storage_device
-            .read(self.part_begin + offset / SECTOR_SIZE, len / SECTOR_SIZE)
     }
 
     /// Opens a file.
@@ -128,11 +123,14 @@ impl FileSystem {
 
             let mut current = self.bpb.root_dir_cluster;
             let mut buf = Vec::new();
-
             while let Some(next) = self.read_cluster(&mut buf, current) {
-                for i in 0..(self.bpb.cluster_size / size_of::<FatEntry>()) {
-                    // FIXME:
-                    let entries = unsafe { &*(buf.as_slice() as *const [u8] as *const [FatEntry]) };
+                let num_max_entries =
+                    (self.bpb.sectors_per_cluster * self.bpb.sector_size) / size_of::<FatEntry>();
+                for i in 0..num_max_entries {
+                    let entries = unsafe {
+                        use resea::std::slice::from_raw_parts;
+                        from_raw_parts(buf.as_ptr() as *const FatEntry, num_max_entries)
+                    };
                     let entry = entries[i];
 
                     if entry.name[0] == 0x00 {
@@ -143,7 +141,8 @@ impl FileSystem {
                     if let Ok(entry_name) = str::from_utf8(&entry.name) {
                         if let Ok(entry_ext) = str::from_utf8(&entry.ext) {
                             if entry_name == name && entry_ext == ext {
-                                return Some(File::new(entry.cluster()));
+                                let file = File::new(entry.cluster(), entry.size as usize);
+                                return Some(file);
                             }
                         }
                     }
@@ -158,36 +157,53 @@ impl FileSystem {
 
     /// Reads a cluster data and returns the next cluster.
     fn read_cluster(&self, buf: &mut Vec<u8>, cluster: Cluster) -> Option<Cluster> {
-        if cluster == 0xffff_ff00 {
+        if cluster == END_OF_CLUSTER_CHAIN {
             return None;
         }
 
+        self.read_cluster_data(buf, cluster);
+        self.read_next_cluster(cluster)
+    }
+
+    fn read_cluster_data(&self, buf: &mut Vec<u8>, cluster: Cluster) {
         let cluster_start = 2; // XXX: FAT32
-        let cluster_offset = self.bpb.cluster_start_offset
-            + ((cluster as usize - cluster_start) * self.bpb.cluster_size);
-        let data = self
-            .read_disk(cluster_offset, self.bpb.cluster_size)
-            .unwrap();
+        assert!(cluster as usize >= cluster_start);
 
-        let entry_offset = (size_of::<Cluster>() * cluster as usize) % self.bpb.sector_size;
-        let fat_offset = (self.bpb.fat_table_offset + entry_offset) % self.bpb.sector_size;
-        let fat_data = self.read_disk(fat_offset, self.bpb.sector_size).unwrap();
-        let table = unsafe { &*(fat_data.as_slice() as *const [u8] as *const [Cluster]) };
-        let next = table[entry_offset];
-
+        let index = cluster as usize - cluster_start;
+        let sector =
+            self.bpb.cluster_start_sector + (index * self.bpb.sectors_per_cluster);
+        use resea::idl::storage_device::Client;
+        let data = self.storage_device.read(
+            self.part_begin + sector, self.bpb.sectors_per_cluster).unwrap();
         *buf = data.as_bytes().to_vec();
+    }
 
+    fn read_next_cluster(&self, cluster: Cluster) -> Option<Cluster> {
+        let sector_offset = (size_of::<Cluster>() * cluster as usize) / self.bpb.sector_size;
+        let entries_per_sector = self.bpb.sector_size / size_of::<Cluster>();
+        let index = (cluster as usize) % entries_per_sector;
+
+        let sector = self.bpb.fat_table_sector_start + sector_offset;
+        use resea::idl::storage_device::Client;
+        let data = self.storage_device.read(self.part_begin + sector, 1).unwrap();
+
+        let table: &[u32] = unsafe {
+            use resea::std::slice::from_raw_parts;
+            from_raw_parts(data.as_ptr() as *const u32, entries_per_sector)
+        };
+        let next = table[index];
         Some(next)
     }
 }
 
 pub struct File {
     first_cluster: Cluster,
+    file_len: usize,
 }
 
 impl File {
-    pub fn new(first_cluster: Cluster) -> File {
-        File { first_cluster }
+    pub fn new(first_cluster: Cluster, file_len: usize) -> File {
+        File { first_cluster, file_len }
     }
 
     pub fn read(
@@ -195,17 +211,19 @@ impl File {
         fs: &FileSystem,
         buf: &mut [u8],
         offset: usize,
-        len: usize,
+        len: usize
     ) -> Result<usize> {
+        debug_assert!(buf.len() >= len);
         let mut current = self.first_cluster;
         let mut data = Vec::new();
         let mut total_len = 0;
-        let mut remaining = len;
+        let mut remaining = min(len, self.file_len);
         let mut off = offset;
         while let Some(next) = fs.read_cluster(&mut data, current) {
-            if off < fs.bpb.cluster_size {
-                let read_len = min(fs.bpb.cluster_size - off, len);
-                buf.copy_from_slice(&data[off..(off + read_len)]);
+            if off < fs.bpb.sectors_per_cluster {
+                let read_len = min(fs.bpb.sectors_per_cluster * fs.bpb.sector_size, remaining);
+                (&mut buf[total_len..(total_len + read_len)])
+                    .copy_from_slice(&data[off..(off + read_len)]);
                 off = 0;
                 remaining -= read_len;
                 total_len += read_len;
@@ -213,9 +231,10 @@ impl File {
                 if remaining == 0 {
                     return Ok(total_len);
                 }
+            } else {
+                off -= fs.bpb.sectors_per_cluster;
             }
 
-            off -= fs.bpb.cluster_size;
             current = next;
         }
 
