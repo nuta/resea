@@ -1,12 +1,12 @@
 use crate::pci::Pci;
-use resea::channel::Channel;
-use resea::collections::{Vec, VecDeque};
+use resea::collections::VecDeque;
 use resea::idl::kernel::call_listen_irq;
 use resea::idl::memmgr::{call_alloc_phy_pages, call_map_phy_pages};
-use resea::message::Page;
-use resea::std::mem::size_of;
-use resea::std::sync::atomic::{fence, Ordering};
+use resea::mem::size_of;
+use resea::prelude::*;
+use resea::sync::atomic::{fence, Ordering};
 use resea::utils::align_up;
+use resea::vec::Vec;
 use resea::PAGE_SIZE;
 
 /// Controls the device features and states.

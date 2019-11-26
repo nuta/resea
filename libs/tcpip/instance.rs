@@ -10,11 +10,11 @@ use crate::tcp::{self, TcpSocket};
 use crate::transport::{BindTo, Port, Socket, TransportProtocol};
 use crate::udp::{self, UdpSocket};
 use crate::{Error, Result};
-use resea::collections::Vec;
+use resea::cell::RefCell;
 use resea::collections::{HashMap, LinkedList, VecDeque};
-use resea::std::cell::RefCell;
-use resea::std::rc::Rc;
-use resea::std::string::String;
+use resea::rc::Rc;
+use resea::string::String;
+use resea::vec::Vec;
 
 pub struct Instance {
     routes: Vec<Route>,
@@ -59,7 +59,7 @@ impl Instance {
         mac_addr: MacAddr,
         device_ip_addr: DeviceIpAddr,
     ) {
-        use resea::std::borrow::ToOwned;
+        use resea::borrow::ToOwned;
         let device = Rc::new(RefCell::new(EthernetDevice::new(mac_addr)));
         match device_ip_addr {
             DeviceIpAddr::Static(addr) => device.borrow_mut().set_ipv4_addr(addr),

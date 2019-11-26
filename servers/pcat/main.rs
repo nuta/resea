@@ -1,9 +1,7 @@
 use crate::keyboard::Keyboard;
 use crate::screen::Screen;
-use resea::channel::Channel;
 use resea::idl::{self, keyboard_device, text_screen_device};
-use resea::message::{InterfaceId, Notification};
-use resea::result::Error;
+use resea::prelude::*;
 use resea::server::{publish_server, DeferredWorkResult, ServerResult};
 
 static _MEMMGR_SERVER: Channel = Channel::from_cid(1);

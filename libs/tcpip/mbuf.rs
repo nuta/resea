@@ -1,6 +1,6 @@
-use resea::collections::Vec;
-use resea::std::mem::size_of;
-use resea::std::slice;
+use resea::mem::size_of;
+use resea::slice;
+use resea::vec::Vec;
 
 pub struct Mbuf {
     buffer: Vec<u8>,

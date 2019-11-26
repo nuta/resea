@@ -7,23 +7,22 @@
 #![allow(clippy::missing_safety_doc)]
 
 #[macro_use]
-extern crate alloc;
-pub use alloc::{format, vec};
+extern crate alloc as alloc_crate;
 
 /// A (partial) standard Rust library (`libstd`) for Resea apps.
-pub mod std {
-    // Prevent rustfmt from removing `::`.
-    #[rustfmt::skip]
-    pub use ::alloc::{alloc, borrow, boxed, fmt, rc, slice, str, string, vec};
+// Prevent rustfmt from removing `::`.
+#[rustfmt::skip]
+pub use alloc_crate::{
+    alloc, borrow, boxed, fmt, rc, slice, str, string, format, vec
+};
 
-    pub use core::{
-        array, cell, char, clone, cmp, convert, default, hash, i16, i32, i64, i8, isize, marker,
-        mem, num, ops, pin, ptr, result, u16, u32, u64, u8, usize,
-    };
-    pub mod sync {
-        pub use alloc::sync::{Arc, Weak};
-        pub use core::sync::atomic;
-    }
+pub use core::{
+    array, cell, char, clone, cmp, convert, default, hash, i16, i32, i64, i8, isize, marker, mem,
+    num, ops, pin, ptr, u16, u32, u64, u8, usize,
+};
+pub mod sync {
+    pub use alloc_crate::sync::{Arc, Weak};
+    pub use core::sync::atomic;
 }
 
 #[macro_use]
@@ -36,6 +35,7 @@ pub mod collections;
 pub mod idl;
 pub mod lazy_static;
 pub mod message;
+pub mod prelude;
 pub mod result;
 pub mod server;
 pub mod thread_info;

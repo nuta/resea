@@ -1,6 +1,6 @@
-use resea::result::{Error, Result};
-use resea::std::mem::size_of;
-use resea::std::slice;
+use resea::mem::size_of;
+use resea::prelude::*;
+use resea::slice;
 
 #[repr(C, packed)]
 struct ELF64Ehdr {

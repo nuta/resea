@@ -82,12 +82,9 @@ pub struct {{ msg.name | camelcase }}{{ "Reply" if reply }}Msg {
 {%- endif %}
 {% endmacro %}
 
-use crate::message::*;
-use crate::result::{Result, Error};
+use crate::prelude::*;
 use crate::server::ServerResult;
 use crate::arch::syscall;
-use crate::channel::{CId, Channel};
-use crate::std::string::String;
 
 pub const INTERFACE_ID: u8 = {{ attrs.id }};
 

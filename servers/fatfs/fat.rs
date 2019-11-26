@@ -1,10 +1,8 @@
-use resea::channel::Channel;
-use resea::collections::Vec;
+use resea::cmp::min;
 use resea::idl;
-use resea::result::Result;
-use resea::std::cmp::min;
-use resea::std::mem::size_of;
-use resea::std::str;
+use resea::mem::size_of;
+use resea::prelude::*;
+use resea::str;
 
 #[repr(C, packed)]
 #[derive(Clone, Copy)]
@@ -127,7 +125,7 @@ impl FileSystem {
                     (self.bpb.sectors_per_cluster * self.bpb.sector_size) / size_of::<FatEntry>();
                 for i in 0..num_max_entries {
                     let entries = unsafe {
-                        use resea::std::slice::from_raw_parts;
+                        use resea::slice::from_raw_parts;
                         from_raw_parts(buf.as_ptr() as *const FatEntry, num_max_entries)
                     };
                     let entry = entries[i];
@@ -190,7 +188,7 @@ impl FileSystem {
                 .unwrap();
 
         let table: &[u32] = unsafe {
-            use resea::std::slice::from_raw_parts;
+            use resea::slice::from_raw_parts;
             from_raw_parts(data.as_ptr() as *const u32, entries_per_sector)
         };
         let next = table[index];

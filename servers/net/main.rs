@@ -1,10 +1,7 @@
-use resea::channel::Channel;
-use resea::collections::Vec;
 use resea::idl;
 use resea::idl::network_device::{call_get_macaddr, call_transmit};
-use resea::message::Message;
+use resea::prelude::*;
 use resea::server::{connect_to_server, DeferredWorkResult};
-use resea::std::string::String;
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
 use tcpip::{DeviceIpAddr, Instance, MacAddr, Port, SocketHandle};
@@ -64,7 +61,7 @@ impl resea::server::Server for Server {
                 info!("reading from sock...");
                 let mut buf = Vec::new();
                 self.tcpip.tcp_read(sock, &mut buf, 1024);
-                req.push_str(resea::std::str::from_utf8(&buf).unwrap_or(""));
+                req.push_str(resea::str::from_utf8(&buf).unwrap_or(""));
 
                 if req.contains("\r\n\r\n") {
                     info!("received a HTTP request:");
@@ -93,7 +90,7 @@ impl resea::server::Server for Server {
         info!("received a message...");
         if m.header == idl::network_device::RECEIVED_MSG {
             let m = unsafe {
-                resea::std::mem::transmute::<&mut Message, &mut idl::network_device::ReceivedMsg>(m)
+                resea::mem::transmute::<&mut Message, &mut idl::network_device::ReceivedMsg>(m)
             };
 
             self.tcpip

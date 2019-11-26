@@ -1,7 +1,6 @@
-use resea::channel::Channel;
 use resea::idl::kernel::{call_read_ioport, call_write_ioport};
-use resea::result::Result;
-use resea::std::slice;
+use resea::prelude::*;
+use resea::slice;
 
 const STATUS_DRQ: u8 = 0x08;
 const STATUS_BSY: u8 = 0x80;

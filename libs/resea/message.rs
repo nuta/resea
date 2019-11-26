@@ -1,6 +1,4 @@
-use crate::channel::CId;
-use crate::result::Error;
-use crate::std::string::String;
+use crate::prelude::*;
 
 pub const SYSCALL_IPC: u32 = 0;
 pub const SYSCALL_OPEN: u32 = 1;

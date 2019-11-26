@@ -1,7 +1,7 @@
 use crate::keymap::*;
-use resea::channel::Channel;
 use resea::collections::VecDeque;
 use resea::idl::kernel::{call_listen_irq, call_read_ioport};
+use resea::prelude::*;
 
 const KEYBOARD_IRQ: u8 = 1;
 const IOPORT_DATA: u64 = 0x60;

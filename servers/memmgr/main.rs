@@ -1,13 +1,11 @@
 use crate::initfs::{File, Initfs};
 use crate::process::ProcessManager;
 use resea::allocator::PageAllocator;
-use resea::channel::Channel;
-use resea::collections::{HashMap, Vec};
+use resea::collections::HashMap;
 use resea::idl;
-use resea::message::{HandleId, InterfaceId, Message, Page};
-use resea::result::{Error, Result};
+use resea::prelude::*;
+use resea::ptr;
 use resea::server::{DeferredWorkResult, ServerResult};
-use resea::std::ptr;
 use resea::PAGE_SIZE;
 
 extern "C" {
@@ -281,7 +279,7 @@ impl resea::server::Server for Server {
     fn unknown_message(&mut self, m: &mut Message) -> bool {
         if m.header == idl::server::CONNECT_REPLY_MSG {
             let m = unsafe {
-                resea::std::mem::transmute::<&mut Message, &mut idl::server::ConnectReplyMsg>(m)
+                resea::mem::transmute::<&mut Message, &mut idl::server::ConnectReplyMsg>(m)
             };
 
             // Successfully created a new client channel.

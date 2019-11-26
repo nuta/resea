@@ -94,7 +94,7 @@ macro_rules! serve_forever {
                     info!("retrying later...");
                     timer::call_reset(&timer_server, timer_handle, delay, 0).unwrap();
                     needs_retry = true;
-                    delay =  $crate::std::cmp::min(delay << 1, DELAY_MAX);
+                    delay =  $crate::cmp::min(delay << 1, DELAY_MAX);
                 }
                 _ => {
                     // The timer has not yet been expired.

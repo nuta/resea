@@ -4,7 +4,7 @@ use crate::ipv4::Ipv4Addr;
 use crate::mbuf::Mbuf;
 use crate::packet::Packet;
 use resea::collections::HashMap;
-use resea::collections::Vec;
+use resea::vec::Vec;
 
 pub enum ArpEntry {
     /// The MAC address of the IP address.

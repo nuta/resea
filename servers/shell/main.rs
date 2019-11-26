@@ -1,9 +1,7 @@
-use resea::channel::Channel;
 use resea::idl;
 use resea::idl::text_screen_device::{call_print_char, call_print_str};
-use resea::message::Message;
+use resea::prelude::*;
 use resea::server::connect_to_server;
-use resea::std::string::String;
 
 static _MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -105,7 +103,7 @@ impl resea::server::Server for Server {
         // FIXME:
         if m.header == idl::keyboard_device::PRESSED_MSG {
             let m = unsafe {
-                resea::std::mem::transmute::<&mut Message, &mut idl::keyboard_device::PressedMsg>(m)
+                resea::mem::transmute::<&mut Message, &mut idl::keyboard_device::PressedMsg>(m)
             };
 
             self.readchar(m.ch as char);

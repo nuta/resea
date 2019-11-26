@@ -6,8 +6,8 @@ use crate::ipv4::Ipv4Addr;
 use crate::mbuf::Mbuf;
 use crate::packet::Packet;
 use crate::Result;
-use resea::collections::Vec;
 use resea::collections::VecDeque;
+use resea::vec::Vec;
 
 pub struct EthernetDevice {
     arp_table: ArpTable,

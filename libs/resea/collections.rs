@@ -1,9 +1,8 @@
 #![allow(clippy::implicit_hasher)]
 #![allow(clippy::new_without_default)]
-
-use alloc::collections::btree_map::Iter;
-pub use alloc::collections::{BTreeMap, BTreeSet, BinaryHeap, LinkedList, VecDeque};
-pub use alloc::vec::Vec;
+pub use alloc_crate::collections::{
+    btree_map::Iter, BTreeMap, BTreeSet, BinaryHeap, LinkedList, VecDeque,
+};
 pub use core::borrow::Borrow;
 pub use core::hash::Hash;
 

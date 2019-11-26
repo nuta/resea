@@ -1,6 +1,6 @@
 use crate::endian::swap16;
-use resea::std::mem::{size_of, transmute};
-use resea::std::slice;
+use resea::mem::{size_of, transmute};
+use resea::slice;
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]

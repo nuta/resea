@@ -1,5 +1,5 @@
-use resea::channel::Channel;
 use resea::idl::kernel::{call_read_ioport, call_write_ioport};
+use resea::prelude::*;
 
 const PCI_IOPORT_ADDR: u64 = 0x0cf8;
 const PCI_IOPORT_DATA: u64 = 0x0cfc;

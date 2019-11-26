@@ -3,10 +3,10 @@ use crate::ip::IpAddr;
 use crate::mbuf::Mbuf;
 use crate::tcp::{TcpFlags, TcpSocket};
 use crate::Result;
-use resea::collections::Vec;
-use resea::std::cell::RefCell;
-use resea::std::fmt;
-use resea::std::rc::Rc;
+use resea::cell::RefCell;
+use resea::fmt;
+use resea::rc::Rc;
+use resea::vec::Vec;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Port(u16);

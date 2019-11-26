@@ -11,13 +11,14 @@ use crate::transport::{
 };
 use crate::wrapping::WrappingU32;
 use crate::{Error, Result};
-use resea::collections::{Vec, VecDeque};
-use resea::std::boxed::Box;
-use resea::std::cell::RefCell;
-use resea::std::cmp::min;
-use resea::std::fmt;
-use resea::std::mem::size_of;
-use resea::std::rc::Rc;
+use resea::boxed::Box;
+use resea::cell::RefCell;
+use resea::cmp::min;
+use resea::collections::VecDeque;
+use resea::fmt;
+use resea::mem::size_of;
+use resea::rc::Rc;
+use resea::vec::Vec;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum TcpState {

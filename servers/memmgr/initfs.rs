@@ -1,4 +1,4 @@
-use resea::std::mem::size_of;
+use resea::mem::size_of;
 use resea::utils::c_str_to_str;
 
 #[repr(C, packed)]
@@ -32,7 +32,7 @@ impl File {
     }
 
     pub fn data(&self) -> &[u8] {
-        unsafe { resea::std::slice::from_raw_parts(self.content.as_ptr(), self.len as usize) }
+        unsafe { resea::slice::from_raw_parts(self.content.as_ptr(), self.len as usize) }
     }
 }
 

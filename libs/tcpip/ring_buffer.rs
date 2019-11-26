@@ -1,6 +1,6 @@
 use crate::{Error, Result};
-use resea::collections::Vec;
-use resea::std::cmp::min;
+use resea::cmp::min;
+use resea::vec::Vec;
 
 pub struct RingBuffer {
     buffer: Vec<u8>,

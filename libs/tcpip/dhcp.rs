@@ -9,12 +9,12 @@ use crate::transport::{
     BindTo, Port, Socket, TransportHeader, TransportProtocol, UdpTransportHeader,
 };
 use crate::Result;
-use resea::collections::Vec;
+use resea::boxed::Box;
+use resea::cell::RefCell;
 use resea::collections::VecDeque;
-use resea::std::boxed::Box;
-use resea::std::cell::RefCell;
-use resea::std::mem::size_of;
-use resea::std::rc::Rc;
+use resea::mem::size_of;
+use resea::rc::Rc;
+use resea::vec::Vec;
 
 pub enum DhcpClientState {
     SendingDiscovery,

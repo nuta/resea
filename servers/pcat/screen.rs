@@ -1,6 +1,5 @@
-use resea::channel::Channel;
 use resea::idl::kernel::{call_batch_write_ioport, call_get_screen_buffer};
-use resea::message::Page;
+use resea::prelude::*;
 
 const DEFAULT_COLOR: u16 = 0x0f;
 const BLANK_CHAR: u16 = 0x0f20 /* whitespace */;

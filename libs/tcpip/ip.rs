@@ -1,9 +1,9 @@
 use crate::device::Device;
 use crate::ipv4::{Ipv4Addr, Ipv4Network};
 use crate::transport::Port;
-use resea::std::cell::RefCell;
-use resea::std::fmt;
-use resea::std::rc::Rc;
+use resea::cell::RefCell;
+use resea::fmt;
+use resea::rc::Rc;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum NetworkProtocol {

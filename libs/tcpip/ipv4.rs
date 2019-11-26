@@ -4,8 +4,8 @@ use crate::mbuf::Mbuf;
 use crate::packet::Packet;
 use crate::transport::TransportProtocol;
 use crate::Result;
-use resea::std::fmt;
-use resea::std::mem::size_of;
+use resea::fmt;
+use resea::mem::size_of;
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
