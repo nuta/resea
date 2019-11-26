@@ -8,7 +8,14 @@ void backtrace(void);
 
 void printk(const char *fmt, ...);
 void print_char(char ch);
-void read_kernel_log(char *buf, size_t buf_len);
+void read_kernel_log(char *buf, int buf_len);
+
+#define KERNEL_LOG_BUFFER_MAX 4096
+struct kernel_log_buffer {
+    char buf[KERNEL_LOG_BUFFER_MAX];
+    int head;
+    int tail;
+};
 
 #define COLOR_BOLD "\e[1m"
 #define COLOR_BOLD_RED "\e[1;91m"

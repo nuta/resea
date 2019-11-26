@@ -6,11 +6,49 @@
 #include <support/printk.h>
 #include <support/backtrace.h>
 
+static struct kernel_log_buffer kernel_log;
+
+void read_kernel_log(char *buf, int buf_len) {
+    // We need at least one byte for the NUL terminator.
+    ASSERT(buf_len > 0);
+
+    // Create a space for the NUL terminator.
+    buf_len--;
+
+    if (kernel_log.tail > kernel_log.head) {
+        int copy_len = MIN(buf_len, KERNEL_LOG_BUFFER_MAX - kernel_log.tail);
+        inlined_memcpy(buf, &kernel_log.buf[kernel_log.tail], copy_len);
+        buf += copy_len;
+        buf_len -= copy_len;
+        kernel_log.tail = 0;
+    }
+
+    int copy_len = MIN(buf_len, kernel_log.head - kernel_log.tail);
+    inlined_memcpy(buf, &kernel_log.buf[kernel_log.tail], copy_len);
+    buf += copy_len;
+    kernel_log.tail += copy_len;
+    *buf = '\0';
+}
+
+static void write_kernel_log(char ch) {
+    kernel_log.buf[kernel_log.head] = ch;
+    kernel_log.head = (kernel_log.head + 1) % KERNEL_LOG_BUFFER_MAX;
+    if (kernel_log.head == kernel_log.tail) {
+        // The buffer is full. Discard a character by moving the tail.
+        kernel_log.tail = (kernel_log.tail + 1) % KERNEL_LOG_BUFFER_MAX;
+    }
+}
+
 static void print_str(const char *s) {
     while (*s != '\0') {
-        arch_putchar(*s);
+        print_char(*s);
         s++;
     }
+}
+
+void print_char(char ch) {
+    arch_putchar(ch);
+    write_kernel_log(ch);
 }
 
 static void print_uint(uintmax_t n, int base, char pad, int width) {
@@ -24,7 +62,7 @@ static void print_uint(uintmax_t n, int base, char pad, int width) {
     } while (n > 0 && i > 0);
 
     while (width-- > 0) {
-        arch_putchar(pad);
+        print_char(pad);
     }
 
     tmp[sizeof(tmp) - 1] = '\0';
@@ -56,7 +94,7 @@ static void print_ptr(const char **fmt, va_list vargs) {
     default:
         print_uint((uintmax_t) va_arg(vargs, void *), 16, '0',
                    sizeof(vaddr_t) * 2);
-        arch_putchar(ch);
+        print_char(ch);
     }
 }
 
@@ -75,7 +113,7 @@ static void print_ptr(const char **fmt, va_list vargs) {
 void vprintk(const char *fmt, va_list vargs) {
     while (*fmt) {
         if (*fmt != '%') {
-            arch_putchar(*fmt++);
+            print_char(*fmt++);
         } else {
             int num_len = 1; // int
             int width = 0;
@@ -122,7 +160,7 @@ void vprintk(const char *fmt, va_list vargs) {
                 n = (num_len == 3) ? va_arg(vargs, long long) :
                                      va_arg(vargs, int);
                 if ((intmax_t) n < 0) {
-                    arch_putchar('-');
+                    print_char('-');
                     n = -((intmax_t) n);
                 }
                 print_uint(n, 10, pad, width);
@@ -136,13 +174,13 @@ void vprintk(const char *fmt, va_list vargs) {
                 print_uint(n, alt ? 16 : 10, pad, width);
                 break;
             case 'c':
-                arch_putchar(va_arg(vargs, int));
+                print_char(va_arg(vargs, int));
                 break;
             case 's':
                 print_str(va_arg(vargs, char *));
                 break;
             case '%':
-                arch_putchar('%');
+                print_char('%');
                 break;
             default: // Including '\0'.
                 print_str("<invalid format>");
