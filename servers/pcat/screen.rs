@@ -1,6 +1,5 @@
 use resea::channel::Channel;
 use resea::message::Page;
-use resea::std::mem::size_of;
 
 const DEFAULT_COLOR: u16 = 0x0f;
 const SCREEN_HEIGHT: usize = 25;
@@ -64,8 +63,7 @@ impl Screen {
             for from in diff..SCREEN_HEIGHT {
                 let dst = (from - diff) * SCREEN_WIDTH;
                 let src = from * SCREEN_WIDTH;
-                let len = SCREEN_WIDTH * size_of::<u16>();
-                screen.copy_within(src..(src + len), dst);
+                screen.copy_within(src..(src + SCREEN_WIDTH), dst);
             }
 
             // Clear the last line.
