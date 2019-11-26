@@ -36,7 +36,12 @@ impl Server {
 }
 
 impl idl::network_device::Server for Server {
-    fn listen(&mut self, _from: &Channel, ch: Channel) -> ServerResult<()> {
+    fn get_macaddr(&mut self, _from: &Channel) -> ServerResult<(u8, u8, u8, u8, u8, u8)> {
+        let m = self.device.mac_addr();
+        ServerResult::Ok((m[0], m[1], m[2], m[3], m[4], m[5]))
+    }
+
+        fn listen(&mut self, _from: &Channel, ch: Channel) -> ServerResult<()> {
         assert!(self.listener.is_none());
         self.listener = Some(ch);
         ServerResult::Ok(())

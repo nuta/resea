@@ -133,11 +133,16 @@ interface storage_device {
 [id(31)]
 interface network_device {
     [id(1), type(call)]
-    listen(ch: channel) -> ()
+    get_macaddr() -> (
+        addr0: uint8, addr1: uint8, addr2: uint8,
+        addr3: uint8, addr4: uint8, addr5: uint8
+    )
     [id(2), type(call)]
+    listen(ch: channel) -> ()
+    [id(3), type(call)]
     transmit(packet: page) -> ()
 
-    [id(3), type(event)]
+    [id(4), type(event)]
     received(packet: page) -> ()
 }
 

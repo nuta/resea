@@ -23,20 +23,11 @@ impl Server {
     pub fn new(server_ch: Channel, network_device: Channel) -> Server {
         let mut tcpip = Instance::new();
         let test_sock = tcpip.tcp_listen(Port::new(80));
-        tcpip.add_ethernet_device(
-            "net0",
-            MacAddr::new([0x52, 0x54, 0x0, 0x12, 0x34, 0x56]), /* TODO: */
-            DeviceIpAddr::Dhcp
-        );
-        tcpip.interval_work().unwrap();
-        /*
-        tcpip.add_route(
-            "net0",
-            Ipv4Network::new(10, 0, 2, 0, 0xffffff00),
-            Ipv4Addr::new(10, 0, 2, 15),
-        );
-        */
-
+        use resea::idl::network_device::Client;
+        let ma = network_device.get_macaddr().unwrap();
+        let macaddr = MacAddr::new([ma.0, ma.1, ma.2, ma.3, ma.4, ma.5]);
+        tcpip.add_ethernet_device("net0", macaddr, DeviceIpAddr::Dhcp);
+        tcpip.interval_work().unwrap(); // TODO: remove
         Server {
             ch: server_ch,
             network_device,
