@@ -307,14 +307,14 @@ impl Device {
         fence(Ordering::Acquire);
         unsafe {
             let ptr = self.regs_page.as_bytes().as_ptr().offset(offset as isize) as *const u32;
-            *ptr
+            core::ptr::read_volatile(ptr)
         }
     }
 
     fn write_reg32(&self, offset: u32, value: u32) {
         unsafe {
             let ptr = self.regs_page.as_bytes().as_ptr().offset(offset as isize) as *mut u32;
-            *ptr = value;
+            core::ptr::write_volatile(ptr, value);
         }
 
         fence(Ordering::Acquire);
