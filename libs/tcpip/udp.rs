@@ -78,7 +78,13 @@ impl Socket for UdpSocket {
         self.rx.push_back(rx_data);
     }
 
-    fn send(&mut self, device: Option<Rc<RefCell<dyn Device>>>, dst_addr: IpAddr, dst_port: Port, payload: &[u8]) {
+    fn send(
+        &mut self,
+        device: Option<Rc<RefCell<dyn Device>>>,
+        dst_addr: IpAddr,
+        dst_port: Port,
+        payload: &[u8],
+    ) {
         self.tx.push_back(TxPacket {
             device,
             dst_addr,
@@ -89,9 +95,7 @@ impl Socket for UdpSocket {
 
     fn recv(&mut self) -> Option<(IpAddr, Port, Vec<u8>)> {
         match self.rx.pop_front() {
-            Some(pkt) => {
-                Some((pkt.src_addr, pkt.src_port, pkt.payload))
-            }
+            Some(pkt) => Some((pkt.src_addr, pkt.src_port, pkt.payload)),
             None => None,
         }
     }

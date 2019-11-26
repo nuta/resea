@@ -21,15 +21,13 @@ impl Server {
             .expect("failed to connect to a text_screen_device server");
         let keyboard = connect_to_server(idl::keyboard_device::INTERFACE_ID)
             .expect("failed to connect to a keyboard_device server");
-        let fs = connect_to_server(idl::fs::INTERFACE_ID)
-            .expect("failed to connect to a fs server");
+        let fs =
+            connect_to_server(idl::fs::INTERFACE_ID).expect("failed to connect to a fs server");
 
         // Print the welcome message.
         use idl::text_screen_device::Client;
         screen.print_str("Resea Version \n").unwrap();
-        screen
-            .print_str("Type 'help' for usage.\n")
-            .unwrap();
+        screen.print_str("Type 'help' for usage.\n").unwrap();
         screen.print_str(">>> ").unwrap();
 
         // Start receiving keyboard inputs from the driver.
@@ -69,9 +67,8 @@ impl Server {
                 Ok(handle) => {
                     match self.fs.read(handle, 0, 4096 /* FIXME: */) {
                         Ok(page) => {
-                            let content = unsafe {
-                                core::str::from_utf8_unchecked(page.as_bytes())
-                            };
+                            let content =
+                                unsafe { core::str::from_utf8_unchecked(page.as_bytes()) };
                             self.print_string(content);
                         }
                         Err(_) => self.print_string("failed to read the file"),

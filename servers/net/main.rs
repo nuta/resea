@@ -6,7 +6,7 @@ use resea::server::{connect_to_server, DeferredWorkResult};
 use resea::std::string::String;
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
-use tcpip::{Instance, DeviceIpAddr, MacAddr, Port, SocketHandle};
+use tcpip::{DeviceIpAddr, Instance, MacAddr, Port, SocketHandle};
 
 static MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static _KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -97,7 +97,8 @@ impl resea::server::Server for Server {
                 resea::std::mem::transmute::<&mut Message, &mut idl::network_device::ReceivedMsg>(m)
             };
 
-            self.tcpip.receive("net0", &m.packet.as_bytes()[..m.packet.len()]);
+            self.tcpip
+                .receive("net0", &m.packet.as_bytes()[..m.packet.len()]);
             resea::thread_info::alloc_and_set_page_base();
         }
 

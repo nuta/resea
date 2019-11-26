@@ -1,8 +1,8 @@
 use crate::device::{Device, MacAddr};
-use crate::endian::{NetEndian, swap32};
-use crate::mbuf::Mbuf;
+use crate::endian::{swap32, NetEndian};
 use crate::ip::IpAddr;
 use crate::ipv4::Ipv4Addr;
+use crate::mbuf::Mbuf;
 use crate::packet::Packet;
 use crate::tcp::TcpSocket;
 use crate::transport::{
@@ -51,7 +51,7 @@ impl DhcpClient {
                     DHCP_TYPE_DISCOVER,
                     self.device.borrow().mac_addr(),
                     None,
-                    Some(&param_list)
+                    Some(&param_list),
                 );
                 self.state = DhcpClientState::WaitingOffer;
                 Some((IpAddr::Ipv4(Ipv4Addr::BROADCAST), mbuf))
@@ -63,16 +63,21 @@ impl DhcpClient {
                     DHCP_TYPE_REQUEST,
                     self.device.borrow().mac_addr(),
                     Some(request_ipaddr),
-                    None
+                    None,
                 );
                 self.state = DhcpClientState::WaitingAck;
-                Some((IpAddr::Ipv4(Ipv4Addr::BROADCAST), mbuf))                
+                Some((IpAddr::Ipv4(Ipv4Addr::BROADCAST), mbuf))
             }
-            _ => None
+            _ => None,
         }
     }
 
-    pub fn receive(&mut self, src_addr: IpAddr, src_port: Port, payload: &[u8]) -> Option<Ipv4Addr> {
+    pub fn receive(
+        &mut self,
+        src_addr: IpAddr,
+        src_port: Port,
+        payload: &[u8],
+    ) -> Option<Ipv4Addr> {
         info!("received a dhcp packet!");
         let mut pkt = Packet::new(payload);
         if let Some(parsed) = parse(&mut pkt) {
@@ -89,7 +94,7 @@ impl DhcpClient {
                 _ => {}
             }
         }
-        
+
         None
     }
 }
@@ -130,7 +135,7 @@ pub fn build(
     dhcp_type: u8,
     client_hwaddr: &MacAddr,
     requested_ipaddr: Option<Ipv4Addr>,
-    param_list: Option<&[u8]>
+    param_list: Option<&[u8]>,
 ) {
     pkt.append(&DhcpPacket {
         op: BOOTP_OP_REQUEST,
@@ -147,7 +152,7 @@ pub fn build(
         client_hwaddr: *client_hwaddr.as_slice(),
         _unused: [0; 202],
         magic: DHCP_MAGIC.into(),
-        options: [],   
+        options: [],
     });
 
     // DHCP message type.
@@ -212,22 +217,16 @@ fn parse<'a>(pkt: &'a mut Packet) -> Option<ParsedDhcpPacket> {
             }
         }
     }
-    
+
     match dhcp_type {
-        Some(DHCP_TYPE_OFFER) => {
-            Some(ParsedDhcpPacket {
-                dhcp_type: DHCP_TYPE_OFFER,
-                your_ipaddr,
-            })
-        }
-        Some(DHCP_TYPE_ACK) => {
-            Some(ParsedDhcpPacket {
-                dhcp_type: DHCP_TYPE_ACK,
-                your_ipaddr,
-            })
-        }
-        Some(_) | None => {
-            None
-        }
+        Some(DHCP_TYPE_OFFER) => Some(ParsedDhcpPacket {
+            dhcp_type: DHCP_TYPE_OFFER,
+            your_ipaddr,
+        }),
+        Some(DHCP_TYPE_ACK) => Some(ParsedDhcpPacket {
+            dhcp_type: DHCP_TYPE_ACK,
+            your_ipaddr,
+        }),
+        Some(_) | None => None,
     }
 }

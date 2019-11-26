@@ -76,8 +76,7 @@ fn parse_mbr(mbr: &[u8]) -> Bpb {
     let fat_table_sector_start = unsafe { (*bpb).reserved_sectors as usize };
     let number_of_fats = unsafe { (*bpb).number_of_fats as usize };
     let sectors_per_fat = unsafe { (*bpb).sectors_per_fat32 as usize };
-    let cluster_start_sector =
-        fat_table_sector_start + number_of_fats * sectors_per_fat;
+    let cluster_start_sector = fat_table_sector_start + number_of_fats * sectors_per_fat;
     let root_dir_cluster = unsafe { (*bpb).root_dir_cluster };
 
     trace!("FAT: root_dir_cluster = {}", root_dir_cluster);
@@ -170,11 +169,12 @@ impl FileSystem {
         assert!(cluster as usize >= cluster_start);
 
         let index = cluster as usize - cluster_start;
-        let sector =
-            self.bpb.cluster_start_sector + (index * self.bpb.sectors_per_cluster);
+        let sector = self.bpb.cluster_start_sector + (index * self.bpb.sectors_per_cluster);
         use resea::idl::storage_device::Client;
-        let data = self.storage_device.read(
-            self.part_begin + sector, self.bpb.sectors_per_cluster).unwrap();
+        let data = self
+            .storage_device
+            .read(self.part_begin + sector, self.bpb.sectors_per_cluster)
+            .unwrap();
         *buf = data.as_bytes().to_vec();
     }
 
@@ -185,7 +185,10 @@ impl FileSystem {
 
         let sector = self.bpb.fat_table_sector_start + sector_offset;
         use resea::idl::storage_device::Client;
-        let data = self.storage_device.read(self.part_begin + sector, 1).unwrap();
+        let data = self
+            .storage_device
+            .read(self.part_begin + sector, 1)
+            .unwrap();
 
         let table: &[u32] = unsafe {
             use resea::std::slice::from_raw_parts;
@@ -203,7 +206,10 @@ pub struct File {
 
 impl File {
     pub fn new(first_cluster: Cluster, file_len: usize) -> File {
-        File { first_cluster, file_len }
+        File {
+            first_cluster,
+            file_len,
+        }
     }
 
     pub fn read(
@@ -211,7 +217,7 @@ impl File {
         fs: &FileSystem,
         buf: &mut [u8],
         offset: usize,
-        len: usize
+        len: usize,
     ) -> Result<usize> {
         debug_assert!(buf.len() >= len);
         let mut current = self.first_cluster;

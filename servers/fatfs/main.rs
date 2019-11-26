@@ -39,9 +39,7 @@ impl idl::fs::Server for Server {
                 self.opened_files.insert(handle_id, file);
                 ServerResult::Ok(handle_id)
             }
-            None => {
-                ServerResult::Err(Error::NotFound)
-            },
+            None => ServerResult::Err(Error::NotFound),
         }
     }
 
@@ -103,8 +101,8 @@ pub fn main() {
     info!("starting...");
     let storage_device = connect_to_server(idl::storage_device::INTERFACE_ID)
         .expect("failed to connect to a storage_device server");
-    let fs = FileSystem::new(storage_device, 0 /* TODO: */)
-        .expect("failed to load the file system");
+    let fs =
+        FileSystem::new(storage_device, 0 /* TODO: */).expect("failed to load the file system");
     let mut server = Server::new(fs);
     publish_server(idl::fs::INTERFACE_ID, &server.ch).unwrap();
     serve_forever!(&mut server, [server, fs]);

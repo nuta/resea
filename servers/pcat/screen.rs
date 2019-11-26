@@ -71,7 +71,7 @@ impl Screen {
 
             // Clear the last line.
             for i in 0..SCREEN_WIDTH {
-                screen[(SCREEN_HEIGHT - diff) * SCREEN_WIDTH + i] =  BLANK_CHAR;
+                screen[(SCREEN_HEIGHT - diff) * SCREEN_WIDTH + i] = BLANK_CHAR;
             }
 
             self.cursor_y = SCREEN_HEIGHT - 1;
@@ -86,10 +86,21 @@ impl Screen {
     pub fn update_cursor(&self) {
         use resea::idl::kernel::Client;
         let pos = self.cursor_y * SCREEN_WIDTH + self.cursor_x;
-        self.kernel_server.batch_write_ioport(
-            0x3d4, 1, 0x0f as u64,
-            0x3d5, 1, (pos & 0xff) as u64,
-            0x3d4, 1, 0x0e as u64,
-            0x3d5, 1, ((pos >> 8) & 0xff) as u64).ok();
+        self.kernel_server
+            .batch_write_ioport(
+                0x3d4,
+                1,
+                0x0f as u64,
+                0x3d5,
+                1,
+                (pos & 0xff) as u64,
+                0x3d4,
+                1,
+                0x0e as u64,
+                0x3d5,
+                1,
+                ((pos >> 8) & 0xff) as u64,
+            )
+            .ok();
     }
 }

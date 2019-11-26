@@ -358,7 +358,13 @@ impl Socket for TcpSocket {
         BindTo::new(TransportProtocol::Tcp, self.local_addr, self.local_port)
     }
 
-    fn send(&mut self, device: Option<Rc<RefCell<dyn Device>>>, dst_addr: IpAddr, dst_port: Port, payload: &[u8]) {
+    fn send(
+        &mut self,
+        device: Option<Rc<RefCell<dyn Device>>>,
+        dst_addr: IpAddr,
+        dst_port: Port,
+        payload: &[u8],
+    ) {
         unreachable!();
     }
 

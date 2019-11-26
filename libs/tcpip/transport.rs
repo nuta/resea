@@ -4,8 +4,8 @@ use crate::mbuf::Mbuf;
 use crate::tcp::{TcpFlags, TcpSocket};
 use crate::Result;
 use resea::collections::Vec;
-use resea::std::fmt;
 use resea::std::cell::RefCell;
+use resea::std::fmt;
 use resea::std::rc::Rc;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -83,6 +83,12 @@ pub trait Socket {
     fn accept(&mut self) -> Option<TcpSocket>;
 
     // UDP only.
-    fn send(&mut self, device: Option<Rc<RefCell<dyn Device>>>, dst_addr: IpAddr, dst_port: Port, payload: &[u8]);
+    fn send(
+        &mut self,
+        device: Option<Rc<RefCell<dyn Device>>>,
+        dst_addr: IpAddr,
+        dst_port: Port,
+        payload: &[u8],
+    );
     fn recv(&mut self) -> Option<(IpAddr, Port, Vec<u8>)>;
 }

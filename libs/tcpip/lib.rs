@@ -24,7 +24,7 @@ mod udp;
 mod wrapping;
 
 pub use device::MacAddr;
-pub use instance::{Instance, SocketHandle, DeviceIpAddr};
+pub use instance::{DeviceIpAddr, Instance, SocketHandle};
 pub use ip::IpAddr;
 pub use ipv4::{Ipv4Addr, Ipv4Network};
 pub use mbuf::Mbuf;

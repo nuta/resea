@@ -1,7 +1,7 @@
 use crate::device::{Device, MacAddr};
 use crate::dhcp::DhcpClient;
 use crate::ethernet;
-use crate::ethernet::{EthernetDevice};
+use crate::ethernet::EthernetDevice;
 use crate::ip::{IpAddr, NetworkProtocol, Route};
 use crate::ipv4::{self, Ipv4Addr, Ipv4Network};
 use crate::mbuf::Mbuf;
@@ -64,8 +64,7 @@ impl Instance {
         match device_ip_addr {
             DeviceIpAddr::Static(addr) => device.borrow_mut().set_ipv4_addr(addr),
             DeviceIpAddr::Dhcp => {
-                let sock = self.udp_open(
-                    IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED), Port::new(68));
+                let sock = self.udp_open(IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED), Port::new(68));
                 let dhcp_client = DhcpClient::new(device.clone());
                 assert!(self.dhcp_client.is_none());
                 self.dhcp_client = Some((sock, dhcp_client));
@@ -129,7 +128,11 @@ impl Instance {
     }
 
     pub fn udp_open(&mut self, addr: IpAddr, port: Port) -> SocketHandle {
-        let sock = Rc::new(RefCell::new(UdpSocket::new(BindTo::new(TransportProtocol::Udp, addr, port))));
+        let sock = Rc::new(RefCell::new(UdpSocket::new(BindTo::new(
+            TransportProtocol::Udp,
+            addr,
+            port,
+        ))));
         let local = BindTo::new(TransportProtocol::Udp, addr, port);
         let remote = BindTo::new(
             TransportProtocol::Udp,
@@ -141,7 +144,13 @@ impl Instance {
         SocketHandle::new(sock)
     }
 
-    pub fn udp_send(&mut self, sock: &SocketHandle, dst_addr: IpAddr, dst_port: Port, payload: &[u8]) {
+    pub fn udp_send(
+        &mut self,
+        sock: &SocketHandle,
+        dst_addr: IpAddr,
+        dst_port: Port,
+        payload: &[u8],
+    ) {
         sock.0.borrow_mut().send(None, dst_addr, dst_port, payload);
     }
 
@@ -170,7 +179,11 @@ impl Instance {
             (Some(sock), Some(client)) if client.0 == sock => {
                 if let Some((src_addr, src_port, payload)) = sock.0.borrow_mut().recv() {
                     if let Some(got_ipaddr) = client.1.receive(src_addr, src_port, &payload) {
-                        self.add_route(device_name, Ipv4Network::new(10, 0, 2, 0, 0xffffff00) /* TODO: */, got_ipaddr);
+                        self.add_route(
+                            device_name,
+                            Ipv4Network::new(10, 0, 2, 0, 0xffffff00), /* TODO: */
+                            got_ipaddr,
+                        );
                     }
                 }
                 None
@@ -185,7 +198,9 @@ impl Instance {
         if let Some((sock, client)) = &mut self.dhcp_client {
             if let Some((addr, pkt)) = client.build() {
                 let device = client.device().clone();
-                sock.0.borrow_mut().send(Some(device), addr, Port::new(67), pkt.as_bytes());
+                sock.0
+                    .borrow_mut()
+                    .send(Some(device), addr, Port::new(67), pkt.as_bytes());
             }
         }
 
@@ -225,18 +240,16 @@ impl Instance {
         dst: IpAddr,
         proto: TransportProtocol,
         device: Option<Rc<RefCell<dyn Device>>>,
-        mut pkt: Mbuf
+        mut pkt: Mbuf,
     ) -> Result<()> {
         let (device, src_addr) = match device {
             Some(device) => (device, Ipv4Addr::UNSPECIFIED),
-            None => {
-                match self.look_for_route(&dst) {
-                    Some(route) => (route.device.clone(), route.our_ipv4_addr),
-                    None => {
-                        return Err(Error::NoRoute);
-                    }
+            None => match self.look_for_route(&dst) {
+                Some(route) => (route.device.clone(), route.our_ipv4_addr),
+                None => {
+                    return Err(Error::NoRoute);
                 }
-            }
+            },
         };
 
         let len = pkt.len();
@@ -278,7 +291,7 @@ impl Instance {
             sock = self.sockets.get(&(local, unspecified));
         }
         if sock.is_none() {
-            sock = self.sockets.get(&(unspecified, unspecified))        
+            sock = self.sockets.get(&(unspecified, unspecified))
         }
 
         warn!("sock: {}", sock.is_none());

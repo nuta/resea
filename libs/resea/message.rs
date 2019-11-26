@@ -178,9 +178,7 @@ impl FixedString {
     }
 
     pub fn to_str(&self) -> &str {
-        unsafe {
-            crate::utils::c_str_to_str(self.0.as_ptr())
-        }
+        unsafe { crate::utils::c_str_to_str(self.0.as_ptr()) }
     }
 }
 
