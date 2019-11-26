@@ -48,7 +48,7 @@ impl idl::network_device::Server for Server {
             return ServerResult::Err(Error::InvalidArg);
         }
 
-        self.device.send_ethernet_packet(&data[..packet.len()]);
+        self.device.send_ethernet_packet(data);
         ServerResult::Ok(())
     }
 }
