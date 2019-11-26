@@ -1,5 +1,5 @@
 use crate::arp::ArpTable;
-use crate::device::Device;
+use crate::device::{Device, MacAddr};
 use crate::endian::NetEndian;
 use crate::ip::{IpAddr, NetworkProtocol};
 use crate::ipv4::Ipv4Addr;
@@ -8,18 +8,6 @@ use crate::packet::Packet;
 use crate::Result;
 use resea::collections::Vec;
 use resea::collections::VecDeque;
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct MacAddr([u8; 6]);
-
-impl MacAddr {
-    pub const BROADCAST: MacAddr = MacAddr::new([0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
-
-    pub const fn new(addr: [u8; 6]) -> MacAddr {
-        MacAddr(addr)
-    }
-}
 
 pub struct EthernetDevice {
     arp_table: ArpTable,
@@ -55,6 +43,10 @@ impl EthernetDevice {
 }
 
 impl Device for EthernetDevice {
+    fn mac_addr(&self) -> &MacAddr {
+        &self.mac_addr
+    }
+
     fn enqueue(&mut self, tx_queue: &mut VecDeque<Mbuf>, dst: IpAddr, mut pkt: Mbuf) -> Result<()> {
         let (ether_type, dst_macaddr) = match dst {
             IpAddr::Ipv4(addr) => {

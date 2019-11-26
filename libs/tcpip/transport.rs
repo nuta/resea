@@ -1,9 +1,12 @@
+use crate::device::Device;
 use crate::ip::IpAddr;
 use crate::mbuf::Mbuf;
 use crate::tcp::{TcpFlags, TcpSocket};
 use crate::Result;
 use resea::collections::Vec;
 use resea::std::fmt;
+use resea::std::cell::RefCell;
+use resea::std::rc::Rc;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Port(u16);
@@ -68,12 +71,18 @@ pub enum TransportHeader<'a> {
 }
 
 pub trait Socket {
-    fn build(&mut self) -> Option<(IpAddr, Mbuf)>;
-    fn read(&mut self, buf: &mut Vec<u8>, len: usize) -> usize;
-    fn write(&mut self, data: &[u8]) -> Result<()>;
-    fn accept(&mut self) -> Option<TcpSocket>;
+    fn build(&mut self) -> Option<(Option<Rc<RefCell<dyn Device>>>, IpAddr, Mbuf)>;
     fn close(&mut self);
-    fn receive<'a>(&mut self, src_addr: IpAddr, header: &TransportHeader<'a>);
+    fn receive<'a>(&mut self, src_addr: IpAddr, dst_addr: IpAddr, header: &TransportHeader<'a>);
     fn protocol(&self) -> TransportProtocol;
-    fn bind_to(&self) -> &BindTo;
+    fn bind_to(&self) -> BindTo;
+
+    // TCP only.
+    fn write(&mut self, data: &[u8]) -> Result<()>;
+    fn read(&mut self, buf: &mut Vec<u8>, len: usize) -> usize;
+    fn accept(&mut self) -> Option<TcpSocket>;
+
+    // UDP only.
+    fn send(&mut self, device: Option<Rc<RefCell<dyn Device>>>, dst_addr: IpAddr, dst_port: Port, payload: &[u8]);
+    fn recv(&mut self) -> Option<(IpAddr, Port, Vec<u8>)>;
 }

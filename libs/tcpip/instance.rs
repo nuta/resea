@@ -1,6 +1,7 @@
-use crate::device::Device;
+use crate::device::{Device, MacAddr};
+use crate::dhcp::DhcpClient;
 use crate::ethernet;
-use crate::ethernet::{EthernetDevice, MacAddr};
+use crate::ethernet::{EthernetDevice};
 use crate::ip::{IpAddr, NetworkProtocol, Route};
 use crate::ipv4::{self, Ipv4Addr, Ipv4Network};
 use crate::mbuf::Mbuf;
@@ -20,6 +21,7 @@ pub struct Instance {
     tx_queue: RefCell<VecDeque<Mbuf>>,
     devices: HashMap<String, Rc<RefCell<dyn Device>>>,
     sockets: HashMap<(BindTo, BindTo), Rc<RefCell<dyn Socket>>>,
+    dhcp_client: Option<(SocketHandle, DhcpClient)>,
 }
 
 pub struct SocketHandle(Rc<RefCell<dyn Socket>>);
@@ -29,6 +31,17 @@ impl SocketHandle {
     }
 }
 
+impl PartialEq for SocketHandle {
+    fn eq(&self, other: &SocketHandle) -> bool {
+        Rc::ptr_eq(&self.0, &other.0)
+    }
+}
+
+pub enum DeviceIpAddr {
+    Static(Ipv4Addr),
+    Dhcp,
+}
+
 impl Instance {
     pub fn new() -> Instance {
         Instance {
@@ -36,6 +49,7 @@ impl Instance {
             devices: HashMap::new(),
             sockets: HashMap::new(),
             tx_queue: RefCell::new(VecDeque::new()),
+            dhcp_client: None,
         }
     }
 
@@ -43,16 +57,23 @@ impl Instance {
         &mut self,
         name: &str,
         mac_addr: MacAddr,
-        ipv4_addr: Option<Ipv4Addr>,
+        device_ip_addr: DeviceIpAddr,
     ) {
         use resea::std::borrow::ToOwned;
-        let mut device = EthernetDevice::new(mac_addr);
-        if let Some(addr) = ipv4_addr {
-            device.set_ipv4_addr(addr);
+        let device = Rc::new(RefCell::new(EthernetDevice::new(mac_addr)));
+        match device_ip_addr {
+            DeviceIpAddr::Static(addr) => device.borrow_mut().set_ipv4_addr(addr),
+            DeviceIpAddr::Dhcp => {
+                let sock = self.udp_open(
+                    IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED), Port::new(68));
+                let dhcp_client = DhcpClient::new(device.clone());
+                assert!(self.dhcp_client.is_none());
+                self.dhcp_client = Some((sock, dhcp_client));
+                warn!("created a dhcp client");
+            }
         }
 
-        self.devices
-            .insert(name.to_owned(), Rc::new(RefCell::new(device)));
+        self.devices.insert(name.to_owned(), device);
     }
 
     pub fn add_route(&mut self, device: &str, ipv4_network: Ipv4Network, our_ipv4_addr: Ipv4Addr) {
@@ -65,7 +86,8 @@ impl Instance {
         self.tx_queue.borrow_mut().pop_front()
     }
 
-    pub fn tcp_listen(&mut self, addr: IpAddr, port: Port) -> SocketHandle {
+    pub fn tcp_listen(&mut self, port: Port) -> SocketHandle {
+        let addr = IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED);
         let sock = Rc::new(RefCell::new(TcpSocket::new_listen(addr, port)));
         let local = BindTo::new(TransportProtocol::Tcp, addr, port);
         let remote = BindTo::new(
@@ -92,16 +114,39 @@ impl Instance {
 
     pub fn tcp_accept(&mut self, sock: &SocketHandle) -> Option<SocketHandle> {
         sock.0.borrow_mut().accept().map(|tcp_sock| {
-            let local = tcp_sock.bind_to().clone();
+            let mut local = tcp_sock.bind_to().clone();
+            local.addr = IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED); // FIXME:
             let remote = BindTo::new(
                 TransportProtocol::Tcp,
                 tcp_sock.remote_addr().unwrap(),
                 tcp_sock.remote_port().unwrap(),
             );
+            info!("accept: {:?} -> {:?}", remote, local);
             let sock = Rc::new(RefCell::new(tcp_sock));
             self.sockets.insert((local, remote), sock.clone());
             SocketHandle::new(sock)
         })
+    }
+
+    pub fn udp_open(&mut self, addr: IpAddr, port: Port) -> SocketHandle {
+        let sock = Rc::new(RefCell::new(UdpSocket::new(BindTo::new(TransportProtocol::Udp, addr, port))));
+        let local = BindTo::new(TransportProtocol::Udp, addr, port);
+        let remote = BindTo::new(
+            TransportProtocol::Udp,
+            IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED),
+            Port::UNSPECIFIED,
+        );
+        assert!(self.sockets.get(&(local, remote)).is_none());
+        self.sockets.insert((local, remote), sock.clone());
+        SocketHandle::new(sock)
+    }
+
+    pub fn udp_send(&mut self, sock: &SocketHandle, dst_addr: IpAddr, dst_port: Port, payload: &[u8]) {
+        sock.0.borrow_mut().send(None, dst_addr, dst_port, payload);
+    }
+
+    pub fn recv(&mut self, sock: &SocketHandle) -> Option<(IpAddr, Port, Vec<u8>)> {
+        sock.0.borrow_mut().recv()
     }
 
     pub fn receive(&mut self, device_name: &str, pkt: &[u8]) -> Option<SocketHandle> {
@@ -114,22 +159,43 @@ impl Instance {
             None
         );
 
-        match net_type {
+        let sock = match net_type {
             NetworkProtocol::Ipv4 => self
                 .receive_ipv4_packet(pkt)
                 .map(|inner| SocketHandle::new(inner.clone())),
+        };
+
+        // Handle DHCP messages.
+        match (sock, &mut self.dhcp_client) {
+            (Some(sock), Some(client)) if client.0 == sock => {
+                if let Some((src_addr, src_port, payload)) = sock.0.borrow_mut().recv() {
+                    if let Some(got_ipaddr) = client.1.receive(src_addr, src_port, &payload) {
+                        self.add_route(device_name, Ipv4Network::new(10, 0, 2, 0, 0xffffff00) /* TODO: */, got_ipaddr);
+                    }
+                }
+                None
+            }
+            (Some(sock), _) => Some(sock),
+            (None, _) => None,
         }
     }
 
     pub fn interval_work(&mut self) -> Result<()> {
+        // Send a DHCP message if needed.
+        if let Some((sock, client)) = &mut self.dhcp_client {
+            if let Some((addr, pkt)) = client.build() {
+                let device = client.device().clone();
+                sock.0.borrow_mut().send(Some(device), addr, Port::new(67), pkt.as_bytes());
+            }
+        }
+
         // Send pending packets.
         loop {
             let mut num_sent_packets = 0;
-
             for (_, sock) in self.sockets.iter() {
                 let mut sock = sock.borrow_mut();
-                let (dst, pkt) = match sock.build() {
-                    Some((dst, pkt)) => (dst, pkt),
+                let (device, dst, pkt) = match sock.build() {
+                    Some((device, dst, pkt)) => (device, dst, pkt),
                     None => {
                         // The socket no longer have data to send. Remove it from
                         // the queue.
@@ -138,7 +204,7 @@ impl Instance {
                 };
 
                 match sock.bind_to().addr {
-                    IpAddr::Ipv4(_) => self.send_ipv4_packet(dst, sock.protocol(), pkt)?,
+                    IpAddr::Ipv4(_) => self.send_ipv4_packet(dst, sock.protocol(), device, pkt)?,
                 }
 
                 num_sent_packets += 1;
@@ -154,21 +220,33 @@ impl Instance {
         Ok(())
     }
 
-    fn send_ipv4_packet(&self, dst: IpAddr, proto: TransportProtocol, mut pkt: Mbuf) -> Result<()> {
-        let route = match self.look_for_route(&dst) {
-            Some(route) => route,
+    fn send_ipv4_packet(
+        &self,
+        dst: IpAddr,
+        proto: TransportProtocol,
+        device: Option<Rc<RefCell<dyn Device>>>,
+        mut pkt: Mbuf
+    ) -> Result<()> {
+        let (device, src_addr) = match device {
+            Some(device) => (device, Ipv4Addr::UNSPECIFIED),
             None => {
-                return Err(Error::NoRoute);
+                match self.look_for_route(&dst) {
+                    Some(route) => (route.device.clone(), route.our_ipv4_addr),
+                    None => {
+                        return Err(Error::NoRoute);
+                    }
+                }
             }
         };
 
         let len = pkt.len();
         match dst {
-            IpAddr::Ipv4(dst) => ipv4::build(&mut pkt, dst, route.our_ipv4_addr, proto, len),
+            IpAddr::Ipv4(dst) => ipv4::build(&mut pkt, dst, src_addr, proto, len),
         }
 
         let mut queue = self.tx_queue.borrow_mut();
-        route.device.borrow_mut().enqueue(&mut *queue, dst, pkt);
+        info!("queueing = {} bytes", pkt.len());
+        device.borrow_mut().enqueue(&mut *queue, dst, pkt);
         Ok(())
     }
 
@@ -176,7 +254,7 @@ impl Instance {
         let (dst_addr, src_addr, trans, len) = unwrap_or_return!(ipv4::parse(&mut pkt), None);
         let src = IpAddr::Ipv4(src_addr);
         let dst = IpAddr::Ipv4(dst_addr);
-        if !self.is_our_ip_addr(&dst) {
+        if dst_addr != Ipv4Addr::BROADCAST && !self.is_our_ip_addr(&dst) {
             return None;
         }
 
@@ -185,24 +263,31 @@ impl Instance {
             TransportProtocol::Tcp => unwrap_or_return!(tcp::parse(&mut pkt, len), None),
         };
 
-        let local = BindTo::new(trans, dst, dst_port);
+        let local = BindTo::new(trans, IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED), dst_port);
         let remote = BindTo::new(trans, src, src_port);
         info!("ipv4 packet: {:?} -> {:?}", remote, local);
-        if let Some(sock) = self.sockets.get(&(local, remote)) {
-            sock.borrow_mut().receive(src, &parsed_trans_data);
-            Some(sock)
-        } else {
-            let remote = BindTo::new(
-                trans,
-                IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED),
-                Port::UNSPECIFIED,
-            );
-            if let Some(sock) = self.sockets.get(&(local, remote)) {
-                sock.borrow_mut().receive(src, &parsed_trans_data);
+
+        // Look for the socket.
+        let unspecified = BindTo::new(
+            trans,
+            IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED),
+            Port::UNSPECIFIED,
+        );
+        let mut sock = self.sockets.get(&(local, remote));
+        if sock.is_none() {
+            sock = self.sockets.get(&(local, unspecified));
+        }
+        if sock.is_none() {
+            sock = self.sockets.get(&(unspecified, unspecified))        
+        }
+
+        warn!("sock: {}", sock.is_none());
+        match sock {
+            Some(sock) => {
+                sock.borrow_mut().receive(src, dst, &parsed_trans_data);
                 Some(sock)
-            } else {
-                None
             }
+            None => None,
         }
     }
 

@@ -1,3 +1,4 @@
+use crate::device::Device;
 use crate::endian::NetEndian;
 use crate::ip::IpAddr;
 use crate::mbuf::Mbuf;
@@ -15,6 +16,7 @@ use resea::std::mem::size_of;
 use resea::std::rc::Rc;
 
 struct TxPacket {
+    device: Option<Rc<RefCell<dyn Device>>>,
     dst_addr: IpAddr,
     dst_port: Port,
     payload: Vec<u8>,
@@ -28,13 +30,22 @@ struct RxPacket {
 
 pub struct UdpSocket {
     bind_to: BindTo,
-    port: Port,
     tx: VecDeque<TxPacket>,
     rx: VecDeque<RxPacket>,
 }
 
+impl UdpSocket {
+    pub fn new(bind_to: BindTo) -> UdpSocket {
+        UdpSocket {
+            bind_to,
+            tx: VecDeque::new(),
+            rx: VecDeque::new(),
+        }
+    }
+}
+
 impl Socket for UdpSocket {
-    fn build(&mut self) -> Option<(IpAddr, Mbuf)> {
+    fn build(&mut self) -> Option<(Option<Rc<RefCell<dyn Device>>>, IpAddr, Mbuf)> {
         let tx = match self.tx.pop_front() {
             Some(tx) => tx,
             None => return None,
@@ -43,16 +54,16 @@ impl Socket for UdpSocket {
         let mut mbuf = Mbuf::new();
         mbuf.prepend(&UdpHeader {
             dst_port: tx.dst_port.as_u16().into(),
-            src_port: self.port.as_u16().into(),
+            src_port: self.bind_to.port.as_u16().into(),
             len: (tx.payload.len() as u16).into(),
             checksum: 0.into(),
         });
         mbuf.append_bytes(tx.payload.as_slice());
 
-        Some((tx.dst_addr, mbuf))
+        Some((tx.device, tx.dst_addr, mbuf))
     }
 
-    fn receive<'a>(&mut self, src_addr: IpAddr, header: &TransportHeader<'a>) {
+    fn receive<'a>(&mut self, src_addr: IpAddr, _dst_addr: IpAddr, header: &TransportHeader<'a>) {
         let header = match header {
             TransportHeader::Udp(header) => header,
             _ => unreachable!(),
@@ -65,6 +76,24 @@ impl Socket for UdpSocket {
         };
 
         self.rx.push_back(rx_data);
+    }
+
+    fn send(&mut self, device: Option<Rc<RefCell<dyn Device>>>, dst_addr: IpAddr, dst_port: Port, payload: &[u8]) {
+        self.tx.push_back(TxPacket {
+            device,
+            dst_addr,
+            dst_port,
+            payload: payload.to_vec(),
+        });
+    }
+
+    fn recv(&mut self) -> Option<(IpAddr, Port, Vec<u8>)> {
+        match self.rx.pop_front() {
+            Some(pkt) => {
+                Some((pkt.src_addr, pkt.src_port, pkt.payload))
+            }
+            None => None,
+        }
     }
 
     fn close(&mut self) {
@@ -87,8 +116,8 @@ impl Socket for UdpSocket {
         TransportProtocol::Udp
     }
 
-    fn bind_to(&self) -> &BindTo {
-        &self.bind_to
+    fn bind_to(&self) -> BindTo {
+        self.bind_to
     }
 }
 

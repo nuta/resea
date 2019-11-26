@@ -1,5 +1,5 @@
+use crate::device::MacAddr;
 use crate::endian::NetEndian;
-use crate::ethernet::MacAddr;
 use crate::ipv4::Ipv4Addr;
 use crate::mbuf::Mbuf;
 use crate::packet::Packet;

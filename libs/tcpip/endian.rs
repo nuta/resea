@@ -2,6 +2,12 @@
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct NetEndian<T>(T);
 
+impl<T: Into<NetEndian<T>>> NetEndian<T> {
+    pub fn new(value: T) -> NetEndian<T> {
+        value.into()
+    }
+}
+
 impl Into<NetEndian<u16>> for u16 {
     fn into(self) -> NetEndian<u16> {
         NetEndian(swap16(self))

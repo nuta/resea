@@ -9,6 +9,7 @@ mod macros;
 mod arp;
 mod checksum;
 mod device;
+mod dhcp;
 mod endian;
 mod ethernet;
 mod instance;
@@ -22,8 +23,8 @@ mod transport;
 mod udp;
 mod wrapping;
 
-pub use ethernet::MacAddr;
-pub use instance::{Instance, SocketHandle};
+pub use device::MacAddr;
+pub use instance::{Instance, SocketHandle, DeviceIpAddr};
 pub use ip::IpAddr;
 pub use ipv4::{Ipv4Addr, Ipv4Network};
 pub use mbuf::Mbuf;

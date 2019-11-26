@@ -1,4 +1,5 @@
 use crate::checksum::Checksum;
+use crate::device::Device;
 use crate::endian::{swap16, swap32, NetEndian};
 use crate::ip::IpAddr;
 use crate::ipv4::IPV4_PROTO_TCP;
@@ -35,7 +36,8 @@ enum TcpState {
 const TCP_BUFFER_SIZE: usize = 2048;
 
 pub struct TcpSocket {
-    bind_to: BindTo,
+    local_addr: IpAddr,
+    local_port: Port,
     remote_addr: Option<IpAddr>,
     remote_port: Option<Port>,
     state: TcpState,
@@ -53,12 +55,9 @@ pub struct TcpSocket {
 
 impl TcpSocket {
     pub fn new(local_addr: IpAddr, local_port: Port) -> TcpSocket {
-        TcpSocket::new_with_bind_to(BindTo::new(TransportProtocol::Tcp, local_addr, local_port))
-    }
-
-    pub fn new_with_bind_to(bind_to: BindTo) -> TcpSocket {
         TcpSocket {
-            bind_to,
+            local_addr,
+            local_port,
             remote_addr: None,
             remote_port: None,
             state: TcpState::Closed,
@@ -164,7 +163,7 @@ impl TcpSocket {
 }
 
 impl Socket for TcpSocket {
-    fn build(&mut self) -> Option<(IpAddr, Mbuf)> {
+    fn build(&mut self) -> Option<(Option<Rc<RefCell<dyn Device>>>, IpAddr, Mbuf)> {
         for backlog in &mut self.backlog {
             match backlog.state {
                 TcpState::Listen => {
@@ -177,7 +176,7 @@ impl Socket for TcpSocket {
                     let mut mbuf = Mbuf::new();
                     let mut header = TcpHeader {
                         dst_port: backlog.remote_port.unwrap().as_u16().into(),
-                        src_port: backlog.bind_to.port.as_u16().into(),
+                        src_port: backlog.local_port.as_u16().into(),
                         seq_no: backlog.local_seq_no.as_u32().into(),
                         ack_no: backlog.local_ack_no.as_u32().into(),
                         data_offset_and_ns: (header_words << 4).into(),
@@ -190,7 +189,7 @@ impl Socket for TcpSocket {
                     let mut checksum = Checksum::new();
                     compute_header_checksum(
                         &mut checksum,
-                        backlog.bind_to.addr,
+                        backlog.local_addr,
                         backlog.remote_addr.unwrap(),
                         &header,
                         0,
@@ -198,7 +197,7 @@ impl Socket for TcpSocket {
                     header.checksum = checksum.finish().into();
 
                     mbuf.append(&header);
-                    return Some((backlog.remote_addr.unwrap(), mbuf));
+                    return Some((None, backlog.remote_addr.unwrap(), mbuf));
                 }
                 TcpState::SynReceived | TcpState::Established => (),
                 _ => unreachable!(),
@@ -214,7 +213,7 @@ impl Socket for TcpSocket {
         let mut mbuf = Mbuf::new();
         let mut header = TcpHeader {
             dst_port: self.remote_port.unwrap().as_u16().into(),
-            src_port: self.bind_to.port.as_u16().into(),
+            src_port: self.local_port.as_u16().into(),
             seq_no: self.local_seq_no.as_u32().into(),
             ack_no: if self.pending_flags.contains(FLAG_ACK) {
                 self.local_ack_no.as_u32().into()
@@ -236,10 +235,10 @@ impl Socket for TcpSocket {
             mbuf.append_bytes(&data);
             compute_header_checksum(
                 &mut checksum,
-                self.bind_to.addr,
+                self.local_addr,
                 self.remote_addr.unwrap(),
                 &header,
-                data.len(),
+                len,
             );
             checksum.input_bytes(&data);
             self.bytes_not_acked += len;
@@ -247,7 +246,7 @@ impl Socket for TcpSocket {
         } else {
             compute_header_checksum(
                 &mut checksum,
-                self.bind_to.addr,
+                self.local_addr,
                 self.remote_addr.unwrap(),
                 &header,
                 0,
@@ -258,7 +257,7 @@ impl Socket for TcpSocket {
         mbuf.prepend(&header);
 
         self.pending_flags.clear();
-        Some((self.remote_addr.unwrap(), mbuf))
+        Some((None, self.remote_addr.unwrap(), mbuf))
     }
 
     fn close(&mut self) {
@@ -290,7 +289,7 @@ impl Socket for TcpSocket {
         Ok(())
     }
 
-    fn receive<'a>(&mut self, src_addr: IpAddr, header: &TransportHeader<'a>) {
+    fn receive<'a>(&mut self, src_addr: IpAddr, dst_addr: IpAddr, header: &TransportHeader<'a>) {
         let header = match header {
             TransportHeader::Tcp(header) => header,
             _ => unreachable!(),
@@ -324,14 +323,14 @@ impl Socket for TcpSocket {
             TcpState::Listen if header.flags.contains(FLAG_SYN) => {
                 trace!(
                     "SYN: {}:{} <- {}:{}",
-                    self.bind_to.addr,
-                    self.bind_to.port,
+                    dst_addr,
+                    self.local_port,
                     src_addr,
                     src_port
                 );
                 // The client wants to connect to this socket. Create a new
                 // socket for it.
-                let mut client = TcpSocket::new_with_bind_to(self.bind_to);
+                let mut client = TcpSocket::new(dst_addr, self.local_port);
                 client.state = TcpState::Listen;
                 client.remote_addr = Some(src_addr);
                 client.remote_port = Some(src_port);
@@ -355,8 +354,16 @@ impl Socket for TcpSocket {
         TransportProtocol::Tcp
     }
 
-    fn bind_to(&self) -> &BindTo {
-        &self.bind_to
+    fn bind_to(&self) -> BindTo {
+        BindTo::new(TransportProtocol::Tcp, self.local_addr, self.local_port)
+    }
+
+    fn send(&mut self, device: Option<Rc<RefCell<dyn Device>>>, dst_addr: IpAddr, dst_port: Port, payload: &[u8]) {
+        unreachable!();
+    }
+
+    fn recv(&mut self) -> Option<(IpAddr, Port, Vec<u8>)> {
+        unreachable!();
     }
 }
 
@@ -374,7 +381,7 @@ fn compute_header_checksum(
     match local_addr {
         IpAddr::Ipv4(ipv4_addr) => checksum.input_u32(swap32(ipv4_addr.as_u32())),
     }
-    checksum.input_u16(swap16(IPV4_PROTO_TCP.into()));
+    checksum.input_u16(swap16(IPV4_PROTO_TCP as u16));
     checksum.input_u16(swap16((size_of::<TcpHeader>() + data_len) as u16));
 
     // TCP header.
