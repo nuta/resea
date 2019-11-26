@@ -19,6 +19,10 @@ impl<K: Hash + Ord + Eq, V> HashMap<K, V> {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
     pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
