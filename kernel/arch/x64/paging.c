@@ -27,8 +27,8 @@ void page_table_destroy(UNUSED struct page_table *pt) {
     // TODO: Traverse and kfree the page table.
 }
 
-void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
-               int num_pages, uintmax_t flags) {
+error_t link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
+                  int num_pages, uintmax_t flags) {
     ASSERT(vaddr < KERNEL_BASE_ADDR && "tried to link a kernel page");
 
     uint64_t attrs = PAGE_PRESENT | flags;
@@ -65,6 +65,11 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
         uint64_t offset = 0;
         while (remaining > 0 && index < PAGE_ENTRY_NUM) {
             // TRACE("link: %p -> %p (flags=0x%x)", vaddr, paddr, attrs);
+            if (table[index]) {
+                // The page is already mapped. It must be an error!
+                return ERR_ALREDY_EXISTS;
+            }
+
             table[index] = paddr | attrs;
             asm_invlpg(vaddr);
             vaddr += PAGE_SIZE;
@@ -80,6 +85,8 @@ void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
 
         // The page spans across multiple PTs.
     }
+
+    return OK;
 }
 
 void unlink_page(struct page_table *pt, vaddr_t vaddr, int num_pages) {

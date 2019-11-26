@@ -238,8 +238,14 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
                 }
 
                 // TODO: Abort if the virutal address is already mapped.
-                link_page(&receiver->process->page_table, page_base_addr, paddr,
-                          num_pages, PAGE_USER | PAGE_WRITABLE);
+                error_t err =
+                    link_page(&receiver->process->page_table, page_base_addr, paddr,
+                              num_pages, PAGE_USER | PAGE_WRITABLE);
+                if (err != OK) {
+                    WARN("link_page returned an error: %d", err);
+                    receiver->abort_reason = ERR_NEEDS_RETRY;
+                    return err;
+                }
                 dst_m->payloads.page_addr = page_base_addr;
                 dst_m->payloads.page_len = page_len;
             }

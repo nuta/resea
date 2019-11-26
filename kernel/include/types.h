@@ -82,6 +82,7 @@ enum error_codes {
     ERR_NOT_ACCEPTABLE,
     ERR_TOO_SHORT,
     ERR_TOO_LARGE,
+    ERR_ALREDY_EXISTS,
     ERR_IM_A_TEAPOT,
 
     // Try again!

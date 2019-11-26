@@ -154,8 +154,11 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
 
             // Register the filled page with the page table.
             // TRACE("#PF: link vaddr %p to %p", aligned_vaddr, paddr);
-            link_page(
-                &process->page_table, aligned_vaddr, paddr, 1, vma->flags);
+            error_t err =
+                link_page(&process->page_table, aligned_vaddr, paddr, 1, vma->flags);
+            if (err != OK) {
+                PANIC("link_page returned an error: %d", err);
+            }
 
             // Now we've done what we have to do. Return to the exception
             // handler and resume the thread.

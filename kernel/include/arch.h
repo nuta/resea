@@ -13,8 +13,8 @@ void arch_mp_init(void);
 
 void page_table_init(struct page_table *pt);
 void page_table_destroy(struct page_table *pt);
-void link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
-                    int num_pages, uintmax_t flags);
+error_t link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
+                  int num_pages, uintmax_t flags);
 void unlink_page(struct page_table *pt, vaddr_t vaddr, int num_pages);
 paddr_t resolve_paddr_from_vaddr(struct page_table *pt,
                                  vaddr_t vaddr);
