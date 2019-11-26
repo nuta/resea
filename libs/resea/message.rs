@@ -101,7 +101,7 @@ impl Page {
     pub fn copy_from_slice(&mut self, data: &[u8]) {
         let len = data.len();
         self.len = len;
-        (&mut self.as_bytes_mut()[..len]).copy_from_slice(data);
+        self.as_bytes_mut().copy_from_slice(data);
     }
 }
 
