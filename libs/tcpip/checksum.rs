@@ -16,7 +16,9 @@ impl Checksum {
     }
 
     pub fn input_u32<T: Into<u32>>(&mut self, data: T) {
-        self.0 += data.into();
+        let value = data.into();
+        self.input_u16((value & 0xffff) as u16);
+        self.input_u16((value >> 16) as u16);
     }
 
     pub fn input_struct<T>(&mut self, data: &T) {
@@ -52,7 +54,6 @@ impl Checksum {
     pub fn finish(self) -> u16 {
         let mut checksum = (self.0 >> 16) + (self.0 & 0xffff);
         checksum += (checksum >> 16);
-        // FIXME: I believe we don't swap16 here...
         swap16(!checksum as u16)
     }
 }
