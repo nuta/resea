@@ -7,7 +7,6 @@ use linked_list_allocator::LockedHeap;
 
 #[cfg_attr(target_os = "resea", global_allocator)]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
-static VALLOC_ALLOCATOR: LazyStatic<RefCell<PageAllocator>> = LazyStatic::new();
 
 extern "C" {
     static __heap: u8;
@@ -73,8 +72,12 @@ impl PageAllocator {
     }
 }
 
+static VALLOC_NEXT_ADDR: LazyStatic<RefCell<usize>> = LazyStatic::new();
 pub fn valloc(num_pages: usize) -> usize {
-    VALLOC_ALLOCATOR.borrow_mut().allocate(num_pages).addr
+    // TODO:
+    let addr = *VALLOC_NEXT_ADDR.borrow();
+    *VALLOC_NEXT_ADDR.borrow_mut() = addr + num_pages * crate::PAGE_SIZE;
+    addr
 }
 
 pub fn init() {
@@ -84,10 +87,7 @@ pub fn init() {
         ALLOCATOR.lock().init(heap_start, heap_end - heap_start);
 
         let valloc_start = &__valloc as *const u8 as usize;
-        let valloc_end = &__valloc_end as *const u8 as usize;
-        VALLOC_ALLOCATOR.init(RefCell::new(PageAllocator::new(
-            valloc_start,
-            valloc_end - valloc_start,
-        )));
+        let _valloc_end = &__valloc_end as *const u8 as usize;
+        VALLOC_NEXT_ADDR.init(RefCell::new(valloc_start));
     }
 }
