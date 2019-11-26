@@ -5,7 +5,7 @@ use resea::server::connect_to_server;
 use resea::std::string::String;
 
 static _MEMMGR_SERVER: Channel = Channel::from_cid(1);
-static _KERNEL_SERVER: Channel = Channel::from_cid(2);
+static KERNEL_SERVER: Channel = Channel::from_cid(2);
 
 struct Server {
     ch: Channel,
@@ -44,8 +44,17 @@ impl Server {
     }
 
     fn run_command(&mut self) {
-        if self.input.starts_with("help") {
+        if self.input == "help" {
             self.print_string("echo <string>   -  Prints a string.\n");
+        } else if self.input == "dmesg" {
+            use idl::kernel::Client;
+            loop {
+                let r = KERNEL_SERVER.read_kernel_log().unwrap();
+                if r.is_empty() {
+                    break;
+                }
+                self.print_string(&r);
+            }
         } else if self.input.starts_with("echo ") {
             self.print_string(&self.input[5..]);
             self.print_string("\n");
