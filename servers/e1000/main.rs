@@ -41,7 +41,7 @@ impl idl::network_device::Server for Server {
         ServerResult::Ok((m[0], m[1], m[2], m[3], m[4], m[5]))
     }
 
-        fn listen(&mut self, _from: &Channel, ch: Channel) -> ServerResult<()> {
+    fn listen(&mut self, _from: &Channel, ch: Channel) -> ServerResult<()> {
         assert!(self.listener.is_none());
         self.listener = Some(ch);
         ServerResult::Ok(())
