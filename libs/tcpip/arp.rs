@@ -36,6 +36,10 @@ impl ArpTable {
     }
 
     pub fn resolve(&self, addr: Ipv4Addr) -> Option<MacAddr> {
+        if addr == Ipv4Addr::BROADCAST {
+            return Some(MacAddr::BROADCAST);
+        }
+
         match self.table.get(&addr) {
             Some(ArpEntry::Resolved(mac_addr)) => Some(*mac_addr),
             _ => None,
