@@ -72,15 +72,11 @@ pub struct {{ msg.name | camelcase }}{{ "Reply" if reply }}Msg {
 
 {% macro deserialize(var, name, fields) %}
 {%- if fields.fields | length == 1 %}
-    let {{ fields.fields[0].name }} = {{ var }}.{{ fields.fields[0].name }};
-    {{ fields.fields[0] | from_payload }}
+    {{ fields.fields[0] | from_payload(var + ".") }}
 {%- else %}
-    {%- for field in fields.fields -%}
-        let {{ field.name }} = {{ var }}.{{ field.name }};
-    {%- endfor -%}
     (
     {%- for field in fields.fields -%}
-        {{ field | from_payload }},
+        {{ field | from_payload(var + ".") }},
     {%- endfor -%}
     )
 {%- endif %}
@@ -317,23 +313,31 @@ def arg_params(args, first_param):
 def ret_params(rets):
     params = []
     for ret in rets["fields"]:
-        params.append(resolve_type(ret['type']))
+        if ret["type"] == "string":
+            params.append("String")
+        else:
+            params.append(resolve_type(ret['type']))
     if len(params) == 1:
         return params[0]
     else:
         return "(" + ", ".join(params) + ")"
 
-def from_payload(field):
-    if field["type"] == "string":
-        return f"{field['name']}.to_str()"
-    elif field["type"] == "channel":
-        return f"Channel::from_cid({field['name']})"
+def from_payload(field, prefix=None):
+    if prefix:
+        expr = prefix + field["name"]
     else:
-        return f"{field['name']}"
+        expr = field["name"]
+
+    if field["type"] == "string":
+        return f"{expr}.to_string()"
+    elif field["type"] == "channel":
+        return f"Channel::from_cid({expr})"
+    else:
+        return f"{expr}"
 
 def to_payload(field):
     if field["type"] == "string":
-        return f"FixedString::from_str({field['name']})"
+        return f"FixedString::from_str(&{field['name']})"
     elif field["type"] == "channel":
         return f"{field['name']}.cid()"
     else:
