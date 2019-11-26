@@ -65,6 +65,7 @@ macro_rules! serve_forever {
             $crate::thread_info::alloc_and_set_page_base();
             let mut m = server.ch.recv().expect("failed to receive");
             let mut reply_to = Channel::from_cid(m.from);
+            let notification = m.notification;
 
             let has_reply = match m.header.interface_id() {
                 $( $crate::idl::$interface::INTERFACE_ID =>
@@ -87,12 +88,15 @@ macro_rules! serve_forever {
                     // needs_retry = false;
                     delay = DELAY_RESET;
                 }
-                DeferredWorkResult::NeedsRetry => {
+                DeferredWorkResult::NeedsRetry if !notification.is_empty() => {
                     // Set a timer to retry the deferred work later.
                     info!("retrying later...");
                     timer_server.reset(timer_handle, delay, 0).unwrap();
                     needs_retry = true;
                     delay =  $crate::std::cmp::min(delay << 1, DELAY_MAX);
+                }
+                _ => {
+                    // The timer has not yet been expired.
                 }
             }
         }
