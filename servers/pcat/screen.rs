@@ -6,6 +6,7 @@ const SCREEN_HEIGHT: usize = 25;
 const SCREEN_WIDTH: usize = 80;
 
 pub struct Screen {
+    kernel_server: &'static Channel,
     screen: Page,
     cursor_x: usize,
     cursor_y: usize,
@@ -19,6 +20,7 @@ impl Screen {
             .expect("failed to get the screen page");
 
         Screen {
+            kernel_server,
             screen,
             cursor_x: 0,
             cursor_y: 0,
@@ -81,6 +83,11 @@ impl Screen {
     }
 
     pub fn update_cursor(&self) {
-        // TODO:
+        use resea::idl::kernel::Client;
+        let pos = self.cursor_y * SCREEN_WIDTH + self.cursor_x;
+        self.kernel_server.write_ioport(0x3d4, 1, 0x0f as u64).ok();
+        self.kernel_server.write_ioport(0x3d5, 1, pos as u64).ok();
+        self.kernel_server.write_ioport(0x3d4, 1, 0x0e as u64).ok();
+        self.kernel_server.write_ioport(0x3d5, 1, (pos >> 8) as u64).ok();
     }
 }
