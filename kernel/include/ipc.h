@@ -32,6 +32,8 @@ static inline bool is_annoying_msg(header_t msg_type) {
            || msg_type == KERNEL_READ_IOPORT_REPLY_MSG
            || msg_type == KERNEL_WRITE_IOPORT_MSG
            || msg_type == KERNEL_WRITE_IOPORT_REPLY_MSG
+           || msg_type == KERNEL_BATCH_WRITE_IOPORT_MSG
+           || msg_type == KERNEL_BATCH_WRITE_IOPORT_REPLY_MSG
            || msg_type == KERNEL_READ_KERNEL_LOG_MSG
            || msg_type == KERNEL_READ_KERNEL_LOG_REPLY_MSG
            || msg_type == TEXT_SCREEN_DEVICE_PRINT_CHAR_MSG

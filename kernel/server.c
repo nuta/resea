@@ -283,6 +283,25 @@ static error_t handle_io_write_io_port(struct message *m) {
     return OK;
 }
 
+static error_t handle_io_batch_write_io_port(struct message *m) {
+#define HANDLE_NTH_WRITE(nth)                                                  \
+    do {                                                                       \
+        vaddr_t addr = m->payloads.kernel.batch_write_ioport.addr ## nth;      \
+        vaddr_t size = m->payloads.kernel.batch_write_ioport.size ## nth;      \
+        uint64_t data = m->payloads.kernel.batch_write_ioport.data ## nth;     \
+        if (addr) {                                                            \
+            arch_write_ioport(addr, size, data);                               \
+        }                                                                      \
+    } while (0)
+
+    HANDLE_NTH_WRITE(1);
+    HANDLE_NTH_WRITE(2);
+    HANDLE_NTH_WRITE(3);
+    HANDLE_NTH_WRITE(4);
+    m->header = KERNEL_BATCH_WRITE_IOPORT_REPLY_MSG;
+    return OK;
+}
+
 static error_t handle_kernel_get_screen_buffer(struct message *m) {
     paddr_t page;
     size_t num_pages;
@@ -373,6 +392,7 @@ static error_t process_message(struct message *m) {
     case KERNEL_LISTEN_IRQ_MSG:        return handle_io_listen_irq(m);
     case KERNEL_READ_IOPORT_MSG:       return handle_io_read_io_port(m);
     case KERNEL_WRITE_IOPORT_MSG:      return handle_io_write_io_port(m);
+    case KERNEL_BATCH_WRITE_IOPORT_MSG: return handle_io_batch_write_io_port(m);
     case KERNEL_GET_SCREEN_BUFFER_MSG: return handle_kernel_get_screen_buffer(m);
     case KERNEL_READ_KERNEL_LOG_MSG:   return handle_read_kernel_log(m);
     case TIMER_CREATE_MSG:             return handle_timer_create(m);

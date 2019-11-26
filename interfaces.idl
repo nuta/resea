@@ -79,11 +79,18 @@ interface kernel {
     read_ioport(addr: uint64, size: size) -> (data: uint64)
     [id(9), type(call)]
     write_ioport(addr: uint64, size: size, data: uint64) -> ()
-
     [id(10), type(call)]
-    get_screen_buffer() -> (page: page)
+    batch_write_ioport(
+        addr1: uint64, size1: size, data1: uint64,
+        addr2: uint64, size2: size, data2: uint64,
+        addr3: uint64, size3: size, data3: uint64,
+        addr4: uint64, size4: size, data4: uint64
+    ) -> ()
 
     [id(11), type(call)]
+    get_screen_buffer() -> (page: page)
+
+    [id(12), type(call)]
     read_kernel_log() -> (str: string)
 }
 
