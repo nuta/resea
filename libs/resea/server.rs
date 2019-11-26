@@ -7,13 +7,13 @@ pub fn publish_server(interface_id: InterfaceId, server_ch: &Channel) -> Result<
     let discovery_server = Channel::from_cid(1);
     let ch = Channel::create().unwrap();
     ch.transfer_to(&server_ch).unwrap();
-    discovery::Client::publish(&discovery_server, interface_id, ch)
+    discovery::call_publish(&discovery_server, interface_id, ch)
 }
 
 pub fn connect_to_server(interface_id: InterfaceId) -> Result<Channel> {
     use crate::idl::discovery;
     let discovery_server = Channel::from_cid(1);
-    discovery::Client::connect(&discovery_server, interface_id)
+    discovery::call_connect(&discovery_server, interface_id)
 }
 
 pub enum ServerResult<T> {
@@ -53,8 +53,9 @@ macro_rules! serve_forever {
         let timer_client = Channel::create().unwrap();
         timer_client.transfer_to(&server.ch).unwrap();
 
-        use $crate::idl::timer::Client;
-        let timer_handle = timer_server.create(timer_client, 0, 0).unwrap();
+        use $crate::idl::timer;
+        let timer_handle =
+            timer::call_create(&timer_server, timer_client, 0, 0).unwrap();
 
         const DELAY_RESET: i32 = 20;
         const DELAY_MAX: i32 = 3000;
@@ -91,7 +92,7 @@ macro_rules! serve_forever {
                 DeferredWorkResult::NeedsRetry if !notification.is_empty() => {
                     // Set a timer to retry the deferred work later.
                     info!("retrying later...");
-                    timer_server.reset(timer_handle, delay, 0).unwrap();
+                    timer::call_reset(&timer_server, timer_handle, delay, 0).unwrap();
                     needs_retry = true;
                     delay =  $crate::std::cmp::min(delay << 1, DELAY_MAX);
                 }

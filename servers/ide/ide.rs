@@ -1,5 +1,5 @@
 use resea::channel::Channel;
-use resea::idl::kernel::Client;
+use resea::idl::kernel::{call_read_ioport, call_write_ioport};
 use resea::result::Result;
 use resea::std::slice;
 
@@ -29,7 +29,7 @@ impl IdeDevice {
         let buf_32: &mut [u32] =
             unsafe { slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u32, buf.len() / 4) };
         for i in 0..(read_len / 4) {
-            buf_32[i] = self.io_server.read_ioport(0x1f0, 4)? as u32;
+            buf_32[i] = call_read_ioport(&self.io_server, 0x1f0, 4)? as u32;
         }
 
         Ok(())
@@ -45,7 +45,7 @@ impl IdeDevice {
 
     fn select_num_sectors(&self, num_sectors: usize) -> Result<()> {
         assert!(num_sectors <= 0xff);
-        self.io_server.write_ioport(0x1f2, 1, num_sectors as u64)?;
+        call_write_ioport(self.io_server, 0x1f2, 1, num_sectors as u64)?;
         Ok(())
     }
 
@@ -55,20 +55,20 @@ impl IdeDevice {
         let sector_high = (sector >> 16) & 0xff;
         let sector_highhigh = (sector >> 24) & 0xf;
 
-        self.io_server.write_ioport(0x1f3, 1, sector_low as u64)?;
-        self.io_server.write_ioport(0x1f4, 1, sector_mid as u64)?;
-        self.io_server.write_ioport(0x1f5, 1, sector_high as u64)?;
+        call_write_ioport(self.io_server, 0x1f3, 1, sector_low as u64)?;
+        call_write_ioport(self.io_server, 0x1f4, 1, sector_mid as u64)?;
+        call_write_ioport(self.io_server, 0x1f5, 1, sector_high as u64)?;
         let drive_reg = 0xe0 /* Use LBA */ | (self.drive_no() << 4) | sector_highhigh as u8;
-        self.io_server.write_ioport(0x1f6, 1, drive_reg as u64)?;
+        call_write_ioport(self.io_server, 0x1f6, 1, drive_reg as u64)?;
         Ok(())
     }
 
     fn select_command(&self, command: u8) -> Result<()> {
-        self.io_server.write_ioport(0x1f7, 1, command as u64)
+        call_write_ioport(self.io_server, 0x1f7, 1, command as u64)
     }
 
     fn read_status(&self) -> Result<u8> {
-        self.io_server.read_ioport(0x1f7, 1).map(|data| data as u8)
+        call_read_ioport(self.io_server, 0x1f7, 1).map(|data| data as u8)
     }
 
     // Waits until the device gets ready.

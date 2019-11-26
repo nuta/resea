@@ -1,4 +1,5 @@
 use resea::channel::Channel;
+use resea::idl::kernel::{call_batch_write_ioport, call_get_screen_buffer};
 use resea::message::Page;
 
 const DEFAULT_COLOR: u16 = 0x0f;
@@ -15,10 +16,7 @@ pub struct Screen {
 
 impl Screen {
     pub fn new(kernel_server: &'static Channel) -> Screen {
-        use resea::idl::kernel::Client;
-        let screen = kernel_server
-            .get_screen_buffer()
-            .expect("failed to get the screen page");
+        let screen = call_get_screen_buffer(kernel_server).expect("failed to get the screen page");
 
         Screen {
             kernel_server,
@@ -84,23 +82,22 @@ impl Screen {
     }
 
     pub fn update_cursor(&self) {
-        use resea::idl::kernel::Client;
         let pos = self.cursor_y * SCREEN_WIDTH + self.cursor_x;
-        self.kernel_server
-            .batch_write_ioport(
-                0x3d4,
-                1,
-                0x0f as u64,
-                0x3d5,
-                1,
-                (pos & 0xff) as u64,
-                0x3d4,
-                1,
-                0x0e as u64,
-                0x3d5,
-                1,
-                ((pos >> 8) & 0xff) as u64,
-            )
-            .ok();
+        call_batch_write_ioport(
+            self.kernel_server,
+            0x3d4,
+            1,
+            0x0f as u64,
+            0x3d5,
+            1,
+            (pos & 0xff) as u64,
+            0x3d4,
+            1,
+            0x0e as u64,
+            0x3d5,
+            1,
+            ((pos >> 8) & 0xff) as u64,
+        )
+        .ok();
     }
 }

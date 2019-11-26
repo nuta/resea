@@ -1,7 +1,7 @@
 use crate::e1000::Device;
 use crate::pci::Pci;
 use resea::channel::Channel;
-use resea::idl;
+use resea::idl::{self, memmgr};
 use resea::message::{InterfaceId, Notification, Page};
 use resea::result::Error;
 use resea::server::{publish_server, ServerResult};
@@ -77,9 +77,8 @@ impl resea::server::Server for Server {
         let rx_queue = self.device.rx_queue();
         while let Some(pkt) = rx_queue.front() {
             if let Some(ref listener) = self.listener {
-                use idl::memmgr::Client;
                 let num_pages = align_up(pkt.len(), PAGE_SIZE) / PAGE_SIZE;
-                let mut page = MEMMGR_SERVER.alloc_pages(num_pages).unwrap();
+                let mut page = memmgr::call_alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
                 page.copy_from_slice(&pkt);
                 let reply = idl::network_device::nbsend_received(listener, page);
                 match reply {

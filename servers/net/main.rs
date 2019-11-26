@@ -1,6 +1,7 @@
 use resea::channel::Channel;
 use resea::collections::Vec;
 use resea::idl;
+use resea::idl::network_device::{call_get_macaddr, call_transmit};
 use resea::message::Message;
 use resea::server::{connect_to_server, DeferredWorkResult};
 use resea::std::string::String;
@@ -23,8 +24,7 @@ impl Server {
     pub fn new(server_ch: Channel, network_device: Channel) -> Server {
         let mut tcpip = Instance::new();
         let test_sock = tcpip.tcp_listen(Port::new(80));
-        use resea::idl::network_device::Client;
-        let ma = network_device.get_macaddr().unwrap();
+        let ma = call_get_macaddr(&network_device).unwrap();
         let macaddr = MacAddr::new([ma.0, ma.1, ma.2, ma.3, ma.4, ma.5]);
         tcpip.add_ethernet_device("net0", macaddr, DeviceIpAddr::Dhcp);
         tcpip.interval_work().unwrap(); // TODO: remove
@@ -39,12 +39,11 @@ impl Server {
 
     pub fn flush(&mut self) {
         while let Some(mbuf) = self.tcpip.pop_tx_packet() {
-            use resea::idl::network_device::Client;
             let frame = mbuf.as_bytes();
             let num_pages = align_up(frame.len(), PAGE_SIZE) / PAGE_SIZE;
-            let mut page = idl::memmgr::Client::alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
+            let mut page = idl::memmgr::call_alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
             page.copy_from_slice(frame);
-            self.network_device.transmit(page).unwrap();
+            call_transmit(&self.network_device, page).unwrap();
         }
     }
 }
@@ -116,7 +115,7 @@ pub fn main() {
     let network_device = connect_to_server(idl::network_device::INTERFACE_ID)
         .expect("failed to connect to a network_device");
 
-    idl::network_device::Client::listen(&network_device, listener_ch).unwrap();
+    idl::network_device::call_listen(&network_device, listener_ch).unwrap();
 
     let mut server = Server::new(server_ch, network_device);
     server.flush();

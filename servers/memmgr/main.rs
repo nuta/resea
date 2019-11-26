@@ -170,9 +170,9 @@ impl idl::timer::Server for Server {
         initial: i32,
         interval: i32,
     ) -> ServerResult<HandleId> {
-        use idl::timer::Client;
+        use idl::timer::call_create;
         // FIXME: Don't use unwrap
-        ServerResult::Ok(KERNEL_SERVER.create(ch, initial, interval).unwrap())
+        ServerResult::Ok(call_create(&KERNEL_SERVER, ch, initial, interval).unwrap())
     }
 
     fn reset(
@@ -182,13 +182,13 @@ impl idl::timer::Server for Server {
         initial: i32,
         interval: i32,
     ) -> ServerResult<()> {
-        use idl::timer::Client;
-        ServerResult::Ok(KERNEL_SERVER.reset(timer, initial, interval).unwrap())
+        use idl::timer::call_reset;
+        ServerResult::Ok(call_reset(&KERNEL_SERVER, timer, initial, interval).unwrap())
     }
 
     fn clear(&mut self, _from: &Channel, timer: HandleId) -> ServerResult<()> {
-        use idl::timer::Client;
-        ServerResult::Ok(KERNEL_SERVER.clear(timer).unwrap())
+        use idl::timer::call_clear;
+        ServerResult::Ok(call_clear(&KERNEL_SERVER, timer).unwrap())
     }
 }
 

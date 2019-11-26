@@ -1,4 +1,5 @@
 use crate::channel::Channel;
+use crate::idl;
 use core::fmt::Write;
 
 pub struct Printer();
@@ -25,16 +26,14 @@ pub fn printchar(ch: u8) {
     // Assuming that @1 is connected with a server which provides runtime
     // interface.
     let client = Channel::from_cid(1);
-    use crate::idl::runtime::Client;
-    client.printchar(ch).ok();
+    idl::runtime::call_printchar(&client, ch).ok();
 }
 
 pub fn print_str(s: &str) {
     // Assuming that @1 is connected with a server which provides runtime
     // interface.
     let client = Channel::from_cid(1);
-    use crate::idl::runtime::Client;
-    client.print_str(s).ok();
+    idl::runtime::call_print_str(&client, s).ok();
 }
 
 /// Prints a string.

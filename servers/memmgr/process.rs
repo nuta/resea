@@ -4,6 +4,7 @@ use resea::allocator::AllocatedPage;
 use resea::channel::Channel;
 use resea::collections::HashMap;
 use resea::idl;
+use resea::idl::kernel::{call_add_vm_area, call_create_process, call_inject_channel};
 use resea::message::HandleId;
 use resea::result::{Error, Result};
 use resea::std::cmp::min;
@@ -19,8 +20,8 @@ pub struct Process {
 
 impl Process {
     pub fn start(&self, thread_server: &Channel) -> Result<()> {
-        use idl::kernel::Client;
-        thread_server.spawn_thread(
+        idl::kernel::call_spawn_thread(
+            thread_server,
             self.pid,
             self.elf.entry,
             APP_INITIAL_STACK_POINTER,
@@ -58,15 +59,20 @@ impl ProcessManager {
 
     pub fn create(&mut self, file: &'static File) -> Result<HandleId> {
         let elf = ELF::parse(file.data())?;
-        let (_, kernel_ch) = idl::server::Client::connect(self.process_server, 0)?;
+        let (_, kernel_ch) = idl::server::call_connect(self.process_server, 0)?;
 
-        use idl::kernel::Client;
-        let (proc, pager_ch) = self.process_server.create_process(file.path())?;
+        let (proc, pager_ch) = call_create_process(self.process_server, file.path())?;
 
-        self.process_server.inject_channel(proc, kernel_ch)?;
-        self.process_server
-            .add_vm_area(proc, APP_IMAGE_START, APP_IMAGE_SIZE, 0x06)?;
-        self.process_server.add_vm_area(
+        call_inject_channel(self.process_server, proc, kernel_ch)?;
+        call_add_vm_area(
+            self.process_server,
+            proc,
+            APP_IMAGE_START,
+            APP_IMAGE_SIZE,
+            0x06,
+        )?;
+        call_add_vm_area(
+            self.process_server,
             proc,
             APP_ZEROED_PAGES_START,
             APP_ZEROED_PAGES_SIZE,

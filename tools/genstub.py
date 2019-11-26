@@ -136,6 +136,24 @@ pub fn nbsend_{{ msg.name }}({{ msg.args | arg_params("__ch: &Channel") }})
 }
 
 {%- if msg.attrs.type == "call" %}
+pub fn call_{{ msg.name }}({{ msg.args | arg_params("__ch: &Channel") }}) -> Result<{{ msg.rets | ret_params }}> {
+    let mut __m: {{ msg.name | camelcase }}Msg =
+        unsafe { core::mem::MaybeUninit::uninit().assume_init() };
+{%- if msg.rets.page %}
+    crate::thread_info::alloc_and_set_page_base();
+{%- endif %}
+    {{ serialize("__m", msg.name, msg.args, False) }}
+    __ch.call(__cast_into_message(&__m))
+        .map(|__r| {
+            let __r: &{{ msg.name | camelcase }}ReplyMsg = __cast_from_message(&__r);
+            {{ deserialize("__r", msg.name, msg.rets) }}
+        })
+        .map_err(|err| {
+            // TODO: Free allocated pages.
+            err
+        })
+}
+
 pub fn send_{{ msg.name }}_reply({{ msg.rets | arg_params("__ch: &Channel") }})
     -> Result<()> {
     let mut __m: {{ msg.name | camelcase }}ReplyMsg =
@@ -143,6 +161,7 @@ pub fn send_{{ msg.name }}_reply({{ msg.rets | arg_params("__ch: &Channel") }})
     {{ serialize("__m", msg.name, msg.rets, True) }}
     __ch.send(__cast_into_message(&__m))
 }
+
 pub fn nbsend_{{ msg.name }}_reply({{ msg.rets | arg_params("__ch: &Channel") }})
     -> Result<()> {
     let mut __m: {{ msg.name | camelcase }}ReplyMsg =
@@ -152,40 +171,6 @@ pub fn nbsend_{{ msg.name }}_reply({{ msg.rets | arg_params("__ch: &Channel") }}
 }
 {%- endif %}
 {% endfor -%}
-
-//
-//  Client stubs.
-//
-pub trait Client {
-    fn __server(&self) -> &Channel;
-{% for msg in messages %}
-{%- if msg.attrs.type == "call" %}
-    fn {{ msg.name }}({{ msg.args | arg_params("&self") }})
-        -> Result<{{ msg.rets | ret_params }}> {
-        let mut __m: {{ msg.name | camelcase }}Msg =
-            unsafe { core::mem::MaybeUninit::uninit().assume_init() };
-{%- if msg.rets.page %}
-        crate::thread_info::alloc_and_set_page_base();
-
-{%- endif %}
-        {{ serialize("__m", msg.name, msg.args, False) }}
-        self.__server().call(__cast_into_message(&__m))
-            .map(|__r| {
-                let __r: &{{ msg.name | camelcase }}ReplyMsg = __cast_from_message(&__r);
-                {{ deserialize("__r", msg.name, msg.rets) }}
-            })
-            .map_err(|err| {
-                // TODO: Free allocated pages.
-                err
-            })
-    }
-{%- endif %}
-{% endfor -%}
-}
-
-impl Client for Channel {
-    fn __server(&self) -> &Channel { self }
-}
 
 //
 //  Server stubs.

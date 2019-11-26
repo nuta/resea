@@ -1,6 +1,7 @@
 use crate::keymap::*;
 use resea::channel::Channel;
 use resea::collections::VecDeque;
+use resea::idl::kernel::{call_listen_irq, call_read_ioport};
 
 const KEYBOARD_IRQ: u8 = 1;
 const IOPORT_DATA: u64 = 0x60;
@@ -24,12 +25,9 @@ pub struct Keyboard {
 
 impl Keyboard {
     pub fn new(server_ch: &Channel, kernel_server: &'static Channel) -> Keyboard {
-        use resea::idl::kernel::Client;
-
         let kbd_irq_ch = Channel::create().unwrap();
         kbd_irq_ch.transfer_to(server_ch).unwrap();
-        kernel_server
-            .listen_irq(kbd_irq_ch, KEYBOARD_IRQ)
+        call_listen_irq(kernel_server, kbd_irq_ch, KEYBOARD_IRQ)
             .expect("failed to register the keyboard IRQ handler");
 
         // FIXME: kbd_irq_ch is not closed.
@@ -53,14 +51,13 @@ impl Keyboard {
     }
 
     pub fn read_input(&mut self) {
-        use resea::idl::kernel::Client;
         loop {
-            let status = self.kernel_server.read_ioport(IOPORT_STATUS, 1).unwrap() as u8;
+            let status = call_read_ioport(self.kernel_server, IOPORT_STATUS, 1).unwrap() as u8;
             if status & STATUS_OUTBUF_FULL == 0 {
                 break;
             }
 
-            let raw_scancode = self.kernel_server.read_ioport(IOPORT_DATA, 1).unwrap() as u8;
+            let raw_scancode = call_read_ioport(self.kernel_server, IOPORT_DATA, 1).unwrap() as u8;
             let scancode = ScanCode::new(raw_scancode);
 
             let shifted = self.shift_left || self.shift_right || self.caps_lock;

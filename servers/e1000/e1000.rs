@@ -1,6 +1,8 @@
 use crate::pci::Pci;
 use resea::channel::Channel;
 use resea::collections::{Vec, VecDeque};
+use resea::idl::kernel::call_listen_irq;
+use resea::idl::memmgr::{call_alloc_phy_pages, call_map_phy_pages};
 use resea::message::Page;
 use resea::std::mem::size_of;
 use resea::std::sync::atomic::{fence, Ordering};
@@ -137,32 +139,29 @@ impl Device {
             .expect("failed to locate an e1000 device in PCI");
         pci.enable_bus_master(&pci_device);
 
-        use resea::idl::kernel::Client as KernelClient;
         let irq_ch = Channel::create().unwrap();
         irq_ch.transfer_to(server_ch).unwrap();
-        kernel_server
-            .listen_irq(irq_ch, pci_device.interrupt_line)
+        call_listen_irq(kernel_server, irq_ch, pci_device.interrupt_line)
             .expect("failed to register the keyboard IRQ handler");
 
         // Map memory-mapped registers.
-        use resea::idl::memmgr::Client;
-        let regs_page = memmgr.map_phy_pages(pci_device.bar0 as usize, 8).unwrap();
+        let regs_page = call_map_phy_pages(memmgr, pci_device.bar0 as usize, 8).unwrap();
 
         // Allocate pages for RX/TX descriptors.
         let rx_desc_len = align_up(size_of::<RxDesc>() * NUM_RX_DESCS, PAGE_SIZE);
         let (rx_desc_paddr, rx_desc_page) =
-            memmgr.alloc_phy_pages(rx_desc_len / PAGE_SIZE).unwrap();
+            call_alloc_phy_pages(memmgr, rx_desc_len / PAGE_SIZE).unwrap();
         let tx_buffer_len = align_up(size_of::<TxDesc>() * NUM_TX_DESCS, PAGE_SIZE);
         let (tx_desc_paddr, tx_desc_page) =
-            memmgr.alloc_phy_pages(tx_buffer_len / PAGE_SIZE).unwrap();
+            call_alloc_phy_pages(memmgr, tx_buffer_len / PAGE_SIZE).unwrap();
 
         // Allocate pages for RX/TX packets.
         let rx_desc_len = align_up(BUFFER_SIZE * NUM_RX_DESCS, PAGE_SIZE);
         let (rx_data_paddr, rx_data_page) =
-            memmgr.alloc_phy_pages(rx_desc_len / PAGE_SIZE).unwrap();
+            call_alloc_phy_pages(memmgr, rx_desc_len / PAGE_SIZE).unwrap();
         let tx_buffer_len = align_up(BUFFER_SIZE * NUM_TX_DESCS, PAGE_SIZE);
         let (tx_data_paddr, tx_data_page) =
-            memmgr.alloc_phy_pages(tx_buffer_len / PAGE_SIZE).unwrap();
+            call_alloc_phy_pages(memmgr, tx_buffer_len / PAGE_SIZE).unwrap();
 
         Device {
             regs_page,

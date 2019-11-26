@@ -31,9 +31,9 @@ impl idl::storage_device::Server for Server {
             return ServerResult::Err(Error::InvalidArg);
         }
 
-        use idl::memmgr::Client;
+        use idl::memmgr::call_alloc_pages;
         let num_pages = align_up(num_sectors * self.device.sector_size(), PAGE_SIZE) / PAGE_SIZE;
-        let mut page = MEMMGR_SERVER.alloc_pages(num_pages).unwrap();
+        let mut page = call_alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
         self.device
             .read_sectors(sector, num_sectors, page.as_bytes_mut())
             .unwrap();

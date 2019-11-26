@@ -1,5 +1,6 @@
 use resea::channel::Channel;
 use resea::collections::Vec;
+use resea::idl;
 use resea::result::Result;
 use resea::std::cmp::min;
 use resea::std::mem::size_of;
@@ -100,8 +101,7 @@ pub struct FileSystem {
 impl FileSystem {
     pub fn new(storage_device: Channel, part_begin: usize) -> Result<FileSystem> {
         let bpb = {
-            use resea::idl::storage_device::Client;
-            let mbr = storage_device.read(part_begin, 1)?;
+            let mbr = idl::storage_device::call_read(&storage_device, part_begin, 1)?;
             parse_mbr(mbr.as_bytes())
         };
 
@@ -170,11 +170,12 @@ impl FileSystem {
 
         let index = cluster as usize - cluster_start;
         let sector = self.bpb.cluster_start_sector + (index * self.bpb.sectors_per_cluster);
-        use resea::idl::storage_device::Client;
-        let data = self
-            .storage_device
-            .read(self.part_begin + sector, self.bpb.sectors_per_cluster)
-            .unwrap();
+        let data = idl::storage_device::call_read(
+            &self.storage_device,
+            self.part_begin + sector,
+            self.bpb.sectors_per_cluster,
+        )
+        .unwrap();
         *buf = data.as_bytes().to_vec();
     }
 
@@ -184,11 +185,9 @@ impl FileSystem {
         let index = (cluster as usize) % entries_per_sector;
 
         let sector = self.bpb.fat_table_sector_start + sector_offset;
-        use resea::idl::storage_device::Client;
-        let data = self
-            .storage_device
-            .read(self.part_begin + sector, 1)
-            .unwrap();
+        let data =
+            idl::storage_device::call_read(&self.storage_device, self.part_begin + sector, 1)
+                .unwrap();
 
         let table: &[u32] = unsafe {
             use resea::std::slice::from_raw_parts;

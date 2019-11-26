@@ -1,4 +1,5 @@
 use resea::channel::Channel;
+use resea::idl::kernel::{call_read_ioport, call_write_ioport};
 
 const PCI_IOPORT_ADDR: u64 = 0x0cf8;
 const PCI_IOPORT_DATA: u64 = 0x0cfc;
@@ -76,11 +77,8 @@ impl Pci {
 
         let addr = (1 << 31) | ((bus as u32) << 16) | ((slot as u32) << 11) | offset as u32;
 
-        use resea::idl::kernel::Client;
-        self.kernel_server
-            .write_ioport(PCI_IOPORT_ADDR, 4, addr as u64)
-            .unwrap();
-        self.kernel_server.read_ioport(PCI_IOPORT_DATA, 4).unwrap() as u32
+        call_write_ioport(self.kernel_server, PCI_IOPORT_ADDR, 4, addr as u64).unwrap();
+        call_read_ioport(self.kernel_server, PCI_IOPORT_DATA, 4).unwrap() as u32
     }
 
     fn write_config32(&self, bus: u8, slot: u8, offset: u16, value: u32) {
@@ -89,12 +87,7 @@ impl Pci {
 
         let addr = (1 << 31) | ((bus as u32) << 16) | ((slot as u32) << 11) | offset as u32;
 
-        use resea::idl::kernel::Client;
-        self.kernel_server
-            .write_ioport(PCI_IOPORT_ADDR, 4, addr as u64)
-            .unwrap();
-        self.kernel_server
-            .write_ioport(PCI_IOPORT_DATA, 4, value as u64)
-            .unwrap();
+        call_write_ioport(self.kernel_server, PCI_IOPORT_ADDR, 4, addr as u64).unwrap();
+        call_write_ioport(self.kernel_server, PCI_IOPORT_DATA, 4, value as u64).unwrap();
     }
 }

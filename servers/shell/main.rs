@@ -1,5 +1,6 @@
 use resea::channel::Channel;
 use resea::idl;
+use resea::idl::text_screen_device::{call_print_char, call_print_str};
 use resea::message::Message;
 use resea::server::connect_to_server;
 use resea::std::string::String;
@@ -25,17 +26,16 @@ impl Server {
             connect_to_server(idl::fs::INTERFACE_ID).expect("failed to connect to a fs server");
 
         // Print the welcome message.
-        use idl::text_screen_device::Client;
-        screen.print_str("Resea Version \n").unwrap();
-        screen.print_str("Type 'help' for usage.\n").unwrap();
-        screen.print_str(">>> ").unwrap();
+        call_print_str(&screen, "Resea Version \n").unwrap();
+        call_print_str(&screen, "Type 'help' for usage.\n").unwrap();
+        call_print_str(&screen, ">>> ").unwrap();
 
         // Start receiving keyboard inputs from the driver.
-        use idl::keyboard_device::Client as KeyboardClient;
+        use idl::keyboard_device::call_listen;
         let server_ch = Channel::create().unwrap();
         let listener_ch = Channel::create().unwrap();
         listener_ch.transfer_to(&server_ch).unwrap();
-        keyboard.listen(listener_ch).unwrap();
+        call_listen(&keyboard, listener_ch).unwrap();
 
         Server {
             ch: server_ch,
@@ -49,9 +49,8 @@ impl Server {
         if self.input == "help" {
             self.print_string("echo <string>   -  Prints a string.\n");
         } else if self.input == "dmesg" {
-            use idl::kernel::Client;
             loop {
-                let r = KERNEL_SERVER.read_kernel_log().unwrap();
+                let r = idl::kernel::call_read_kernel_log(&KERNEL_SERVER).unwrap();
                 if r.is_empty() {
                     break;
                 }
@@ -62,10 +61,9 @@ impl Server {
             self.print_string("\n");
         } else if self.input.starts_with("cat ") {
             let path = &self.input[4..];
-            use idl::fs::Client;
-            match self.fs.open(path) {
+            match idl::fs::call_open(&self.fs, path) {
                 Ok(handle) => {
-                    match self.fs.read(handle, 0, 4096 /* FIXME: */) {
+                    match idl::fs::call_read(&self.fs, handle, 0, 4096 /* FIXME: */) {
                         Ok(page) => {
                             let content =
                                 unsafe { core::str::from_utf8_unchecked(page.as_bytes()) };
@@ -82,18 +80,15 @@ impl Server {
     }
 
     fn print_string(&self, string: &str) {
-        use idl::text_screen_device::Client;
-        self.screen.print_str(string).unwrap();
+        call_print_str(&self.screen, string).unwrap();
     }
 
     fn print_prompt(&self) {
-        use idl::text_screen_device::Client;
-        self.screen.print_str(">>> ").unwrap();
+        call_print_str(&self.screen, ">>> ").unwrap();
     }
 
     fn readchar(&mut self, ch: char) {
-        use idl::text_screen_device::Client;
-        self.screen.print_char(ch as u8).ok();
+        call_print_char(&self.screen, ch as u8).ok();
         if ch == '\n' {
             self.run_command();
             self.input.clear();

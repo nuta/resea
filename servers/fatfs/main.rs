@@ -60,10 +60,9 @@ impl idl::fs::Server for Server {
             None => return ServerResult::Err(Error::InvalidHandle),
         };
 
-        use idl::memmgr::Client;
-        let mut page = MEMMGR_SERVER
-            .alloc_pages(align_up(len, PAGE_SIZE) / PAGE_SIZE)
-            .unwrap();
+        use idl::memmgr::call_alloc_pages;
+        let mut page =
+            call_alloc_pages(&MEMMGR_SERVER, align_up(len, PAGE_SIZE) / PAGE_SIZE).unwrap();
         file.read(&self.fs, page.as_bytes_mut(), offset, len)
             .unwrap();
         ServerResult::Ok(page)
