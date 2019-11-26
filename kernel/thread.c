@@ -1,6 +1,6 @@
 #include <arch.h>
 #include <memory.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <process.h>
 #include <table.h>
 #include <thread.h>

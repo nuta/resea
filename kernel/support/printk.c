@@ -3,6 +3,7 @@
 #include <channel.h>
 #include <thread.h>
 #include <process.h>
+#include <support/printk.h>
 #include <support/backtrace.h>
 
 static void print_str(const char *s) {

@@ -4,7 +4,7 @@
 #include <types.h>
 #include <arch.h>
 #include <list.h>
-#include <printk.h>
+#include <support/printk.h>
 
 #define FREE_LIST_MAGIC1 0xdeaddead
 #define FREE_LIST_MAGIC2 0xbadbadba

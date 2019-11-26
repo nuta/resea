@@ -1,4 +1,4 @@
-#include <printk.h>
+#include <support/printk.h>
 #include <timer.h>
 #include <server.h>
 #include <x64/apic.h>

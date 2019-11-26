@@ -2,7 +2,7 @@
 #define __TABLE_H__
 
 #include <memory.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <types.h>
 
 /// We don't allocate id == 0 to use it as a *null* value.

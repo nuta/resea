@@ -82,6 +82,9 @@ interface kernel {
 
     [id(10), type(call)]
     get_screen_buffer() -> (page: page)
+
+    [id(11), type(call)]
+    read_kernel_log() -> (str: string)
 }
 
 [id(11)]

@@ -7,6 +7,8 @@ void arch_panic(void);
 void backtrace(void);
 
 void printk(const char *fmt, ...);
+void print_char(char ch);
+void read_kernel_log(char *buf, size_t buf_len);
 
 #define COLOR_BOLD "\e[1m"
 #define COLOR_BOLD_RED "\e[1;91m"

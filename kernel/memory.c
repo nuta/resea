@@ -1,7 +1,7 @@
 #include <arch.h>
 #include <list.h>
 #include <memory.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <process.h>
 #include <table.h>
 #include <thread.h>

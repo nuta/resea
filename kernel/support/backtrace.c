@@ -1,4 +1,4 @@
-#include <printk.h>
+#include <support/printk.h>
 #include <arch.h>
 #include <support/backtrace.h>
 

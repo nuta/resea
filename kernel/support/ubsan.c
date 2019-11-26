@@ -3,7 +3,7 @@
 // https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 //
 #include <types.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <support/ubsan.h>
 
 static void report_ubsan_event(const char *event) {

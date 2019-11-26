@@ -1,7 +1,7 @@
 #ifndef __ARCH_TYPES_H__
 #define __ARCH_TYPES_H__
 
-#include <printk.h>
+#include <support/printk.h>
 #include <x64/screen.h>
 #include <x64/serial.h>
 #include <x64/x64.h>

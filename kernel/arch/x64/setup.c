@@ -1,7 +1,7 @@
 #include <arch.h>
 #include <bootinfo.h>
 #include <boot.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <x64/apic.h>
 #include <x64/handler.h>
 #include <x64/multiboot.h>

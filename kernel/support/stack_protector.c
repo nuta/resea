@@ -1,6 +1,6 @@
 #include <arch.h>
 #include <thread.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <support/stack_protector.h>
 
 #define STACK_CANARY 0xdeadca71 /* dead canary */

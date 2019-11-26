@@ -1,5 +1,5 @@
 #include <memory.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <process.h>
 #include <server.h>
 #include <table.h>

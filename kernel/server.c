@@ -1,5 +1,5 @@
 #include <channel.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <process.h>
 #include <server.h>
 #include <thread.h>
@@ -64,14 +64,14 @@ static paddr_t user_pager(struct vmarea *vma, vaddr_t vaddr) {
 }
 
 static error_t handle_runtime_printchar(struct message *m) {
-    arch_putchar(m->payloads.runtime.printchar.ch);
+    print_char(m->payloads.runtime.printchar.ch);
     return OK;
 }
 
 static error_t handle_runtime_print_str(struct message *m) {
     char *str = m->payloads.runtime.print_str.str;
     for (int i = 0; str[i] != '\0' && i < STRING_LEN_MAX; i++) {
-        arch_putchar(str[i]);
+        print_char(str[i]);
     }
     return OK;
 }
@@ -352,6 +352,13 @@ static error_t handle_timer_clear(UNUSED struct message *m) {
     return OK;
 }
 
+static error_t handle_read_kernel_log(UNUSED struct message *m) {
+    read_kernel_log(m->payloads.kernel.read_kernel_log_reply.str,
+                    STRING_LEN_MAX);
+    m->header = KERNEL_READ_KERNEL_LOG_REPLY_MSG;
+    return OK;
+}
+
 static error_t process_message(struct message *m) {
     switch (m->header) {
     case RUNTIME_EXIT_MSG:             return handle_runtime_exit(m);
@@ -367,6 +374,7 @@ static error_t process_message(struct message *m) {
     case KERNEL_READ_IOPORT_MSG:       return handle_io_read_io_port(m);
     case KERNEL_WRITE_IOPORT_MSG:      return handle_io_write_io_port(m);
     case KERNEL_GET_SCREEN_BUFFER_MSG: return handle_kernel_get_screen_buffer(m);
+    case KERNEL_READ_KERNEL_LOG_MSG:   return handle_read_kernel_log(m);
     case TIMER_CREATE_MSG:             return handle_timer_create(m);
     case TIMER_RESET_MSG:              return handle_timer_reset(m);
     case TIMER_CLEAR_MSG:              return handle_timer_clear(m);

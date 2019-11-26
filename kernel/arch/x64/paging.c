@@ -1,7 +1,7 @@
 #include <arch.h>
 #include <support/kasan.h>
 #include <memory.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <x64/x64.h>
 
 #define NTH_LEVEL_INDEX(level, vaddr) \

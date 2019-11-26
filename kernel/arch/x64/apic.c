@@ -1,5 +1,5 @@
 #include <arch.h>
-#include <printk.h>
+#include <support/printk.h>
 #include <x64/apic.h>
 #include <x64/x64.h>
 
