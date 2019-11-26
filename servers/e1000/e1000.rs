@@ -238,6 +238,10 @@ impl Device {
         let desc = self.tx_desc(self.tx_current);
         desc.cmd = TX_DESC_IFCS | TX_DESC_EOP;
         desc.len = pkt.len() as u16;
+        desc.cso = 0;
+        desc.status = 0;
+        desc.css = 0;
+        desc.special = 0;
 
         // Notify the device.
         self.tx_current = (self.tx_current + 1) % (NUM_TX_DESCS as u32);
