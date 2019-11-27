@@ -23,6 +23,8 @@ pub unsafe fn get_thread_info() -> &'static mut ThreadInfo {
 
 pub unsafe fn copy_to_ipc_buffer(m: &Message) {
     // TODO: Read the length of the inline payload not to copy the whole message.
+    // TODO: Fill the unused space in the page payload with zeroes in order not
+    //       to leak unintended information (cf. Heartbleed Bug).
     core::ptr::copy_nonoverlapping(
         m as *const _,
         &mut get_thread_info().ipc_buffer as *mut _,
