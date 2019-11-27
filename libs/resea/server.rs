@@ -41,7 +41,10 @@ pub trait Server {
 
 #[macro_export]
 macro_rules! serve_forever {
-    ($server:expr, [$($interface:ident), *]) => {{
+    ($server:expr, [$($server_interface:ident), *]) => {{
+        serve_forever!($server, [$($server_interface),*], [])
+    }};
+    ($server:expr, [$($server_interface:ident), *], [$($client_interface:ident), *]) => {{
         use $crate::server::DeferredWorkResult;
 
         // The server struct must have 'ch' field.
@@ -69,8 +72,10 @@ macro_rules! serve_forever {
             let notification = m.notification;
 
             let has_reply = match m.header.interface_id() {
-                $( $crate::idl::$interface::INTERFACE_ID =>
-                    $crate::idl::$interface::Server::__handle(server, &mut m), )*
+                $( $crate::idl::$server_interface::INTERFACE_ID =>
+                    $crate::idl::$server_interface::Server::__handle(server, &mut m), )*
+                $( $crate::idl::$client_interface::INTERFACE_ID =>
+                    $crate::idl::$client_interface::Client::__handle(server, &mut m), )*
                 $crate::idl::notification::INTERFACE_ID => {
                     $crate::server::Server::notification(server, m.notification);
                     false

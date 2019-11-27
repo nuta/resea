@@ -231,6 +231,34 @@ pub trait Server {
         }
     }
 }
+
+pub trait Client {
+{%- for msg in messages %}
+{%- if msg.attrs.type == "call" %}
+    fn {{ msg.name }}_reply({{ msg.rets | arg_params("&mut self, _from: &Channel") }}) {}
+{%- endif %}
+{%- endfor %}
+
+    fn __handle(&mut self, m: &mut Message) -> bool {
+        match m.header {
+{%- for msg in messages %}
+{%- if msg.attrs.type == "call" %}
+            {{ msg.name | upper }}_REPLY_MSG => {
+                let reply: &mut {{ msg.name | camelcase }}ReplyMsg =
+                    __cast_from_message_mut(m);
+                let from = Channel::from_cid(reply.from);
+                self.{{ msg.name }}_reply({{ msg.rets | call_args("reply") }});
+                false
+            }
+{%- endif %}
+{%- endfor %}
+            _ => {
+                m.header = MessageHeader::from_error(Error::UnknownMessage);
+                true
+            },
+        }
+    }
+}
 """
 
 builtin_types = {

@@ -217,6 +217,19 @@ impl idl::discovery::Server for Server {
     }
 }
 
+impl idl::server::Client for Server {
+    fn connect_reply(&mut self, _from: &Channel, interface: InterfaceId, ch: Channel) {
+        // Successfully created a new client channel.
+        info!("received a server.connect_reply for interface={}", interface);
+        match self.servers.get_mut(&interface) {
+            Some(server) => server.client_ch = Some(ch),
+            None => {
+                warn!("received server.connect_reply from an unexpected channel");
+            }
+        }
+    }
+}
+
 impl resea::server::Server for Server {
     fn deferred_work(&mut self) -> DeferredWorkResult {
         let mut pending_requests = Vec::with_capacity(self.connect_requests.len());
@@ -275,30 +288,6 @@ impl resea::server::Server for Server {
         self.connect_requests = pending_requests;
         result
     }
-
-    fn unknown_message(&mut self, m: &mut Message) -> bool {
-        if m.header == idl::server::CONNECT_REPLY_MSG {
-            let m = unsafe {
-                resea::mem::transmute::<&mut Message, &mut idl::server::ConnectReplyMsg>(m)
-            };
-
-            // Successfully created a new client channel.
-            info!(
-                "received a server.connect_reply for interface={}",
-                m.interface
-            );
-            match self.servers.get_mut(&m.interface) {
-                Some(server) => server.client_ch = Some(Channel::from_cid(m.ch)),
-                None => {
-                    warn!("received server.connect_reply from an unexpected channel");
-                }
-            }
-        } else {
-            warn!("unknown message");
-        }
-
-        false
-    }
 }
 
 #[no_mangle]
@@ -311,5 +300,5 @@ pub fn main() {
     server.launch_servers(initfs);
 
     info!("entering mainloop...");
-    serve_forever!(&mut server, [runtime, pager, timer, memmgr, discovery]);
+    serve_forever!(&mut server, [runtime, pager, timer, memmgr, discovery], [server]);
 }
