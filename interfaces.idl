@@ -120,6 +120,24 @@ interface fs {
     write(file: handle, page: page, len: size) -> ()
 }
 
+[id(14)]
+interface net {
+    [id(1), type(call)]
+    tcp_close(sock: handle) -> ()
+    [id(2), type(call)]
+    tcp_listen(ch: channel, port: uint16) -> (sock: handle)
+    [id(3), type(call)]
+    tcp_write(sock: handle, data: page) -> ()
+}
+
+[id(15)]
+interface net_client {
+    [id(1), type(oneway)]
+    tcp_received(client_sock: handle, data: page) -> ()
+    [id(2), type(oneway)]
+    tcp_accepted(listen_sock: handle, client_sock: handle) -> ()
+}
+
 [id(30)]
 interface storage_device {
     [id(1), type(call)]
