@@ -47,6 +47,7 @@ impl Checksum {
 
         // Handle the last byte if the length of input is odd.
         if odd {
+            // FIXME: It's broken...
             self.0 += bytes[bytes.len() - 1] as u32;
         }
     }
