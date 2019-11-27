@@ -2,7 +2,6 @@
 #define __ARCH_TYPES_H__
 
 #include <support/printk.h>
-#include <x64/screen.h>
 #include <x64/serial.h>
 #include <x64/x64.h>
 
@@ -57,7 +56,6 @@ struct arch_thread {
     uint64_t cr3;
     uint64_t info;
     uint64_t xsave_area;
-    uint64_t rflags_ormask;
 } PACKED;
 
 struct page_table {
@@ -129,8 +127,6 @@ static inline void arch_putchar(char ch) {
         x64_serial_putchar('\r');
     }
 
-    // FIXME: The pcat driver uses the screen buffer.
-    // x64_screen_putchar(ch);
     x64_serial_putchar(ch);
 }
 

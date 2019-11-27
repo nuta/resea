@@ -1,13 +1,8 @@
 #include <x64/handler.h>
 #define ARCH_THREAD_RSP           0
 #define ARCH_THREAD_KERNEL_STACK  8
-#define ARCH_RFLAGS_ORMASK        40
 
 .intel_syntax noprefix
-
-.data
-.align 8
-
 .text
 
 .extern syscall_handler
@@ -72,10 +67,6 @@ x64_syscall_handler:
     pop rcx
     pop r11
     pop rsp
-
-    // Update RFLAGS. TODO: Abandon io.allow_iomapped_io and remove this.
-    mov rdx, gs:[ARCH_RFLAGS_ORMASK]
-    or  r11, rdx
 
     // Sanitize registers to prevent information leak. Note that some scratch
     // registers holds values for SYSRETQ and the user:
@@ -203,12 +194,6 @@ handle_interrupt:
      * occur in the userspace. If so, do swapgs. */
     test qword ptr [rsp + 8], 3
     jz 1f
-
-    /* Update RFLAGS. */
-    push rax
-    mov rax, gs:[ARCH_RFLAGS_ORMASK]
-    or [rsp + 24], rax
-    pop rax
 
     cli
     swapgs

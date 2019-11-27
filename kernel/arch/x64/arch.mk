@@ -23,7 +23,6 @@ kernel_objs += \
 	$(BUILD_DIR)/kernel/arch/x64/handler.o \
 	$(BUILD_DIR)/kernel/arch/x64/interrupt.o \
 	$(BUILD_DIR)/kernel/arch/x64/paging.o \
-	$(BUILD_DIR)/kernel/arch/x64/screen.o \
 	$(BUILD_DIR)/kernel/arch/x64/serial.o \
 	$(BUILD_DIR)/kernel/arch/x64/setup.o \
 	$(BUILD_DIR)/kernel/arch/x64/mp.o \
