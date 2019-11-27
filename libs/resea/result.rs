@@ -14,6 +14,8 @@ pub enum Error {
     InvalidHandle = 10,
     NeedsRetry = 22,
     NoReply = 23,
+    WouldBlock = 24,
+    __NonExhaustive
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

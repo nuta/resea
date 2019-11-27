@@ -51,7 +51,7 @@ enum error_codes {
     //       printk("Success!");
     //     }
     //
-    OK = 0x1a1a,
+    OK = 0,
 #else
     OK,
 #endif
@@ -87,7 +87,7 @@ enum error_codes {
 
     // Try again!
     ERR_ALREADY_RECEVING,
-    ERR_WOULD_BLOCK,
+    ERR_WOULD_BLOCK = 24,
     ERR_NEEDS_RETRY,
 };
 
