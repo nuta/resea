@@ -244,8 +244,7 @@ impl resea::server::Server for Server {
                             warn!("sending a connect_reply");
                             match idl::discovery::nbsend_connect_reply(&request.ch, client_ch) {
                                 Ok(_) => false,
-                                Err(Error::NeedsRetry) => {
-                                    warn!("failed to send a connect_reply");
+                                Err(Error::WouldBlock) => {
                                     true
                                 }
                                 Err(_) => {
@@ -257,19 +256,17 @@ impl resea::server::Server for Server {
                         None => {
                             // Try sending a server.connect request to the registered
                             // server...
-                            warn!("sending a connect request");
                             let reply =
                                 idl::server::nbsend_connect(&server.server_ch, request.interface);
                             match reply {
                                 Ok(()) => true,
-                                Err(Error::NeedsRetry) => {
+                                Err(Error::WouldBlock) => {
                                     // The server is not ready. Try later.
-                                    warn!("failed to send a connect");
                                     true
                                 }
-                                Err(_) => {
+                                Err(err) => {
                                     // The server returned an unexpected error.
-                                    warn!("error occurred during receiving a server.connect");
+                                    warn!("error occurred during sending a server.connect {}", err);
                                     true
                                 }
                             }
