@@ -31,10 +31,8 @@ impl idl::storage_device::Server for Server {
 
         use idl::memmgr::call_alloc_pages;
         let num_pages = align_up(num_sectors * self.device.sector_size(), PAGE_SIZE) / PAGE_SIZE;
-        let mut page = call_alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
-        self.device
-            .read_sectors(sector, num_sectors, page.as_bytes_mut())
-            .unwrap();
+        let mut page = call_alloc_pages(&MEMMGR_SERVER, num_pages)?;
+        self.device.read_sectors(sector, num_sectors, page.as_bytes_mut())?;
         Ok(page)
     }
 }
@@ -46,8 +44,8 @@ impl idl::server::Server for Server {
         interface: InterfaceId,
     ) -> Result<(InterfaceId, Channel)> {
         assert!(interface == idl::storage_device::INTERFACE_ID);
-        let client_ch = Channel::create().unwrap();
-        client_ch.transfer_to(&self.ch).unwrap();
+        let client_ch = Channel::create()?;
+        client_ch.transfer_to(&self.ch)?;
         Ok((interface, client_ch))
     }
 }

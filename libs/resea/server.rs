@@ -5,8 +5,8 @@ use crate::result::{Error, Result};
 pub fn publish_server(interface_id: InterfaceId, server_ch: &Channel) -> Result<()> {
     use crate::idl::discovery;
     let discovery_server = Channel::from_cid(1);
-    let ch = Channel::create().unwrap();
-    ch.transfer_to(&server_ch).unwrap();
+    let ch = Channel::create()?;
+    ch.transfer_to(&server_ch)?;
     discovery::call_publish(&discovery_server, interface_id, ch)
 }
 

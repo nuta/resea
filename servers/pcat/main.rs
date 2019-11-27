@@ -57,8 +57,8 @@ impl idl::server::Server for Server {
             interface == keyboard_device::INTERFACE_ID
                 || interface == text_screen_device::INTERFACE_ID
         );
-        let client_ch = Channel::create().unwrap();
-        client_ch.transfer_to(&self.ch).unwrap();
+        let client_ch = Channel::create()?;
+        client_ch.transfer_to(&self.ch)?;
         Ok((interface, client_ch))
     }
 }

@@ -63,8 +63,8 @@ impl idl::server::Server for Server {
         interface: InterfaceId,
     ) -> Result<(InterfaceId, Channel)> {
         assert!(interface == idl::network_device::INTERFACE_ID);
-        let client_ch = Channel::create().unwrap();
-        client_ch.transfer_to(&self.ch).unwrap();
+        let client_ch = Channel::create()?;
+        client_ch.transfer_to(&self.ch)?;
         Ok((interface, client_ch))
     }
 }
@@ -76,7 +76,14 @@ impl resea::server::Server for Server {
         while let Some(pkt) = rx_queue.front() {
             if let Some(ref listener) = self.listener {
                 let num_pages = align_up(pkt.len(), PAGE_SIZE) / PAGE_SIZE;
-                let mut page = memmgr::call_alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
+                let mut page =
+                    match memmgr::call_alloc_pages(&MEMMGR_SERVER, num_pages) {
+                        Ok(page) => page,
+                        Err(_) => {
+                            warn!("failed to allocate a page");
+                            return;
+                        }
+                    };
                 page.copy_from_slice(&pkt);
                 let reply = nbsend_received(listener, page);
                 match reply {
