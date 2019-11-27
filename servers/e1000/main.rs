@@ -2,7 +2,7 @@ use crate::e1000::Device;
 use crate::pci::Pci;
 use resea::idl::{self, memmgr, network_device_client::nbsend_received};
 use resea::prelude::*;
-use resea::server::{publish_server};
+use resea::server::{publish_server, DeferredWorkResult};
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
 
@@ -64,6 +64,9 @@ impl idl::server::Server for Server {
 impl resea::server::Server for Server {
     fn notification(&mut self, _notification: Notification) {
         self.device.handle_interrupt();
+    }
+
+    fn deferred_work(&mut self) -> DeferredWorkResult {
         let rx_queue = self.device.rx_queue();
         while let Some(pkt) = rx_queue.front() {
             if let Some(ref listener) = self.listener {
@@ -73,14 +76,16 @@ impl resea::server::Server for Server {
                         Ok(page) => page,
                         Err(_) => {
                             warn!("failed to allocate a page");
-                            return;
+                            return DeferredWorkResult::NeedsRetry;
                         }
                     };
                 page.copy_from_slice(&pkt);
                 let reply = nbsend_received(listener, page);
                 match reply {
                     // Try later.
-                    Err(Error::NeedsRetry) => (),
+                    Err(Error::NeedsRetry) => {
+                        return DeferredWorkResult::NeedsRetry;
+                    }
                     _ => {
                         rx_queue.pop_front();
                     }
@@ -90,6 +95,8 @@ impl resea::server::Server for Server {
                 rx_queue.pop_front();
             }
         }
+
+        DeferredWorkResult::Done
     }
 }
 
