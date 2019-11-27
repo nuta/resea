@@ -16,15 +16,7 @@ struct Server {
 }
 
 impl Server {
-    pub fn new() -> Server {
-        let pci = Pci::new(&KERNEL_SERVER);
-        let ch = Channel::create().unwrap();
-        let mut device = Device::new(&ch, &pci, &KERNEL_SERVER, &MEMMGR_SERVER);
-        device.init();
-
-        info!("initialized the device");
-        info!("MAC address = {:x?}", device.mac_addr());
-
+    pub fn new(ch: Channel, device: Device) -> Server {
         Server {
             ch,
             listener: None,
@@ -104,8 +96,16 @@ impl resea::server::Server for Server {
 #[no_mangle]
 pub fn main() {
     info!("starting...");
-    let mut server = Server::new();
+    let pci = Pci::new(&KERNEL_SERVER);
+    let ch = Channel::create().unwrap();
+    let mut device = Device::new(&ch, &pci, &KERNEL_SERVER, &MEMMGR_SERVER);
+    device.init();
 
+    info!("initialized the device");
+    info!("MAC address = {:x?}", device.mac_addr());
+
+    let mut server = Server::new(ch, device);
     publish_server(idl::network_device::INTERFACE_ID, &server.ch).unwrap();
+    info!("ready");
     serve_forever!(&mut server, [server, network_device]);
 }
