@@ -8,8 +8,8 @@ const IPC_RECV: u32 = 1 << 9;
 const IPC_NOBLOCK: u32 = 1 << 10;
 
 unsafe fn convert_error(error: i32) -> Result<()> {
-    if error < 0 {
-        Err(core::mem::transmute::<u8, Error>(-error as u8))
+    if error != 0 {
+        Err(core::mem::transmute::<u8, Error>(error as u8))
     } else {
         Ok(())
     }
