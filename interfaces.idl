@@ -137,12 +137,15 @@ interface network_device {
     listen(ch: channel) -> ()
     [id(3), type(call)]
     transmit(packet: page) -> ()
-
-    [id(4), type(event)]
-    received(packet: page) -> ()
 }
 
 [id(32)]
+interface network_device_client {
+    [id(1), type(oneway)]
+    received(packet: page) -> ()
+}
+
+[id(33)]
 interface text_screen_device {
     [id(1), type(call)]
     print_str(str: string) -> ()
@@ -150,13 +153,13 @@ interface text_screen_device {
     print_char(ch: char) -> ()
 }
 
-[id(33)]
+[id(34)]
 interface keyboard_device {
     [id(1), type(call)]
     listen(ch: channel) -> ()
 }
 
-[id(34)]
+[id(35)]
 interface keyboard_device_client {
     [id(1), type(oneway)]
     pressed(ch: char) -> ()

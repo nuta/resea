@@ -45,6 +45,14 @@ impl Server {
     }
 }
 
+
+
+impl resea::idl::network_device_client::Server for Server {
+    fn received(&mut self, _from: &Channel, packet: Page) {
+        self.tcpip.receive("net0", packet.as_bytes());
+    }
+}
+
 impl resea::server::Server for Server {
     fn deferred_work(&mut self) -> DeferredWorkResult {
         loop {
@@ -83,23 +91,6 @@ impl resea::server::Server for Server {
 
         DeferredWorkResult::Done
     }
-
-    // FIXME:
-    #[allow(safe_packed_borrows)]
-    fn unknown_message(&mut self, m: &mut Message) -> bool {
-        info!("received a message...");
-        if m.header == idl::network_device::RECEIVED_MSG {
-            let m = unsafe {
-                resea::mem::transmute::<&mut Message, &mut idl::network_device::ReceivedMsg>(m)
-            };
-
-            self.tcpip
-                .receive("net0", &m.packet.as_bytes()[..m.packet.len()]);
-            resea::thread_info::alloc_and_set_page_base();
-        }
-
-        false
-    }
 }
 
 #[no_mangle]
@@ -119,5 +110,5 @@ pub fn main() {
 
     info!("ready");
     resea::thread_info::alloc_and_set_page_base();
-    serve_forever!(&mut server, []);
+    serve_forever!(&mut server, [network_device_client], []);
 }

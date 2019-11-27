@@ -1,6 +1,6 @@
 use crate::e1000::Device;
 use crate::pci::Pci;
-use resea::idl::{self, memmgr};
+use resea::idl::{self, memmgr, network_device_client::nbsend_received};
 use resea::prelude::*;
 use resea::server::{publish_server, ServerResult};
 use resea::utils::align_up;
@@ -78,7 +78,7 @@ impl resea::server::Server for Server {
                 let num_pages = align_up(pkt.len(), PAGE_SIZE) / PAGE_SIZE;
                 let mut page = memmgr::call_alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
                 page.copy_from_slice(&pkt);
-                let reply = idl::network_device::nbsend_received(listener, page);
+                let reply = nbsend_received(listener, page);
                 match reply {
                     // Try later.
                     Err(Error::NeedsRetry) => (),
