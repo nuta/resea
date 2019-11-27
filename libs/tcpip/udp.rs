@@ -104,7 +104,11 @@ impl Socket for UdpSocket {
         unreachable!();
     }
 
-    fn read(&mut self, buf: &mut Vec<u8>, len: usize) -> usize {
+    fn readable_len(&mut self) -> usize {
+        unreachable!();
+    }
+
+    fn read(&mut self, buf: &mut [u8]) -> usize {
         unreachable!();
     }
 

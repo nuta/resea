@@ -79,7 +79,8 @@ pub trait Socket {
 
     // TCP only.
     fn write(&mut self, data: &[u8]) -> Result<()>;
-    fn read(&mut self, buf: &mut Vec<u8>, len: usize) -> usize;
+    fn readable_len(&mut self) -> usize;
+    fn read(&mut self, buf: &mut [u8]) -> usize;
     fn accept(&mut self) -> Option<TcpSocket>;
 
     // UDP only.

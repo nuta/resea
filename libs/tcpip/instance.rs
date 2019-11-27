@@ -109,8 +109,12 @@ impl Instance {
         sock.0.borrow_mut().write(data);
     }
 
-    pub fn tcp_read(&mut self, sock: &SocketHandle, buf: &mut Vec<u8>, len: usize) -> usize {
-        sock.0.borrow_mut().read(buf, len)
+    pub fn tcp_readable_len(&mut self, sock: &SocketHandle) -> usize {
+        sock.0.borrow_mut().readable_len()
+    }
+
+    pub fn tcp_read(&mut self, sock: &SocketHandle, buf: &mut [u8]) -> usize {
+        sock.0.borrow_mut().read(buf)
     }
 
     pub fn tcp_accept(&mut self, sock: &SocketHandle) -> Option<SocketHandle> {

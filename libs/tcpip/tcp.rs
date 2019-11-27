@@ -231,7 +231,7 @@ impl Socket for TcpSocket {
         let mut checksum = Checksum::new();
         if send_payload {
             let len = min(self.tx.readable_len(), self.remote_win_size);
-            let mut data = Vec::with_capacity(len);
+            let mut data = vec![0; len];
             self.tx.peek(len, &mut data);
             mbuf.append_bytes(&data);
             compute_header_checksum(
@@ -278,8 +278,12 @@ impl Socket for TcpSocket {
         self.backlog.pop_front()
     }
 
-    fn read(&mut self, buf: &mut Vec<u8>, len: usize) -> usize {
-        let read_len = min(len, self.rx.readable_len());
+    fn readable_len(&mut self) -> usize {
+        self.rx.readable_len()
+    }
+
+    fn read(&mut self, buf: &mut [u8]) -> usize {
+        let read_len = min(buf.len(), self.rx.readable_len());
         self.rx.read(read_len, buf);
         read_len
     }

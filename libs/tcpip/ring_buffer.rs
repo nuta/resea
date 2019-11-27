@@ -48,12 +48,12 @@ impl RingBuffer {
         Ok(())
     }
 
-    pub fn read(&mut self, len: usize, buf: &mut Vec<u8>) {
+    pub fn read(&mut self, len: usize, buf: &mut [u8]) {
         self.peek(len, buf);
         self.read_offset = (self.read_offset + len) % self.capacity;
     }
 
-    pub fn peek(&mut self, len: usize, buf: &mut Vec<u8>) {
+    pub fn peek(&mut self, len: usize, buf: &mut [u8]) {
         assert!(len <= self.readable_len());
         /*
         warn!("ringbuf[r={}, w={}, rl={}, wl={}]: read {}",
@@ -64,11 +64,12 @@ impl RingBuffer {
 
         let end = min(self.read_offset + len, self.capacity);
         let copy_len = end - self.read_offset;
-        buf.extend_from_slice(&self.buffer[self.read_offset..end]);
+        (&mut buf[0..copy_len]).copy_from_slice(&self.buffer[self.read_offset..end]);
 
         let remaining_len = len - copy_len;
         if remaining_len > 0 {
-            buf.extend_from_slice(&self.buffer[0..remaining_len]);
+            (&mut buf[copy_len..copy_len + remaining_len])
+                .copy_from_slice(&self.buffer[0..remaining_len]);
         }
     }
 
