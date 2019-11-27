@@ -24,7 +24,9 @@ pub struct Instance {
     dhcp_client: Option<(SocketHandle, DhcpClient)>,
 }
 
+#[derive(Clone)]
 pub struct SocketHandle(Rc<RefCell<dyn Socket>>);
+
 impl SocketHandle {
     pub(crate) fn new(sock: Rc<RefCell<dyn Socket>>) -> SocketHandle {
         SocketHandle(sock)
