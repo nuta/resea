@@ -83,7 +83,7 @@ impl resea::server::Server for Server {
                 let reply = nbsend_received(listener, page);
                 match reply {
                     // Try later.
-                    Err(Error::NeedsRetry) => {
+                    Err(Error::WouldBlock) => {
                         return DeferredWorkResult::NeedsRetry;
                     }
                     _ => {
