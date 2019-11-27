@@ -178,7 +178,11 @@ pub trait Server {
     fn {{ msg.name }}({{ msg.args | arg_params("&mut self, _from: &Channel") }})
         -> ServerResult<{{ msg.rets | ret_params }}>;
 {%- endif %}
+{%- if msg.attrs.type == "oneway" %}
+    fn {{ msg.name }}({{ msg.args | arg_params("&mut self, _from: &Channel") }});
+{%- endif %}
 {%- endfor %}
+
     fn __handle(&mut self, m: &mut Message) -> bool {
         match m.header {
 {%- for msg in messages %}
@@ -209,6 +213,14 @@ pub trait Server {
                         false
                     }
                 }
+            }
+{%- elif msg.attrs.type == "oneway" %}
+            {{ msg.name | upper }}_MSG => {
+                let req: &mut {{ msg.name | camelcase }}Msg =
+                    __cast_from_message_mut(m);
+                let from = Channel::from_cid(req.from);
+                self.{{ msg.name }}({{ msg.args | call_args("req") }});
+                false
             }
 {%- endif %}
 {%- endfor %}
