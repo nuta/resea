@@ -97,26 +97,18 @@ impl Server {
     }
 }
 
-impl resea::server::Server for Server {
-    #[allow(safe_packed_borrows)]
-    fn unknown_message(&mut self, m: &mut Message) -> bool {
-        // FIXME:
-        if m.header == idl::keyboard_device::PRESSED_MSG {
-            let m = unsafe {
-                resea::mem::transmute::<&mut Message, &mut idl::keyboard_device::PressedMsg>(m)
-            };
-
-            self.readchar(m.ch as char);
-        }
-
-        false
+impl resea::idl::keyboard_device_client::Server for Server {
+    fn pressed(&mut self, _from: &Channel, ch: u8) {
+        self.readchar(ch as char);
     }
 }
+
+impl resea::server::Server for Server {}
 
 #[no_mangle]
 pub fn main() {
     info!("starting...");
     let mut server = Server::new();
     info!("ready");
-    serve_forever!(&mut server, []);
+    serve_forever!(&mut server, [keyboard_device_client]);
 }

@@ -67,7 +67,7 @@ impl resea::server::Server for Server {
     fn deferred_work(&mut self) -> DeferredWorkResult {
         if let Some(ref listener) = self.keyboard_listener {
             while let Some(ch) = self.keyboard.buffer().front() {
-                use resea::idl::keyboard_device::nbsend_pressed;
+                use resea::idl::keyboard_device_client::nbsend_pressed;
                 match nbsend_pressed(listener, *ch) {
                     Err(Error::NeedsRetry) => {
                         return DeferredWorkResult::NeedsRetry;

@@ -11,12 +11,8 @@
 //
 //  Message Types
 //  -------------
-//  call     - Send a request & Reply a response (client to server)
-//  upcall   - Send a request & Reply a response (server to client)
-//  sendonly - Send a request (client to server)
-//  event    - Send a data (server to client)
-//
-//  TODO: upcall is not yet supported.
+//  call     - Request and response messages (sort of Remote Procedure Call).
+//  oneway - A one-way message.
 //
 [id(1)]
 interface notification {
@@ -158,7 +154,10 @@ interface text_screen_device {
 interface keyboard_device {
     [id(1), type(call)]
     listen(ch: channel) -> ()
+}
 
-    [id(2), type(event)]
+[id(34)]
+interface keyboard_device_client {
+    [id(1), type(oneway)]
     pressed(ch: char) -> ()
 }
