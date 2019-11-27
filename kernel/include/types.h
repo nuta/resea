@@ -41,8 +41,9 @@
 
 typedef int error_t;
 enum error_codes {
-    // Indicates success. Not an error! Set it to a non-zero value in debug
-    // build to reveal bad error checking bugs:
+#ifdef DEBUG_BUILD
+    // Set it to a non-zero value in debug build to reveal bad error checking
+    // bugs, for example:
     //
     //     error_t err = do_something();
     //     /* Don't do this - compare with OK instead (i.e. err == OK) */
@@ -50,7 +51,6 @@ enum error_codes {
     //       printk("Success!");
     //     }
     //
-#ifdef DEBUG_BUILD
     OK = 0x1a1a,
 #else
     OK,
