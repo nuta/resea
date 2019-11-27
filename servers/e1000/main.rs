@@ -2,7 +2,7 @@ use crate::e1000::Device;
 use crate::pci::Pci;
 use resea::idl::{self, memmgr, network_device_client::nbsend_received};
 use resea::prelude::*;
-use resea::server::{publish_server, ServerResult};
+use resea::server::{publish_server};
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
 
@@ -34,25 +34,25 @@ impl Server {
 }
 
 impl idl::network_device::Server for Server {
-    fn get_macaddr(&mut self, _from: &Channel) -> ServerResult<(u8, u8, u8, u8, u8, u8)> {
+    fn get_macaddr(&mut self, _from: &Channel) -> Result<(u8, u8, u8, u8, u8, u8)> {
         let m = self.device.mac_addr();
-        ServerResult::Ok((m[0], m[1], m[2], m[3], m[4], m[5]))
+        Ok((m[0], m[1], m[2], m[3], m[4], m[5]))
     }
 
-    fn listen(&mut self, _from: &Channel, ch: Channel) -> ServerResult<()> {
+    fn listen(&mut self, _from: &Channel, ch: Channel) -> Result<()> {
         assert!(self.listener.is_none());
         self.listener = Some(ch);
-        ServerResult::Ok(())
+        Ok(())
     }
 
-    fn transmit(&mut self, _from: &Channel, packet: Page) -> ServerResult<()> {
+    fn transmit(&mut self, _from: &Channel, packet: Page) -> Result<()> {
         let data = packet.as_bytes();
         if packet.len() > data.len() {
-            return ServerResult::Err(Error::InvalidArg);
+            return Err(Error::InvalidArg);
         }
 
         self.device.send_ethernet_packet(data);
-        ServerResult::Ok(())
+        Ok(())
     }
 }
 
@@ -61,11 +61,11 @@ impl idl::server::Server for Server {
         &mut self,
         _from: &Channel,
         interface: InterfaceId,
-    ) -> ServerResult<(InterfaceId, Channel)> {
+    ) -> Result<(InterfaceId, Channel)> {
         assert!(interface == idl::network_device::INTERFACE_ID);
         let client_ch = Channel::create().unwrap();
         client_ch.transfer_to(&self.ch).unwrap();
-        ServerResult::Ok((interface, client_ch))
+        Ok((interface, client_ch))
     }
 }
 

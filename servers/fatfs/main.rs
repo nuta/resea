@@ -2,7 +2,7 @@ use crate::fat::{File, FileSystem};
 use resea::collections::HashMap;
 use resea::idl;
 use resea::prelude::*;
-use resea::server::{connect_to_server, publish_server, ServerResult};
+use resea::server::{connect_to_server, publish_server};
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
 
@@ -28,22 +28,22 @@ impl Server {
 }
 
 impl idl::fs::Server for Server {
-    fn open(&mut self, _from: &Channel, path: &str) -> ServerResult<HandleId> {
+    fn open(&mut self, _from: &Channel, path: &str) -> Result<HandleId> {
         match self.fs.open_file(&path) {
             Some(file) => {
                 // TODO: Support freeing and reusing handle IDs.
                 let handle_id = self.next_handle_id;
                 self.next_handle_id += 1;
                 self.opened_files.insert(handle_id, file);
-                ServerResult::Ok(handle_id)
+                Ok(handle_id)
             }
-            None => ServerResult::Err(Error::NotFound),
+            None => Err(Error::NotFound),
         }
     }
 
-    fn close(&mut self, _from: &Channel, _handle: HandleId) -> ServerResult<()> {
+    fn close(&mut self, _from: &Channel, _handle: HandleId) -> Result<()> {
         // TODO:
-        ServerResult::Err(Error::Unimplemented)
+        Err(Error::Unimplemented)
     }
 
     fn read(
@@ -52,10 +52,10 @@ impl idl::fs::Server for Server {
         file: HandleId,
         offset: usize,
         len: usize,
-    ) -> ServerResult<Page> {
+    ) -> Result<Page> {
         let file = match self.opened_files.get(&file) {
             Some(file) => file,
-            None => return ServerResult::Err(Error::InvalidHandle),
+            None => return Err(Error::InvalidHandle),
         };
 
         use idl::memmgr::call_alloc_pages;
@@ -63,7 +63,7 @@ impl idl::fs::Server for Server {
             call_alloc_pages(&MEMMGR_SERVER, align_up(len, PAGE_SIZE) / PAGE_SIZE).unwrap();
         file.read(&self.fs, page.as_bytes_mut(), offset, len)
             .unwrap();
-        ServerResult::Ok(page)
+        Ok(page)
     }
 
     fn write(
@@ -72,9 +72,9 @@ impl idl::fs::Server for Server {
         _file: HandleId,
         _page: Page,
         _len: usize,
-    ) -> ServerResult<()> {
+    ) -> Result<()> {
         // TODO:
-        ServerResult::Err(Error::Unimplemented)
+        Err(Error::Unimplemented)
     }
 }
 
@@ -83,11 +83,11 @@ impl idl::server::Server for Server {
         &mut self,
         _from: &Channel,
         interface: InterfaceId,
-    ) -> ServerResult<(InterfaceId, Channel)> {
+    ) -> Result<(InterfaceId, Channel)> {
         assert!(interface == idl::fs::INTERFACE_ID);
         let client_ch = Channel::create().unwrap();
         client_ch.transfer_to(&self.ch).unwrap();
-        ServerResult::Ok((interface, client_ch))
+        Ok((interface, client_ch))
     }
 }
 

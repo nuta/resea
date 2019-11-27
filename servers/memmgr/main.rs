@@ -5,7 +5,7 @@ use resea::collections::HashMap;
 use resea::idl;
 use resea::prelude::*;
 use resea::ptr;
-use resea::server::{DeferredWorkResult, ServerResult};
+use resea::server::{DeferredWorkResult};
 use resea::PAGE_SIZE;
 
 extern "C" {
@@ -79,7 +79,7 @@ impl idl::pager::Server for Server {
         pid: HandleId,
         addr: usize,
         num_pages: usize,
-    ) -> ServerResult<Page> {
+    ) -> Result<Page> {
         // TODO: Support filling multiple pages.
         assert_eq!(num_pages, 1);
 
@@ -102,31 +102,31 @@ impl idl::pager::Server for Server {
             _ => unreachable!(),
         }
 
-        ServerResult::Ok(page.as_page_payload())
+        Ok(page.as_page_payload())
     }
 }
 
 impl idl::memmgr::Server for Server {
-    fn alloc_pages(&mut self, _from: &Channel, num_pages: usize) -> ServerResult<Page> {
+    fn alloc_pages(&mut self, _from: &Channel, num_pages: usize) -> Result<Page> {
         if num_pages == 0 {
-            return ServerResult::Err(Error::InvalidArg);
+            return Err(Error::InvalidArg);
         }
 
         let page = self.page_allocator.allocate(num_pages);
-        ServerResult::Ok(page.as_page_payload())
+        Ok(page.as_page_payload())
     }
 
     fn alloc_phy_pages(
         &mut self,
         _from: &Channel,
         num_pages: usize,
-    ) -> ServerResult<(usize, Page)> {
+    ) -> Result<(usize, Page)> {
         if num_pages == 0 {
-            return ServerResult::Err(Error::InvalidArg);
+            return Err(Error::InvalidArg);
         }
 
         let page = self.page_allocator.allocate(num_pages);
-        ServerResult::Ok((page.addr, page.as_page_payload()))
+        Ok((page.addr, page.as_page_payload()))
     }
 
     fn map_phy_pages(
@@ -134,29 +134,29 @@ impl idl::memmgr::Server for Server {
         _from: &Channel,
         paddr: usize,
         num_pages: usize,
-    ) -> ServerResult<Page> {
+    ) -> Result<Page> {
         // TODO: Check whether the given paddr is already allocated.
         if paddr == 0 || num_pages == 0 {
-            return ServerResult::Err(Error::InvalidArg);
+            return Err(Error::InvalidArg);
         }
 
-        ServerResult::Ok(Page::new(paddr, num_pages * PAGE_SIZE))
+        Ok(Page::new(paddr, num_pages * PAGE_SIZE))
     }
 }
 
 impl idl::runtime::Server for Server {
-    fn exit(&mut self, _from: &Channel, _code: i32) -> ServerResult<()> {
+    fn exit(&mut self, _from: &Channel, _code: i32) -> Result<()> {
         unimplemented!();
     }
 
-    fn printchar(&mut self, _from: &Channel, ch: u8) -> ServerResult<()> {
+    fn printchar(&mut self, _from: &Channel, ch: u8) -> Result<()> {
         resea::print::printchar(ch);
-        ServerResult::Ok(())
+        Ok(())
     }
 
-    fn print_str(&mut self, _from: &Channel, string: &str) -> ServerResult<()> {
+    fn print_str(&mut self, _from: &Channel, string: &str) -> Result<()> {
         resea::print::print_str(string);
-        ServerResult::Ok(())
+        Ok(())
     }
 }
 
@@ -167,10 +167,10 @@ impl idl::timer::Server for Server {
         ch: Channel,
         initial: i32,
         interval: i32,
-    ) -> ServerResult<HandleId> {
+    ) -> Result<HandleId> {
         use idl::timer::call_create;
-        // FIXME: Don't use unwrap
-        ServerResult::Ok(call_create(&KERNEL_SERVER, ch, initial, interval).unwrap())
+        let handle = call_create(&KERNEL_SERVER, ch, initial, interval)?;
+        Ok(handle)
     }
 
     fn reset(
@@ -179,29 +179,29 @@ impl idl::timer::Server for Server {
         timer: HandleId,
         initial: i32,
         interval: i32,
-    ) -> ServerResult<()> {
+    ) -> Result<()> {
         use idl::timer::call_reset;
-        ServerResult::Ok(call_reset(&KERNEL_SERVER, timer, initial, interval).unwrap())
+        Ok(call_reset(&KERNEL_SERVER, timer, initial, interval).unwrap())
     }
 
-    fn clear(&mut self, _from: &Channel, timer: HandleId) -> ServerResult<()> {
+    fn clear(&mut self, _from: &Channel, timer: HandleId) -> Result<()> {
         use idl::timer::call_clear;
-        ServerResult::Ok(call_clear(&KERNEL_SERVER, timer).unwrap())
+        Ok(call_clear(&KERNEL_SERVER, timer).unwrap())
     }
 }
 
 impl idl::discovery::Server for Server {
-    fn connect(&mut self, from: &Channel, interface: u8) -> ServerResult<Channel> {
+    fn connect(&mut self, from: &Channel, interface: u8) -> Result<Channel> {
         warn!("accepted a connect request = {}", interface);
         self.connect_requests.push(ConnectRequest {
             interface,
             ch: unsafe { from.clone() },
         });
 
-        ServerResult::NoReply
+        Err(Error::NoReply)
     }
 
-    fn publish(&mut self, _from: &Channel, interface: u8, ch: Channel) -> ServerResult<()> {
+    fn publish(&mut self, _from: &Channel, interface: u8, ch: Channel) -> Result<()> {
         // TODO: Support multiple servers with the same interface ID.
         assert!(self.servers.get(&interface).is_none());
 
@@ -213,7 +213,7 @@ impl idl::discovery::Server for Server {
         };
 
         self.servers.insert(interface, server);
-        ServerResult::Ok(())
+        Ok(())
     }
 }
 

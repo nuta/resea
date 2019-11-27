@@ -83,7 +83,6 @@ pub struct {{ msg.name | camelcase }}{{ "Reply" if reply }}Msg {
 {% endmacro %}
 
 use crate::prelude::*;
-use crate::server::ServerResult;
 use crate::arch::syscall;
 
 pub const INTERFACE_ID: u8 = {{ attrs.id }};
@@ -176,7 +175,7 @@ pub trait Server {
 {%- for msg in messages %}
 {%- if msg.attrs.type == "call" %}
     fn {{ msg.name }}({{ msg.args | arg_params("&mut self, _from: &Channel") }})
-        -> ServerResult<{{ msg.rets | ret_params }}>;
+        -> Result<{{ msg.rets | ret_params }}>;
 {%- endif %}
 {%- if msg.attrs.type == "oneway" %}
     fn {{ msg.name }}({{ msg.args | arg_params("&mut self, _from: &Channel") }});
@@ -192,7 +191,7 @@ pub trait Server {
                     __cast_from_message_mut(m);
                 let from = Channel::from_cid(req.from);
                 match self.{{ msg.name }}({{ msg.args | call_args("req") }}) {
-                    ServerResult::Ok(rets) => {
+                    Ok(rets) => {
                         let __resp: &mut {{ msg.name | camelcase }}ReplyMsg
                             = __cast_from_message_mut(m);
                         {%- if msg.rets.fields | length == 1 %}
@@ -205,12 +204,12 @@ pub trait Server {
                         {{ serialize("__resp", msg.name, msg.rets, True) }}
                         true
                     }
-                    ServerResult::Err(err) => {
+                    Err(Error::NoReply) => {
+                        false
+                    }
+                    Err(err) => {
                         m.header = MessageHeader::from_error(err);
                         true
-                    }
-                    ServerResult::NoReply => {
-                        false
                     }
                 }
             }

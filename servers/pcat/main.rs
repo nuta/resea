@@ -2,7 +2,7 @@ use crate::keyboard::Keyboard;
 use crate::screen::Screen;
 use resea::idl::{self, keyboard_device, text_screen_device};
 use resea::prelude::*;
-use resea::server::{publish_server, DeferredWorkResult, ServerResult};
+use resea::server::{publish_server, DeferredWorkResult};
 
 static _MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -29,21 +29,21 @@ impl Server {
 }
 
 impl text_screen_device::Server for Server {
-    fn print_str(&mut self, _from: &Channel, str: &str) -> ServerResult<()> {
+    fn print_str(&mut self, _from: &Channel, str: &str) -> Result<()> {
         self.screen.print_str(str);
-        ServerResult::Ok(())
+        Ok(())
     }
 
-    fn print_char(&mut self, _from: &Channel, ch: u8) -> ServerResult<()> {
+    fn print_char(&mut self, _from: &Channel, ch: u8) -> Result<()> {
         self.screen.print_char(ch as char);
-        ServerResult::Ok(())
+        Ok(())
     }
 }
 
 impl keyboard_device::Server for Server {
-    fn listen(&mut self, _from: &Channel, ch: Channel) -> ServerResult<()> {
+    fn listen(&mut self, _from: &Channel, ch: Channel) -> Result<()> {
         self.keyboard_listener = Some(ch);
-        ServerResult::Ok(())
+        Ok(())
     }
 }
 
@@ -52,14 +52,14 @@ impl idl::server::Server for Server {
         &mut self,
         _from: &Channel,
         interface: InterfaceId,
-    ) -> ServerResult<(InterfaceId, Channel)> {
+    ) -> Result<(InterfaceId, Channel)> {
         assert!(
             interface == keyboard_device::INTERFACE_ID
                 || interface == text_screen_device::INTERFACE_ID
         );
         let client_ch = Channel::create().unwrap();
         client_ch.transfer_to(&self.ch).unwrap();
-        ServerResult::Ok((interface, client_ch))
+        Ok((interface, client_ch))
     }
 }
 

@@ -16,12 +16,6 @@ pub fn connect_to_server(interface_id: InterfaceId) -> Result<Channel> {
     discovery::call_connect(&discovery_server, interface_id)
 }
 
-pub enum ServerResult<T> {
-    Ok(T),
-    Err(Error),
-    NoReply,
-}
-
 pub enum DeferredWorkResult {
     Done,
     NeedsRetry,

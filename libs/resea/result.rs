@@ -13,6 +13,7 @@ pub enum Error {
     NotFound = 9,
     InvalidHandle = 10,
     NeedsRetry = 22,
+    NoReply = 23,
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

@@ -2,7 +2,7 @@ use crate::ide::IdeDevice;
 use resea::idl;
 use resea::idl::storage_device::INTERFACE_ID;
 use resea::prelude::*;
-use resea::server::{publish_server, ServerResult};
+use resea::server::{publish_server};
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
 
@@ -24,9 +24,9 @@ impl Server {
 }
 
 impl idl::storage_device::Server for Server {
-    fn read(&mut self, _from: &Channel, sector: usize, num_sectors: usize) -> ServerResult<Page> {
+    fn read(&mut self, _from: &Channel, sector: usize, num_sectors: usize) -> Result<Page> {
         if num_sectors == 0 {
-            return ServerResult::Err(Error::InvalidArg);
+            return Err(Error::InvalidArg);
         }
 
         use idl::memmgr::call_alloc_pages;
@@ -35,7 +35,7 @@ impl idl::storage_device::Server for Server {
         self.device
             .read_sectors(sector, num_sectors, page.as_bytes_mut())
             .unwrap();
-        ServerResult::Ok(page)
+        Ok(page)
     }
 }
 
@@ -44,11 +44,11 @@ impl idl::server::Server for Server {
         &mut self,
         _from: &Channel,
         interface: InterfaceId,
-    ) -> ServerResult<(InterfaceId, Channel)> {
+    ) -> Result<(InterfaceId, Channel)> {
         assert!(interface == idl::storage_device::INTERFACE_ID);
         let client_ch = Channel::create().unwrap();
         client_ch.transfer_to(&self.ch).unwrap();
-        ServerResult::Ok((interface, client_ch))
+        Ok((interface, client_ch))
     }
 }
 
