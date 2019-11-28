@@ -94,12 +94,18 @@ static inline struct thread *get_current_thread(void) {
 }
 
 static inline void *inlined_memset(void *dst, int ch, size_t len) {
-    __asm__ __volatile__("cld; rep stosb" ::"D"(dst), "a"(ch), "c"(len));
+    __asm__ __volatile__("cld; rep stosb"
+        : "=D"(dst), "=a"(ch), "=c"(len)
+        : "D"(dst), "a"(ch), "c"(len)
+        : "memory");
     return dst;
 }
 
 static inline void *inlined_memcpy(void *dst, void *src, size_t len) {
-    __asm__ __volatile__("cld; rep movsb" ::"D"(dst), "S"(src), "c"(len));
+    __asm__ __volatile__("cld; rep movsb"
+        : "=D"(dst), "=S"(src), "=c"(len)
+        : "D"(dst), "S"(src), "c"(len)
+        : "memory");
     return dst;
 }
 
