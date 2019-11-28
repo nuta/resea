@@ -26,7 +26,7 @@ void read_kernel_log(char *buf, int buf_len) {
     int copy_len = MIN(buf_len, kernel_log.head - kernel_log.tail);
     inlined_memcpy(buf, &kernel_log.buf[kernel_log.tail], copy_len);
     buf += copy_len;
-    kernel_log.tail += copy_len;
+    kernel_log.tail = (kernel_log.tail + copy_len) % KERNEL_LOG_BUFFER_MAX;
     *buf = '\0';
 }
 
