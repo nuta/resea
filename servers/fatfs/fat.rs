@@ -105,7 +105,7 @@ impl FileSystem {
 
         Ok(FileSystem {
             storage_device,
-            bpb: bpb,
+            bpb,
             part_begin,
         })
     }

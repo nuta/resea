@@ -43,8 +43,8 @@ impl EthernetDevice {
 }
 
 impl Device for EthernetDevice {
-    fn mac_addr(&self) -> &MacAddr {
-        &self.mac_addr
+    fn mac_addr(&self) -> MacAddr {
+        self.mac_addr
     }
 
     fn enqueue(&mut self, tx_queue: &mut VecDeque<Mbuf>, dst: IpAddr, mut pkt: Mbuf) -> Result<()> {

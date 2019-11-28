@@ -39,8 +39,8 @@ pub fn swap16(x: u16) -> u16 {
 
 pub fn swap32(x: u32) -> u32 {
     // TODO: Do nothing on big-endian CPUs.
-    ((x & 0xff000000) >> 24)
-        | ((x & 0x00ff0000) >> 8)
-        | ((x & 0x0000ff00) << 8)
-        | ((x & 0x000000ff) << 24)
+    ((x & 0xff00_0000) >> 24)
+        | ((x & 0x00ff_0000) >> 8)
+        | ((x & 0x0000_ff00) << 8)
+        | ((x & 0x0000_00ff) << 24)
 }

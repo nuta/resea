@@ -94,17 +94,17 @@ impl ArpTable {
                     target_ipv4: packet.sender_ipv4,
                 });
 
-                return Some((packet.sender, vec![(0x0806 /* ARP */, mbuf)]));
+                Some((packet.sender, vec![(0x0806 /* ARP */, mbuf)]))
             }
             OPCODE_REPLY => {
                 trace!("received arp reply from: {}", src);
                 if let Some(ArpEntry::UnResolved(pending)) = self.table.remove(&src) {
                     trace!("received arp reply");
                     self.table.insert(src, ArpEntry::Resolved(packet.sender));
-                    return Some((packet.sender, pending));
+                    Some((packet.sender, pending))
+                } else {
+                    None
                 }
-
-                None
             }
             _ => None,
         }

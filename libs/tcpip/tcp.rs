@@ -128,7 +128,7 @@ impl TcpSocket {
         }
 
         // Receive data.
-        if header.payload.len() > 0 {
+        if !header.payload.is_empty() {
             if header.seq_no == self.local_ack_no.as_u32() {
                 match self.rx.write(header.payload) {
                     Ok(()) => {
@@ -180,7 +180,7 @@ impl Socket for TcpSocket {
                         src_port: backlog.local_port.as_u16().into(),
                         seq_no: backlog.local_seq_no.as_u32().into(),
                         ack_no: backlog.local_ack_no.as_u32().into(),
-                        data_offset_and_ns: (header_words << 4).into(),
+                        data_offset_and_ns: header_words << 4,
                         flags: TcpFlags::new(FLAG_SYN | FLAG_ACK),
                         win_size: 1024.into(), // TODO: (backlog.rx.writable_len() as u16).into(),
                         checksum: 0.into(),
@@ -221,7 +221,7 @@ impl Socket for TcpSocket {
             } else {
                 0.into()
             },
-            data_offset_and_ns: (5 << 4).into(),
+            data_offset_and_ns: 5 << 4,
             flags: self.pending_flags,
             win_size: 1024.into(), // TODO: (self.rx.writable_len() as u16).into(),
             checksum: 0.into(),

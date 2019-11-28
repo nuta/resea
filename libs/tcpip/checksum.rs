@@ -23,11 +23,11 @@ impl Checksum {
 
     pub fn input_struct<T>(&mut self, data: &T) {
         let len = size_of::<T>();
-        debug_assert!(len % 1 == 0);
+        debug_assert!(len % 2 == 0);
         let words = unsafe { slice::from_raw_parts(data as *const T as *const u16, len / 2) };
 
-        for i in 0..words.len() {
-            self.0 += words[i] as u32;
+        for word in words {
+            self.0 += *word as u32;
         }
     }
 
@@ -41,8 +41,8 @@ impl Checksum {
             unsafe { slice::from_raw_parts(bytes.as_ptr() as *const u16, bytes.len() / 2) };
 
         // Sum up the input.
-        for i in 0..words.len() {
-            self.0 += words[i] as u32;
+        for word in words {
+            self.0 += *word as u32;
         }
 
         // Handle the last byte if the length of input is odd.

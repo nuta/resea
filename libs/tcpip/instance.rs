@@ -119,7 +119,7 @@ impl Instance {
 
     pub fn tcp_accept(&mut self, sock: &SocketHandle) -> Option<SocketHandle> {
         sock.0.borrow_mut().accept().map(|tcp_sock| {
-            let mut local = tcp_sock.bind_to().clone();
+            let mut local = tcp_sock.bind_to();
             local.addr = IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED); // FIXME:
             let remote = BindTo::new(
                 TransportProtocol::Tcp,

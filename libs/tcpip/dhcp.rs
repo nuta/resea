@@ -120,7 +120,7 @@ struct DhcpPacket {
 
 const BOOTP_OP_REQUEST: u8 = 1;
 const BOOTP_HWTYPE_ETHERNET: u8 = 1;
-const DHCP_MAGIC: u32 = 0x63825363;
+const DHCP_MAGIC: u32 = 0x6382_5363;
 const OPTION_DHCP_TYPE: u8 = 53;
 const DHCP_TYPE_DISCOVER: u8 = 1;
 const DHCP_TYPE_OFFER: u8 = 2;
@@ -133,7 +133,7 @@ const OPTION_END: u8 = 255;
 pub fn build(
     pkt: &mut Mbuf,
     dhcp_type: u8,
-    client_hwaddr: &MacAddr,
+    client_hwaddr: MacAddr,
     requested_ipaddr: Option<Ipv4Addr>,
     param_list: Option<&[u8]>,
 ) {
@@ -142,7 +142,7 @@ pub fn build(
         hw_type: BOOTP_HWTYPE_ETHERNET,
         hw_len: 6,
         hops: 0,
-        xid: 0x12345678.into(),
+        xid: 0x1234_5678.into(),
         secs: 0.into(),
         flags: 0.into(),
         client_ipaddr: 0.into(),

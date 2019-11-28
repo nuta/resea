@@ -21,7 +21,7 @@ impl MacAddr {
 }
 
 pub trait Device {
-    fn mac_addr(&self) -> &MacAddr;
+    fn mac_addr(&self) -> MacAddr;
     fn enqueue(&mut self, tx_queue: &mut VecDeque<Mbuf>, dst: IpAddr, pkt: Mbuf) -> Result<()>;
     fn receive(
         &mut self,

@@ -23,7 +23,7 @@ impl Ipv4Addr {
         Ipv4Addr(((a0 as u32) << 24) | ((a1 as u32) << 16) | ((a2 as u32) << 8) | (a3 as u32))
     }
 
-    pub fn as_u32(&self) -> u32 {
+    pub fn as_u32(self) -> u32 {
         self.0
     }
 }
@@ -55,7 +55,7 @@ impl Ipv4Network {
         }
     }
 
-    pub fn contains(&self, addr: Ipv4Addr) -> bool {
+    pub fn contains(self, addr: Ipv4Addr) -> bool {
         self.addr == addr.as_u32() & self.netmask
     }
 }

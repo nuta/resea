@@ -20,9 +20,10 @@ impl<'a> Packet<'a> {
 
         let offset = self.offset;
         self.offset += consume_len;
-        let reference =
-            unsafe { &*transmute::<*const u8, *const T>(self.data.as_ptr().add(offset)) };
-        Some(reference)
+        unsafe {
+            let reference = self.data.as_ptr().add(offset) as *const T;
+            Some(&*reference)
+        }
     }
 
     pub fn consume_bytes(&mut self, len: usize) -> Option<&[u8]> {

@@ -18,6 +18,10 @@ impl<K: Hash + Ord + Eq, V> HashMap<K, V> {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
     pub fn len(&self) -> usize {
         self.inner.len()
     }
@@ -50,7 +54,7 @@ impl<K: Hash + Ord + Eq, V> HashMap<K, V> {
         self.inner.remove(k)
     }
 
-    pub fn iter<'a>(&'a self) -> Iter<'a, K, V> {
+    pub fn iter(&self) -> Iter<'_, K, V> {
         self.inner.iter()
     }
 }
