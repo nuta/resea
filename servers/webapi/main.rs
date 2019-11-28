@@ -114,7 +114,7 @@ impl idl::net_client::Server for Server {
         }
     }
 
-    fn tcp_accepted(&mut self, _from: &Channel, listen_sock: HandleId, client_sock: HandleId) {
+    fn tcp_accepted(&mut self, _from: &Channel, _listen_sock: HandleId, _client_sock: HandleId) {
         info!("tcp_accept");
     }
 }
