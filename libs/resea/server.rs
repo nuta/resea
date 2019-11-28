@@ -61,7 +61,11 @@ macro_rules! serve_forever {
 
         loop {
             $crate::thread_info::alloc_and_set_page_base();
-            let mut m = server.ch.recv().expect("failed to receive");
+            let mut m = match server.ch.recv() {
+                Ok(m) => m,
+                Err(Error::NeedsRetry) => continue,
+                Err(err) => panic!("failed to receive: {}", err),
+            };
             let mut reply_to = Channel::from_cid(m.from);
             let notification = m.notification;
 
