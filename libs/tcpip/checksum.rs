@@ -36,7 +36,7 @@ impl Checksum {
             return;
         }
 
-        let odd = bytes.len() % 1 != 0;
+        let odd = bytes.len() % 2 != 0;
         let words: &[u16] =
             unsafe { slice::from_raw_parts(bytes.as_ptr() as *const u16, bytes.len() / 2) };
 
@@ -47,7 +47,6 @@ impl Checksum {
 
         // Handle the last byte if the length of input is odd.
         if odd {
-            // FIXME: It's broken...
             self.0 += bytes[bytes.len() - 1] as u32;
         }
     }
