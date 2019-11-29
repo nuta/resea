@@ -42,6 +42,19 @@ impl Server {
     fn run_command(&mut self) {
         if self.input == "help" {
             self.print_string("echo <string>   -  Prints a string.\n");
+        } else if self.input == "stats" {
+            let stats = idl::kernel::call_read_stats(&KERNEL_SERVER).unwrap();
+            // TODO: We had better support struct in IDL.
+            let uptime = stats.0;
+            let ipc_total = stats.1;
+            let page_fault_total = stats.2;
+            let context_switch_total = stats.3;
+            let kernel_call_total = stats.4;
+            self.print_string(&format!("uptime: {} seconds\n", uptime / 1000));
+            self.print_string(&format!("ipc total:            {}\n", ipc_total));
+            self.print_string(&format!("page fault total:     {}\n", page_fault_total));
+            self.print_string(&format!("context switch total: {}\n", context_switch_total));
+            self.print_string(&format!("kernel call total:    {}\n", kernel_call_total));
         } else if self.input == "dmesg" {
             loop {
                 let r = idl::kernel::call_read_kernel_log(&KERNEL_SERVER).unwrap();
