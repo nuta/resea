@@ -26,7 +26,7 @@ impl Server {
 impl idl::storage_device::Server for Server {
     fn read(&mut self, _from: &Channel, sector: usize, num_sectors: usize) -> Result<Page> {
         if num_sectors == 0 {
-            return Err(Error::InvalidArg);
+            return Err(Error::NotAcceptable);
         }
 
         use idl::memmgr::call_alloc_pages;

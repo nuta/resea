@@ -79,7 +79,7 @@ static error_t handle_runtime_print_str(struct message *m) {
 
 static error_t handle_runtime_exit(struct message *m) {
     process_destroy(get_sender_process(m->from));
-    return DONT_REPLY;
+    return NO_REPLY;
 }
 
 static error_t handle_process_create(struct message *m) {
@@ -127,7 +127,7 @@ static error_t handle_thread_spawn(struct message *m) {
 
     struct process *proc = table_get(&process_table, pid);
     if (!proc) {
-        return ERR_INVALID_MESSAGE;
+        return ERR_NOT_FOUND;
     }
 
     struct thread *thread;
@@ -157,14 +157,14 @@ static error_t handle_process_add_vm_area(struct message *m) {
     struct process *proc = table_get(&process_table, pid);
     if (!proc) {
         WARN("Invalid pid #%d.", pid);
-        return ERR_INVALID_MESSAGE;
+        return ERR_NOT_FOUND;
     }
 
     struct channel *pager_ch = table_get(&proc->channels, PAGER_CID);
     if (!pager_ch) {
         WARN("pager channel (@1) is closed.", PAGER_CID);
         process_destroy(proc);
-        return ERR_INVALID_MESSAGE;
+        return ERR_NOT_FOUND;
     }
 
     error_t err = vmarea_create(proc, start, start + size, user_pager, pager_ch,
@@ -240,7 +240,7 @@ static error_t handle_process_inject_channel(struct message *m) {
     struct process *proc = table_get(&process_table, pid);
     if (!proc) {
         WARN("Invalid pid #%d.", pid);
-        return ERR_INVALID_MESSAGE;
+        return ERR_NOT_FOUND;
     }
 
     struct channel *ch = table_get(&CURRENT->process->channels, cid);
@@ -418,7 +418,7 @@ static error_t process_message(struct message *m) {
     }
 
     WARN("unknown message: header=%p", m->header);
-    return ERR_UNEXPECTED_MESSAGE;
+    return ERR_UNKNOWN_MESSAGE;
 }
 
 /// The kernel server mainloop.
@@ -428,7 +428,7 @@ NORETURN static void mainloop(cid_t server_ch) {
         kernel_ipc(server_ch, IPC_RECV);
 
         error_t err = process_message(m);
-        if (err == DONT_REPLY) {
+        if (err == NO_REPLY) {
             continue;
         }
 

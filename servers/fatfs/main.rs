@@ -55,7 +55,7 @@ impl idl::fs::Server for Server {
     ) -> Result<Page> {
         let file = match self.opened_files.get(&file) {
             Some(file) => file,
-            None => return Err(Error::InvalidHandle),
+            None => return Err(Error::NotFound),
         };
 
         use idl::memmgr::call_alloc_pages;

@@ -40,7 +40,7 @@ impl idl::network_device::Server for Server {
     fn transmit(&mut self, _from: &Channel, packet: Page) -> Result<()> {
         let data = packet.as_bytes();
         if packet.len() > data.len() {
-            return Err(Error::InvalidArg);
+            return Err(Error::NotAcceptable);
         }
 
         self.device.send_ethernet_packet(data);

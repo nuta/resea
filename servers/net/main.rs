@@ -155,7 +155,7 @@ impl resea::idl::net::Server for Server {
     fn tcp_close(&mut self, _from: &Channel, handle: HandleId) -> Result<()> {
         let sock = match self.sockets.get(&handle) {
             Some(sock) => sock,
-            None => return Err(Error::InvalidHandle),
+            None => return Err(Error::NotFound),
         };
 
         self.tcpip.tcp_close(&sock.sock);
@@ -166,7 +166,7 @@ impl resea::idl::net::Server for Server {
     fn tcp_write(&mut self, _from: &Channel, handle: HandleId, data: Page) -> Result<()> {
         let sock = match self.sockets.get(&handle) {
             Some(sock) => sock,
-            None => return Err(Error::InvalidHandle),
+            None => return Err(Error::NotFound),
         };
 
         self.tcpip.tcp_write(&sock.sock, data.as_bytes());

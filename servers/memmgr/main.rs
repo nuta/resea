@@ -109,7 +109,7 @@ impl idl::pager::Server for Server {
 impl idl::memmgr::Server for Server {
     fn alloc_pages(&mut self, _from: &Channel, num_pages: usize) -> Result<Page> {
         if num_pages == 0 {
-            return Err(Error::InvalidArg);
+            return Err(Error::NotAcceptable);
         }
 
         let page = self.page_allocator.allocate(num_pages);
@@ -122,7 +122,7 @@ impl idl::memmgr::Server for Server {
         num_pages: usize,
     ) -> Result<(usize, Page)> {
         if num_pages == 0 {
-            return Err(Error::InvalidArg);
+            return Err(Error::NotAcceptable);
         }
 
         let page = self.page_allocator.allocate(num_pages);
@@ -137,7 +137,7 @@ impl idl::memmgr::Server for Server {
     ) -> Result<Page> {
         // TODO: Check whether the given paddr is already allocated.
         if paddr == 0 || num_pages == 0 {
-            return Err(Error::InvalidArg);
+            return Err(Error::NotAcceptable);
         }
 
         Ok(Page::new(paddr, num_pages * PAGE_SIZE))

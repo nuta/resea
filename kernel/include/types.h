@@ -41,54 +41,39 @@
 
 typedef int error_t;
 enum error_codes {
-#ifdef DEBUG_BUILD
-    // Set it to a non-zero value in debug build to reveal bad error checking
-    // bugs, for example:
-    //
-    //     error_t err = do_something();
-    //     /* Don't do this - compare with OK instead (i.e. err == OK) */
-    //     if (!err) {
-    //       printk("Success!");
-    //     }
-    //
-    OK = 0,
-#else
-    OK,
-#endif
+    OK = 0x00,
+
+    // Critical errors.
+    ERR_OUT_OF_MEMORY   = 0x01,
+    ERR_OUT_OF_RESOURCE = 0x02,
+    ERR_UNIMPLEMENTED   = 0x03,
+
+    // Errors from system calls.
+    ERR_INVALID_CID          = 0x10,
+    ERR_INVALID_MSG          = 0x11,
+    ERR_INVALID_PAYLOAD      = 0x12,
+    ERR_INVALID_SYSCALL      = 0x13,
+    ERR_INVALID_PAGE_PAYLOAD = 0x14,
+    ERR_CHANNEL_CLOSED       = 0x15,
+    ERR_ALREADY_RECEVING     = 0x16,
+
+    // General errors.
+    ERR_UNKNOWN_MESSAGE = 0x30,
+    ERR_BAD_REQUEST     = 0x31,
+    ERR_NOT_FOUND       = 0x32,
+    ERR_NOT_ACCEPTABLE  = 0x33,
+    ERR_TOO_SHORT       = 0x34,
+    ERR_TOO_LARGE       = 0x35,
+    ERR_ALREDY_EXISTS   = 0x36,
+    ERR_IM_A_TEAPOT     = 0x37,
+
+    // Try again!
+    ERR_WOULD_BLOCK = 0x50,
+    ERR_NEEDS_RETRY = 0x51,
 
     // Used by servers to indicate that the server does not need to send a reply
     // message.
-    DONT_REPLY,
-
-    // Critical errors.
-    ERR_OUT_OF_MEMORY,
-    ERR_OUT_OF_RESOURCE,
-    ERR_UNIMPLEMENTED,
-
-    // Errors from system calls.
-    ERR_INVALID_CID,
-    ERR_INVALID_MSG,
-    ERR_INVALID_PAYLOAD,
-    ERR_INVALID_MESSAGE,
-    ERR_INVALID_SYSCALL,
-    ERR_INVALID_PAGE_PAYLOAD,
-    ERR_NO_LONGER_LINKED,
-    ERR_CHANNEL_CLOSED,
-
-    // General errors.
-    ERR_UNEXPECTED_MESSAGE,
-    ERR_BAD_REQUEST,
-    ERR_NOT_FOUND,
-    ERR_NOT_ACCEPTABLE,
-    ERR_TOO_SHORT,
-    ERR_TOO_LARGE,
-    ERR_ALREDY_EXISTS,
-    ERR_IM_A_TEAPOT,
-
-    // Try again!
-    ERR_ALREADY_RECEVING,
-    ERR_WOULD_BLOCK = 24,
-    ERR_NEEDS_RETRY,
+    NO_REPLY = 0x70,
 };
 
 typedef int bool;

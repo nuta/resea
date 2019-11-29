@@ -46,7 +46,7 @@ impl<'a> ELF<'a> {
         // Verify the magic.
         let ehdr = unsafe { &*(image.as_ptr() as *const ELF64Ehdr) };
         if &ehdr.e_ident[0..4] != b"\x7fELF" {
-            return Err(Error::InvalidData);
+            return Err(Error::NotAcceptable);
         }
 
         let phdrs = unsafe {
