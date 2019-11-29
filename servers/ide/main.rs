@@ -15,10 +15,10 @@ struct Server {
 }
 
 impl Server {
-    pub fn new() -> Server {
+    pub fn new(device: IdeDevice) -> Server {
         Server {
             ch: Channel::create().unwrap(),
-            device: IdeDevice::new(&KERNEL_SERVER),
+            device,
         }
     }
 }
@@ -55,7 +55,8 @@ impl resea::server::Server for Server {}
 #[no_mangle]
 pub fn main() {
     info!("starting...");
-    let mut server = Server::new();
+    let device = IdeDevice::new(&KERNEL_SERVER);
+    let mut server = Server::new(device);
 
     publish_server(INTERFACE_ID, &server.ch).unwrap();
     serve_forever!(&mut server, [storage_device, server]);
