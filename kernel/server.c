@@ -1,5 +1,6 @@
 #include <channel.h>
 #include <support/printk.h>
+#include <support/stats.h>
 #include <process.h>
 #include <server.h>
 #include <thread.h>
@@ -378,7 +379,21 @@ static error_t handle_read_kernel_log(UNUSED struct message *m) {
     return OK;
 }
 
+static error_t handle_read_stats(UNUSED struct message *m) {
+    m->header = KERNEL_READ_STATS_REPLY_MSG;
+    m->payloads.kernel.read_stats_reply.uptime = timer_uptime();
+    m->payloads.kernel.read_stats_reply.ipc_total = READ_STAT(ipc_total);
+    m->payloads.kernel.read_stats_reply.page_fault_total =
+        READ_STAT(page_fault_total);
+    m->payloads.kernel.read_stats_reply.context_switch_total =
+        READ_STAT(context_switch_total);
+    m->payloads.kernel.read_stats_reply.kernel_call_total =
+        READ_STAT(kernel_call_total);
+    return OK;
+}
+
 static error_t process_message(struct message *m) {
+    INC_STAT(kernel_call_total);
     switch (m->header) {
     case RUNTIME_EXIT_MSG:             return handle_runtime_exit(m);
     case RUNTIME_PRINTCHAR_MSG:        return handle_runtime_printchar(m);
@@ -395,6 +410,7 @@ static error_t process_message(struct message *m) {
     case KERNEL_BATCH_WRITE_IOPORT_MSG: return handle_io_batch_write_io_port(m);
     case KERNEL_GET_SCREEN_BUFFER_MSG: return handle_kernel_get_screen_buffer(m);
     case KERNEL_READ_KERNEL_LOG_MSG:   return handle_read_kernel_log(m);
+    case KERNEL_READ_STATS_MSG:        return handle_read_stats(m);
     case TIMER_CREATE_MSG:             return handle_timer_create(m);
     case TIMER_RESET_MSG:              return handle_timer_reset(m);
     case TIMER_CLEAR_MSG:              return handle_timer_clear(m);

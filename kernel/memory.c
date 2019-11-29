@@ -6,6 +6,7 @@
 #include <table.h>
 #include <thread.h>
 #include <support/kasan.h>
+#include <support/stats.h>
 
 /// The PAGE_SIZE-sized memory pool.
 struct kmalloc_arena page_arena;
@@ -124,6 +125,7 @@ static int is_valid_page_fault_for(struct vmarea *vma, vaddr_t vaddr,
 /// the current thread.
 paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
     // TRACE("page_fault_handler: addr=%p", addr);
+    INC_STAT(page_fault_total);
 
     if (!(flags & PF_USER)) {
         // This will never occur. NEVER!

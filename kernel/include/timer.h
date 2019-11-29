@@ -17,6 +17,7 @@ struct timer {
 };
 
 void timer_interrupt_handler(int ticks);
+uint64_t timer_uptime(void);
 struct timer *timer_create(int initial, int interval,
                            void (*handler)(struct timer *), void *arg);
 void timer_reset(struct timer *timer, int initial, int interval);

@@ -8,8 +8,12 @@
 static struct table timers;
 static struct list_head active_timers;
 
+/// Uptime in milliseconds.
+static uint64_t uptime = 0;
+
 /// The timer interrupt handler.
 void timer_interrupt_handler(int ticks) {
+    uptime++;
     LIST_FOR_EACH(timer, &active_timers, struct timer, next) {
         if (timer->current <= 0) {
             // The timer is disabled or is an already expired oneshot one.
@@ -24,6 +28,10 @@ void timer_interrupt_handler(int ticks) {
             }
         }
     }
+}
+
+uint64_t timer_uptime(void) {
+    return uptime;
 }
 
 struct timer *timer_create(int initial, int interval,

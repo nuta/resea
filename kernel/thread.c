@@ -7,6 +7,7 @@
 #include <timer.h>
 #include <support/kasan.h>
 #include <support/stack_protector.h>
+#include <support/stats.h>
 
 /// Creates a new thread. If `process` is `kernel_process`, it creates a kernel
 /// thread, which is a special thread which runs only in the kernel land. In
@@ -186,6 +187,7 @@ void thread_switch(void) {
 
     // Switch into the next thread. This function will return when another
     // thread switches into the current one.
+    INC_STAT(context_switch_total);
     arch_thread_switch(CURRENT, next);
 
     check_stack_canary();

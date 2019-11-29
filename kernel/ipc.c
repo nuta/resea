@@ -3,6 +3,7 @@
 #include <channel.h>
 #include <thread.h>
 #include <ipc.h>
+#include <support/stats.h>
 
 /// The open system call: creates a new channel. It returns negated error value
 /// if an error occurred.
@@ -161,6 +162,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 #endif
         IPC_TRACE(m, "send: %pC -> %pC => %pC (header=%p)",
                   ch, linked_with, dst, header);
+        INC_STAT(ipc_total);
         // DUMP_MESSAGE(ch, dst, m);
 
         // Now we have a receiver thread. It's time to send a message!

@@ -103,6 +103,7 @@ kernel_objs +=  \
 	$(BUILD_DIR)/kernel/support/stack_protector.o \
 	$(BUILD_DIR)/kernel/support/backtrace.o \
 	$(BUILD_DIR)/kernel/support/kdebug.o \
+	$(BUILD_DIR)/kernel/support/stats.o \
 	$(BUILD_DIR)/kernel/support/kasan.o \
 	$(BUILD_DIR)/kernel/support/ubsan.o
 
