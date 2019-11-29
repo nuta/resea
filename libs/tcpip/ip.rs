@@ -1,6 +1,5 @@
 use crate::device::Device;
 use crate::ipv4::{Ipv4Addr, Ipv4Network};
-use crate::transport::Port;
 use resea::cell::RefCell;
 use resea::fmt;
 use resea::rc::Rc;

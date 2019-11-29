@@ -11,7 +11,7 @@ pub struct RingBuffer {
 
 impl RingBuffer {
     pub fn new(capacity: usize) -> RingBuffer {
-        let mut buffer = vec![0; capacity];
+        let buffer = vec![0; capacity];
         RingBuffer {
             buffer,
             capacity,

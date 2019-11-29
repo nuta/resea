@@ -169,7 +169,8 @@ impl resea::idl::net::Server for Server {
             None => return Err(Error::NotFound),
         };
 
-        self.tcpip.tcp_write(&sock.sock, data.as_bytes());
+        // FIXME: Propagate the error.
+        self.tcpip.tcp_write(&sock.sock, data.as_bytes()).unwrap();
         Ok(())
     }
 }

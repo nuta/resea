@@ -8,7 +8,6 @@ use crate::transport::{
     BindTo, Port, Socket, TransportHeader, TransportProtocol, UdpTransportHeader,
 };
 use crate::Result;
-use resea::boxed::Box;
 use resea::cell::RefCell;
 use resea::collections::VecDeque;
 use resea::mem::size_of;
@@ -108,11 +107,11 @@ impl Socket for UdpSocket {
         unreachable!();
     }
 
-    fn read(&mut self, buf: &mut [u8]) -> usize {
+    fn read(&mut self, _buf: &mut [u8]) -> usize {
         unreachable!();
     }
 
-    fn write(&mut self, data: &[u8]) -> Result<()> {
+    fn write(&mut self, _data: &[u8]) -> Result<()> {
         unreachable!();
     }
 

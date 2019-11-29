@@ -1,5 +1,5 @@
 use crate::endian::swap16;
-use resea::mem::{size_of, transmute};
+use resea::mem::size_of;
 use resea::slice;
 
 #[repr(transparent)]
@@ -53,7 +53,7 @@ impl Checksum {
 
     pub fn finish(self) -> u16 {
         let mut checksum = (self.0 >> 16) + (self.0 & 0xffff);
-        checksum += (checksum >> 16);
+        checksum += checksum >> 16;
         swap16(!checksum as u16)
     }
 }

@@ -5,7 +5,6 @@ use crate::ip::{IpAddr, NetworkProtocol};
 use crate::ipv4::Ipv4Addr;
 use crate::mbuf::Mbuf;
 use crate::packet::Packet;
-use crate::Result;
 use resea::collections::VecDeque;
 use resea::vec::Vec;
 
@@ -47,7 +46,7 @@ impl Device for EthernetDevice {
         self.mac_addr
     }
 
-    fn enqueue(&mut self, tx_queue: &mut VecDeque<Mbuf>, dst: IpAddr, mut pkt: Mbuf) -> Result<()> {
+    fn enqueue(&mut self, tx_queue: &mut VecDeque<Mbuf>, dst: IpAddr, pkt: Mbuf) {
         let (ether_type, dst_macaddr) = match dst {
             IpAddr::Ipv4(addr) => {
                 match self.arp_table.resolve(addr) {
@@ -55,16 +54,15 @@ impl Device for EthernetDevice {
                     None => {
                         // We don't know the MAC address. Enqueue the packet and
                         // send a ARP request.
-                        let mut arp_req = self.arp_table.enqueue(addr, ETHERTYPE_IPV4, pkt);
+                        let arp_req = self.arp_table.enqueue(addr, ETHERTYPE_IPV4, pkt);
                         self.do_enqueue(tx_queue, MacAddr::BROADCAST, ETHERTYPE_ARP, arp_req);
-                        return Ok(());
+                        return;
                     }
                 }
             }
         };
 
         self.do_enqueue(tx_queue, dst_macaddr, ether_type, pkt);
-        Ok(())
     }
 
     fn receive(

@@ -4,17 +4,9 @@ use crate::ip::IpAddr;
 use crate::ipv4::Ipv4Addr;
 use crate::mbuf::Mbuf;
 use crate::packet::Packet;
-use crate::tcp::TcpSocket;
-use crate::transport::{
-    BindTo, Port, Socket, TransportHeader, TransportProtocol, UdpTransportHeader,
-};
-use crate::Result;
-use resea::boxed::Box;
+use crate::transport::Port;
 use resea::cell::RefCell;
-use resea::collections::VecDeque;
-use resea::mem::size_of;
 use resea::rc::Rc;
-use resea::vec::Vec;
 
 pub enum DhcpClientState {
     SendingDiscovery,
@@ -74,8 +66,8 @@ impl DhcpClient {
 
     pub fn receive(
         &mut self,
-        src_addr: IpAddr,
-        src_port: Port,
+        _src_addr: IpAddr,
+        _src_port: Port,
         payload: &[u8],
     ) -> Option<Ipv4Addr> {
         info!("received a dhcp packet!");

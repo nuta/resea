@@ -11,7 +11,6 @@ use crate::transport::{
 };
 use crate::wrapping::WrappingU32;
 use crate::{Error, Result};
-use resea::boxed::Box;
 use resea::cell::RefCell;
 use resea::cmp::min;
 use resea::collections::VecDeque;
@@ -25,13 +24,13 @@ enum TcpState {
     Closed,
     Listen,
     SynReceived,
-    SynSent,
+    _SynSent,
     Established,
     FinWait1,
-    FinWait2,
-    Closing,
-    TimeWait,
-    LastAck,
+    _FinWait2,
+    _Closing,
+    _TimeWait,
+    _LastAck,
 }
 
 const TCP_BUFFER_SIZE: usize = 2048;
@@ -262,9 +261,8 @@ impl Socket for TcpSocket {
     }
 
     fn close(&mut self) {
-        // TODO:
-        // self.pending_flags.add(FLAG_FIN);
-        // self.state = TcpState::FinWait1;
+        self.pending_flags.add(FLAG_FIN);
+        self.state = TcpState::FinWait1;
     }
 
     fn accept(&mut self) -> Option<TcpSocket> {
@@ -365,10 +363,10 @@ impl Socket for TcpSocket {
 
     fn send(
         &mut self,
-        device: Option<Rc<RefCell<dyn Device>>>,
-        dst_addr: IpAddr,
-        dst_port: Port,
-        payload: &[u8],
+        _device: Option<Rc<RefCell<dyn Device>>>,
+        _dst_addr: IpAddr,
+        _dst_port: Port,
+        _payload: &[u8],
     ) {
         unreachable!();
     }

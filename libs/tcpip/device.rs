@@ -1,7 +1,6 @@
 use crate::ip::{IpAddr, NetworkProtocol};
 use crate::mbuf::Mbuf;
 use crate::packet::Packet;
-use crate::Result;
 use resea::collections::VecDeque;
 
 #[repr(transparent)]
@@ -22,7 +21,7 @@ impl MacAddr {
 
 pub trait Device {
     fn mac_addr(&self) -> MacAddr;
-    fn enqueue(&mut self, tx_queue: &mut VecDeque<Mbuf>, dst: IpAddr, pkt: Mbuf) -> Result<()>;
+    fn enqueue(&mut self, tx_queue: &mut VecDeque<Mbuf>, dst: IpAddr, pkt: Mbuf);
     fn receive(
         &mut self,
         tx_queue: &mut VecDeque<Mbuf>,

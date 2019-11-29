@@ -1,4 +1,4 @@
-use resea::mem::{size_of, transmute};
+use resea::mem::size_of;
 
 pub struct Packet<'a> {
     data: &'a [u8],

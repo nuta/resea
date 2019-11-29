@@ -1,6 +1,5 @@
 use crate::device::{Device, MacAddr};
 use crate::dhcp::DhcpClient;
-use crate::ethernet;
 use crate::ethernet::EthernetDevice;
 use crate::ip::{IpAddr, NetworkProtocol, Route};
 use crate::ipv4::{self, Ipv4Addr, Ipv4Network};
@@ -11,7 +10,7 @@ use crate::transport::{BindTo, Port, Socket, TransportProtocol};
 use crate::udp::{self, UdpSocket};
 use crate::{Error, Result};
 use resea::cell::RefCell;
-use resea::collections::{HashMap, LinkedList, VecDeque};
+use resea::collections::{HashMap, VecDeque};
 use resea::rc::Rc;
 use resea::string::String;
 use resea::vec::Vec;
@@ -105,8 +104,8 @@ impl Instance {
         sock.0.borrow_mut().close();
     }
 
-    pub fn tcp_write(&mut self, sock: &SocketHandle, data: &[u8]) {
-        sock.0.borrow_mut().write(data);
+    pub fn tcp_write(&mut self, sock: &SocketHandle, data: &[u8]) -> Result<()> {
+        sock.0.borrow_mut().write(data)
     }
 
     pub fn tcp_readable_len(&mut self, sock: &SocketHandle) -> usize {
