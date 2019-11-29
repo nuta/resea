@@ -9,14 +9,15 @@ BUILD_DIR   ?= build
 INIT        ?= memmgr
 STARTUPS    ?= shell fatfs net webapi pcat ide e1000
 LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
+LLVM_SUFFIX ?=
 GRUB_PREFIX ?= i386-elf-
 
 PYTHON3  ?= python3
 XARGO    ?= xargo
-CC       := $(LLVM_PREFIX)clang
-LD       := $(LLVM_PREFIX)ld.lld
-NM       := $(LLVM_PREFIX)llvm-nm
-OBJCOPY  := $(LLVM_PREFIX)llvm-objcopy
+CC       := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
+LD       := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
+NM       := $(LLVM_PREFIX)llvm-nm$(LLVM_SUFFIX)
+OBJCOPY  := $(LLVM_PREFIX)llvm-objcopy$(LLVM_SUFFIX)
 PROGRESS := printf "  \\033[1;35m%8s  \\033[1;m%s\\033[m\\n"
 
 ifeq ($(BUILD), debug)
