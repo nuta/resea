@@ -12,8 +12,6 @@ from pathlib import Path
 import colorama
 from colorama import Fore, Style
 
-TOO_MUCH_STACK_THRESHOLD = 2048
-
 def decode_leb128(buf):
     value = 0
     i = 0
@@ -24,7 +22,7 @@ def decode_leb128(buf):
             return value, i + 1
         i += 1
 
-def analyze_stack_sizes(objcopy, nm, file):
+def analyze_stack_sizes(objcopy, nm, file, stack_size_max):
     with tempfile.TemporaryDirectory() as tempdir:
         stack_file = tempdir + "/stack_sizes.bin"
 
@@ -44,7 +42,7 @@ def analyze_stack_sizes(objcopy, nm, file):
         while index < len(stack_sizes):
             addr = struct.unpack("Q", stack_sizes[index:index+8])[0]
             size, size_len = decode_leb128(stack_sizes[index+8:])
-            if addr in functions and size >= TOO_MUCH_STACK_THRESHOLD:
+            if addr in functions and size >= stack_size_max:
                 print(f"{Fore.YELLOW}{Style.BRIGHT}{file}: Warning: Large stack usage" +
                       f" in {functions[addr]} ({size} bytes).{Style.RESET_ALL}")
 
@@ -116,7 +114,7 @@ def verify_symtable(nm, old_file, new_file):
             sys.exit(f"Incorrect symbol table entry '{name}': " +
                 f"expected={symbols[name]}, actual={new_symbols[name]}")
 
-def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs):
+def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs, stack_size_max):
     outfile = Path(outfile)
     stage1 = outfile.parent / ("." + outfile.name + ".stage1.tmp")
     stage2 = outfile.parent / ("." + outfile.name + ".stage2.tmp")
@@ -153,7 +151,7 @@ def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs
 
     verify_symtable(nm, stage2, stage3)
     shutil.move(stage3, outfile)
-    analyze_stack_sizes(objcopy, nm, outfile)
+    analyze_stack_sizes(objcopy, nm, outfile, stack_size_max)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -167,12 +165,16 @@ def main():
     parser.add_argument("--build-dir", help="The build directory.", required=True)
     parser.add_argument("--mapfile", help="The map file.", required=True)
     parser.add_argument("--outfile", help="The output file.", required=True)
+    parser.add_argument("--stack-size-max",
+        help="The maximum size of stack consumption in a function.",
+        type=int, required=True)
     parser.add_argument("objs", help="The object files.", nargs="+")
     args = parser.parse_args()
 
     try:
         link(args.cc, args.cflags, args.ld, args.ldflags, args.objcopy, args.nm,
-             args.build_dir, args.outfile, args.mapfile, args.objs)
+             args.build_dir, args.outfile, args.mapfile, args.objs,
+             args.stack_size_max)
     except subprocess.CalledProcessError as e:
         sys.exit("link.py: A subprocess returned an error, aborting.")
 

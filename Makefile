@@ -117,6 +117,7 @@ $(BUILD_DIR)/kernel.elf: $(kernel_objs) $(arch_dir)/$(ARCH).ld tools/link.py Mak
 		--build-dir="$(BUILD_DIR)"            \
 		--mapfile="$(BUILD_DIR)/kernel.map"   \
 		--outfile="$@"                        \
+		--stack-size-max=1024                 \
 		$(kernel_objs)
 	$(MAKE) $(BUILD_DIR)/compile_commands.json
 
@@ -168,6 +169,7 @@ $(BUILD_DIR)/servers/%.elf: libs/resea/idl/mod.rs tools/link.py Makefile
 		--ldflags="$(ldflags)"                    \
 		--nm="$(NM)"                              \
 		--objcopy="$(OBJCOPY)"                    \
+		--stack-size-max="4096"                   \
 		--build-dir="$(BUILD_DIR)/servers/$(name)"   \
 		--mapfile="$(BUILD_DIR)/servers/$(name).map" \
 		--outfile="$(BUILD_DIR)/servers/$(name).elf" \
