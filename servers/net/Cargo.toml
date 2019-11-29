@@ -10,4 +10,3 @@ path = "lib.rs"
 
 [dependencies]
 resea = { path = "../../libs/resea" }
-tcpip = { path = "../../libs/tcpip" }

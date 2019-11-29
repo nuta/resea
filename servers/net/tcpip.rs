@@ -15,7 +15,7 @@ use resea::rc::Rc;
 use resea::string::String;
 use resea::vec::Vec;
 
-pub struct Instance {
+pub struct TcpIp {
     routes: Vec<Route>,
     tx_queue: RefCell<VecDeque<Mbuf>>,
     devices: HashMap<String, Rc<RefCell<dyn Device>>>,
@@ -39,13 +39,14 @@ impl PartialEq for SocketHandle {
 }
 
 pub enum DeviceIpAddr {
+    #[allow(unused)]
     Static(Ipv4Addr),
     Dhcp,
 }
 
-impl Instance {
-    pub fn new() -> Instance {
-        Instance {
+impl TcpIp {
+    pub fn new() -> TcpIp {
+        TcpIp {
             routes: Vec::new(),
             devices: HashMap::new(),
             sockets: HashMap::new(),
@@ -149,7 +150,7 @@ impl Instance {
         SocketHandle::new(sock)
     }
 
-    pub fn udp_send(
+    pub fn _udp_send(
         &mut self,
         sock: &SocketHandle,
         dst_addr: IpAddr,
@@ -159,7 +160,7 @@ impl Instance {
         sock.0.borrow_mut().send(None, dst_addr, dst_port, payload);
     }
 
-    pub fn recv(&mut self, sock: &SocketHandle) -> Option<(IpAddr, Port, Vec<u8>)> {
+    pub fn _udp_recv(&mut self, sock: &SocketHandle) -> Option<(IpAddr, Port, Vec<u8>)> {
         sock.0.borrow_mut().recv()
     }
 

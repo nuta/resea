@@ -7,7 +7,9 @@ use resea::rc::Rc;
 use resea::server::{connect_to_server, publish_server, DeferredWorkResult};
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
-use tcpip::{DeviceIpAddr, Instance, MacAddr, Port, SocketHandle};
+use crate::device::MacAddr;
+use crate::tcpip::{DeviceIpAddr, TcpIp, SocketHandle};
+use crate::transport::Port;
 
 static MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static _KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -21,7 +23,7 @@ struct TcpSocket {
 struct Server {
     ch: Channel,
     network_device: Channel,
-    tcpip: Instance,
+    tcpip: TcpIp,
     sockets: HashMap<HandleId, Rc<TcpSocket>>,
     tcp_sockets: Vec<Rc<TcpSocket>>,
     accepted_queue: Vec<(Rc<Channel>, HandleId, HandleId)>,
@@ -31,7 +33,7 @@ struct Server {
 
 impl Server {
     pub fn new(server_ch: Channel, network_device: Channel) -> Server {
-        let mut tcpip = Instance::new();
+        let mut tcpip = TcpIp::new();
         let ma = call_get_macaddr(&network_device).unwrap();
         let macaddr = MacAddr::new([ma.0, ma.1, ma.2, ma.3, ma.4, ma.5]);
         tcpip.add_ethernet_device("net0", macaddr, DeviceIpAddr::Dhcp);
