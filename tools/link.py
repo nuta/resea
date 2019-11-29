@@ -28,7 +28,7 @@ def analyze_stack_sizes(objcopy, nm, file, stack_size_max):
 
         subprocess.check_call([objcopy, "--dump-section",
             f".stack_sizes={stack_file}", file])
-        nm_output = subprocess.check_output([nm, "--demangle", file], text=True)
+        nm_output = subprocess.check_output([nm, "--demangle", file], universal_newlines=True)
         functions = {}
         for line in nm_output.splitlines():
             cols = line.split(" ", 2)
