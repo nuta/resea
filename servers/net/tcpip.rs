@@ -126,7 +126,6 @@ impl TcpIp {
                 tcp_sock.remote_addr().unwrap(),
                 tcp_sock.remote_port().unwrap(),
             );
-            info!("accept: {:?} -> {:?}", remote, local);
             let sock = Rc::new(RefCell::new(tcp_sock));
             self.sockets.insert((local, remote), sock.clone());
             SocketHandle::new(sock)
@@ -264,7 +263,6 @@ impl TcpIp {
         }
 
         let mut queue = self.tx_queue.borrow_mut();
-        info!("queueing = {} bytes", pkt.len());
         device.borrow_mut().enqueue(&mut *queue, dst, pkt);
         Ok(())
     }
@@ -284,7 +282,6 @@ impl TcpIp {
 
         let local = BindTo::new(trans, IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED), dst_port);
         let remote = BindTo::new(trans, src, src_port);
-        info!("ipv4 packet: {:?} -> {:?}", remote, local);
 
         // Look for the socket.
         let unspecified = BindTo::new(

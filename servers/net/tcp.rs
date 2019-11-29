@@ -101,7 +101,6 @@ impl TcpSocket {
         }
 
         if header.flags.contains(FLAG_FIN) {
-            info!("received fin");
             self.state = TcpState::Closed;
             self.pending_flags.add(FLAG_FIN | FLAG_ACK);
             self.local_ack_no.add(1);

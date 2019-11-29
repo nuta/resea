@@ -70,7 +70,6 @@ impl DhcpClient {
         _src_port: Port,
         payload: &[u8],
     ) -> Option<Ipv4Addr> {
-        info!("received a dhcp packet!");
         let mut pkt = Packet::new(payload);
         if let Some(parsed) = parse(&mut pkt) {
             match self.state {
