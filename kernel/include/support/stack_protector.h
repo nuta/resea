@@ -1,5 +1,5 @@
-#ifndef __DEBUG_H__
-#define __DEBUG_H__
+#ifndef __STACK_PROTECTOR_H__
+#define __STACK_PROTECTOR_H__
 
 #include <types.h>
 
