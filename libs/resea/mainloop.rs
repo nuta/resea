@@ -9,7 +9,11 @@ pub trait Mainloop {
     fn deferred_work(&mut self) -> DeferredWorkResult {
         DeferredWorkResult::Done
     }
-    fn notification(&mut self, _notification: Notification) {}
+
+    fn notification(&mut self, _notification: Notification) {
+        // Do nothing by default.
+    }
+
     fn unknown_message(&mut self, m: &mut Message) -> bool {
         warn!("unknown message");
         m.header = MessageHeader::from_error(Error::UnknownMessage);
