@@ -278,6 +278,16 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             return ERR_ALREADY_RECEVING;
         }
 
+        // Receive a pending notification if exists.
+        if (recv_ch->notification) {
+            m->header = NOTIFICATION_NOTIFICATION_MSG;
+            m->from   = 0;
+            m->notification = atomic_swap(&recv_ch->notification, 0);
+            IPC_TRACE(m, "recv (notification): %pC (notification=%p)",
+                      recv_ch, m->notification);
+            return OK;
+        }
+
 #ifdef DEBUG_BUILD
         current->debug.receive_from = recv_ch;
 #endif
@@ -358,6 +368,8 @@ static error_t sys_ipc_fastpath(cid_t cid) {
         !FASTPATH_HEADER_TEST(header) +
         // Make sure that the channels are not destructed.
         ch->destructed + recv_ch->destructed + dst_ch->destructed +
+        // There's no pending notification.
+        recv_ch->notification +
         // Make sure that the current thread is able to be the receiver of
         // `recv_ch`.
         ((int) recv_ch->receiver) +
