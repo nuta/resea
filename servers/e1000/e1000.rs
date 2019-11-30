@@ -252,6 +252,7 @@ impl Device {
         self.write_reg32(REG_TDT, self.tx_current);
 
         // TODO: Wait until trasmission finish.
+        trace!("sent {} bytes", pkt.len());
     }
 
     pub fn rx_queue(&mut self) -> &mut VecDeque<Vec<u8>> {
@@ -278,7 +279,7 @@ impl Device {
 
             // Copy the received packet into the RX queue.
             let len = desc.len as usize;
-            warn!("received {} bytes", len);
+            trace!("received {} bytes", len);
             let mut pkt = Vec::with_capacity(len);
             pkt.extend_from_slice(&self.rx_buffer(index)[0..len]);
             self.rx_queue.push_back(pkt);

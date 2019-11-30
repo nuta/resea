@@ -230,7 +230,7 @@ impl TcpIp {
                 num_sent_packets += 1;
             }
 
-            trace!("sent {} packets", num_sent_packets);
+            trace!("enqueued {} packets", num_sent_packets);
             if num_sent_packets == 0 {
                 // We've sent all pending packets.
                 break;
@@ -297,7 +297,6 @@ impl TcpIp {
             sock = self.sockets.get(&(unspecified, unspecified))
         }
 
-        warn!("sock: {}", sock.is_none());
         match sock {
             Some(sock) => {
                 sock.borrow_mut().receive(src, dst, &parsed_trans_data);
