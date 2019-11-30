@@ -141,6 +141,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
             // Exit the system call handler if IPC_NOBLOCK is specified.
             if (syscall & IPC_NOBLOCK) {
+#ifdef DEBUG_BUILD
+        current->debug.send_from = NULL;
+#endif
                 return ERR_WOULD_BLOCK;
             }
 
