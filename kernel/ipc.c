@@ -4,6 +4,7 @@
 #include <thread.h>
 #include <ipc.h>
 #include <support/stats.h>
+#include <support/kdebug.h>
 
 /// The open system call: creates a new channel. It returns negated error value
 /// if an error occurred.
@@ -118,9 +119,8 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
         struct channel *linked_with;
         struct channel *dst;
         struct thread *receiver;
-#ifdef DEBUG_BUILD
-        current->debug.send_from = ch;
-#endif
+        SET_KDEBUG_INFO(current, send_from, ch);
+
         // Wait for a receiver thread.
         while (1) {
             linked_with = ch->linked_with;
@@ -141,9 +141,7 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
             // Exit the system call handler if IPC_NOBLOCK is specified.
             if (syscall & IPC_NOBLOCK) {
-#ifdef DEBUG_BUILD
-        current->debug.send_from = NULL;
-#endif
+                SET_KDEBUG_INFO(current, send_from, NULL);
                 return ERR_WOULD_BLOCK;
             }
 
@@ -160,13 +158,11 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             }
         }
 
-#ifdef DEBUG_BUILD
-        current->debug.send_from = NULL;
-#endif
         IPC_TRACE(m, "send: %pC -> %pC => %pC (header=%p)",
                   ch, linked_with, dst, header);
-        INC_STAT(ipc_total);
         // DUMP_MESSAGE(ch, dst, m);
+        SET_KDEBUG_INFO(current, send_from, NULL);
+        INC_STAT(ipc_total);
 
         // Now we have a receiver thread. It's time to send a message!
         struct message *dst_m = receiver->ipc_buffer;
@@ -291,11 +287,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
             return OK;
         }
 
-#ifdef DEBUG_BUILD
-        current->debug.receive_from = recv_ch;
-#endif
+        // Block the current thread until a sender thread wakes it up.
         recv_ch->receiver = current;
-
+        SET_KDEBUG_INFO(current, receive_from, recv_ch);
         thread_block(current);
 
         // Resume a thread in the sender queue if exists.
@@ -312,11 +306,6 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
         // Received a message or a notification, or the IPC operation is
         // aborted.
-
-#ifdef DEBUG_BUILD
-        current->debug.receive_from = NULL;
-#endif
-
         if (current->abort_reason != OK) {
             WARN("aborted IPC!");
             return atomic_swap(&current->abort_reason, OK);
@@ -324,9 +313,9 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
         // Read and clear the notification field atomically.
         m->notification = atomic_swap(&recv_ch->notification, 0);
-
         IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
                   recv_ch, m->from, m->header, m->notification);
+        SET_KDEBUG_INFO(current, receive_from, NULL);
     }
 
     return OK;
@@ -347,22 +336,18 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     DEBUG_ASSERT(CURRENT->process != kernel_process);
 
     struct thread *current = CURRENT;
-    struct message *m      = current->ipc_buffer;
-    prefetch(m);
-
+    struct message *m = current->ipc_buffer;
     struct channel *ch = table_get(&current->process->channels, cid);
     if (UNLIKELY(!ch)) {
         goto slowpath_fallback;
     }
 
-    header_t header             = m->header;
+    header_t header = m->header;
     struct channel *recv_ch     = ch->transfer_to;
     struct channel *linked_with = ch->linked_with;
-    cid_t from                  = linked_with->cid;
-    struct channel *dst_ch      = linked_with->transfer_to;
-    struct thread *receiver     = dst_ch->receiver;
-
-    prefetch(recv_ch);
+    cid_t from = linked_with->cid;
+    struct channel *dst_ch  = linked_with->transfer_to;
+    struct thread *receiver = dst_ch->receiver;
 
     // Check whether the message can be sent in fastpath. Here we use `+`
     // instead of lengthy if statements to eliminate branches.
@@ -390,11 +375,8 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     // channel.
     IPC_TRACE(m, "send (fastpath): %pC -> %pC => %pC (header=%p)",
               ch, linked_with, dst_ch, header);
-
+    // DUMP_MESSAGE(ch, dst_ch, m);
     struct message *dst_m = receiver->ipc_buffer;
-    prefetch(dst_m);
-    prefetch(receiver);
-
     recv_ch->receiver = current;
     dst_ch->receiver  = NULL;
     current->blocked  = true;
@@ -404,26 +386,17 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     inlined_memcpy(&dst_m->payloads.data, m->payloads.data,
                    INLINE_PAYLOAD_LEN(header));
 
-#ifdef DEBUG_BUILD
-    current->debug.receive_from = recv_ch;
-#endif
-
     // Do a direct context switch into the receiver thread. The current thread
     // is now blocked and will be resumed by another IPC.
+    SET_KDEBUG_INFO(current, receive_from, recv_ch);
     arch_thread_switch(current, receiver);
 
     // Received a message or a notification, or the IPC operation is aborted.
-
-    // Read and clear the notification field.
+    // Read and clear the notification field and go back to the userspace.
     m->notification = atomic_swap(&recv_ch->notification, 0);
-
     IPC_TRACE(m, "recv (fastpath): %pC <- @%d (header=%p, notification=%p)",
               recv_ch, m->from, m->header, m->notification);
-
-#ifdef DEBUG_BUILD
-    current->debug.receive_from = NULL;
-#endif
-
+    SET_KDEBUG_INFO(current, receive_from, NULL);
     return atomic_swap(&current->abort_reason, OK);
 
 slowpath_fallback:

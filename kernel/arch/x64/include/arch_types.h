@@ -142,10 +142,6 @@ static inline error_t arch_get_screen_buffer(paddr_t *page, size_t *num_pages) {
     return OK;
 }
 
-static inline void prefetch(MAYBE_UNUSED void *ptr) {
-    __asm__ __volatile__("prefetcht0 (%0)" :: "r"(ptr));
-}
-
 static inline uint64_t arch_read_ioport(uintmax_t addr, int size) {
     uint64_t data = 0;
     switch (size) {
