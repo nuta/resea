@@ -69,13 +69,18 @@ macro_rules! serve_forever {
             let mut reply_to = Channel::from_cid(m.from);
             let notification = m.notification;
 
+            if !notification.is_empty() {
+                $crate::server::Server::notification(server, m.notification);
+            }
+
             let has_reply = match m.header.interface_id() {
                 $( $crate::idl::$server_interface::INTERFACE_ID =>
                     $crate::idl::$server_interface::Server::__handle(server, &mut m), )*
                 $( $crate::idl::$client_interface::INTERFACE_ID =>
                     $crate::idl::$client_interface::Client::__handle(server, &mut m), )*
                 $crate::idl::notification::INTERFACE_ID => {
-                    $crate::server::Server::notification(server, m.notification);
+                    // Do nothing: we've already invoked the notification method
+                    // above.
                     false
                 }
                 _ => {
