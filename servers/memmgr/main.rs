@@ -256,20 +256,19 @@ impl resea::server::Server for Server {
                         None => {
                             // Try sending a server.connect request to the registered
                             // server...
+                            trace!("sending connect...");
                             let reply =
                                 idl::server::nbsend_connect(&server.server_ch, request.interface);
                             match reply {
-                                Ok(()) => true,
-                                Err(Error::WouldBlock) => {
-                                    // The server is not ready. Try later.
-                                    true
-                                }
+                                Ok(()) | Err(Error::WouldBlock) => {},
                                 Err(err) => {
                                     // The server returned an unexpected error.
                                     warn!("error occurred during sending a server.connect {}", err);
-                                    true
                                 }
                             }
+                            // We'll retry sending server.connect or send
+                            // discovery.connect_reply later.
+                            true
                         }
                     }
                 }
