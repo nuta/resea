@@ -22,6 +22,9 @@ const CTRL_RST: u32 = 1 << 26;
 const REG_IMS: u32 = 0x00d0;
 const IMS_RXT0: u32 = 1 << 7;
 
+/// Interrupt Mask Clear.
+const REG_IMC: u32 = 0x00d8;
+
 /// Interrupt Cause Read.
 const REG_ICR: u32 = 0x00c0;
 /// Receiver Timer Interrupt.
@@ -224,6 +227,8 @@ impl Device {
         self.write_reg32(REG_TCTL, TCTL_EN | TCTL_PSP);
 
         // Enable interrupts.
+        self.write_reg32(REG_IMS, 0xff);
+        self.write_reg32(REG_IMC, 0xff);
         self.write_reg32(REG_IMS, IMS_RXT0);
     }
 
