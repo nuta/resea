@@ -171,7 +171,7 @@ $(BUILD_DIR)/servers/%.elf: libs/resea/idl/mod.rs tools/link.py Makefile
 		--ldflags="$(ldflags)"                    \
 		--nm="$(NM)"                              \
 		--objcopy="$(OBJCOPY)"                    \
-		--stack-size-max="4096"                   \
+		--stack-size-max=4096                     \
 		--build-dir="$(BUILD_DIR)/servers/$(name)"   \
 		--mapfile="$(BUILD_DIR)/servers/$(name).map" \
 		--outfile="$(BUILD_DIR)/servers/$(name).elf" \
