@@ -2,7 +2,8 @@ use crate::e1000::Device;
 use crate::pci::Pci;
 use resea::idl::{self, memmgr, network_device_client::nbsend_received};
 use resea::prelude::*;
-use resea::server::{publish_server, DeferredWorkResult};
+use resea::server::publish_server;
+use resea::mainloop::DeferredWorkResult;
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
 
@@ -61,7 +62,7 @@ impl idl::server::Server for Server {
     }
 }
 
-impl resea::server::Server for Server {
+impl resea::mainloop::Mainloop for Server {
     fn notification(&mut self, _notification: Notification) {
         self.device.handle_interrupt();
     }
@@ -114,5 +115,5 @@ pub fn main() {
     let mut server = Server::new(ch, device);
     publish_server(idl::network_device::INTERFACE_ID, &server.ch).unwrap();
     info!("ready");
-    serve_forever!(&mut server, [server, network_device]);
+    mainloop!(&mut server, [server, network_device]);
 }

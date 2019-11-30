@@ -97,12 +97,12 @@ impl resea::idl::keyboard_device_client::Server for Server {
     }
 }
 
-impl resea::server::Server for Server {}
+impl resea::mainloop::Mainloop for Server {}
 
 #[no_mangle]
 pub fn main() {
     info!("starting...");
     let mut server = Server::new();
     info!("ready");
-    serve_forever!(&mut server, [keyboard_device_client]);
+    mainloop!(&mut server, [keyboard_device_client]);
 }

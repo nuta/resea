@@ -119,7 +119,7 @@ impl idl::net_client::Server for Server {
     }
 }
 
-impl resea::server::Server for Server {}
+impl resea::mainloop::Mainloop for Server {}
 
 #[no_mangle]
 pub fn main() {
@@ -128,5 +128,5 @@ pub fn main() {
         .expect("failed to connect to net server");
     let mut server = Server::new(net_server);
     info!("ready");
-    serve_forever!(&mut server, [net_client]);
+    mainloop!(&mut server, [net_client]);
 }

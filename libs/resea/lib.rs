@@ -34,6 +34,7 @@ pub mod channel;
 pub mod collections;
 pub mod idl;
 pub mod lazy_static;
+pub mod mainloop;
 pub mod message;
 pub mod prelude;
 pub mod result;

@@ -2,7 +2,8 @@ use crate::keyboard::Keyboard;
 use crate::screen::Screen;
 use resea::idl::{self, keyboard_device, text_screen_device};
 use resea::prelude::*;
-use resea::server::{publish_server, DeferredWorkResult};
+use resea::server::publish_server;
+use resea::mainloop::DeferredWorkResult;
 
 static _MEMMGR_SERVER: Channel = Channel::from_cid(1);
 static KERNEL_SERVER: Channel = Channel::from_cid(2);
@@ -63,7 +64,7 @@ impl idl::server::Server for Server {
     }
 }
 
-impl resea::server::Server for Server {
+impl resea::mainloop::Mainloop for Server {
     fn deferred_work(&mut self) -> DeferredWorkResult {
         if let Some(ref listener) = self.keyboard_listener {
             while let Some(ch) = self.keyboard.buffer().front() {
@@ -100,5 +101,5 @@ pub fn main() {
     publish_server(keyboard_device::INTERFACE_ID, &server.ch).unwrap();
 
     info!("ready");
-    serve_forever!(&mut server, [server, text_screen_device, keyboard_device]);
+    mainloop!(&mut server, [server, text_screen_device, keyboard_device]);
 }

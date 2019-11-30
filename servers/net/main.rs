@@ -4,7 +4,8 @@ use resea::idl::net_client::{nbsend_tcp_accepted, nbsend_tcp_received};
 use resea::idl::network_device::{call_get_macaddr, call_transmit};
 use resea::prelude::*;
 use resea::rc::Rc;
-use resea::server::{connect_to_server, publish_server, DeferredWorkResult};
+use resea::server::{connect_to_server, publish_server};
+use resea::mainloop::DeferredWorkResult;
 use resea::utils::align_up;
 use resea::PAGE_SIZE;
 use crate::device::MacAddr;
@@ -196,7 +197,7 @@ impl idl::server::Server for Server {
     }
 }
 
-impl resea::server::Server for Server {
+impl resea::mainloop::Mainloop for Server {
     fn deferred_work(&mut self) -> DeferredWorkResult {
         self.receive_and_transmit();
         DeferredWorkResult::Done
@@ -220,5 +221,5 @@ pub fn main() {
     publish_server(idl::net::INTERFACE_ID, &server.ch).unwrap();
 
     info!("ready");
-    serve_forever!(&mut server, [server, net, network_device_client], []);
+    mainloop!(&mut server, [server, net, network_device_client], []);
 }

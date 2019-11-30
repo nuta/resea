@@ -50,7 +50,7 @@ impl idl::server::Server for Server {
     }
 }
 
-impl resea::server::Server for Server {}
+impl resea::mainloop::Mainloop for Server {}
 
 #[no_mangle]
 pub fn main() {
@@ -59,5 +59,5 @@ pub fn main() {
     let mut server = Server::new(device);
 
     publish_server(INTERFACE_ID, &server.ch).unwrap();
-    serve_forever!(&mut server, [storage_device, server]);
+    mainloop!(&mut server, [storage_device, server]);
 }

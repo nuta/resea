@@ -91,7 +91,7 @@ impl idl::server::Server for Server {
     }
 }
 
-impl resea::server::Server for Server {}
+impl resea::mainloop::Mainloop for Server {}
 
 #[no_mangle]
 pub fn main() {
@@ -102,5 +102,5 @@ pub fn main() {
         FileSystem::new(storage_device, 0 /* TODO: */).expect("failed to load the file system");
     let mut server = Server::new(fs);
     publish_server(idl::fs::INTERFACE_ID, &server.ch).unwrap();
-    serve_forever!(&mut server, [server, fs]);
+    mainloop!(&mut server, [server, fs]);
 }

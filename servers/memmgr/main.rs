@@ -5,7 +5,7 @@ use resea::collections::HashMap;
 use resea::idl;
 use resea::prelude::*;
 use resea::ptr;
-use resea::server::{DeferredWorkResult};
+use resea::mainloop::DeferredWorkResult;
 use resea::PAGE_SIZE;
 
 extern "C" {
@@ -230,7 +230,7 @@ impl idl::server::Client for Server {
     }
 }
 
-impl resea::server::Server for Server {
+impl resea::mainloop::Mainloop for Server {
     fn deferred_work(&mut self) -> DeferredWorkResult {
         let mut pending_requests = Vec::with_capacity(self.connect_requests.len());
         let mut result = DeferredWorkResult::Done;
@@ -296,5 +296,5 @@ pub fn main() {
     server.launch_servers(initfs);
 
     info!("entering mainloop...");
-    serve_forever!(&mut server, [runtime, pager, timer, memmgr, discovery], [server]);
+    mainloop!(&mut server, [runtime, pager, timer, memmgr, discovery], [server]);
 }
