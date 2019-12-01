@@ -20,7 +20,7 @@ void boot(void) {
     kasan_init();
 #endif
 
-    INFO("Booting Resea...");
+    INFO("Booting Resea... (version " VERSION ")");
     memory_init();
     arch_init(&bootinfo);
     timer_init();

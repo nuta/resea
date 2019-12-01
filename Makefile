@@ -6,6 +6,7 @@ TARGET      ?= x64
 ARCH        ?= $(TARGET)
 BUILD       ?= debug
 BUILD_DIR   ?= build
+VERSION     ?= $(shell git rev-parse HEAD | head -c7)
 INIT        ?= memmgr
 STARTUPS    ?= shell fatfs net webapi pcat ide e1000
 LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
@@ -41,7 +42,7 @@ KERNEL_CFLAGS += -Werror=return-type
 KERNEL_CFLAGS += -Werror=pointer-integer-compare
 KERNEL_CFLAGS += -Werror=tautological-constant-out-of-range-compare
 KERNEL_CFLAGS += -Ikernel/include -I$(arch_dir)/include
-KERNEL_CFLAGS += -DKERNEL -DINITFS_BIN='"$(BUILD_DIR)/initfs.bin"'
+KERNEL_CFLAGS += -DVERSION='"$(VERSION)"' -DINITFS_BIN='"$(BUILD_DIR)/initfs.bin"'
 
 # LLD options (kernel).
 KERNEL_LDFLAGS += --script=$(arch_dir)/$(ARCH).ld
