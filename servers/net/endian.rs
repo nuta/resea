@@ -33,14 +33,20 @@ impl Into<u32> for NetEndian<u32> {
 }
 
 pub fn swap16(x: u16) -> u16 {
-    // TODO: Do nothing on big-endian CPUs.
-    ((x & 0xff00) >> 8) | ((x & 0x00ff) << 8)
+    if cfg!(target_endian = "big") {
+        x
+    } else {
+        ((x & 0xff00) >> 8) | ((x & 0x00ff) << 8)
+    }
 }
 
 pub fn swap32(x: u32) -> u32 {
-    // TODO: Do nothing on big-endian CPUs.
-    ((x & 0xff00_0000) >> 24)
-        | ((x & 0x00ff_0000) >> 8)
-        | ((x & 0x0000_ff00) << 8)
-        | ((x & 0x0000_00ff) << 24)
+    if cfg!(target_endian = "big") {
+        x
+    } else {
+        ((x & 0xff00_0000) >> 24)
+            | ((x & 0x00ff_0000) >> 8)
+            | ((x & 0x0000_ff00) << 8)
+            | ((x & 0x0000_00ff) << 24)
+    }
 }
