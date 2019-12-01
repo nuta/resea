@@ -77,10 +77,10 @@ impl TcpIp {
         self.devices.insert(name.to_owned(), device);
     }
 
-    pub fn add_route(&mut self, device: &str, ipv4_network: Ipv4Network, our_ipv4_addr: Ipv4Addr) {
+    pub fn add_route(&mut self, device: &str, ipv4_network: Ipv4Network, gateway: Option<IpAddr>, our_ipv4_addr: Ipv4Addr) {
         let device = self.devices.get(device).cloned().expect("unknown device");
         self.routes
-            .push(Route::new(ipv4_network, our_ipv4_addr, device));
+            .push(Route::new(ipv4_network, gateway, our_ipv4_addr, device));
     }
 
     pub fn pop_tx_packet(&mut self) -> Option<Mbuf> {
@@ -187,6 +187,7 @@ impl TcpIp {
                         self.add_route(
                             device_name,
                             Ipv4Network::new(10, 0, 2, 0, 0xffffff00), /* TODO: */
+                            None,
                             got_ipaddr,
                         );
                     }
@@ -247,14 +248,17 @@ impl TcpIp {
         device: Option<Rc<RefCell<dyn Device>>>,
         mut pkt: Mbuf,
     ) -> Result<()> {
-        let (device, src_addr) = match device {
-            Some(device) => (device, Ipv4Addr::UNSPECIFIED),
-            None => match self.look_for_route(&dst) {
-                Some(route) => (route.device.clone(), route.our_ipv4_addr),
-                None => {
-                    return Err(Error::NoRoute);
+        let (device, next_addr, src_addr) = match device {
+            Some(device) => (device, dst, Ipv4Addr::UNSPECIFIED),
+            None => {
+                match self.look_for_route(&dst) {
+                    Some(route) =>
+                        (route.device.clone(), route.gateway.unwrap_or(dst), route.our_ipv4_addr),
+                    None => {
+                        return Err(Error::NoRoute)
+                    }
                 }
-            },
+            }
         };
 
         let len = pkt.len();
@@ -263,7 +267,7 @@ impl TcpIp {
         }
 
         let mut queue = self.tx_queue.borrow_mut();
-        device.borrow_mut().enqueue(&mut *queue, dst, pkt);
+        device.borrow_mut().enqueue(&mut *queue, next_addr, pkt);
         Ok(())
     }
 
@@ -308,6 +312,10 @@ impl TcpIp {
 
     fn look_for_route(&self, addr: &IpAddr) -> Option<&Route> {
         for route in &self.routes {
+            if route.ipv4_network.netmask() == 0 {
+                continue;
+            }
+
             match addr {
                 IpAddr::Ipv4(addr) if route.ipv4_network.contains(*addr) => {
                     return Some(route);
@@ -316,6 +324,14 @@ impl TcpIp {
             }
         }
 
+        // Use the default gateway.
+        for route in &self.routes {
+            if route.ipv4_network.netmask() == 0 {
+                return Some(route);
+            }
+        }
+
+        // No routes found.
         None
     }
 

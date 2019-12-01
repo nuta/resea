@@ -24,6 +24,7 @@ impl fmt::Display for IpAddr {
 
 pub struct Route {
     pub our_ipv4_addr: Ipv4Addr,
+    pub gateway: Option<IpAddr>,
     pub ipv4_network: Ipv4Network,
     pub device: Rc<RefCell<dyn Device>>,
 }
@@ -31,11 +32,13 @@ pub struct Route {
 impl Route {
     pub fn new(
         ipv4_network: Ipv4Network,
+        gateway: Option<IpAddr>,
         our_ipv4_addr: Ipv4Addr,
         device: Rc<RefCell<dyn Device>>,
     ) -> Route {
         Route {
             ipv4_network,
+            gateway,
             our_ipv4_addr,
             device,
         }

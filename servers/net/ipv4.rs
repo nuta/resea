@@ -54,6 +54,10 @@ impl Ipv4Network {
         }
     }
 
+    pub fn netmask(self) -> u32 {
+        self.netmask
+    }
+
     pub fn contains(self, addr: Ipv4Addr) -> bool {
         self.addr == addr.as_u32() & self.netmask
     }
