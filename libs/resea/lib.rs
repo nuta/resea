@@ -50,14 +50,8 @@ mod lang_items;
 
 pub use arch::{breakpoint, PAGE_SIZE};
 
-#[cfg(target_os = "resea")]
 pub fn program_name() -> &'static str {
-    env!("PROGRAM_NAME")
-}
-
-#[cfg(not(target_os = "resea"))]
-pub fn program_name() -> &'static str {
-    "(test program)"
+    env!("PROGRAM_NAME", "(test program)")
 }
 
 pub fn version() -> &'static str {
