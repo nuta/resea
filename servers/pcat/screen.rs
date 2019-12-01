@@ -57,6 +57,11 @@ impl Screen {
             }
         }
 
+        if (ch as u32) < 0x20 || (ch as u32) >= 0x7f {
+            // Not a printable ASCII character.
+            return;
+        }
+
         if self.cursor_y >= SCREEN_HEIGHT {
             // Scroll by one line.
             let diff = self.cursor_y - SCREEN_HEIGHT + 1;
