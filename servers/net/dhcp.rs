@@ -36,7 +36,10 @@ impl DhcpClient {
     pub fn build(&mut self) -> Option<(IpAddr, Mbuf)> {
         match self.state {
             DhcpClientState::SendingDiscovery => {
-                let param_list = [];
+                let param_list = [
+                    OPTION_SUBNET_MASK,
+                    OPTION_ROUTER,
+                ];
                 let mut mbuf = Mbuf::new();
                 build(
                     &mut mbuf,
@@ -69,7 +72,7 @@ impl DhcpClient {
         _src_addr: IpAddr,
         _src_port: Port,
         payload: &[u8],
-    ) -> Option<Ipv4Addr> {
+    ) -> Option<(Ipv4Addr, Option<Ipv4Addr>, u32)> {
         let mut pkt = Packet::new(payload);
         if let Some(parsed) = parse(&mut pkt) {
             match self.state {
@@ -79,8 +82,9 @@ impl DhcpClient {
                 }
                 DhcpClientState::WaitingAck if parsed.dhcp_type == DHCP_TYPE_ACK => {
                     info!("DHCP ack: {}", parsed.your_ipaddr);
+                    let netmask = unwrap_or_return!(parsed.netmask, None);
                     self.state = DhcpClientState::Done;
-                    return Some(parsed.your_ipaddr);
+                    return Some((parsed.your_ipaddr, parsed.router, netmask));
                 }
                 _ => {}
             }
@@ -119,6 +123,8 @@ const DHCP_TYPE_REQUEST: u8 = 3;
 const DHCP_TYPE_ACK: u8 = 5;
 const OPTION_REQUESTED_IP_ADDR: u8 = 50;
 const OPTION_PARAM_REQUEST_LIST: u8 = 55;
+const OPTION_SUBNET_MASK: u8 = 1;
+const OPTION_ROUTER: u8 = 3;
 const OPTION_END: u8 = 255;
 
 pub fn build(
@@ -180,6 +186,8 @@ pub fn build(
 struct ParsedDhcpPacket {
     dhcp_type: u8,
     your_ipaddr: Ipv4Addr,
+    router: Option<Ipv4Addr>,
+    netmask: Option<u32>,
 }
 
 fn parse<'a>(pkt: &'a mut Packet) -> Option<ParsedDhcpPacket> {
@@ -192,6 +200,8 @@ fn parse<'a>(pkt: &'a mut Packet) -> Option<ParsedDhcpPacket> {
 
     // Parse options.
     let mut dhcp_type = None;
+    let mut router = None;
+    let mut netmask: Option<u32> = None;
     loop {
         let option_type: u8 = *unwrap_or_return!(pkt.consume::<u8>(), None);
         let option_len: u8 = *unwrap_or_return!(pkt.consume::<u8>(), None);
@@ -199,6 +209,14 @@ fn parse<'a>(pkt: &'a mut Packet) -> Option<ParsedDhcpPacket> {
         match option_type {
             OPTION_DHCP_TYPE => {
                 dhcp_type = Some(*unwrap_or_return!(pkt.consume::<u8>(), None));
+            }
+            OPTION_SUBNET_MASK => {
+                let value = *unwrap_or_return!(pkt.consume::<u32>(), None);
+                netmask = Some(NetEndian::new(value).into());
+            }
+            OPTION_ROUTER => {
+                let value = *unwrap_or_return!(pkt.consume::<u32>(), None);
+                router = Some(Ipv4Addr::from_u32(NetEndian::new(value).into()));
             }
             OPTION_END => {
                 break;
@@ -213,10 +231,14 @@ fn parse<'a>(pkt: &'a mut Packet) -> Option<ParsedDhcpPacket> {
         Some(DHCP_TYPE_OFFER) => Some(ParsedDhcpPacket {
             dhcp_type: DHCP_TYPE_OFFER,
             your_ipaddr,
+            router,
+            netmask,
         }),
         Some(DHCP_TYPE_ACK) => Some(ParsedDhcpPacket {
             dhcp_type: DHCP_TYPE_ACK,
             your_ipaddr,
+            router,
+            netmask,
         }),
         Some(_) | None => None,
     }

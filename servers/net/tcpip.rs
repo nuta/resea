@@ -183,13 +183,21 @@ impl TcpIp {
         match (sock, &mut self.dhcp_client) {
             (Some(sock), Some(client)) if client.0 == sock => {
                 if let Some((src_addr, src_port, payload)) = sock.0.borrow_mut().recv() {
-                    if let Some(got_ipaddr) = client.1.receive(src_addr, src_port, &payload) {
+                    if let Some((our_addr, gateway, netmask)) = client.1.receive(src_addr, src_port, &payload) {
                         self.add_route(
                             device_name,
-                            Ipv4Network::new(10, 0, 2, 0, 0xffffff00), /* TODO: */
+                            Ipv4Network::from_ipv4_addr(our_addr, netmask),
                             None,
-                            got_ipaddr,
+                            our_addr,
                         );
+                        if let Some(gateway) = gateway {
+                            self.add_route(
+                                device_name,
+                                Ipv4Network::UNSPECIFIED,
+                                Some(IpAddr::Ipv4(gateway)),
+                                our_addr,
+                            );
+                        }
                     }
                 }
                 None

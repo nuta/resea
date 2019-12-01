@@ -22,7 +22,7 @@ impl Ipv4Addr {
         Ipv4Addr(((a0 as u32) << 24) | ((a1 as u32) << 16) | ((a2 as u32) << 8) | (a3 as u32))
     }
 
-    pub fn as_u32(self) -> u32 {
+    pub const fn as_u32(self) -> u32 {
         self.0
     }
 }
@@ -47,10 +47,19 @@ pub struct Ipv4Network {
 }
 
 impl Ipv4Network {
+    pub const UNSPECIFIED: Ipv4Network = Ipv4Network::new(0, 0, 0, 0, 0);
+
     pub const fn new(a0: u8, a1: u8, a2: u8, a3: u8, netmask: u32) -> Ipv4Network {
         Ipv4Network {
             addr: ((a0 as u32) << 24) | ((a1 as u32) << 16) | ((a2 as u32) << 8) | (a3 as u32),
             netmask,
+        }
+    }
+
+    pub const fn from_ipv4_addr(addr: Ipv4Addr, netmask: u32) -> Ipv4Network {
+        Ipv4Network {
+            addr: addr.as_u32(),
+            netmask
         }
     }
 

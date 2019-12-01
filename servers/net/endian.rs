@@ -4,7 +4,7 @@ pub struct NetEndian<T>(T);
 
 impl<T: Into<NetEndian<T>>> NetEndian<T> {
     pub fn new(value: T) -> NetEndian<T> {
-        value.into()
+        NetEndian(value)
     }
 }
 
