@@ -8,7 +8,7 @@ struct bootinfo;
 void arch_init(struct bootinfo *args);
 void arch_idle(void);
 void arch_putchar(char ch);
-NORETURN void arch_panic(void);
+NORETURN void arch_halt(void);
 void arch_mp_init(void);
 
 void page_table_init(struct page_table *pt);

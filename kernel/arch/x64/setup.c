@@ -247,7 +247,7 @@ void arch_init(struct bootinfo *bootinfo) {
     x64_serial_init();
 }
 
-void arch_panic(void) {
+void arch_halt(void) {
     for (;;) {
         __asm__ __volatile__("cli; hlt");
     }

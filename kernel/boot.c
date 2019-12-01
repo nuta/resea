@@ -45,9 +45,7 @@ void boot_ap(void) {
     // TODO: Fix locking bugs and enable threading!
 
     while (1) {
-        // TODO:
-        // arch_idle();
-        __asm__ __volatile__("hlt");
+        arch_halt();
     }
 }
 

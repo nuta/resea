@@ -3,7 +3,7 @@
 
 // Declare here instead of including header files to allow inline functions
 // in header files to use these macros.
-void arch_panic(void);
+void arch_halt(void);
 void backtrace(void);
 
 void printk(const char *fmt, ...);
@@ -49,7 +49,7 @@ struct kernel_log_buffer {
         printk(COLOR_BOLD_RED "[kernel] BUG: " fmt COLOR_RESET "\n", \
             ##__VA_ARGS__);                                          \
         backtrace();                                                 \
-        arch_panic();                                                \
+        arch_halt();                                                \
     } while (0)
 
 #define PANIC(fmt, ...)                                                \
@@ -57,7 +57,7 @@ struct kernel_log_buffer {
         printk(COLOR_BOLD_RED "[kernel] PANIC: " fmt COLOR_RESET "\n", \
             ##__VA_ARGS__);                                            \
         backtrace();                                                   \
-        arch_panic();                                                  \
+        arch_halt();                                                  \
     } while (0)
 
 #define UNIMPLEMENTED() \
@@ -69,7 +69,7 @@ struct kernel_log_buffer {
             printk(COLOR_BOLD_RED "[kernel] ASSERTION FAILURE: " \
                    #expr "\n" COLOR_RESET);                      \
             backtrace();                                         \
-            arch_panic();                                        \
+            arch_halt();                                        \
         }                                                        \
     } while (0)
 
