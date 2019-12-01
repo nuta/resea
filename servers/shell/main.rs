@@ -42,6 +42,8 @@ impl Server {
     fn run_command(&mut self) {
         if self.input == "help" {
             self.print_string("echo <string>   -  Prints a string.\n");
+            self.print_string("dmesg           -  Print kernel log.\n");
+            self.print_string("stats           -  Kernel statistics.\n");
         } else if self.input == "stats" {
             let stats = idl::kernel::call_read_stats(&KERNEL_SERVER).unwrap();
             // TODO: We had better support struct in IDL.
