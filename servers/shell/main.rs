@@ -21,7 +21,7 @@ impl Server {
             .expect("failed to connect to a keyboard_device server");
 
         // Print the welcome message.
-        call_print_str(&screen, "Resea Version \n").unwrap();
+        call_print_str(&screen, &format!("Resea version {}\n", resea::version())).unwrap();
         call_print_str(&screen, "Type 'help' for usage.\n").unwrap();
         call_print_str(&screen, ">>> ").unwrap();
 
