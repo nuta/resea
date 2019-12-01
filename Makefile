@@ -156,6 +156,7 @@ $(BUILD_DIR)/servers/%.elf: libs/resea/idl/mod.rs tools/link.py Makefile
 	$(PROGRESS) "XARGO" servers/$(name)
 	cd servers/$(name) && \
 		PROGRAM_NAME="$(name)" \
+		VERSION="$(VERSION)" \
 		RUST_TARGET_PATH="$(PWD)/libs/resea/arch/$(TARGET)"  \
 		RUSTFLAGS="$(RUSTFLAGS)"                             \
 		$(XARGO) build --target user_$(TARGET)               \

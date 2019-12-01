@@ -59,3 +59,7 @@ pub fn program_name() -> &'static str {
 pub fn program_name() -> &'static str {
     "(test program)"
 }
+
+pub fn version() -> &'static str {
+    env!("VERSION", "(version)")
+}
