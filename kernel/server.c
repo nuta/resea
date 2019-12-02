@@ -201,7 +201,7 @@ void deliver_interrupt(uint8_t irq) {
     }
 }
 
-static error_t handle_io_listen_irq(struct message *m) {
+static error_t handle_listen_irq(struct message *m) {
     cid_t cid   = m->payloads.kernel.listen_irq.ch;
     uint8_t irq = m->payloads.kernel.listen_irq.irq;
 
@@ -266,7 +266,7 @@ static void user_timer_handler(struct timer *timer) {
     WARN("timer expire notified");
 }
 
-static error_t handle_io_read_io_port(struct message *m) {
+static error_t handle_read_io_port(struct message *m) {
     vaddr_t addr = m->payloads.kernel.read_ioport.addr;
     vaddr_t size = m->payloads.kernel.read_ioport.size;
     uint64_t data = arch_read_ioport(addr, size);
@@ -275,7 +275,7 @@ static error_t handle_io_read_io_port(struct message *m) {
     return OK;
 }
 
-static error_t handle_io_write_io_port(struct message *m) {
+static error_t handle_write_io_port(struct message *m) {
     vaddr_t addr = m->payloads.kernel.write_ioport.addr;
     vaddr_t size = m->payloads.kernel.write_ioport.size;
     uint64_t data = m->payloads.kernel.write_ioport.data;
@@ -284,7 +284,7 @@ static error_t handle_io_write_io_port(struct message *m) {
     return OK;
 }
 
-static error_t handle_io_batch_write_io_port(struct message *m) {
+static error_t handle_batch_write_io_port(struct message *m) {
 #define HANDLE_NTH_WRITE(nth)                                                  \
     do {                                                                       \
         vaddr_t addr = m->payloads.kernel.batch_write_ioport.addr ## nth;      \
@@ -303,7 +303,7 @@ static error_t handle_io_batch_write_io_port(struct message *m) {
     return OK;
 }
 
-static error_t handle_kernel_get_screen_buffer(struct message *m) {
+static error_t handle_get_screen_buffer(struct message *m) {
     paddr_t page;
     size_t num_pages;
     error_t err = arch_get_screen_buffer(&page, &num_pages);
@@ -395,26 +395,26 @@ static error_t handle_read_stats(UNUSED struct message *m) {
 static error_t process_message(struct message *m) {
     INC_STAT(kernel_call_total);
     switch (m->header) {
-    case RUNTIME_EXIT_MSG:             return handle_runtime_exit(m);
-    case RUNTIME_PRINTCHAR_MSG:        return handle_runtime_printchar(m);
-    case RUNTIME_PRINT_STR_MSG:        return handle_runtime_print_str(m);
-    case KERNEL_CREATE_PROCESS_MSG:    return handle_process_create(m);
-    case KERNEL_DESTROY_PROCESS_MSG:   return handle_process_destroy(m);
-    case KERNEL_ADD_VM_AREA_MSG:       return handle_process_add_vm_area(m);
-    case KERNEL_INJECT_CHANNEL_MSG:    return handle_process_inject_channel(m);
-    case KERNEL_SPAWN_THREAD_MSG:      return handle_thread_spawn(m);
-    case KERNEL_DESTROY_THREAD_MSG:    return handle_thread_destroy(m);
-    case KERNEL_LISTEN_IRQ_MSG:        return handle_io_listen_irq(m);
-    case KERNEL_READ_IOPORT_MSG:       return handle_io_read_io_port(m);
-    case KERNEL_WRITE_IOPORT_MSG:      return handle_io_write_io_port(m);
-    case KERNEL_BATCH_WRITE_IOPORT_MSG: return handle_io_batch_write_io_port(m);
-    case KERNEL_GET_SCREEN_BUFFER_MSG: return handle_kernel_get_screen_buffer(m);
-    case KERNEL_READ_KERNEL_LOG_MSG:   return handle_read_kernel_log(m);
-    case KERNEL_READ_STATS_MSG:        return handle_read_stats(m);
-    case TIMER_CREATE_MSG:             return handle_timer_create(m);
-    case TIMER_RESET_MSG:              return handle_timer_reset(m);
-    case TIMER_CLEAR_MSG:              return handle_timer_clear(m);
-    case SERVER_CONNECT_MSG:           return handle_server_connect(m);
+    case RUNTIME_EXIT_MSG:              return handle_runtime_exit(m);
+    case RUNTIME_PRINTCHAR_MSG:         return handle_runtime_printchar(m);
+    case RUNTIME_PRINT_STR_MSG:         return handle_runtime_print_str(m);
+    case KERNEL_CREATE_PROCESS_MSG:     return handle_process_create(m);
+    case KERNEL_DESTROY_PROCESS_MSG:    return handle_process_destroy(m);
+    case KERNEL_ADD_VM_AREA_MSG:        return handle_process_add_vm_area(m);
+    case KERNEL_INJECT_CHANNEL_MSG:     return handle_process_inject_channel(m);
+    case KERNEL_SPAWN_THREAD_MSG:       return handle_thread_spawn(m);
+    case KERNEL_DESTROY_THREAD_MSG:     return handle_thread_destroy(m);
+    case KERNEL_LISTEN_IRQ_MSG:         return handle_listen_irq(m);
+    case KERNEL_READ_IOPORT_MSG:        return handle_read_io_port(m);
+    case KERNEL_WRITE_IOPORT_MSG:       return handle_write_io_port(m);
+    case KERNEL_BATCH_WRITE_IOPORT_MSG: return handle_batch_write_io_port(m);
+    case KERNEL_GET_SCREEN_BUFFER_MSG:  return handle_get_screen_buffer(m);
+    case KERNEL_READ_KERNEL_LOG_MSG:    return handle_read_kernel_log(m);
+    case KERNEL_READ_STATS_MSG:         return handle_read_stats(m);
+    case TIMER_CREATE_MSG:              return handle_timer_create(m);
+    case TIMER_RESET_MSG:               return handle_timer_reset(m);
+    case TIMER_CLEAR_MSG:               return handle_timer_clear(m);
+    case SERVER_CONNECT_MSG:            return handle_server_connect(m);
     }
 
     WARN("unknown message: header=%p", m->header);
