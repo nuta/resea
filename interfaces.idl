@@ -1,19 +1,20 @@
 //
 //  Resea Interface Definitions.
 //
-//  Every server provides at least one services which definied as "interface",
+//  Every server provides at least one service which definied as ``interface'',
 //  a set of messages that implementors must accept and respond.
 //
 //  This file defines the interfaces in our own domain specific language. We
 //  haven't yet documented the language specification, but it should be pretty
 //  straightforward to understand. We use this definition to generate IPC stubs
-//  (`resea::idl` module in the Resea userland library in Rust).
+//  (``resea::idl'' module in the Resea userland library).
 //
 //  Message Types
 //  -------------
-//  call     - Request and response messages (sort of Remote Procedure Call).
+//  call   - Request and response messages (sort of Remote Procedure Call).
 //  oneway - A one-way message.
 //
+
 [id(1)]
 interface notification {
     [id(1), type(call)]
