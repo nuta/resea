@@ -138,8 +138,11 @@ void thread_destroy(UNUSED struct thread *thread) {
 /// Kills the current thread and switches into another thread. This function
 /// won't return.
 NORETURN void thread_kill_current(void) {
-    thread_destroy(CURRENT);
-    UNREACHABLE;
+    // For a while, we just stop running the current thread.
+    // TODO: Implement thread destruction.
+    WARN("NYI: ignoring thread_kill_current (%pT)", CURRENT);
+    thread_block(CURRENT);
+    thread_switch();
 }
 
 static struct list_head runqueue;
