@@ -143,6 +143,7 @@ NORETURN void thread_kill_current(void) {
     WARN("NYI: ignoring thread_kill_current (%pT)", CURRENT);
     thread_block(CURRENT);
     thread_switch();
+    PANIC("unreachable %s:%d", __FILE__, __LINE__);
 }
 
 static struct list_head runqueue;
