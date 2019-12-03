@@ -126,7 +126,7 @@ $(BUILD_DIR)/kernel.elf: $(kernel_objs) $(arch_dir)/$(ARCH).ld tools/link.py Mak
 		--mapfile="$(BUILD_DIR)/kernel.map"   \
 		--outfile="$@"                        \
 		--stack-size-max=1024                 \
-		--max-size=
+		--output-size-max=6144                \
 		$(kernel_objs)
 	$(MAKE) $(BUILD_DIR)/compile_commands.json
 

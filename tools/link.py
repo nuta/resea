@@ -114,7 +114,8 @@ def verify_symtable(nm, old_file, new_file):
             sys.exit(f"Incorrect symbol table entry '{name}': " +
                 f"expected={symbols[name]}, actual={new_symbols[name]}")
 
-def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs, stack_size_max):
+def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile,
+         objs, stack_size_max, output_size_max):
     outfile = Path(outfile)
     stage1 = outfile.parent / ("." + outfile.name + ".stage1.tmp")
     stage2 = outfile.parent / ("." + outfile.name + ".stage2.tmp")
@@ -150,6 +151,9 @@ def link(cc, cflags, ld, ldflags, objcopy, nm, build_dir, outfile, mapfile, objs
         + shlex.split(ldflags) + [f"{build_dir}/__symtable.o"] + objs)
 
     verify_symtable(nm, stage2, stage3)
+    filesize_in_kib = stage3.stat().st_size // 1024
+    if filesize_in_kib > output_size_max:
+        sys.exit(f"Error: {outfile}: the output file is too big: {filesize_in_kib}KiB (max = {output_size_max}).")
     shutil.move(stage3, outfile)
     analyze_stack_sizes(objcopy, nm, outfile, stack_size_max)
 
@@ -168,13 +172,17 @@ def main():
     parser.add_argument("--stack-size-max",
         help="The maximum size of stack consumption in a function.",
         type=int, required=True)
+    parser.add_argument("--output-size-max",
+        help="The maximum size of the output file in KiB.",
+        type=int, default=16 * 1024)
     parser.add_argument("objs", help="The object files.", nargs="+")
     args = parser.parse_args()
 
+    # TODO: Needs refactoring.
     try:
         link(args.cc, args.cflags, args.ld, args.ldflags, args.objcopy, args.nm,
              args.build_dir, args.outfile, args.mapfile, args.objs,
-             args.stack_size_max)
+             args.stack_size_max, args.output_size_max)
     except subprocess.CalledProcessError as e:
         sys.exit("link.py: A subprocess returned an error, aborting.")
 
