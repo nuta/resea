@@ -1,4 +1,4 @@
-#include <support/printk.h>
+#include <thread.h>
 #include <timer.h>
 #include <server.h>
 #include <x64/apic.h>
@@ -7,6 +7,7 @@
 #include <x64/serial.h>
 #include <x64/thread.h>
 #include <support/kdebug.h>
+#include <support/printk.h>
 
 static void print_regs(struct interrupt_regs *regs) {
     WARN("RIP = %p    CS  = %p    RFL = %p", regs->rip, regs->cs, regs->rflags);
@@ -45,7 +46,11 @@ void x64_handle_interrupt(uint8_t vec, struct interrupt_regs *regs) {
         if (vec <= 20) {
             WARN("Exception #%d", vec);
             print_regs(regs);
-            PANIC("Unhandled exception #%d", vec);
+            if (regs->cs == KERNEL_CS) {
+                PANIC("Exception #%d occurred in the kernel space!", vec);
+            } else {
+                thread_kill_current();
+            }
         } else if (vec >= VECTOR_IRQ_BASE) {
             int irq = vec - VECTOR_IRQ_BASE;
             if (irq == SERIAL_IRQ) {
