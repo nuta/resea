@@ -36,6 +36,7 @@ pub mod idl;
 pub mod lazy_static;
 pub mod mainloop;
 pub mod message;
+pub mod page;
 pub mod prelude;
 pub mod result;
 pub mod server;

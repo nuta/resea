@@ -86,7 +86,7 @@ impl idl::pager::Server for Server {
         // Search the process table. It should never fail.
         let proc = self.process_manager.get(pid).unwrap();
 
-        let mut page = self.page_allocator.allocate(1);
+        let mut page = Page::from_addr(self.page_allocator.allocate(1), PAGE_SIZE);
         match self.process_manager.try_filling_page(&mut page, proc, addr) {
             Ok(()) => (),
             Err(Error::NotFound) => {
@@ -96,13 +96,13 @@ impl idl::pager::Server for Server {
                 // TODO: Make sure that the address is in the range of
                 // stack/heap.
                 unsafe {
-                    ptr::write_bytes(page.as_mut_ptr(), 0, PAGE_SIZE);
+                    ptr::write_bytes::<u8>(page.as_mut_ptr(), 0, PAGE_SIZE);
                 }
             }
             _ => unreachable!(),
         }
 
-        Ok(page.as_page_payload())
+        Ok(page)
     }
 }
 
@@ -112,8 +112,9 @@ impl idl::memmgr::Server for Server {
             return Err(Error::NotAcceptable);
         }
 
-        let page = self.page_allocator.allocate(num_pages);
-        Ok(page.as_page_payload())
+        let addr = self.page_allocator.allocate(num_pages);
+        let page = Page::from_addr(addr, num_pages * PAGE_SIZE);
+        Ok(page)
     }
 
     fn alloc_phy_pages(
@@ -125,8 +126,8 @@ impl idl::memmgr::Server for Server {
             return Err(Error::NotAcceptable);
         }
 
-        let page = self.page_allocator.allocate(num_pages);
-        Ok((page.addr, page.as_page_payload()))
+        let addr = self.page_allocator.allocate(num_pages);
+        Ok((addr, Page::from_addr(addr, num_pages * PAGE_SIZE)))
     }
 
     fn map_phy_pages(
@@ -140,7 +141,7 @@ impl idl::memmgr::Server for Server {
             return Err(Error::NotAcceptable);
         }
 
-        Ok(Page::new(paddr, num_pages * PAGE_SIZE))
+        Ok(Page::from_addr(paddr, num_pages * PAGE_SIZE))
     }
 }
 

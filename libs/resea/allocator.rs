@@ -10,23 +10,15 @@ static ALLOCATOR: LockedHeap = LockedHeap::empty();
 extern "C" {
     static __heap: u8;
     static __heap_end: u8;
-    static __valloc: u8;
-    static __valloc_end: u8;
+    static __writable_pages: u8;
+    static __writable_pages_end: u8;
+    static __unmapped_pages: u8;
+    static __unmapped_pages_end: u8;
 }
 
 pub struct AllocatedPage {
     pub addr: usize,
     pub num_pages: usize,
-}
-
-impl AllocatedPage {
-    pub fn as_mut_ptr(&mut self) -> *mut u8 {
-        self.addr as *mut u8
-    }
-
-    pub fn as_page_payload(&self) -> Page {
-        Page::new(self.addr, self.num_pages * PAGE_SIZE)
-    }
 }
 
 pub struct FreeArea {
@@ -50,7 +42,7 @@ impl PageAllocator {
         }
     }
 
-    pub fn allocate(&mut self, num_pages: usize) -> AllocatedPage {
+    pub fn allocate(&mut self, num_pages: usize) -> usize {
         while let Some(free_area) = self.free_area.pop() {
             if num_pages <= free_area.num_pages {
                 let remaining_pages = free_area.num_pages - num_pages;
@@ -60,24 +52,21 @@ impl PageAllocator {
                         num_pages: remaining_pages,
                     });
                 }
-                return AllocatedPage {
-                    addr: free_area.addr,
-                    num_pages,
-                };
+
+                return free_area.addr;
             }
         }
 
         panic!("out of memory");
     }
+
+    pub fn free(&mut self, addr: usize, num_pages: usize) {
+        self.free_area.push(FreeArea { addr, num_pages });
+    }
 }
 
-static VALLOC_NEXT_ADDR: LazyStatic<RefCell<usize>> = LazyStatic::new();
-pub fn valloc(num_pages: usize) -> usize {
-    // TODO:
-    let addr = *VALLOC_NEXT_ADDR.borrow();
-    *VALLOC_NEXT_ADDR.borrow_mut() = addr + num_pages * crate::PAGE_SIZE;
-    addr
-}
+pub(crate) static WRITABLE_PAGE_ALLOCATOR: LazyStatic<RefCell<PageAllocator>> = LazyStatic::new();
+pub(crate) static UNMAPPED_PAGE_ALLOCATOR: LazyStatic<RefCell<PageAllocator>> = LazyStatic::new();
 
 pub fn init() {
     unsafe {
@@ -85,8 +74,16 @@ pub fn init() {
         let heap_end = &__heap_end as *const u8 as usize;
         ALLOCATOR.lock().init(heap_start, heap_end - heap_start);
 
-        let valloc_start = &__valloc as *const u8 as usize;
-        let _valloc_end = &__valloc_end as *const u8 as usize;
-        VALLOC_NEXT_ADDR.init(RefCell::new(valloc_start));
+        let writable_pages_start = &__writable_pages as *const u8 as usize;
+        let writable_pages_end = &__writable_pages_end as *const u8 as usize;
+        WRITABLE_PAGE_ALLOCATOR.init(
+            RefCell::new(
+                PageAllocator::new(writable_pages_start, writable_pages_end)));
+
+        let unmapped_pages_start = &__unmapped_pages as *const u8 as usize;
+        let unmapped_pages_end = &__unmapped_pages_end as *const u8 as usize;
+        UNMAPPED_PAGE_ALLOCATOR.init(
+            RefCell::new(
+                PageAllocator::new(unmapped_pages_start, unmapped_pages_end)));
     }
 }

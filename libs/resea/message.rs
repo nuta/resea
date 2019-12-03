@@ -58,63 +58,6 @@ impl Notification {
     }
 }
 
-#[repr(C, packed)]
-#[derive(Clone, Copy)]
-pub struct Page {
-    pub addr: usize,
-    pub len: usize,
-}
-
-impl Page {
-    pub const fn new(addr: usize, len: usize) -> Page {
-        Page { addr, len }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    pub fn len(&self) -> usize {
-        self.len
-    }
-
-    pub fn as_slice_mut<T>(&mut self) -> &mut [T] {
-        unsafe {
-            let num = self.len / core::mem::size_of::<T>();
-            core::slice::from_raw_parts_mut(self.as_mut_ptr(), num)
-        }
-    }
-
-    pub fn as_slice<T>(&self) -> &[T] {
-        unsafe {
-            let num = self.len / core::mem::size_of::<T>();
-            core::slice::from_raw_parts(self.as_ptr(), num)
-        }
-    }
-
-    pub fn as_bytes_mut(&mut self) -> &mut [u8] {
-        self.as_slice_mut()
-    }
-
-    pub fn as_bytes(&self) -> &[u8] {
-        self.as_slice()
-    }
-
-    pub unsafe fn as_ptr<T>(&self) -> *const T {
-        self.addr as *const T
-    }
-
-    pub unsafe fn as_mut_ptr<T>(&self) -> *mut T {
-        self.addr as *mut T
-    }
-
-    pub fn copy_from_slice(&mut self, data: &[u8]) {
-        let len = data.len();
-        self.len = len;
-        self.as_bytes_mut().copy_from_slice(data);
-    }
-}
-
 pub const MESSAGE_SIZE: usize = 256;
 pub const INLINE_PAYLOAD_LEN_MAX: usize = MESSAGE_SIZE - core::mem::size_of::<usize>() * 4;
 
@@ -124,7 +67,7 @@ pub struct Message {
     pub from: CId,
     pub notification: Notification,
     pub channel: CId,
-    pub page: Page,
+    pub page: RawPage,
     pub data: [u8; INLINE_PAYLOAD_LEN_MAX],
 }
 

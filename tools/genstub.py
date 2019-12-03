@@ -14,6 +14,11 @@ TEMPLATE = """\
 #![allow(clippy::unused_unit)]
 #![allow(clippy::let_and_return)]
 
+use crate::prelude::*;
+use crate::arch::syscall;
+use crate::page::PageBase;
+use crate::thread_info::set_page_base;
+
 {% macro define_message(msg, reply) %}
 {% set fields = msg.rets if reply else msg.args %}
 pub const {{ msg.name | upper }}{{ "_REPLY" if reply }}_MSG_INLINE_LEN: usize
@@ -44,9 +49,9 @@ pub struct {{ msg.name | camelcase }}{{ "Reply" if reply }}Msg {
     __unused_channel: CId,
 {%- endif %}
 {%- if fields.page %}
-    pub {{ fields.page.name }}: Page,
+    pub {{ fields.page.name }}: RawPage,
 {%- else %}
-    __unused_page: Page,
+    __unused_page: RawPage,
 {%- endif %}
 {%- for field in fields.inlines %}
     pub {{ field.name }}: {{ field.type | resolve_type_in_msg_struct }},
@@ -60,7 +65,7 @@ pub struct {{ msg.name | camelcase }}{{ "Reply" if reply }}Msg {
 {% macro serialize(var, name, fields, reply) %}
     {{ var }}.header = {{ name | upper }}{{ "_REPLY" if reply }}_MSG;
 {%- if fields.page %}
-    {{ var }}.{{ fields.page.name }} = {{ fields.page.name }};
+    {{ var }}.{{ fields.page.name }} = {{ fields.page.name }}.as_raw_page();
 {%- endif %}
 {%- if fields.channel %}
     {{ var }}.{{ fields.channel.name }} = {{ fields.channel.name }}.cid();
@@ -81,9 +86,6 @@ pub struct {{ msg.name | camelcase }}{{ "Reply" if reply }}Msg {
     )
 {%- endif %}
 {% endmacro %}
-
-use crate::prelude::*;
-use crate::arch::syscall;
 
 pub const INTERFACE_ID: u8 = {{ attrs.id }};
 
@@ -136,17 +138,13 @@ pub fn call_{{ msg.name }}({{ msg.args | arg_params("__ch: &Channel") }}) -> Res
     let mut __m: {{ msg.name | camelcase }}Msg =
         unsafe { core::mem::MaybeUninit::uninit().assume_init() };
 {%- if msg.rets.page %}
-    crate::thread_info::alloc_and_set_page_base();
+    set_page_base(PageBase::allocate());
 {%- endif %}
     {{ serialize("__m", msg.name, msg.args, False) }}
     __ch.call(__cast_into_message(&__m))
         .map(|__r| {
             let __r: &{{ msg.name | camelcase }}ReplyMsg = __cast_from_message(&__r);
             {{ deserialize("__r", msg.name, msg.rets) }}
-        })
-        .map_err(|err| {
-            // TODO: Free allocated pages.
-            err
         })
 }
 
@@ -317,8 +315,8 @@ def call_args(args, msg_var):
         value = f"{msg_var}.{arg['name']}"
         if arg["type"] == "channel":
             values.append(f"Channel::from_cid({value})")
-        elif arg["type"] == "handle":
-            values.append(f"{value}")
+        elif arg["type"] == "page":
+            values.append(f"{value}.into_page(set_page_base(PageBase::allocate()))")
         elif arg["type"] in ["string"]:
             values.append(f"{value}.to_str()")
         else:
@@ -351,6 +349,8 @@ def from_payload(field, prefix=None):
 
     if field["type"] == "string":
         return f"{expr}.to_string()"
+    elif field["type"] == "page":
+        return f"{expr}.into_page(set_page_base(PageBase::allocate()))"
     elif field["type"] == "channel":
         return f"Channel::from_cid({expr})"
     else:

@@ -1,4 +1,5 @@
 use crate::message::Message;
+use crate::page::PageBase;
 
 /// Thread Information Block (TIB).
 #[repr(C, packed)]
@@ -7,10 +8,9 @@ pub struct ThreadInfo {
     pub this: *mut ThreadInfo,
     /// The user-provided argument.
     pub arg: usize,
-    /// The page base set by the user.
-    pub page_addr: usize,
-    /// The maximum number of pages to receive page payloads.
-    pub num_pages: usize,
+    /// The destination virtual address and maximum number of pages to receive
+    /// page payloads.
+    pub page_base: PageBase,
     /// The thread-local user IPC buffer.
     pub ipc_buffer: Message,
 }

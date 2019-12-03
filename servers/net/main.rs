@@ -99,10 +99,12 @@ impl Server {
         // Send net_client.tcp_received messages.
         let mut new_received_queue = Vec::new();
         for (listener, handle, page) in self.received_queue.drain(..) {
+            // FIXME: Avoid this (conditionally) needless memory copy.
+            let cloned_page = page.clone();
             match nbsend_tcp_received(&listener, handle, page) {
                 Ok(_) => {}
                 Err(Error::WouldBlock) | Err(Error::NeedsRetry) => {
-                    new_received_queue.push((listener, handle, page));
+                    new_received_queue.push((listener, handle, cloned_page));
                 }
                 Err(err) => {
                     warn!("failed to send net_client.tcp_received: {}", err);

@@ -1,6 +1,5 @@
 use crate::elf::ELF;
 use crate::initfs::File;
-use resea::allocator::AllocatedPage;
 use resea::cmp::min;
 use resea::collections::HashMap;
 use resea::idl;
@@ -91,7 +90,7 @@ impl ProcessManager {
 
     pub fn try_filling_page(
         &self,
-        page: &mut AllocatedPage,
+        page: &mut Page,
         proc: &Process,
         addr: usize,
     ) -> Result<()> {

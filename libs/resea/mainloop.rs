@@ -27,6 +27,8 @@ macro_rules! mainloop {
         mainloop!($server, [$($server_interface),*], [])
     }};
     ($server:expr, [$($server_interface:ident), *], [$($client_interface:ident), *]) => {{
+        use $crate::page::PageBase;
+        use $crate::thread_info::set_page_base;
         use $crate::mainloop::{DeferredWorkResult, Mainloop};
 
         // The server struct must have 'ch' field.
@@ -48,7 +50,7 @@ macro_rules! mainloop {
         let mut needs_retry = false;
 
         loop {
-            $crate::thread_info::alloc_and_set_page_base();
+            set_page_base(PageBase::allocate());
             let mut m = match server.ch.recv() {
                 Ok(m) => m,
                 Err(Error::NeedsRetry) => continue,
