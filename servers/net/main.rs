@@ -51,7 +51,7 @@ impl Server {
         }
     }
 
-    pub fn receive_and_transmit(&mut self) {
+    pub fn flush_queued_messages(&mut self) {
         let mut new_clients = Vec::new();
         for tcp_sock in &self.tcp_sockets {
             // Accept a new TCP client.
@@ -201,7 +201,7 @@ impl idl::server::Server for Server {
 
 impl resea::mainloop::Mainloop for Server {
     fn deferred_work(&mut self) -> DeferredWorkResult {
-        self.receive_and_transmit();
+        self.flush_queued_messages();
         DeferredWorkResult::Done
     }
 }
@@ -218,8 +218,8 @@ pub fn main() {
     idl::network_device::call_listen(&network_device, listener_ch).unwrap();
 
     let mut server = Server::new(server_ch, network_device);
-    // Run receive_and_transmit() once to submit DHCP packets.
-    server.receive_and_transmit();
+    // Run flush_queued_messages() once to submit DHCP packets.
+    server.flush_queued_messages();
     publish_server(idl::net::INTERFACE_ID, &server.ch).unwrap();
 
     info!("ready");
