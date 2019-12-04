@@ -63,6 +63,11 @@ USER_CFLAGS += $(COMMON_CFLAGS)
 -include $(BUILD_MK)
 
 # ------------------------------------------------------------------------------
+# Variables internally used in the build system.
+
+arch_dir := kernel/arch/$(ARCH)
+
+# ------------------------------------------------------------------------------
 
 # The default build target.
 .PHONY: default
@@ -89,10 +94,15 @@ build: $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/compile_commands.json
 clean:
 	rm -r $(BUILD_DIR)
 
+.PHONY: kernel-lint
+kernel-lint:
+	$(PROGRESS) CLANG-TIDY
+	cd kernel && $(LLVM_PREFIX)clang-tidy *.c arch/$(ARCH)/*.c \
+		-- -Iinclude -Iarch/$(ARCH)/include -DVERSION='""'
+
 #
 #  Kernel
 #
-arch_dir := kernel/arch/$(ARCH)
 include $(arch_dir)/arch.mk
 
 kernel_objs +=  \
