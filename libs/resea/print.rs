@@ -79,9 +79,11 @@ macro_rules! warn {
 #[macro_export]
 macro_rules! trace {
     ($fmt:expr) => {
+        #[cfg(debug_assertions)]
         $crate::println!(concat!("[{}] ", $fmt), $crate::program_name());
     };
     ($fmt:expr, $($arg:tt)*) => {
+        #[cfg(debug_assertions)]
         $crate::println!(concat!("[{}] ", $fmt), $crate::program_name(), $($arg)*);
     };
 }
