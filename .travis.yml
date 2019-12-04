@@ -13,10 +13,13 @@ jobs:
   include:
     - os: osx
       osx_image: xcode11.2
-      env: LLVM_PREFIX=/usr/local/opt/llvm/bin/
+      env: CMD=build
+    - os: osx
+      osx_image: xcode11.2
+      env: CMD=kernel-lint
     - os: linux
       dist: bionic
-      env: LLVM_PREFIX=/usr/bin/ LLVM_SUFFIX=-8
+      env: CMD=build LLVM_PREFIX=/usr/bin/ LLVM_SUFFIX=-8
 
 addons:
   homebrew:
@@ -47,4 +50,4 @@ install:
   - "rustup component add rust-src"
 
 script:
-  - make
+  - make $CMD
