@@ -351,7 +351,7 @@ static error_t sys_ipc_fastpath(cid_t cid) {
 
     // Check whether the message can be sent in fastpath. Here we use `+`
     // instead of lengthy if statements to eliminate branches.
-    int slowpath =
+    unsigned int slowpath =
         // Fastpath accepts only inline payloads.
         !FASTPATH_HEADER_TEST(header) +
         // Make sure that the channels are not destructed.

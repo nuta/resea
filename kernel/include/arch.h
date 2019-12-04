@@ -5,7 +5,7 @@
 #include <types.h>
 
 struct bootinfo;
-void arch_init(struct bootinfo *args);
+void arch_init(struct bootinfo *bootinfo);
 void arch_idle(void);
 void arch_putchar(char ch);
 NORETURN void arch_halt(void);
