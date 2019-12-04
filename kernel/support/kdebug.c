@@ -3,7 +3,9 @@
 #include <support/printk.h>
 #include <process.h>
 #include <thread.h>
+#include <timer.h>
 #include <support/kdebug.h>
+#include <support/stats.h>
 
 #ifdef DEBUG_BUILD
 
@@ -43,8 +45,8 @@ static void debugger_run(const char *cmdline) {
     if (strcmp(cmdline, "help") == 0) {
         DPRINTK("Kernel debugger commands:\n");
         DPRINTK("\n");
-        DPRINTK("  ps - List processes.\n");
-        DPRINTK("  km - Show kernel memory statistics.\n");
+        DPRINTK("  ps - List processes and threads.\n");
+        DPRINTK("  st - Show statistics.\n");
         DPRINTK("\n");
     } else if (strcmp(cmdline, "ps") == 0) {
         LIST_FOR_EACH(proc, &process_list, struct process, next) {
@@ -52,7 +54,7 @@ static void debugger_run(const char *cmdline) {
                 dump_process(proc);
             }
         }
-    } else if (strcmp(cmdline, "km") == 0) {
+    } else if (strcmp(cmdline, "st") == 0) {
         size_t num_used_pages = page_arena.num_objects;
         LIST_FOR_EACH(node, &page_arena.free_list, struct free_list, next) {
             if (node->magic1 != FREE_LIST_MAGIC1
@@ -73,13 +75,28 @@ static void debugger_run(const char *cmdline) {
             num_used_objects -= node->num_objects;
         }
 
-        DPRINTK("Kernel Memory:\n");
+        DPRINTK("\n");
+
+        DPRINTK("  uptime:            %llu\n",
+                timer_uptime());
+        DPRINTK("  # of IPC:          %llu\n",
+                READ_STAT(ipc_total));
+        DPRINTK("  # of page faults:  %llu\n",
+                READ_STAT(page_fault_total));
+        DPRINTK("  # of switches:     %llu\n",
+                READ_STAT(context_switch_total));
+        DPRINTK("  # of kernel calls: %llu\n",
+                READ_STAT(kernel_call_total));
+
+        DPRINTK("\nKernel Memory:\n");
         DPRINTK("  %d of %d (%d%%) pages are in use\n",
                 num_used_pages, page_arena.num_objects,
                 (num_used_pages * 100) / page_arena.num_objects);
         DPRINTK("  %d of %d (%d%%) objects are in use\n",
                 num_used_objects, object_arena.num_objects,
                 (num_used_objects * 100) / object_arena.num_objects);
+
+        DPRINTK("\n");
     } else {
         WARN("Invalid debugger command: '%s'.", cmdline);
     }
