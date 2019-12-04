@@ -1,7 +1,7 @@
 use resea::idl::kernel::{call_batch_write_ioport, call_get_screen_buffer};
 use resea::prelude::*;
 
-const DEFAULT_COLOR: u16 = 0x0f;
+const DEFAULT_COLOR: u8 = 0x0f;
 const BLANK_CHAR: u16 = 0x0f20 /* whitespace */;
 const SCREEN_HEIGHT: usize = 25;
 const SCREEN_WIDTH: usize = 80;
@@ -51,7 +51,6 @@ impl Screen {
     }
 
     fn draw_char(&mut self, ch: char) {
-        let screen: &mut [u16] = self.screen.as_slice_mut();
         if ch == '\n' || self.cursor_x >= SCREEN_WIDTH {
             self.cursor_y += 1;
             self.cursor_x = 0;
@@ -60,11 +59,20 @@ impl Screen {
             }
         }
 
-        if (ch as u32) < 0x20 || (ch as u32) >= 0x7f {
+        if (ch as u32) < 0x20 || (ch as u32) >= 0x80 {
             // Not a printable ASCII character.
             return;
         }
 
+        if (ch as u32) == 0x7f /* backspace */ {
+            if self.cursor_x > 0 {
+                self.cursor_x -= 1;
+                self.draw_char_at(self.cursor_y, self.cursor_x, ' ', DEFAULT_COLOR);
+            }
+            return;
+        }
+
+        let screen: &mut [u16] = self.screen.as_slice_mut();
         if self.cursor_y >= SCREEN_HEIGHT {
             // Scroll by one line.
             let diff = self.cursor_y - SCREEN_HEIGHT + 1;
@@ -83,9 +91,13 @@ impl Screen {
         }
 
         // Draw a character.
-        screen[self.cursor_y * SCREEN_WIDTH + self.cursor_x] =
-            (DEFAULT_COLOR << 8) | (ch as u8) as u16;
+        self.draw_char_at(self.cursor_y, self.cursor_x, ch, DEFAULT_COLOR);
         self.cursor_x += 1;
+    }
+
+    fn draw_char_at(&mut self, y: usize, x: usize, ch: char, color: u8) { 
+        let screen: &mut [u16] = self.screen.as_slice_mut();
+        screen[y * SCREEN_WIDTH + x] = ((color as u16) << 8) | (ch as u16);
     }
 
     pub fn update_cursor(&self) {

@@ -87,13 +87,24 @@ impl Server {
     }
 
     fn readchar(&mut self, ch: char) {
-        call_print_char(&self.screen, ch as u8).ok();
-        if ch == '\n' {
-            self.run_command();
-            self.input.clear();
-            self.print_prompt();
-        } else {
-            self.input.push(ch);
+        match ch {
+            '\n' => {
+                call_print_char(&self.screen, ch as u8).ok();
+                self.run_command();
+                self.input.clear();
+                self.print_prompt();
+            }
+            '\x01' /* KEY_BACKSPACE */ => {
+                if !self.input.is_empty() {
+                    trace!("backspacing {}...", self.input.is_empty());
+                    call_print_char(&self.screen, b'\x7f').ok();
+                    self.input.remove(self.input.len() - 1);
+                }
+            }
+            _ => {
+                call_print_char(&self.screen, ch as u8).ok();
+                self.input.push(ch);
+            }
         }
     }
 }
