@@ -54,7 +54,7 @@ KERNEL_LDFLAGS += --script=$(arch_dir)/$(ARCH).ld
 
 # Cargo/rustc options (userland).
 XARGOFLAGS += --quiet
-RUSTFLAGS += -Z emit-stack-sizes -Z external-macro-backtrace
+RUSTFLAGS += -C lto -Z emit-stack-sizes -Z external-macro-backtrace
 
 # Clang options (userland: use only for compiling the symbol table)
 USER_CFLAGS += $(COMMON_CFLAGS)
