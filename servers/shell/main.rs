@@ -1,5 +1,7 @@
 use resea::idl;
-use resea::idl::text_screen_device::{call_print_char, call_print_str};
+use resea::idl::text_screen_device::{
+    call_print_char, call_print_str, call_clear
+};
 use resea::prelude::*;
 use resea::server::connect_to_server;
 
@@ -41,9 +43,12 @@ impl Server {
 
     fn run_command(&mut self) {
         if self.input == "help" {
+            self.print_string("clear           -  Clear the screen.\n");
             self.print_string("echo <string>   -  Prints a string.\n");
             self.print_string("dmesg           -  Print kernel log.\n");
             self.print_string("stats           -  Kernel statistics.\n");
+        } else if self.input == "clear" {
+            call_clear(&self.screen).ok();
         } else if self.input == "stats" {
             let stats = idl::kernel::call_read_stats(&KERNEL_SERVER).unwrap();
             // TODO: We had better support struct in IDL.
