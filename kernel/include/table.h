@@ -21,7 +21,7 @@ struct table {
 };
 
 /// Initializes the table.
-static inline error_t table_init(struct table *table) {
+static inline MUST_USE error_t table_init(struct table *table) {
     void **entries = KMALLOC(&page_arena, PAGE_SIZE);
     if (!entries) {
         return ERR_OUT_OF_MEMORY;

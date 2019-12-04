@@ -209,8 +209,10 @@ static void thread_switch_by_timeout(UNUSED struct timer *timer) {
 void thread_first_switch(void) {
     init_boot_stack_canary();
     set_current_thread(CPUVAR->idle_thread);
-    timer_create(THREAD_SWITCH_INTERVAL, THREAD_SWITCH_INTERVAL,
-                 thread_switch_by_timeout, NULL);
+    struct timer *timer = timer_create(THREAD_SWITCH_INTERVAL,
+                                       THREAD_SWITCH_INTERVAL,
+                                       thread_switch_by_timeout, NULL);
+    ASSERT(timer != NULL);
     thread_switch();
 }
 

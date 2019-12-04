@@ -37,7 +37,7 @@ extern struct table process_table;
 extern struct list_head process_list;
 
 void process_init(void);
-struct process *process_create(const char *name);
+MUST_USE struct process *process_create(const char *name);
 void process_destroy(struct process *process);
 
 #endif

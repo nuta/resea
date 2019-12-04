@@ -196,7 +196,7 @@ static error_t handle_server_connect(struct message *m) {
 void deliver_interrupt(uint8_t irq) {
     LIST_FOR_EACH(listener, &active_irq_listeners, struct irq_listener, next) {
         if (listener->irq == irq) {
-            channel_notify(listener->ch, NOTIFY_INTERRUPT);
+            OOPS_ON_ERROR(channel_notify(listener->ch, NOTIFY_INTERRUPT));
         }
     }
 }
@@ -262,8 +262,7 @@ static error_t handle_process_inject_channel(struct message *m) {
 
 static void user_timer_handler(struct timer *timer) {
     struct channel *ch = timer->arg;
-    channel_notify(ch, NOTIFY_TIMER);
-    WARN("timer expire notified");
+    OOPS_ON_ERROR(channel_notify(ch, NOTIFY_TIMER));
 }
 
 static error_t handle_read_io_port(struct message *m) {
@@ -425,9 +424,13 @@ static error_t process_message(struct message *m) {
 NORETURN static void mainloop(cid_t server_ch) {
     struct message *m = CURRENT->kernel_ipc_buffer;
     while (1) {
-        kernel_ipc(server_ch, IPC_RECV);
+        error_t err = kernel_ipc(server_ch, IPC_RECV);
+        if (err == ERR_NEEDS_RETRY) {
+            continue;
+        }
+        OOPS_ON_ERROR(err);
 
-        error_t err = process_message(m);
+        err = process_message(m);
         if (err == NO_REPLY) {
             continue;
         }
@@ -436,15 +439,18 @@ NORETURN static void mainloop(cid_t server_ch) {
             m->header = ERROR_TO_HEADER(err);
         }
 
-        kernel_ipc(m->from, IPC_SEND);
+        err = kernel_ipc(m->from, IPC_SEND);
+        if (err != OK && err != ERR_NEEDS_RETRY) {
+            OOPS_ON_ERROR(err);
+        }
     }
 }
 
 /// The kernel server thread entrypoint.
 static void kernel_server_main(void) {
     ASSERT(CURRENT->process == kernel_process);
-    table_init(&user_timers);
-    table_init(&irq_listeners);
+    OOPS_ON_ERROR(table_init(&user_timers));
+    OOPS_ON_ERROR(table_init(&irq_listeners));
     list_init(&active_irq_listeners);
     mainloop(kernel_server_ch->cid);
 }

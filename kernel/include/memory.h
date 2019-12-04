@@ -61,11 +61,12 @@ struct vmarea {
 extern struct kmalloc_arena page_arena;
 extern struct kmalloc_arena object_arena;
 
-void *kmalloc_from(struct kmalloc_arena *arena);
+MUST_USE void *kmalloc_from(struct kmalloc_arena *arena);
 void kfree(struct kmalloc_arena *arena, void *ptr);
 struct process;
-error_t vmarea_create(struct process *process, vaddr_t start, vaddr_t end,
-                      pager_t pager, void *pager_arg, int flags);
+MUST_USE error_t vmarea_create(struct process *process, vaddr_t start,
+                               vaddr_t end, pager_t pager, void *pager_arg,
+                               int flags);
 void vmarea_destroy(struct vmarea *vma);
 paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags);
 void memory_init(void);

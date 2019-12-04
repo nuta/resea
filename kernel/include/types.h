@@ -13,6 +13,7 @@
 #define PACKED __attribute__((packed))
 #define WEAK __attribute__((weak))
 #define NORETURN __attribute__((noreturn))
+#define MUST_USE __attribute__((warn_unused_result))
 #define UNREACHABLE __builtin_unreachable()
 #define LIKELY(cond) __builtin_expect(cond, 1)
 #define UNLIKELY(cond) __builtin_expect(cond, 0)

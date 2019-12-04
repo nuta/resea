@@ -37,6 +37,7 @@ struct kernel_log_buffer {
 #define INFO(fmt, ...) printk(COLOR_BLUE "[kernel] " fmt COLOR_RESET "\n", ##__VA_ARGS__)
 #define WARN(fmt, ...) \
     printk(COLOR_YELLOW "[kernel] WARN: " fmt COLOR_RESET "\n", ##__VA_ARGS__)
+
 #define OOPS(fmt, ...)                                              \
     do {                                                            \
         printk(COLOR_YELLOW "[kernel] Oops: " fmt COLOR_RESET "\n", \
@@ -44,12 +45,20 @@ struct kernel_log_buffer {
         backtrace();                                                \
     } while (0)
 
+#define OOPS_ON_ERROR(expr)                                         \
+    do {                                                            \
+        error_t __err = expr;                                       \
+        if (__err != OK) {                                          \
+            OOPS("unexpecited error in %s()", __func__);            \
+        }                                                           \
+    } while (0)
+
 #define BUG(fmt, ...)                                                \
     do {                                                             \
         printk(COLOR_BOLD_RED "[kernel] BUG: " fmt COLOR_RESET "\n", \
             ##__VA_ARGS__);                                          \
         backtrace();                                                 \
-        arch_halt();                                                \
+        arch_halt();                                                 \
     } while (0)
 
 #define PANIC(fmt, ...)                                                \
@@ -57,7 +66,7 @@ struct kernel_log_buffer {
         printk(COLOR_BOLD_RED "[kernel] PANIC: " fmt COLOR_RESET "\n", \
             ##__VA_ARGS__);                                            \
         backtrace();                                                   \
-        arch_halt();                                                  \
+        arch_halt();                                                   \
     } while (0)
 
 #define UNIMPLEMENTED() \
@@ -69,7 +78,7 @@ struct kernel_log_buffer {
             printk(COLOR_BOLD_RED "[kernel] ASSERTION FAILURE: " \
                    #expr "\n" COLOR_RESET);                      \
             backtrace();                                         \
-            arch_halt();                                        \
+            arch_halt();                                         \
         }                                                        \
     } while (0)
 

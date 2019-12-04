@@ -13,8 +13,8 @@ void arch_mp_init(void);
 
 void page_table_init(struct page_table *pt);
 void page_table_destroy(struct page_table *pt);
-error_t link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
-                  int num_pages, uintmax_t flags);
+MUST_USE error_t link_page(struct page_table *pt, vaddr_t vaddr, paddr_t paddr,
+                           int num_pages, uintmax_t flags);
 void unlink_page(struct page_table *pt, vaddr_t vaddr, int num_pages);
 paddr_t resolve_paddr_from_vaddr(struct page_table *pt,
                                  vaddr_t vaddr);
@@ -23,9 +23,9 @@ uint64_t arch_read_ioport(uintmax_t addr, int size);
 void arch_write_ioport(uintmax_t addr, int size, uint64_t data);
 
 struct thread;
-error_t arch_thread_init(struct thread *thread, vaddr_t start, vaddr_t stack,
-                         vaddr_t kernel_stack, vaddr_t user_buffer,
-                         bool is_kernel_thread);
+MUST_USE error_t arch_thread_init(struct thread *thread, vaddr_t start,
+                                  vaddr_t stack, vaddr_t kernel_stack,
+                                  vaddr_t user_buffer, bool is_kernel_thread);
 void arch_thread_destroy(struct thread *thread);
 inline struct thread *get_current_thread(void);
 void thread_allow_io(struct thread *thread);

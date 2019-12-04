@@ -78,9 +78,9 @@ void kfree(struct kmalloc_arena *arena, void *ptr) {
 }
 
 /// Adds a new vm area.
-error_t vmarea_create(struct process *process, vaddr_t start, vaddr_t end,
-                      pager_t pager, void *pager_arg, int flags) {
-
+MUST_USE error_t vmarea_create(struct process *process, vaddr_t start,
+                               vaddr_t end, pager_t pager, void *pager_arg,
+                               int flags) {
     struct vmarea *vma = KMALLOC(&object_arena, sizeof(struct vmarea));
     if (!vma) {
         return ERR_OUT_OF_MEMORY;
