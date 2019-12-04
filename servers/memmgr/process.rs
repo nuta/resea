@@ -58,7 +58,9 @@ impl ProcessManager {
         let elf = ELF::parse(file.data())?;
         let (_, kernel_ch) = idl::server::call_connect(self.process_server, 0)?;
 
-        let (proc, pager_ch) = call_create_process(self.process_server, file.path())?;
+        let path = file.path();
+        let name = &path[path.find('/').unwrap() + 1..path.find('.').unwrap()];
+        let (proc, pager_ch) = call_create_process(self.process_server, name)?;
 
         call_inject_channel(self.process_server, proc, kernel_ch)?;
         call_add_vm_area(
