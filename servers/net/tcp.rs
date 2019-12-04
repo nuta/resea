@@ -114,13 +114,7 @@ impl TcpSocket {
             // Check if the ack number is valid.
             if len_received_by_remote <= self.tx.readable_len() {
                 self.tx.discard(len_received_by_remote);
-                warn!(
-                    "local_se_no: {}, add={}",
-                    self.local_seq_no.as_u32(),
-                    len_received_by_remote
-                );
                 self.local_seq_no.add(len_received_by_remote as u32);
-                warn!("new_local_se_no: {}", self.local_seq_no.as_u32());
                 self.bytes_not_acked -= len_received_by_remote;
             }
         }
@@ -130,8 +124,8 @@ impl TcpSocket {
             if header.seq_no == self.local_ack_no.as_u32() {
                 match self.rx.write(header.payload) {
                     Ok(()) => {
-                        warn!(
-                            "received payload: {} bytes ({:x?})",
+                        trace!(
+                            "received TCP payload: {} bytes ({:x?}...)",
                             header.payload.len(),
                             &header.payload[0..5]
                         );
@@ -169,7 +163,6 @@ impl Socket for TcpSocket {
                     // Send SYN + ACK.
                     let header_words = 5;
                     backlog.state = TcpState::SynReceived;
-                    warn!("rx.writable_len = {}", backlog.rx.writable_len());
                     assert!(backlog.remote_addr.is_some());
                     assert!(backlog.remote_port.is_some());
                     let mut mbuf = Mbuf::new();
@@ -324,7 +317,7 @@ impl Socket for TcpSocket {
             }
             TcpState::Listen if header.flags.contains(FLAG_SYN) => {
                 trace!(
-                    "SYN: {}:{} <- {}:{}",
+                    "tcp: SYN {}:{} <- {}:{}",
                     dst_addr,
                     self.local_port,
                     src_addr,

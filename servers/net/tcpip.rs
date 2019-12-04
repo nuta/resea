@@ -239,7 +239,6 @@ impl TcpIp {
                 num_sent_packets += 1;
             }
 
-            trace!("enqueued {} packets", num_sent_packets);
             if num_sent_packets == 0 {
                 // We've sent all pending packets.
                 break;

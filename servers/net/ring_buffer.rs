@@ -73,6 +73,7 @@ impl RingBuffer {
     }
 
     pub fn discard(&mut self, len: usize) {
+        /*
         warn!(
             "ringbuf[r={}, w={}, rl={}, wl={}]: discard {}",
             self.read_offset,
@@ -81,6 +82,7 @@ impl RingBuffer {
             self.writable_len(),
             len
         );
+        */
         self.read_offset = (self.read_offset + len) % self.capacity;
     }
 

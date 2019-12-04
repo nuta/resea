@@ -99,7 +99,6 @@ impl ArpTable {
             OPCODE_REPLY => {
                 trace!("received arp reply from: {}", src);
                 if let Some(ArpEntry::UnResolved(pending)) = self.table.remove(&src) {
-                    trace!("received arp reply");
                     self.table.insert(src, ArpEntry::Resolved(packet.sender));
                     Some((packet.sender, pending))
                 } else {

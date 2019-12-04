@@ -206,7 +206,6 @@ impl idl::discovery::Server for Server {
         // TODO: Support multiple servers with the same interface ID.
         assert!(self.servers.get(&interface).is_none());
 
-        warn!("accepted a new server = {}", interface);
         ch.transfer_to(&self.ch).unwrap();
         let server = RegisteredServer {
             server_ch: ch,
@@ -221,7 +220,6 @@ impl idl::discovery::Server for Server {
 impl idl::server::Client for Server {
     fn connect_reply(&mut self, _from: &Channel, interface: InterfaceId, ch: Channel) {
         // Successfully created a new client channel.
-        info!("received a server.connect_reply for interface={}", interface);
         match self.servers.get_mut(&interface) {
             Some(server) => server.client_ch = Some(ch),
             None => {
@@ -242,7 +240,6 @@ impl resea::mainloop::Mainloop for Server {
                         Some(client_ch) => {
                             // Now we have a valid client channel. Try send it to the
                             // awaiting client...
-                            warn!("sending a connect_reply");
                             match idl::discovery::nbsend_connect_reply(&request.ch, client_ch) {
                                 Ok(_) => false,
                                 Err(Error::WouldBlock) => {
@@ -257,7 +254,6 @@ impl resea::mainloop::Mainloop for Server {
                         None => {
                             // Try sending a server.connect request to the registered
                             // server...
-                            trace!("sending connect...");
                             let reply =
                                 idl::server::nbsend_connect(&server.server_ch, request.interface);
                             match reply {

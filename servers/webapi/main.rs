@@ -92,7 +92,6 @@ impl Server {
 
 impl idl::net_client::Server for Server {
     fn tcp_received(&mut self, _from: &Channel, client_sock: HandleId, data: Page) {
-        info!("tcp_receive");
         let req = resea::str::from_utf8(data.as_bytes()).unwrap_or("");
 
         if req.contains("\r\n\r\n") {
@@ -101,7 +100,6 @@ impl idl::net_client::Server for Server {
             let method = words.next().unwrap_or("GET");
             let path = words.next().unwrap_or("/");
             let resp = self.handle_request(method, path);
-            info!("resp = {}", resp);
             use resea::PAGE_SIZE;
             use resea::utils::align_up;
             let num_pages = align_up(resp.len(), PAGE_SIZE) / PAGE_SIZE;
@@ -115,7 +113,7 @@ impl idl::net_client::Server for Server {
     }
 
     fn tcp_accepted(&mut self, _from: &Channel, _listen_sock: HandleId, _client_sock: HandleId) {
-        info!("tcp_accept");
+        info!("accepted a new HTTP client");
     }
 }
 
