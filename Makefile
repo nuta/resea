@@ -96,7 +96,9 @@ clean:
 
 .PHONY: kernel-lint
 kernel-lint:
-	$(PROGRESS) CLANG-TIDY
+	$(PROGRESS) MAKE kernel/include/idl.h
+	$(MAKE) kernel/include/idl.h
+	$(PROGRESS) CLANG-TIDY kernel
 	cd kernel && $(LLVM_PREFIX)clang-tidy *.c arch/$(ARCH)/*.c \
 		-- -Iinclude -Iarch/$(ARCH)/include -DVERSION='""'
 
