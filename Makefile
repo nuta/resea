@@ -30,6 +30,7 @@ COMMON_CFLAGS += -O1 -fsanitize=undefined -DDEBUG_BUILD
 else
 COMMON_CFLAGS += -O3 -DRELEASE_BUILD
 XARGOFLAGS += --release
+RUSTFLAGS += -C opt-level=3 -C debug_assertions=no
 endif
 
 # Clang options (kernel).
