@@ -39,6 +39,11 @@ impl text_screen_device::Server for Server {
         self.screen.print_char(ch as char);
         Ok(())
     }
+
+    fn clear(&mut self, _from: &Channel) -> Result<()> {
+        self.screen.clear();
+        Ok(())
+    }
 }
 
 impl keyboard_device::Server for Server {

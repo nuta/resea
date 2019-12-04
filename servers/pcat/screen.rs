@@ -32,6 +32,9 @@ impl Screen {
                 screen[y * SCREEN_WIDTH + x] = BLANK_CHAR;
             }
         }
+
+        self.cursor_x = 0;
+        self.cursor_y = 0;
     }
 
     pub fn print_str(&mut self, string: &str) {
