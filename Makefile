@@ -7,8 +7,7 @@ include .build.mk
 endif
 
 V           ?=
-TARGET      ?= x64
-ARCH        ?= $(TARGET)
+ARCH        ?= x64
 BUILD       ?= debug
 BUILD_DIR   ?= build
 VERSION     ?= $(shell git rev-parse HEAD | head -c7)
@@ -177,30 +176,30 @@ $(BUILD_DIR)/compile_commands.json: $(kernel_objs)
 # Server executables.
 $(BUILD_DIR)/servers/%.elf: libs/resea/idl/mod.rs tools/link.py Makefile $(BUILD_MK)
 	$(PROGRESS) "XARGO" servers/$(name)
-	cd servers/$(name) && \
-		PROGRAM_NAME="$(name)" \
-		VERSION="$(VERSION)" \
-		RUST_TARGET_PATH="$(PWD)/libs/resea/arch/$(TARGET)"  \
-		RUSTFLAGS="$(RUSTFLAGS)"                             \
-		$(XARGO) build --target user_$(TARGET)               \
+	cd servers/$(name) &&                                           \
+		PROGRAM_NAME="$(name)"                                  \
+		VERSION="$(VERSION)"                                    \
+		RUST_TARGET_PATH="$(PWD)/libs/resea/arch/$(ARCH)"       \
+		RUSTFLAGS="$(RUSTFLAGS)"                                \
+		$(XARGO) build --target user_$(ARCH)                    \
 			--target-dir ../../$(BUILD_DIR)/servers/$(name) \
 			$(XARGOFLAGS)
-	$(PYTHON3) ./tools/fix-deps-file.py \
-		$(BUILD_DIR)/servers/$(name)/user_$(TARGET)/$(BUILD)/lib$(name).d \
+	$(PYTHON3) ./tools/fix-deps-file.py                                     \
+		$(BUILD_DIR)/servers/$(name)/user_$(ARCH)/$(BUILD)/lib$(name).d \
 		$(BUILD_DIR)/servers/$(name).elf
 	$(PROGRESS) "LINK" $@
-	$(PYTHON3) tools/link.py                          \
-		--cc="$(CC)"                              \
-		--cflags="$(USER_CFLAGS)"                 \
-		--ld="$(LD)"                              \
-		--ldflags="$(ldflags)"                    \
-		--nm="$(NM)"                              \
-		--objcopy="$(OBJCOPY)"                    \
-		--stack-size-max=4096                     \
+	$(PYTHON3) tools/link.py                             \
+		--cc="$(CC)"                                 \
+		--cflags="$(USER_CFLAGS)"                    \
+		--ld="$(LD)"                                 \
+		--ldflags="$(ldflags)"                       \
+		--nm="$(NM)"                                 \
+		--objcopy="$(OBJCOPY)"                       \
+		--stack-size-max=4096                        \
 		--build-dir="$(BUILD_DIR)/servers/$(name)"   \
 		--mapfile="$(BUILD_DIR)/servers/$(name).map" \
 		--outfile="$(BUILD_DIR)/servers/$(name).elf" \
-		$(BUILD_DIR)/servers/$(name)/user_$(TARGET)/$(BUILD)/lib$(name).a
+		$(BUILD_DIR)/servers/$(name)/user_$(ARCH)/$(BUILD)/lib$(name).a
 	$(NM) $@ | awk '{ print $$1, $$3 }' > $(@:.elf=.symbols)
 	$(PROGRESS) "STRIP" $@
 	$(OBJCOPY) --strip-all-gnu --strip-debug $@ $(@:.elf=.stripped.elf)
@@ -208,10 +207,10 @@ $(BUILD_DIR)/servers/%.elf: libs/resea/idl/mod.rs tools/link.py Makefile $(BUILD
 define server-make-rule
 $(BUILD_DIR)/servers/$(1).elf: name := $(1)
 $(BUILD_DIR)/servers/$(1).elf: ldflags := \
-	$(if $(wildcard servers/$(1)/$(1)_$(TARGET).ld), \
-		--script=servers/$(1)/$(1)_$(TARGET).ld, \
-		--script=libs/resea/arch/$(TARGET)/user_$(TARGET).ld)
--include $(BUILD_DIR)/servers/$(1)/user_$(TARGET)/$(BUILD)/lib$(1).d
+	$(if $(wildcard servers/$(1)/$(1)_$(ARCH).ld), \
+		--script=servers/$(1)/$(1)_$(ARCH).ld, \
+		--script=libs/resea/arch/$(ARCH)/user_$(ARCH).ld)
+-include $(BUILD_DIR)/servers/$(1)/user_$(ARCH)/$(BUILD)/lib$(1).d
 endef
 $(foreach server, $(INIT) $(STARTUPS), $(eval $(call server-make-rule,$(server))))
 initfs_files += $(foreach server, $(STARTUPS), $(BUILD_DIR)/initfs/startups/$(server).elf)
