@@ -100,6 +100,11 @@ kernel-lint:
 	cd kernel && $(LLVM_PREFIX)clang-tidy *.c arch/$(ARCH)/*.c \
 		-- -Iinclude -Iarch/$(ARCH)/include -DVERSION='""'
 
+.PHONY: user-lint
+user-lint:
+	$(PROGRESS) CLIPPY
+	cargo clippy
+
 #
 #  Kernel
 #
