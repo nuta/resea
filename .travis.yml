@@ -1,5 +1,4 @@
 sudo: false
-
 language: rust
 rust:
   - nightly
@@ -19,6 +18,9 @@ jobs:
       env: CMD=build LLVM_PREFIX=/usr/bin/ LLVM_SUFFIX=-8
     - os: osx
       osx_image: xcode11.2
+      env: CMD=docs
+    - os: osx
+      osx_image: xcode11.2
       env: CMD=kernel-lint
     - os: osx
       osx_image: xcode11.2
@@ -31,11 +33,13 @@ addons:
   homebrew:
     update: true
     packages:
-      - llvm
-      - qemu
-      - xorriso
-      - mtools
-      - i386-elf-grub
+     - llvm
+     - qemu
+     - xorriso
+     - mtools
+     - i386-elf-grub
+     - doxygen
+     - graphviz
   apt:
     packages:
       - llvm-8
@@ -52,8 +56,8 @@ addons:
 
 install:
   - pip3 install -r tools/requirements.txt
-  - "cargo install xargo || true"
-  - "rustup component add rust-src"
+  - cargo install xargo || true
+  - rustup component add rust-src
 
 script:
   - make $CMD

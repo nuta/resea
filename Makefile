@@ -94,6 +94,10 @@ build: $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/compile_commands.json
 clean:
 	rm -r $(BUILD_DIR)
 
+.PHONY: docs
+docs:
+	./tools/gendocs.py build/docs
+
 .PHONY: kernel-lint
 kernel-lint:
 	$(PROGRESS) MAKE kernel/include/idl.h

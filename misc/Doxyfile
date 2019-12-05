@@ -1,6 +1,6 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "Resea Kernel Source Code Reference"
-OUTPUT_DIRECTORY       = build/srcdocs
+OUTPUT_DIRECTORY       = build/kernel-docs
 CREATE_SUBDIRS         = YES
 OUTPUT_LANGUAGE        = English
 BRIEF_MEMBER_DESC      = YES
