@@ -66,6 +66,7 @@ USER_CFLAGS += $(COMMON_CFLAGS)
 # Variables internally used in the build system.
 
 arch_dir := kernel/arch/$(ARCH)
+autogen_files := kernel/include/idl.h libs/resea/idl/mod.rs
 
 # ------------------------------------------------------------------------------
 
@@ -96,18 +97,19 @@ clean:
 
 .PHONY: docs
 docs:
+	$(MAKE) $(autogen_files)
 	./tools/gendocs.py build/docs
 
 .PHONY: kernel-lint
 kernel-lint:
-	$(PROGRESS) MAKE kernel/include/idl.h
-	$(MAKE) kernel/include/idl.h
+	$(MAKE) $(autogen_files)
 	$(PROGRESS) CLANG-TIDY kernel
 	cd kernel && $(LLVM_PREFIX)clang-tidy *.c arch/$(ARCH)/*.c \
 		-- -Iinclude -Iarch/$(ARCH)/include -DVERSION='""'
 
 .PHONY: user-lint
 user-lint:
+	$(MAKE) $(autogen_files)
 	$(PROGRESS) CLIPPY
 	cargo clippy
 
@@ -224,14 +226,17 @@ initfs_files += $(foreach server, $(STARTUPS), $(BUILD_DIR)/initfs/startups/$(se
 #  IPC stubs.
 #
 $(BUILD_DIR)/idl.json: interfaces.idl tools/parse-idl-file.py
+	mkdir -p $(@D)
 	$(PROGRESS) "PARSEIDL" $@
 	$(PYTHON3) tools/parse-idl-file.py $< $@
 
 libs/resea/idl/mod.rs: $(BUILD_DIR)/idl.json tools/genstub.py
+	mkdir -p $(@D)
 	$(PROGRESS) "GENSTUB" libs/resea/idl
 	$(PYTHON3) tools/genstub.py $< libs/resea/idl
 
 kernel/include/idl.h: $(BUILD_DIR)/idl.json tools/kgenstub.py
+	mkdir -p $(@D)
 	$(PROGRESS) "KGENSTUB" $@
 	$(PYTHON3) tools/kgenstub.py $< $@
 
