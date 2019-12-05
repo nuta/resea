@@ -105,6 +105,7 @@ kernel-lint:
 	$(MAKE) $(autogen_files)
 	$(PROGRESS) CLANG-TIDY kernel
 	cd kernel && $(LLVM_PREFIX)clang-tidy *.c arch/$(ARCH)/*.c \
+		--warnings-as-errors='*' \
 		-- -Iinclude -Iarch/$(ARCH)/include -DVERSION='""'
 
 .PHONY: user-lint
