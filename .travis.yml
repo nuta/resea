@@ -33,13 +33,13 @@ addons:
   homebrew:
     update: true
     packages:
-     - llvm
-     - qemu
-     - xorriso
-     - mtools
-     - i386-elf-grub
-     - doxygen
-     - graphviz
+      - llvm
+      - qemu
+      - xorriso
+      - mtools
+      - i386-elf-grub
+      - doxygen
+      - graphviz
   apt:
     packages:
       - llvm-8
