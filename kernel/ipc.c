@@ -8,7 +8,7 @@
 
 /// The open system call: creates a new channel. It returns negated error value
 /// if an error occurred.
-int sys_open(void) {
+static MUST_USE int sys_open(void) {
     STATIC_ASSERT(sizeof(int) == sizeof(cid_t));
 
     struct channel *ch = channel_create(CURRENT->process);
@@ -21,7 +21,7 @@ int sys_open(void) {
 }
 
 /// The close system call: destroys a new channel.
-error_t sys_close(cid_t cid) {
+static MUST_USE error_t sys_close(cid_t cid) {
     struct channel *ch = table_get(&CURRENT->process->channels, cid);
     if (!ch) {
         return ERR_INVALID_CID;
@@ -33,7 +33,7 @@ error_t sys_close(cid_t cid) {
 }
 
 /// The link system call: links channels.
-error_t sys_link(cid_t ch1, cid_t ch2) {
+static MUST_USE error_t sys_link(cid_t ch1, cid_t ch2) {
     struct channel *ch1_ch = table_get(&CURRENT->process->channels, ch1);
     if (!ch1_ch) {
         return ERR_INVALID_CID;
@@ -50,7 +50,7 @@ error_t sys_link(cid_t ch1, cid_t ch2) {
 }
 
 /// The transfer system call: transfers messages.
-error_t sys_transfer(cid_t src, cid_t dst) {
+static MUST_USE error_t sys_transfer(cid_t src, cid_t dst) {
     struct channel *src_ch = table_get(&CURRENT->process->channels, src);
     if (!src_ch) {
         return ERR_INVALID_CID;
@@ -66,34 +66,8 @@ error_t sys_transfer(cid_t src, cid_t dst) {
     return OK;
 }
 
-/// Performs an IPC from kernel threads.
-error_t kernel_ipc(cid_t cid, uint32_t syscall) {
-    // Switch to the thread-local kernel IPC buffer. Kernel threads can't use
-    // the buffer in the TIB because page faults could be occurred during IPC
-    // preparation in userland. Consider the following example:
-    //
-    // ```
-    //    ipc_buffer->header = PRINTCHAR_MSG;
-    //    ipc_buffer->data[0] = foo(); // Page fault occurs here!
-    //    // If kernel and user share one ipc_buffer, the buffer is
-    //    // overwritten by the page fault handler. Consequently,
-    //    // ipc_buffer->header is no longer equal to PRINTCHAR_MSG!
-    //    //
-    //    // This is why we need a kernel's own ipc buffer.
-    //    sys_ipc(ch);
-    // ```
-    //
-    struct thread *current = CURRENT;
-    current->ipc_buffer = current->kernel_ipc_buffer;
-
-    error_t err = sys_ipc(cid, syscall);
-
-    current->ipc_buffer = &current->info->ipc_buffer;
-    return err;
-}
-
 /// The ipc system call: sends/receives messages.
-error_t sys_ipc(cid_t cid, uint32_t syscall) {
+static MUST_USE error_t sys_ipc(cid_t cid, uint32_t syscall) {
     DEBUG_ASSERT(
         (CURRENT->process != kernel_process
          || CURRENT->ipc_buffer == CURRENT->kernel_ipc_buffer)
@@ -321,6 +295,32 @@ error_t sys_ipc(cid_t cid, uint32_t syscall) {
     return OK;
 }
 
+/// Performs an IPC from kernel threads.
+error_t kernel_ipc(cid_t cid, uint32_t syscall) {
+    // Switch to the thread-local kernel IPC buffer. Kernel threads can't use
+    // the buffer in the TIB because page faults could be occurred during IPC
+    // preparation in userland. Consider the following example:
+    //
+    // ```
+    //    ipc_buffer->header = PRINTCHAR_MSG;
+    //    ipc_buffer->data[0] = foo(); // Page fault occurs here!
+    //    // If kernel and user share one ipc_buffer, the buffer is
+    //    // overwritten by the page fault handler. Consequently,
+    //    // ipc_buffer->header is no longer equal to PRINTCHAR_MSG!
+    //    //
+    //    // This is why we need a kernel's own ipc buffer.
+    //    sys_ipc(ch);
+    // ```
+    //
+    struct thread *current = CURRENT;
+    current->ipc_buffer = current->kernel_ipc_buffer;
+
+    error_t err = sys_ipc(cid, syscall);
+
+    current->ipc_buffer = &current->info->ipc_buffer;
+    return err;
+}
+
 /// The faster ipc system call implementation optimized for the common case:
 ///
 ///   - Payloads are inline only (i.e., no channel/page payloads).
@@ -405,7 +405,7 @@ slowpath_fallback:
 
 /// The notify system call: sends a notification. This system call MUST be
 /// asynchronous: return an error instead of blocking the current thread!
-error_t sys_notify(cid_t cid, notification_t notification) {
+static MUST_USE error_t sys_notify(cid_t cid, notification_t notification) {
     struct thread *current = CURRENT;
     struct channel *ch = table_get(&current->process->channels, cid);
     if (UNLIKELY(!ch)) {

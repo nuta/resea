@@ -92,11 +92,7 @@ static inline void dump_message(struct channel *src, struct channel *dst, struct
         }                                             \
     } while (0)
 
-MUST_USE cid_t sys_open(void);
-MUST_USE error_t sys_close(cid_t cid);
 MUST_USE error_t kernel_ipc(cid_t cid, uint32_t syscall);
-MUST_USE error_t sys_ipc(cid_t cid, uint32_t syscall);
-MUST_USE error_t sys_notify(cid_t cid, notification_t notification);
 int syscall_handler(uintmax_t arg0, uintmax_t arg1, uintmax_t syscall);
 
 #endif
