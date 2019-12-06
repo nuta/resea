@@ -172,11 +172,12 @@ impl TcpIp {
                 .receive(&mut *self.tx_queue.borrow_mut(), &mut pkt),
             None
         );
+        drop(device);
 
         let sock = match net_type {
-            NetworkProtocol::Ipv4 => self
-                .receive_ipv4_packet(pkt)
-                .map(|inner| SocketHandle::new(inner.clone())),
+            NetworkProtocol::Ipv4 =>
+                self.receive_ipv4_packet(pkt)
+                    .map(|inner| SocketHandle::new(inner.clone())),
         };
 
         // Handle DHCP messages.
@@ -184,6 +185,10 @@ impl TcpIp {
             (Some(sock), Some(client)) if client.0 == sock => {
                 if let Some((src_addr, src_port, payload)) = sock.0.borrow_mut().recv() {
                     if let Some((our_addr, gateway, netmask)) = client.1.receive(src_addr, src_port, &payload) {
+                        info!("DHCP: our_ip={} gateway={:?} netmask={:x}",
+                            our_addr, gateway, netmask);
+                        let device = unwrap_or_return!(self.devices.get(device_name), None);
+                        device.borrow_mut().set_ipv4_addr(our_addr);
                         self.add_route(
                             device_name,
                             Ipv4Network::from_ipv4_addr(our_addr, netmask),
