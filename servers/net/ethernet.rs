@@ -21,10 +21,6 @@ impl EthernetDevice {
         }
     }
 
-    pub fn set_ipv4_addr(&mut self, addr: Ipv4Addr) {
-        self.arp_table.set_ipv4_addr(addr);
-    }
-
     fn receive_arp_packet(&mut self, pkt: &mut Packet) -> Option<(MacAddr, Vec<(u16, Mbuf)>)> {
         self.arp_table.process_arp_packet(pkt)
     }
@@ -44,6 +40,10 @@ impl EthernetDevice {
 impl Device for EthernetDevice {
     fn mac_addr(&self) -> MacAddr {
         self.mac_addr
+    }
+
+    fn set_ipv4_addr(&mut self, addr: Ipv4Addr) {
+        self.arp_table.set_ipv4_addr(addr);
     }
 
     fn enqueue(&mut self, tx_queue: &mut VecDeque<Mbuf>, dst: IpAddr, pkt: Mbuf) {

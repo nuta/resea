@@ -1,4 +1,5 @@
 use crate::ip::{IpAddr, NetworkProtocol};
+use crate::ipv4::Ipv4Addr;
 use crate::mbuf::Mbuf;
 use crate::packet::Packet;
 use resea::collections::VecDeque;
@@ -21,6 +22,7 @@ impl MacAddr {
 
 pub trait Device {
     fn mac_addr(&self) -> MacAddr;
+    fn set_ipv4_addr(&mut self, addr: Ipv4Addr);
     fn enqueue(&mut self, tx_queue: &mut VecDeque<Mbuf>, dst: IpAddr, pkt: Mbuf);
     fn receive(
         &mut self,
