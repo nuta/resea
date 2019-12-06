@@ -11,17 +11,19 @@ const INDEX_HTML: &str = r#"
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Resea Web API</title>
+    <title>It works!</title>
+    <link rel="icon" href="data:,">
 </head>
 <body>
-<h1>Resea Web API</h1>
+<div style="width:800px;margin:20px auto;text-align:center;">
+<h1>It works!</h1>
 <hr>
-<ul>
-    <li><a href="/status">GET /status</a>
-    <li><a href="/xkcd">GET /xkcd</a>
-</ul>
+<p><img src="https://imgs.xkcd.com/comics/operating_systems.png">
+<p>
+<i>&ldquo;Operating System&rdquo; from <a href="https://xkcd.com/1508/">xkcd</a> (CC BY-NC 2.5)</i>
 <hr>
-<address>Resea Web API Server</address>
+<b>Powered by Resea</b>
+</div>
 </body>
 </html>
 "#;
