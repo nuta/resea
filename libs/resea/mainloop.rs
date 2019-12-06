@@ -30,6 +30,7 @@ macro_rules! mainloop {
         use $crate::page::PageBase;
         use $crate::thread_info::set_page_base;
         use $crate::mainloop::{DeferredWorkResult, Mainloop};
+        use $crate::cmp::{min, max};
 
         // The server struct must have 'ch' field.
         debug_assert!($server.ch.cid() != 0);
@@ -46,8 +47,7 @@ macro_rules! mainloop {
 
         const DELAY_RESET: i32 = 20;
         const DELAY_MAX: i32 = 3000;
-        let mut delay = DELAY_RESET;
-        let mut needs_retry = false;
+        let mut delay = 0;
 
         loop {
             set_page_base(PageBase::allocate());
@@ -84,14 +84,12 @@ macro_rules! mainloop {
 
             match Mainloop::deferred_work(server) {
                 DeferredWorkResult::Done => {
-                    // needs_retry = false;
-                    delay = DELAY_RESET;
+                    delay = 0;
                 }
-                DeferredWorkResult::NeedsRetry if !notification.is_empty() => {
+                DeferredWorkResult::NeedsRetry if delay == 0 || !notification.is_empty() => {
                     // Set a timer to retry the deferred work later.
+                    delay = max(DELAY_RESET, min(delay << 1, DELAY_MAX));
                     timer::call_reset(&timer_server, timer_handle, delay, 0).unwrap();
-                    needs_retry = true;
-                    delay =  $crate::cmp::min(delay << 1, DELAY_MAX);
                 }
                 _ => {
                     // The timer has not yet been expired.
