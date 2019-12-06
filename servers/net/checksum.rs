@@ -1,4 +1,5 @@
-use crate::endian::swap16;
+use crate::endian::{swap16, swap32};
+use crate::ip::IpAddr;
 use resea::mem::size_of;
 use resea::slice;
 
@@ -56,4 +57,26 @@ impl Checksum {
         checksum += checksum >> 16;
         swap16(!checksum as u16)
     }
+}
+
+pub fn compute_pseudo_header_checksum<T>(
+    checksum: &mut Checksum,
+    remote_addr: IpAddr,
+    local_addr: IpAddr,
+    proto: u8,
+    header: &T,
+    data_len: usize
+) {
+    // Pseudo header.
+    match remote_addr {
+        IpAddr::Ipv4(ipv4_addr) => checksum.input_u32(swap32(ipv4_addr.as_u32())),
+    }
+    match local_addr {
+        IpAddr::Ipv4(ipv4_addr) => checksum.input_u32(swap32(ipv4_addr.as_u32())),
+    }
+    checksum.input_u16(swap16(proto as u16));
+    checksum.input_u16(swap16((size_of::<T>() + data_len) as u16));
+
+    // TCP header.
+    checksum.input_struct(header);
 }

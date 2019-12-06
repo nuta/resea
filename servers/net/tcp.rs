@@ -1,6 +1,6 @@
-use crate::checksum::Checksum;
+use crate::checksum::{Checksum, compute_pseudo_header_checksum};
 use crate::device::Device;
-use crate::endian::{swap16, swap32, NetEndian};
+use crate::endian::NetEndian;
 use crate::ip::IpAddr;
 use crate::ipv4::IPV4_PROTO_TCP;
 use crate::mbuf::Mbuf;
@@ -15,7 +15,6 @@ use resea::cell::RefCell;
 use resea::cmp::min;
 use resea::collections::VecDeque;
 use resea::fmt;
-use resea::mem::size_of;
 use resea::rc::Rc;
 use resea::vec::Vec;
 
@@ -179,10 +178,11 @@ impl Socket for TcpSocket {
                     };
 
                     let mut checksum = Checksum::new();
-                    compute_header_checksum(
+                    compute_pseudo_header_checksum(
                         &mut checksum,
                         backlog.local_addr,
                         backlog.remote_addr.unwrap(),
+                        IPV4_PROTO_TCP,
                         &header,
                         0,
                     );
@@ -225,10 +225,11 @@ impl Socket for TcpSocket {
             let mut data = vec![0; len];
             self.tx.peek(len, &mut data);
             mbuf.append_bytes(&data);
-            compute_header_checksum(
+            compute_pseudo_header_checksum(
                 &mut checksum,
                 self.local_addr,
                 self.remote_addr.unwrap(),
+                IPV4_PROTO_TCP,
                 &header,
                 len,
             );
@@ -236,10 +237,11 @@ impl Socket for TcpSocket {
             self.bytes_not_acked += len;
             self.remote_win_size -= len;
         } else {
-            compute_header_checksum(
+            compute_pseudo_header_checksum(
                 &mut checksum,
                 self.local_addr,
                 self.remote_addr.unwrap(),
+                IPV4_PROTO_TCP,
                 &header,
                 0,
             );
@@ -375,27 +377,6 @@ impl Socket for TcpSocket {
     fn recv(&mut self) -> Option<(IpAddr, Port, Vec<u8>)> {
         unreachable!();
     }
-}
-
-fn compute_header_checksum(
-    checksum: &mut Checksum,
-    remote_addr: IpAddr,
-    local_addr: IpAddr,
-    header: &TcpHeader,
-    data_len: usize,
-) {
-    // Pseudo header.
-    match remote_addr {
-        IpAddr::Ipv4(ipv4_addr) => checksum.input_u32(swap32(ipv4_addr.as_u32())),
-    }
-    match local_addr {
-        IpAddr::Ipv4(ipv4_addr) => checksum.input_u32(swap32(ipv4_addr.as_u32())),
-    }
-    checksum.input_u16(swap16(IPV4_PROTO_TCP as u16));
-    checksum.input_u16(swap16((size_of::<TcpHeader>() + data_len) as u16));
-
-    // TCP header.
-    checksum.input_struct(header);
 }
 
 #[repr(transparent)]
