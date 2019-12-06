@@ -204,6 +204,10 @@ fn parse<'a>(pkt: &'a mut Packet) -> Option<ParsedDhcpPacket> {
     let mut netmask: Option<u32> = None;
     loop {
         let option_type: u8 = *unwrap_or_return!(pkt.consume::<u8>(), None);
+        if option_type == OPTION_END {
+            break;
+        }
+
         let option_len: u8 = *unwrap_or_return!(pkt.consume::<u8>(), None);
 
         match option_type {
@@ -217,9 +221,6 @@ fn parse<'a>(pkt: &'a mut Packet) -> Option<ParsedDhcpPacket> {
             OPTION_ROUTER => {
                 let value = *unwrap_or_return!(pkt.consume::<u32>(), None);
                 router = Some(Ipv4Addr::from_u32(NetEndian::new(value).into()));
-            }
-            OPTION_END => {
-                break;
             }
             _ => {
                 unwrap_or_return!(pkt.consume_bytes(option_len as usize), None);
