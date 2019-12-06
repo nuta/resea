@@ -191,7 +191,11 @@ impl Socket for TcpSocket {
                     mbuf.append(&header);
                     return Some((None, backlog.remote_addr.unwrap(), mbuf));
                 }
-                TcpState::SynReceived | TcpState::Established => (),
+                TcpState::SynReceived | TcpState::Established | TcpState::FinWait1 => (),
+                TcpState::Closed => {
+                    // TODO: This pattern should be unreachable. We should destruct
+                    // the socket.
+                },
                 _ => unreachable!(),
             }
         }
