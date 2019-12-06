@@ -287,9 +287,6 @@ impl TcpIp {
         let (dst_addr, src_addr, trans, len) = unwrap_or_return!(ipv4::parse(&mut pkt), None);
         let src = IpAddr::Ipv4(src_addr);
         let dst = IpAddr::Ipv4(dst_addr);
-        if dst_addr != Ipv4Addr::BROADCAST && !self.is_our_ip_addr(&dst) {
-            return None;
-        }
 
         let (src_port, dst_port, parsed_trans_data) = match trans {
             TransportProtocol::Udp => unwrap_or_return!(udp::parse(&mut pkt), None),
@@ -298,6 +295,17 @@ impl TcpIp {
 
         let local = BindTo::new(trans, IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED), dst_port);
         let remote = BindTo::new(trans, src, src_port);
+
+        if src_port.as_u16() == 67 && dst_port.as_u16() == 68 {
+            // XXX: Overwrite the destination address if the packet is a DHCP
+            //      message from the server.
+            // https://superuser.com/questions/1090457/dhcp-offer-already-sent-to-my-local-ip-address
+            dst_addr = Ipv4Addr::BROADCAST;
+        }
+
+        if dst_addr != Ipv4Addr::BROADCAST && !self.is_our_ip_addr(&dst) {
+            return None;
+        }
 
         // Look for the socket.
         let unspecified = BindTo::new(
