@@ -67,7 +67,6 @@ impl Keyboard {
                 KEY_SHIFT_RIGHT => self.shift_right = scancode.is_press(),
                 KEY_CAPS_LOCK => self.caps_lock = scancode.is_press(),
                 _ if scancode.is_press() => {
-                    trace!("key pressed: '{}'", ascii as char);
                     self.buffer.push_back(ascii);
                 }
                 _ => {}

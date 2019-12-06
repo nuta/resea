@@ -70,7 +70,7 @@ impl TcpIp {
                 let dhcp_client = DhcpClient::new(device.clone());
                 assert!(self.dhcp_client.is_none());
                 self.dhcp_client = Some((sock, dhcp_client));
-                warn!("created a dhcp client");
+                info!("created a dhcp client");
             }
         }
 

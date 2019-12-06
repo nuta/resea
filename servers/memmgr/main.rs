@@ -193,7 +193,7 @@ impl idl::timer::Server for Server {
 
 impl idl::discovery::Server for Server {
     fn connect(&mut self, from: &Channel, interface: u8) -> Result<Channel> {
-        warn!("accepted a connect request = {}", interface);
+        trace!("accepted a connect request = {}", interface);
         self.connect_requests.push(ConnectRequest {
             interface,
             ch: unsafe { from.clone() },
@@ -206,6 +206,7 @@ impl idl::discovery::Server for Server {
         // TODO: Support multiple servers with the same interface ID.
         assert!(self.servers.get(&interface).is_none());
 
+        info!("publish a server = {}", interface);
         ch.transfer_to(&self.ch).unwrap();
         let server = RegisteredServer {
             server_ch: ch,

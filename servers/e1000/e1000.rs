@@ -279,7 +279,7 @@ impl Device {
 
             // Copy the received packet into the RX queue.
             let len = desc.len as usize;
-            trace!("received {} bytes", len);
+            // trace!("received {} bytes", len);
             let mut pkt = Vec::with_capacity(len);
             pkt.extend_from_slice(&self.rx_buffer(index)[0..len]);
             self.rx_queue.push_back(pkt);

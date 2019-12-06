@@ -291,6 +291,15 @@ impl Socket for TcpSocket {
         };
         let src_port = header.src_port;
 
+        trace!(
+            "tcp: {}:{} <- {}:{} [{}]",
+            dst_addr,
+            self.local_port,
+            src_addr,
+            src_port    ,
+            header.flags
+        );
+
         // Check if the client is already in the backlog.
         for backlog in &mut self.backlog {
             if backlog.is_connected_with(src_addr, src_port) {
