@@ -189,6 +189,11 @@ impl idl::timer::Server for Server {
         use idl::timer::call_clear;
         Ok(call_clear(&KERNEL_SERVER, timer).unwrap())
     }
+
+    fn uptime(&mut self, _from: &Channel) -> Result<u64> {
+        use idl::timer::call_uptime;
+        call_uptime(&KERNEL_SERVER)
+    }
 }
 
 impl idl::discovery::Server for Server {

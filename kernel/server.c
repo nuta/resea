@@ -371,6 +371,12 @@ static error_t handle_timer_clear(UNUSED struct message *m) {
     return OK;
 }
 
+static error_t handle_timer_uptime(UNUSED struct message *m) {
+    m->header = TIMER_UPTIME_REPLY_MSG;
+    m->payloads.timer.uptime_reply.uptime = timer_uptime();
+    return OK;
+}
+
 static error_t handle_read_kernel_log(UNUSED struct message *m) {
     read_kernel_log(m->payloads.kernel.read_kernel_log_reply.str,
                     STRING_LEN_MAX);
@@ -413,6 +419,7 @@ static error_t process_message(struct message *m) {
     case TIMER_CREATE_MSG:              return handle_timer_create(m);
     case TIMER_RESET_MSG:               return handle_timer_reset(m);
     case TIMER_CLEAR_MSG:               return handle_timer_clear(m);
+    case TIMER_UPTIME_MSG:              return handle_timer_uptime(m);
     case SERVER_CONNECT_MSG:            return handle_server_connect(m);
     }
 

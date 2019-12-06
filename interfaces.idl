@@ -51,6 +51,8 @@ interface timer {
     reset(timer: handle, initial: int32, interval: int32) -> ()
     [id(3), type(call)]
     clear(timer: handle) -> ()
+    [id(4), type(call)]
+    uptime() -> (uptime: uint64)
 }
 
 [id(10)]
