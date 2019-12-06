@@ -284,7 +284,8 @@ impl TcpIp {
     }
 
     fn receive_ipv4_packet<'a>(&mut self, mut pkt: Packet<'a>) -> Option<&Rc<RefCell<dyn Socket>>> {
-        let (dst_addr, src_addr, trans, len) = unwrap_or_return!(ipv4::parse(&mut pkt), None);
+        let (mut dst_addr, src_addr, trans, len) =
+            unwrap_or_return!(ipv4::parse(&mut pkt), None);
         let src = IpAddr::Ipv4(src_addr);
         let dst = IpAddr::Ipv4(dst_addr);
 
