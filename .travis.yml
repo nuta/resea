@@ -61,12 +61,3 @@ install:
 
 script:
   - make $CMD
-
-deploy:
-  provider: netlify
-  edge: true
-  site: "$NETLIFY_SITE_ID"
-  auth: "$NETLIFY_AUTH_TOKEN"
-  dir: build/docs
-  on:
-    condition: "$CMD = docs"
