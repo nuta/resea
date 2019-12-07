@@ -54,7 +54,7 @@ impl Socket for UdpSocket {
         mbuf.prepend(&UdpHeader {
             dst_port: tx.dst_port.as_u16().into(),
             src_port: self.bind_to.port.as_u16().into(),
-            len: (tx.payload.len() as u16).into(),
+            len: ((size_of::<UdpHeader>() + tx.payload.len()) as u16).into(),
             checksum: 0.into(),
         });
         mbuf.append_bytes(tx.payload.as_slice());
