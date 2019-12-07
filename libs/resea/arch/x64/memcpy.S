@@ -1,3 +1,4 @@
+// TODO: Use compiler-builtins crate: https://github.com/rust-lang/compiler-builtins
 .intel_syntax noprefix
 
 /* void *memcpy(void *dst, const void *src, size_t n); */
