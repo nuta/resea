@@ -117,7 +117,7 @@ impl Server {
         self.tcp_sockets.extend(new_clients);
 
         // Build and enqueue packets.
-        self.tcpip.interval_work().unwrap();
+        oops_on_error!(self.tcpip.interval_work(self.uptime()));
 
         // Transmit packets.
         while let Some(mbuf) = self.tcpip.pop_tx_packet() {
@@ -125,7 +125,7 @@ impl Server {
             let num_pages = align_up(frame.len(), PAGE_SIZE) / PAGE_SIZE;
             let mut page = idl::memmgr::call_alloc_pages(&MEMMGR_SERVER, num_pages).unwrap();
             page.copy_from_slice(frame);
-            call_transmit(&self.network_device, page).unwrap();
+            oops_on_error!(call_transmit(&self.network_device, page));
         }
     }
 
