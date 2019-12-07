@@ -101,6 +101,19 @@ macro_rules! oops {
     };
 }
 
+/// Prints an `oops!` message if the given expression is not `Ok`.
+#[macro_export]
+macro_rules! oops_on_error {
+    ($expr:expr) => {
+        match $expr {
+            Ok(_) => {},
+            Err(err) => {
+                oops!("error: {:?} (at {}:{})", err, file!(), line!());
+            }
+        }
+    };
+}
+
 /// Prints an error message.
 #[macro_export]
 macro_rules! error {
