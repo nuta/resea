@@ -185,8 +185,7 @@ impl TcpIp {
             (Some(sock), Some(client)) if client.0 == sock => {
                 if let Some((src_addr, src_port, payload)) = sock.0.borrow_mut().recv() {
                     if let Some((our_addr, gateway, netmask)) = client.1.receive(src_addr, src_port, &payload) {
-                        info!("DHCP: our_ip={} gateway={:?} netmask={:x}",
-                            our_addr, gateway, netmask);
+                        info!("DHCP: our_addr={}", our_addr);
                         let device = unwrap_or_return!(self.devices.get(device_name), None);
                         device.borrow_mut().set_ipv4_addr(our_addr);
                         self.add_route(
