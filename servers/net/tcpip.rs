@@ -211,10 +211,10 @@ impl TcpIp {
         }
     }
 
-    pub fn interval_work(&mut self) -> Result<()> {
+    pub fn interval_work(&mut self, uptime: usize) -> Result<()> {
         // Send a DHCP message if needed.
         if let Some((sock, client)) = &mut self.dhcp_client {
-            if let Some((addr, pkt)) = client.build() {
+            if let Some((addr, pkt)) = client.build(uptime) {
                 let device = client.device().clone();
                 sock.0
                     .borrow_mut()

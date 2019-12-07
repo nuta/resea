@@ -8,12 +8,15 @@ use crate::transport::Port;
 use resea::cell::RefCell;
 use resea::rc::Rc;
 
+const DISCOVERY_MSG_INTERVAL: usize = 10000;
+const DISCOVERY_MSG_MAX: usize = 5;
+
 pub enum DhcpClientState {
-    SendingDiscovery,
-    WaitingOffer,
+    SendingDiscovery((usize, usize)),
     SendingRequest(Ipv4Addr),
     WaitingAck,
     Done,
+    Failed,
 }
 
 pub struct DhcpClient {
@@ -24,7 +27,7 @@ pub struct DhcpClient {
 impl DhcpClient {
     pub fn new(device: Rc<RefCell<dyn Device>>) -> DhcpClient {
         DhcpClient {
-            state: DhcpClientState::SendingDiscovery,
+            state: DhcpClientState::SendingDiscovery((0, 0)),
             device,
         }
     }
@@ -33,9 +36,20 @@ impl DhcpClient {
         &self.device
     }
 
-    pub fn build(&mut self) -> Option<(IpAddr, Mbuf)> {
+    pub fn build(&mut self, uptime: usize) -> Option<(IpAddr, Mbuf)> {
         match self.state {
-            DhcpClientState::SendingDiscovery => {
+            DhcpClientState::SendingDiscovery((num_sent, time_last_sent)) => {
+                if num_sent > DISCOVERY_MSG_MAX {
+                    warn!("couldn't locate the DHCP server");
+                    self.state = DhcpClientState::Failed;
+                    return None;
+                }
+
+                if time_last_sent > 0 && uptime < time_last_sent + DISCOVERY_MSG_INTERVAL {
+                    return None;
+                }
+
+                info!("sending a DHCP DISCOVER...");
                 let param_list = [
                     OPTION_SUBNET_MASK,
                     OPTION_ROUTER,
@@ -48,7 +62,7 @@ impl DhcpClient {
                     None,
                     Some(&param_list),
                 );
-                self.state = DhcpClientState::WaitingOffer;
+                self.state = DhcpClientState::SendingDiscovery((num_sent + 1, uptime));
                 Some((IpAddr::Ipv4(Ipv4Addr::BROADCAST), mbuf))
             }
             DhcpClientState::SendingRequest(request_ipaddr) => {
@@ -76,7 +90,7 @@ impl DhcpClient {
         let mut pkt = Packet::new(payload);
         if let Some(parsed) = parse(&mut pkt) {
             match self.state {
-                DhcpClientState::WaitingOffer if parsed.dhcp_type == DHCP_TYPE_OFFER => {
+                DhcpClientState::SendingDiscovery(_) if parsed.dhcp_type == DHCP_TYPE_OFFER => {
                     info!("DHCP offer: {}", parsed.your_ipaddr);
                     self.state = DhcpClientState::SendingRequest(parsed.your_ipaddr);
                 }

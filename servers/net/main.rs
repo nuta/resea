@@ -1,5 +1,6 @@
 use resea::collections::HashMap;
 use resea::idl;
+use resea::idl::timer;
 use resea::idl::net_client::{nbsend_tcp_accepted, nbsend_tcp_received};
 use resea::idl::network_device::{call_get_macaddr, call_transmit};
 use resea::prelude::*;
@@ -13,7 +14,7 @@ use crate::tcpip::{DeviceIpAddr, TcpIp, SocketHandle};
 use crate::transport::Port;
 
 static MEMMGR_SERVER: Channel = Channel::from_cid(1);
-static _KERNEL_SERVER: Channel = Channel::from_cid(2);
+static KERNEL_SERVER: Channel = Channel::from_cid(2);
 
 struct TcpSocket {
     handle: HandleId,
@@ -30,6 +31,7 @@ struct Server {
     accepted_queue: Vec<(Rc<Channel>, HandleId, HandleId)>,
     received_queue: Vec<(Rc<Channel>, HandleId, Page)>,
     next_sock_id: i32,
+    uptime_start: usize,
 }
 
 impl Server {
@@ -38,7 +40,6 @@ impl Server {
         let ma = call_get_macaddr(&network_device).unwrap();
         let macaddr = MacAddr::new([ma.0, ma.1, ma.2, ma.3, ma.4, ma.5]);
         tcpip.add_ethernet_device("net0", macaddr, DeviceIpAddr::Dhcp);
-        tcpip.interval_work().unwrap(); // TODO: remove
         Server {
             ch: server_ch,
             network_device,
@@ -48,7 +49,13 @@ impl Server {
             accepted_queue: Vec::new(),
             received_queue: Vec::new(),
             next_sock_id: 1,
+            uptime_start: timer::call_uptime(&KERNEL_SERVER).unwrap() as usize,
         }
+    }
+
+    fn uptime(&self) -> usize {
+        let uptime = timer::call_uptime(&KERNEL_SERVER).unwrap() as usize;
+        uptime - self.uptime_start
     }
 
     pub fn flush_queued_messages(&mut self) {
@@ -202,7 +209,9 @@ impl idl::server::Server for Server {
 impl resea::mainloop::Mainloop for Server {
     fn deferred_work(&mut self) -> DeferredWorkResult {
         self.flush_queued_messages();
-        DeferredWorkResult::Done
+
+        // Return always NeedsRetry to do the interval work.
+        DeferredWorkResult::NeedsRetry
     }
 }
 
