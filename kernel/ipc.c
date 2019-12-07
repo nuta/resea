@@ -181,6 +181,7 @@ static MUST_USE error_t sys_ipc(cid_t cid, uint32_t syscall) {
 
             paddr_t paddr;
             if (current->ipc_buffer == current->kernel_ipc_buffer) {
+                // Kernel threads use physical address.
                 paddr = page_addr;
             } else {
                 // Resolve the physical address referenced by the page payload.
@@ -198,7 +199,7 @@ static MUST_USE error_t sys_ipc(cid_t cid, uint32_t syscall) {
             }
 
             if (receiver->ipc_buffer == receiver->kernel_ipc_buffer) {
-                // Kernel threads prefers the physical address (e.g, receiving a
+                // Use physical address for kernel threads (e.g, receiving a
                 // pager.fill_request reply).
                 dst_m->payloads.page_addr = paddr;
             } else {
@@ -212,11 +213,11 @@ static MUST_USE error_t sys_ipc(cid_t cid, uint32_t syscall) {
                     return ERR_INVALID_PAGE_PAYLOAD;
                 }
 
-                // TODO: Abort if the virutal address is already mapped.
                 error_t err =
-                    link_page(&receiver->process->page_table, page_base_addr, paddr,
-                              num_pages, PAGE_USER | PAGE_WRITABLE);
+                    link_page(&receiver->process->page_table, page_base_addr,
+                              paddr, num_pages, PAGE_USER | PAGE_WRITABLE);
                 if (err != OK) {
+                    // The destination virtual address has already been mapped.
                     WARN("link_page returned an error: %d", err);
                     receiver->abort_reason = ERR_NEEDS_RETRY;
                     return err;
@@ -226,7 +227,7 @@ static MUST_USE error_t sys_ipc(cid_t cid, uint32_t syscall) {
             }
 
             if (current->ipc_buffer != current->kernel_ipc_buffer) {
-                // Unlink the pages from the current (sender) process.
+                // Unlink the sent pages from the current (sender) process.
                 unlink_page(&current->process->page_table, page_addr,
                             num_pages);
             }
