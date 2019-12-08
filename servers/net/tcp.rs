@@ -27,7 +27,7 @@ enum TcpState {
     Established,
     FinWait1,
     _FinWait2,
-    _Closing,
+    Closing,
     _TimeWait,
     _LastAck,
 }
@@ -113,7 +113,6 @@ impl TcpSocket {
             // Check if the ack number is valid.
             if len_received_by_remote <= self.tx.readable_len() {
                 self.tx.discard(len_received_by_remote);
-                self.local_seq_no.add(len_received_by_remote as u32);
                 self.bytes_not_acked -= len_received_by_remote;
             }
         }
@@ -206,6 +205,10 @@ impl Socket for TcpSocket {
             return None;
         }
 
+        if self.state == TcpState::Closed {
+            return None;
+        }
+
         let mut mbuf = Mbuf::new();
         let mut header = TcpHeader {
             dst_port: self.remote_port.unwrap().as_u16().into(),
@@ -228,6 +231,10 @@ impl Socket for TcpSocket {
             let len = min(self.tx.readable_len(), self.remote_win_size);
             let mut data = vec![0; len];
             self.tx.peek(len, &mut data);
+
+            // FIXME: Take into account retransmission.
+            self.local_seq_no.add(len as u32);
+
             mbuf.append_bytes(&data);
             compute_pseudo_header_checksum(
                 &mut checksum,
@@ -259,8 +266,13 @@ impl Socket for TcpSocket {
     }
 
     fn close(&mut self) {
-        self.pending_flags.add(FLAG_FIN);
-        self.state = TcpState::FinWait1;
+        match self.state {
+            TcpState::FinWait1 | TcpState::Closed => { /* Do nothing. */ },
+            _ => {
+                self.pending_flags.add(FLAG_FIN);
+                self.state = TcpState::FinWait1;
+            }
+        }
     }
 
     fn accept(&mut self) -> Option<TcpSocket> {
@@ -349,10 +361,14 @@ impl Socket for TcpSocket {
                 client.local_ack_no.add(1);
                 self.backlog.push_back(client);
             }
+            TcpState::Closing if header.flags.contains(FLAG_ACK) => {
+                self.state = TcpState::Closed;
+            }
             TcpState::FinWait1 if header.flags.contains(FLAG_FIN) => {
                 self.pending_flags.add(FLAG_ACK);
                 self.local_ack_no.add(1);
-                self.state = TcpState::Closed;
+                self.local_seq_no.add(1);
+                self.state = TcpState::Closing;
             }
             _ => {
                 // Unexpected message: send RST.
