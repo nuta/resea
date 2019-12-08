@@ -1,3 +1,4 @@
+use core::cell::Cell;
 use crate::allocator::{WRITABLE_PAGE_ALLOCATOR, UNMAPPED_PAGE_ALLOCATOR};
 use crate::utils::align_up;
 use crate::PAGE_SIZE;
@@ -59,9 +60,9 @@ impl RawPage {
     }
 }
 
-#[repr(transparent)]
 pub struct Page {
     raw: RawPage,
+    moved: Cell<bool>,
 }
 
 impl Page {
@@ -69,13 +70,15 @@ impl Page {
         let num_pages = align_up(len, PAGE_SIZE) / PAGE_SIZE;
         let addr = WRITABLE_PAGE_ALLOCATOR.borrow_mut().allocate(num_pages);
         Page {
-            raw: RawPage::new(addr, len)
+            raw: RawPage::new(addr, len),
+            moved: Cell::new(false),
         }
     }
 
     pub fn from_addr(addr: usize, len: usize) -> Page {
         Page {
-            raw: RawPage::new(addr, len)
+            raw: RawPage::new(addr, len),
+            moved: Cell::new(false),
         }
     }
 
@@ -86,11 +89,15 @@ impl Page {
     }
 
     pub const fn from_raw_page(raw_page: RawPage) -> Page {
-        Page { raw: raw_page }
+        Page { raw: raw_page, moved: Cell::new(false) }
     }
 
-    pub const fn as_raw_page(&self) -> RawPage {
+    pub unsafe fn as_raw_page(&self) -> RawPage {
         self.raw
+    }
+
+    pub unsafe fn mark_as_moved(&self) {
+        self.moved.replace(true);
     }
 
     pub fn is_empty(&self) -> bool {
@@ -164,6 +171,12 @@ impl Clone for Page {
 
 impl Drop for Page {
     fn drop(&mut self) {
-        WRITABLE_PAGE_ALLOCATOR.borrow_mut().free(self.addr(), self.num_pages())
+        let mut allocator = if self.moved.get() {
+            UNMAPPED_PAGE_ALLOCATOR.borrow_mut()
+        } else {
+            WRITABLE_PAGE_ALLOCATOR.borrow_mut()
+        };
+
+        allocator.free(self.addr(), self.num_pages());
     }
 }

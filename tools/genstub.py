@@ -65,7 +65,8 @@ pub struct {{ msg.name | camelcase }}{{ "Reply" if reply }}Msg {
 {% macro serialize(var, name, fields, reply) %}
     {{ var }}.header = {{ name | upper }}{{ "_REPLY" if reply }}_MSG;
 {%- if fields.page %}
-    {{ var }}.{{ fields.page.name }} = {{ fields.page.name }}.as_raw_page();
+    {{ var }}.{{ fields.page.name }} = unsafe { {{ fields.page.name }}.as_raw_page() };
+    unsafe { {{ fields.page.name }}.mark_as_moved() };
 {%- endif %}
 {%- if fields.channel %}
     {{ var }}.{{ fields.channel.name }} = {{ fields.channel.name }}.cid();
