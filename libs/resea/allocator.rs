@@ -28,17 +28,20 @@ pub struct FreeArea {
 
 pub struct PageAllocator {
     free_area: Vec<FreeArea>,
+    num_free: usize,
 }
 
 impl PageAllocator {
     pub fn new(free_area_start: usize, free_area_size: usize) -> PageAllocator {
+        let num_pages = free_area_size / PAGE_SIZE;
         let free_area = FreeArea {
             addr: free_area_start,
-            num_pages: free_area_size / PAGE_SIZE,
+            num_pages,
         };
 
         PageAllocator {
             free_area: vec![free_area],
+            num_free: num_pages,
         }
     }
 
@@ -53,6 +56,7 @@ impl PageAllocator {
                     });
                 }
 
+                self.num_free -= num_pages;
                 return free_area.addr;
             }
         }
@@ -62,6 +66,11 @@ impl PageAllocator {
 
     pub fn free(&mut self, addr: usize, num_pages: usize) {
         self.free_area.push(FreeArea { addr, num_pages });
+        self.num_free += num_pages;
+    }
+
+    pub fn num_free(&self) -> usize {
+        self.num_free
     }
 }
 
