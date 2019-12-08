@@ -94,8 +94,7 @@ impl TcpSocket {
         );
 
         if header.flags.contains(FLAG_RST) || header.flags.contains(FLAG_SYN) {
-            self.state = TcpState::Closed;
-            self.pending_flags.add(FLAG_RST);
+            self.rst();
             return;
         }
 
@@ -142,6 +141,10 @@ impl TcpSocket {
                 self.pending_flags.add(FLAG_ACK);
             }
         }
+    }
+
+    fn rst(&mut self) {
+        self.pending_flags.add(FLAG_RST);
     }
 
     pub fn remote_addr(&self) -> Option<IpAddr> {
@@ -207,6 +210,10 @@ impl Socket for TcpSocket {
 
         if self.state == TcpState::Closed {
             return None;
+        }
+
+        if self.pending_flags.contains(FLAG_RST) {
+            self.state = TcpState::Closed;
         }
 
         let mut mbuf = Mbuf::new();
@@ -330,7 +337,7 @@ impl Socket for TcpSocket {
                         backlog.local_seq_no = WrappingU32::new(header.ack_no);
                     }
                     _ => {
-                        // Unexpected message: send RST.
+                        self.rst();
                     }
                 }
 
@@ -371,7 +378,7 @@ impl Socket for TcpSocket {
                 self.state = TcpState::Closing;
             }
             _ => {
-                // Unexpected message: send RST.
+                self.rst();
             }
         }
     }
