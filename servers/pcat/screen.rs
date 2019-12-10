@@ -63,8 +63,6 @@ impl Screen {
                         (_, _) => "0",
                     };
                     
-                    let mut args = (&remaining[1..m_index]).split(';');
-                    //warn!("{:?} {:?}", args.next(), args.next());
                     self.color = match color {
                         "91" => Color::Red,
                         "94" => Color::Cyan,
