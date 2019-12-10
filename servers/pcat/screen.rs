@@ -6,11 +6,22 @@ const BLANK_CHAR: u16 = 0x0f20 /* whitespace */;
 const SCREEN_HEIGHT: usize = 25;
 const SCREEN_WIDTH: usize = 80;
 
+#[repr(u8)]
+#[derive(Clone, Copy)]
+enum Color {
+    Cyan = 3,
+    Red = 4,
+    Magenta = 5,
+    Yellow = 14,
+    White = 15,
+}
+
 pub struct Screen {
     kernel_server: &'static Channel,
     screen: Page,
     cursor_x: usize,
     cursor_y: usize,
+    color: Color,
 }
 
 impl Screen {
@@ -22,6 +33,7 @@ impl Screen {
             screen,
             cursor_x: 0,
             cursor_y: 0,
+            color: Color::White,
         }
     }
 
@@ -38,7 +50,37 @@ impl Screen {
     }
 
     pub fn print_str(&mut self, string: &str) {
-        for ch in string.chars() {
+        let mut iter = string.chars();
+        while let Some(ch) = iter.next() {
+            let remaining = iter.as_str();
+            if ch == '\x1b' && remaining.starts_with('[') {
+                // Handle a CSI sequence.
+                if let Some(m_index) = remaining.find('m') {
+                    let mut args = (&remaining[1..m_index]).split(';');
+                    let color = match (args.next(), args.next()) {
+                        (Some(_), Some(color)) => color,
+                        (Some(color), None) => color,
+                        (_, _) => "0",
+                    };
+                    
+                    let mut args = (&remaining[1..m_index]).split(';');
+                    //warn!("{:?} {:?}", args.next(), args.next());
+                    self.color = match color {
+                        "91" => Color::Red,
+                        "94" => Color::Cyan,
+                        "95" => Color::Magenta,
+                        "33" => Color::Yellow,
+                        _ => Color::White,
+                    };
+
+                    for _ in 0..(1 + m_index) {
+                        iter.next();
+                    }
+                }
+
+                continue;
+            }
+
             self.draw_char(ch);
         }
 
@@ -91,7 +133,7 @@ impl Screen {
         }
 
         // Draw a character.
-        self.draw_char_at(self.cursor_y, self.cursor_x, ch, DEFAULT_COLOR);
+        self.draw_char_at(self.cursor_y, self.cursor_x, ch, self.color as u8);
         self.cursor_x += 1;
     }
 
