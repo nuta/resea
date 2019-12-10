@@ -18,7 +18,7 @@ use resea::fmt;
 use resea::rc::Rc;
 use resea::vec::Vec;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum TcpState {
     Closed,
     Listen,
