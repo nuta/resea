@@ -6,7 +6,7 @@ BUILD_MK = .build.mk
 include .build.mk
 endif
 
-ifeq ($(filter debug release, $(BUILD)),)
+ifneq ($(filter-out debug release, $(BUILD)),)
 $(error "Invalid $$(BUILD) value: specify 'debug' or 'release'.")
 endif
 
