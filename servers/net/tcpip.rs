@@ -6,7 +6,9 @@ use crate::ipv4::{self, Ipv4Addr, Ipv4Network};
 use crate::mbuf::Mbuf;
 use crate::packet::Packet;
 use crate::tcp::{self, TcpSocket};
-use crate::transport::{BindTo, Port, Socket, TransportProtocol};
+use crate::transport::{
+    BindTo, Port, Socket, TransportProtocol, SocketReceiveResult
+};
 use crate::udp::{self, UdpSocket};
 use crate::{Error, Result};
 use resea::cell::RefCell;
@@ -313,21 +315,33 @@ impl TcpIp {
             IpAddr::Ipv4(Ipv4Addr::UNSPECIFIED),
             Port::UNSPECIFIED,
         );
-        let mut sock = self.sockets.get(&(local, remote));
+        let mut pair = (local, remote);
+        let mut sock = self.sockets.get(&pair);
         if sock.is_none() {
-            sock = self.sockets.get(&(local, unspecified));
+            pair = (local, unspecified);
+            sock = self.sockets.get(&pair);
         }
         if sock.is_none() {
-            sock = self.sockets.get(&(unspecified, unspecified))
+            pair = (unspecified, unspecified);
+            sock = self.sockets.get(&pair);
         }
 
-        match sock {
-            Some(sock) => {
-                sock.borrow_mut().receive(src, dst, &parsed_trans_data);
-                Some(sock)
+        if let Some(sock) = sock {
+            match sock.borrow_mut().receive(src, dst, &parsed_trans_data) {
+                SocketReceiveResult::Ok => {
+                    drop(sock);
+                    // FIXME: A dirty fix for addressing a compiler error regarding borrowing rules.
+                    return self.sockets.get(&pair);
+                },
+                SocketReceiveResult::Closed => {},
             }
-            None => None,
+
+            // Remove the socket since it has been closed.
+            drop(sock);
+            self.sockets.remove(&pair);
         }
+
+        None
     }
 
     fn look_for_route(&self, addr: &IpAddr) -> Option<&Route> {

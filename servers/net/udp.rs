@@ -6,6 +6,7 @@ use crate::packet::Packet;
 use crate::tcp::TcpSocket;
 use crate::transport::{
     BindTo, Port, Socket, TransportHeader, TransportProtocol, UdpTransportHeader,
+    SocketReceiveResult,
 };
 use crate::Result;
 use resea::cell::RefCell;
@@ -62,7 +63,7 @@ impl Socket for UdpSocket {
         Some((tx.device, tx.dst_addr, mbuf))
     }
 
-    fn receive<'a>(&mut self, src_addr: IpAddr, _dst_addr: IpAddr, header: &TransportHeader<'a>) {
+    fn receive<'a>(&mut self, src_addr: IpAddr, _dst_addr: IpAddr, header: &TransportHeader<'a>) -> SocketReceiveResult {
         let header = match header {
             TransportHeader::Udp(header) => header,
             _ => unreachable!(),
@@ -75,6 +76,7 @@ impl Socket for UdpSocket {
         };
 
         self.rx.push_back(rx_data);
+        SocketReceiveResult::Ok
     }
 
     fn send(

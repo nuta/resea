@@ -8,6 +8,7 @@ use crate::packet::Packet;
 use crate::ring_buffer::RingBuffer;
 use crate::transport::{
     BindTo, Port, Socket, TcpTransportHeader, TransportHeader, TransportProtocol,
+    SocketReceiveResult,
 };
 use crate::wrapping::WrappingU32;
 use crate::{Error, Result};
@@ -309,7 +310,7 @@ impl Socket for TcpSocket {
         Ok(())
     }
 
-    fn receive<'a>(&mut self, src_addr: IpAddr, dst_addr: IpAddr, header: &TransportHeader<'a>) {
+    fn receive<'a>(&mut self, src_addr: IpAddr, dst_addr: IpAddr, header: &TransportHeader<'a>) -> SocketReceiveResult {
         let header = match header {
             TransportHeader::Tcp(header) => header,
             _ => unreachable!(),
@@ -328,26 +329,28 @@ impl Socket for TcpSocket {
         // Check if the client is already in the backlog.
         for backlog in &mut self.backlog {
             if backlog.is_connected_with(src_addr, src_port) {
-                match backlog.state {
+                return match backlog.state {
                     TcpState::Established => {
                         backlog.receive_on_established(header);
+                        SocketReceiveResult::Ok
                     }
                     TcpState::SynReceived if header.flags.contains(FLAG_ACK) => {
                         backlog.state = TcpState::Established;
                         backlog.local_seq_no = WrappingU32::new(header.ack_no);
+                        SocketReceiveResult::Ok
                     }
                     _ => {
                         self.rst();
+                        SocketReceiveResult::Closed
                     }
-                }
-
-                return;
+                };
             }
         }
 
         match self.state {
             TcpState::Established => {
                 self.receive_on_established(header);
+                SocketReceiveResult::Ok
             }
             TcpState::Listen if header.flags.contains(FLAG_SYN) => {
                 trace!(
@@ -367,18 +370,26 @@ impl Socket for TcpSocket {
                 client.local_ack_no = WrappingU32::new(header.seq_no);
                 client.local_ack_no.add(1);
                 self.backlog.push_back(client);
+                SocketReceiveResult::Ok
+            }
+            TcpState::Listen => {
+                self.rst();
+                SocketReceiveResult::Ok
             }
             TcpState::Closing if header.flags.contains(FLAG_ACK) => {
                 self.state = TcpState::Closed;
+                SocketReceiveResult::Closed
             }
             TcpState::FinWait1 if header.flags.contains(FLAG_FIN) => {
                 self.pending_flags.add(FLAG_ACK);
                 self.local_ack_no.add(1);
                 self.local_seq_no.add(1);
                 self.state = TcpState::Closing;
+                SocketReceiveResult::Ok
             }
             _ => {
                 self.rst();
+                SocketReceiveResult::Closed
             }
         }
     }

@@ -70,10 +70,16 @@ pub enum TransportHeader<'a> {
     Udp(UdpTransportHeader<'a>),
 }
 
+#[derive(Debug)]
+pub enum SocketReceiveResult {
+    Ok,
+    Closed,
+}
+
 pub trait Socket {
     fn build(&mut self) -> Option<(Option<Rc<RefCell<dyn Device>>>, IpAddr, Mbuf)>;
     fn close(&mut self);
-    fn receive<'a>(&mut self, src_addr: IpAddr, dst_addr: IpAddr, header: &TransportHeader<'a>);
+    fn receive<'a>(&mut self, src_addr: IpAddr, dst_addr: IpAddr, header: &TransportHeader<'a>) -> SocketReceiveResult;
     fn protocol(&self) -> TransportProtocol;
     fn bind_to(&self) -> BindTo;
 
