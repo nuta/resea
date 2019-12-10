@@ -12,7 +12,7 @@ const INDEX_HTML: &str = r#"
 <head>
     <meta charset="utf-8">
     <title>It works!</title>
-    <link rel="icon" href="data:,">
+    <link rel="icon" href="data:;base64,=">
 </head>
 <body>
 <div style="width:800px;margin:20px auto;text-align:center;">
@@ -22,7 +22,7 @@ const INDEX_HTML: &str = r#"
 <p>
 <i>&ldquo;Operating System&rdquo; from <a href="https://xkcd.com/1508/">xkcd</a> (CC BY-NC 2.5)</i>
 <hr>
-<b>Powered by Resea</b>
+<b>Powered by <a href="https://seiya.me/resea">Resea</a></b>
 </div>
 </body>
 </html>
