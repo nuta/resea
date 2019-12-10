@@ -21,17 +21,17 @@ struct kernel_log_buffer {
 #define COLOR_BOLD_RED "\e[1;91m"
 #define COLOR_YELLOW "\e[0;33m"
 #define COLOR_BLUE "\e[0;94m"
-#define COLOR_CYAN "\e[0;96m"
+#define COLOR_MAGENTA "\e[0;95m"
 #define COLOR_RESET "\e[0m"
 
 #ifdef RELEASE_BUILD
 #    define TRACE(fmt, ...)
-#    define TRACE(fmt, ...)
+#    define DEBUG(fmt, ...)
 #else
 #    define TRACE(fmt, ...) \
         printk("[kernel] " fmt COLOR_RESET "\n", ##__VA_ARGS__)
 #    define DEBUG(fmt, ...) \
-        printk(COLOR_CYAN "[kernel] " fmt COLOR_RESET "\n", ##__VA_ARGS__)
+        printk(COLOR_MAGENTA "[kernel] " fmt COLOR_RESET "\n", ##__VA_ARGS__)
 #endif
 
 #define INFO(fmt, ...) printk(COLOR_BLUE "[kernel] " fmt COLOR_RESET "\n", ##__VA_ARGS__)
