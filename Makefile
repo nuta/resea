@@ -6,6 +6,10 @@ BUILD_MK = .build.mk
 include .build.mk
 endif
 
+ifeq ($(filter debug release, $(BUILD)),)
+$(error "Invalid $$(BUILD) value: specify 'debug' or 'release'.")
+endif
+
 V           ?=
 ARCH        ?= x64
 BUILD       ?= debug
