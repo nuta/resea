@@ -16,18 +16,6 @@ jobs:
     - os: linux
       dist: bionic
       env: CMD=build LLVM_PREFIX=/usr/bin/ LLVM_SUFFIX=-8
-    - os: osx
-      osx_image: xcode11.2
-      env: CMD=docs
-    - os: osx
-      osx_image: xcode11.2
-      env: CMD=kernel-lint
-    - os: osx
-      osx_image: xcode11.2
-      env: CMD=user-lint
-  allow_failures:
-    - env: CMD=kernel-lint
-    - env: CMD=user-lint
 
 addons:
   homebrew:
