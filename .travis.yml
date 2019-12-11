@@ -57,6 +57,7 @@ addons:
 install:
   - pip3 install -r tools/requirements.txt
   - cargo install xargo || true
+  - cargo install mdbook || true
   - rustup component add rust-src
 
 script:
