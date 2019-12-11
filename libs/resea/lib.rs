@@ -18,6 +18,7 @@
 //! - [`allocator`]
 //! - [`backtrace`]
 //! - [`channel`]
+//! - [`collections`]
 //! - [`idl`]
 //! - [`lazy_static`]
 //! - [`mainloop`]
