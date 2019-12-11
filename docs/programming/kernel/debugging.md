@@ -1,4 +1,4 @@
-# Debugging
+# Kernel Debugging
 Resea Kernel is written in C. While some people say *"C is a bad language! Rewrite
 everything in Rust!"*, C is a pretty good chioce for writing kernel because it
 makes easy to understand what happens.
@@ -52,7 +52,7 @@ Kernel debugger is available only in the debug build. You can use it over the se
 Use Wireshark to inspect messages!
 
 ### Set Up
-1. Install this dissector (in macOS, copy this file to ~/.config/wireshark/plugins/).
+1. Install the dissector `misc/wireshark.lua` (in macOS, copy this file to `~/.config/wireshark/plugins/`).
 2. Open `Prefrences > Protocols > DLT_USER > Encapsulations Table`.
 3. Add a new rule: `DLT="User 0 (DLT=147)", Payload protocol="resea", Header/Trailer size=0`
    (see [HowToDissectAnything - The Wireshark Wiki](https://wiki.wireshark.org/HowToDissectAnything)).
