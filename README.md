@@ -3,7 +3,7 @@ Resea
 [![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
 
 
-TODO: screenshot
+![screenshot](https://seiya.me/resea/screenshot.png)
 
 Resea *[ríːseə]* is a microkernel-based operating system written from scratch featuring:
 
