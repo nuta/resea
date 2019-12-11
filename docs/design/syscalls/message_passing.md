@@ -1,5 +1,6 @@
 # Message Passing (IPC)
-IPC on Resea is channel-based and synchronous.
+Inter-Process Communication (IPC) is synchronous (except `notify` system call)
+and channel-based.
 
 ## Message Structure
 You may noticed that `ipc` system call does not take a pointer to the message buffer
