@@ -4,6 +4,15 @@ COMMON_CFLAGS += --target=x86_64-pc-linux-elf
 COMMON_CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 KERNEL_CFLAGS += -mcmodel=large -mno-red-zone
 
+ifeq ($(BUILD), debug)
+KERNEL_CFLAGS += -fsanitize=undefined,kernel-address
+KERNEL_CFLAGS += -mllvm -asan-instrumentation-with-call-threshold=0
+KERNEL_CFLAGS += -mllvm -asan-globals=false
+KERNEL_CFLAGS += -mllvm -asan-stack=false
+KERNEL_CFLAGS += -mllvm -asan-use-after-return=false
+KERNEL_CFLAGS += -mllvm -asan-use-after-scope=false
+endif
+
 HDD_DIR = $(BUILD_DIR)/hdd
 BOCHS ?= bochs
 QEMU ?= qemu-system-x86_64
