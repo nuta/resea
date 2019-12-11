@@ -5,6 +5,7 @@ Cargo.lock
 /.vscode
 /kernel/include/idl.h
 /libs/resea/idl
+/book
 
 *.o
 *.bin

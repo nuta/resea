@@ -2,6 +2,9 @@ Resea
 =====
 [![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
 
+
+TODO: screenshot
+
 Resea *[ríːseə]* is a microkernel-based operating system written from scratch featuring:
 
 - **A *pure* microkernel written in C:** provides only primitive such as
@@ -14,49 +17,15 @@ Resea *[ríːseə]* is a microkernel-based operating system written from scratch
 Resea aims to provide an attractive developer experience and be *hackable*:
 intuitive to understand the whole design, easy to customize the system, and fun to extend the functionality.
 
-See **[Documentation](#documentation)** for details.
-
-Prerequisites
--------------
-
-**macOS:**
-```
-$ brew install llvm python3 qemu bochs i386-elf-grub xorriso mtools \
-               doxygen graphviz
-$ pip3 install -r tools/requirements.txt
-```
-
-**Ubuntu:**
-```
-$ sudo apt install llvm lld clang make git python3 python3-pip \
-                   qemu bochs grub2 xorriso mtools \
-                   doxygen graphviz
-$ pip3 install -r tools/requirements.txt
-```
-
-Building
---------
-```bash
-$ make build         # Build a kernel executable.
-$ make build V=1     # Build a kernel executable with verbose command output.
-
-$ make run           # Run on QEMU with -nographic.
-$ make run GUI=1     # Run on QEMU without -nographic.
-$ make bochs         # Run on Bochs.
-
-$ make docs          # Generate a source code reference.
-$ make clean         # Remove built files.
-```
+Read **[documentation](https://seiya.me/resea/docs)** to get started.
 
 Documentation
 -------------
-- **[Design](https://github.com/seiyanuta/resea/blob/master/docs/design.md)**
-- **[Internals](https://github.com/seiyanuta/resea/blob/master/docs/internals.md)**
-- **[Server Writer's Guide](https://github.com/seiyanuta/resea/blob/master/docs/server-writers-guide.md)**
+**[Documentation](https://seiya.me/resea/docs)**
 
 Contributing
 ------------
-We receive bug reports, feature requests, and patches on [GitHub](https://github.com/seiyanuta/resea).
+We accept bug reports, feature requests, and patches on [GitHub](https://github.com/seiyanuta/resea).
 
 License
 -------

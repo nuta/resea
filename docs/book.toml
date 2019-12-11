@@ -1,0 +1,22 @@
+[book]
+title = "Resea Documentation"
+description = ""
+authors = ["Seiya Nuta"]
+language = "en"
+src = "docs"
+
+[build]
+build-dir = "build"
+
+[output.html]
+mathjax-support = true
+git-repository-url = "https://github.com/seiyanuta/resea"
+
+[output.html.search]
+limit-results = 20
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 2
+boost-paragraph = 1
+expand = true
+heading-split-level = 2
