@@ -28,7 +28,7 @@ void boot(void) {
     thread_init();
     kernel_server_init();
     userland(&bootinfo);
-    arch_mp_init();
+    // TODO: arch_mp_init();
 
     thread_first_switch();
     while (1) {
