@@ -14,7 +14,6 @@ V           ?=
 ARCH        ?= x64
 BUILD       ?= debug
 BUILD_DIR   ?= build
-VERSION     ?= $(shell git rev-parse HEAD | head -c7)
 INIT        ?= memmgr
 STARTUPS    ?= shell fatfs net webapi pcat ide e1000
 LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
@@ -28,6 +27,11 @@ LD       := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
 NM       := $(LLVM_PREFIX)llvm-nm$(LLVM_SUFFIX)
 OBJCOPY  := $(LLVM_PREFIX)llvm-objcopy$(LLVM_SUFFIX)
 PROGRESS := printf "  \\033[1;35m%8s  \\033[1;m%s\\033[m\\n"
+
+VERSION := $(strip $(shell git describe --tags 2> /dev/null))
+ifeq ($(VERSION),)
+VERSION := $(shell git rev-parse HEAD | head -c7)
+endif
 
 ifeq ($(BUILD), debug)
 COMMON_CFLAGS += -O1 -fsanitize=undefined -DDEBUG_BUILD
