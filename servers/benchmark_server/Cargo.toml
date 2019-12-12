@@ -1,0 +1,12 @@
+[package]
+name = "benchmark-server"
+version = "0.0.0"
+authors = ["Seiya Nuta <nuta@seiya.me>"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
+path = "lib.rs"
+
+[dependencies]
+resea = { path = "../../libs/resea" }

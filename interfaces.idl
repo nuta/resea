@@ -148,6 +148,13 @@ interface net_client {
     tcp_accepted(listen_sock: handle, client_sock: handle) -> ()
 }
 
+[id(16)]
+interface benchmark {
+    [id(1), type(call)]
+    nop() -> ()
+}
+
+
 [id(30)]
 interface storage_device {
     [id(1), type(call)]
