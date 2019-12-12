@@ -37,6 +37,6 @@ SECTIONS {
     . = 0x03a00000; __heap_end = .;
     . = 0x03a00000; __writable_pages = .;
     . = 0x04000000; __writable_pages_end = .;
-    . = 0x70000000; __unmapped_pages = .;
-    . = 0x80000000; __unmapped_pages_end = .;
+    . = 0x50000000; __unmapped_pages = .;
+    . = 0x70000000; __unmapped_pages_end = .;
 }

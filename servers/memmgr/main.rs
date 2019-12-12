@@ -1,3 +1,4 @@
+use crate::arch::*;
 use crate::initfs::{File, Initfs};
 use crate::process::ProcessManager;
 use resea::allocator::PageAllocator;
@@ -32,9 +33,6 @@ struct Server {
     servers: HashMap<InterfaceId, RegisteredServer>,
     connect_requests: Vec<ConnectRequest>,
 }
-
-const FREE_MEMORY_START: usize = 0x0400_0000;
-const FREE_MEMORY_SIZE: usize = 0x1000_0000;
 
 impl Server {
     pub fn new(initfs: &'static Initfs) -> Server {

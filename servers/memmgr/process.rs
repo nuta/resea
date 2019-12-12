@@ -1,3 +1,4 @@
+use crate::arch::*;
 use crate::elf::ELF;
 use crate::initfs::File;
 use resea::cmp::min;
@@ -33,14 +34,6 @@ pub struct ProcessManager {
     process_server: &'static Channel,
     processes: HashMap<HandleId, Process>,
 }
-
-// TODO: Move to arch.
-const THREAD_INFO_ADDR: usize = 0x00f1_b000;
-const APP_IMAGE_START: usize = 0x0100_0000;
-const APP_IMAGE_SIZE: usize = 0x0100_0000;
-const APP_ZEROED_PAGES_START: usize = 0x0200_0000;
-const APP_ZEROED_PAGES_SIZE: usize = 0x0200_0000;
-const APP_INITIAL_STACK_POINTER: usize = 0x0300_0000;
 
 impl ProcessManager {
     pub fn new(process_server: &'static Channel) -> ProcessManager {
