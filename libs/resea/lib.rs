@@ -104,7 +104,7 @@ pub mod server;
 pub mod thread_info;
 pub mod utils;
 
-mod arch;
+pub mod arch;
 mod init;
 
 #[cfg(target_os = "resea")]

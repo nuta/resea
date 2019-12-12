@@ -1,11 +1,11 @@
 use crate::result::{Error, Result};
 
-const SYSCALL_IPC: u32 = 0;
-const SYSCALL_OPEN: u32 = 1;
-const SYSCALL_TRANSFER: u32 = 4;
-const IPC_SEND: u32 = 1 << 8;
-const IPC_RECV: u32 = 1 << 9;
-const IPC_NOBLOCK: u32 = 1 << 10;
+pub const SYSCALL_IPC: u32 = 0;
+pub const SYSCALL_OPEN: u32 = 1;
+pub const SYSCALL_TRANSFER: u32 = 4;
+pub const IPC_SEND: u32 = 1 << 8;
+pub const IPC_RECV: u32 = 1 << 9;
+pub const IPC_NOBLOCK: u32 = 1 << 10;
 
 unsafe fn convert_error(error: i32) -> Result<()> {
     if error != 0 {
