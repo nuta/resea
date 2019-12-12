@@ -389,7 +389,7 @@ impl Socket for TcpSocket {
             }
             _ => {
                 self.rst();
-                SocketReceiveResult::Closed
+                SocketReceiveResult::Ok
             }
         }
     }
