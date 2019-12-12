@@ -8,28 +8,13 @@ use resea::idl::benchmark;
 use resea::idl::server::{CONNECT_REPLY_MSG, ConnectReplyMsg};
 
 #[inline(always)]
-fn ipc_recv(cid: i32) {
+fn ipc(cid: i32, ops: u32) {
     unsafe {
         let _error: i32;
         asm!(
             "syscall"
             : "={eax}"(_error)
-            : "{eax}"(SYSCALL_IPC | IPC_RECV),
-              "{rdi}"(cid)
-            : "memory", "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"
-            : "volatile"
-        );
-    }
-}
-
-#[inline(always)]
-fn ipc_send(cid: i32) {
-    unsafe {
-        let _error: i32;
-        asm!(
-            "syscall"
-            : "={eax}"(_error)
-            : "{eax}"(SYSCALL_IPC | IPC_SEND),
+            : "{eax}"(SYSCALL_IPC | ops),
               "{rdi}"(cid)
             : "memory", "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"
             : "volatile"
@@ -58,9 +43,9 @@ pub fn main() {
     // Handle benchmark (round-trip IPC) messages.
     let thread_info = unsafe { get_thread_info() };
     let server_ch_cid = server_ch.cid();
+    ipc(server_ch_cid, IPC_RECV);
     loop {
-        ipc_recv(server_ch_cid);
         let from = thread_info.ipc_buffer.from;
-        ipc_send(from);
+        ipc(from, IPC_SEND | IPC_RECV);
     }
 }
