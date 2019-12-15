@@ -26,7 +26,7 @@
 - [Userland Programming](programming/userland/README.md)
   - [Hello, World!](programming/userland/hello_world.md)
   - [Directory Strcture](programming/userland/directory_structure.md)
-  - [Resea Standard Library](programming/userland/resea.md)
+  - [Resea Standard Library](programming/userland/std.md)
   - [Interfaces](programming/userland/interfaces.md)
   - [Mainloop](programming/userland/mainloop.md)
   - [Deferred Work](programming/userland/deferred_work.md)
