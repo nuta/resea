@@ -2,7 +2,7 @@
 Serializing and deserializing messages are error-prone and painful. Resea provides
 auto-generated *IPC stubs* to make it easy to send and receive messages.
 
-Every server provides at least one service which definied as *interface*,
+Every server provides at least one service which is definied as *interface*,
 a set of messages that implementors must accept and respond.
 
 This file defines the interfaces in our own domain specific language. We
