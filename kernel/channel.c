@@ -40,6 +40,7 @@ void channel_incref(struct channel *ch) {
 }
 
 /// Increments the reference counter of the channel.
+/// TODO: Not tested!
 void channel_decref(struct channel *ch) {
     ASSERT(ch->ref_count >= 1);
     ch->ref_count--;
@@ -82,6 +83,7 @@ void channel_decref(struct channel *ch) {
 
 /// Decrements the refrence counter of the channel and destructs a channel if
 /// possible.
+/// TODO: Not tested!
 void channel_destroy(struct channel *ch) {
     DEBUG_ASSERT(!ch->destructed);
     ch->destructed = true;

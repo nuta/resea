@@ -61,6 +61,7 @@ struct process *process_create(const char *name) {
 }
 
 /// Destroys a process.
+/// TODO: Not tested!
 void process_destroy(UNUSED struct process *process) {
     if (process == init_process) {
         PANIC("Tried to kill the init process!");

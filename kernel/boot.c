@@ -51,7 +51,8 @@ void boot_ap(void) {
 
 extern char __initfs[];
 
-/// The pager which maps the initfs image in the kernel executable image.
+/// The pager which maps the initfs image embedded in the kernel executable
+/// image.
 static paddr_t initfs_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
     ASSERT(((vaddr_t) &__initfs & (PAGE_SIZE - 1)) == 0 &&
            "initfs is not aligned");
@@ -59,8 +60,7 @@ static paddr_t initfs_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
     return into_paddr(__initfs + (vaddr - INITFS_ADDR));
 }
 
-/// The pager which maps the physical page whose address is identical with the
-/// requested virtual address.
+/// The straight-mapping pager: virtual addresses are equal to physical.
 static paddr_t straight_map_pager(UNUSED struct vmarea *vma, vaddr_t vaddr) {
     return vaddr;
 }
@@ -88,8 +88,8 @@ static void userland(struct bootinfo *args) {
     // Set up pagers.
     int flags = PAGE_WRITABLE | PAGE_USER;
     error_t err;
-    err = vmarea_create(init_process, INITFS_ADDR, INITFS_END, initfs_pager, NULL,
-                        flags);
+    err = vmarea_create(init_process, INITFS_ADDR, INITFS_END, initfs_pager,
+                        NULL, flags);
     ASSERT(err == OK);
     err = vmarea_create(init_process, STRAIGHT_MAP_ADDR, STRAIGHT_MAP_END,
                         straight_map_pager, NULL, flags);

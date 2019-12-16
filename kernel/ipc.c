@@ -279,8 +279,9 @@ static MUST_USE error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Wait for a message...
         thread_switch();
 
-        // Received a message or a notification, or the IPC operation is
-        // aborted.
+        // Sleep until a thread sends a message/notification to `recv_ch` (or
+        // an IPC operation has been aborted in the sender thread)...
+
         if (current->abort_reason != OK) {
             WARN("aborted IPC!");
             return atomic_swap(&current->abort_reason, OK);
@@ -322,7 +323,7 @@ error_t kernel_ipc(cid_t cid, uint32_t syscall) {
     return err;
 }
 
-/// The faster ipc system call implementation optimized for the common case:
+/// A faster IPC system call implementation optimized for a common case:
 ///
 ///   - Payloads are inline only (i.e., no channel/page payloads).
 ///   - Both IPC_SEND and  IPC_RECV are specified.
@@ -331,8 +332,9 @@ error_t kernel_ipc(cid_t cid, uint32_t syscall) {
 /// If these preconditions are not met, it fall backs into the full-featured
 /// version (`sys_ipc()`).
 ///
-/// Note that the current implementation is not fast enough. We need to
-/// eliminate memory accesses...
+/// TODO: Take into account cache memory and eliminate memory accesses to make
+///       it even faster.
+///
 static error_t sys_ipc_fastpath(cid_t cid) {
     DEBUG_ASSERT(CURRENT->process != kernel_process);
 
@@ -350,19 +352,18 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     struct channel *dst_ch  = linked_with->transfer_to;
     struct thread *receiver = dst_ch->receiver;
 
-    // Check whether the message can be sent in fastpath. Here we use `+`
+    // Check whether the message can be sent in the fastpath. Here we use `+`
     // instead of lengthy if statements to eliminate branches.
     unsigned int slowpath =
         // Fastpath accepts only inline payloads.
         !FASTPATH_HEADER_TEST(header) +
-        // Make sure that the channels are not destructed.
+        // The related channels are not destructed.
         ch->destructed + recv_ch->destructed + dst_ch->destructed +
         // There's no pending notification.
         recv_ch->notification +
-        // Make sure that the current thread is able to be the receiver of
-        // `recv_ch`.
+        // The current thread is able to be the receiver of `recv_ch`.
         ((int) recv_ch->receiver) +
-        // Make sure that no threads are waitng for us.
+        // No threads are waitng for us.
         !list_is_empty(&recv_ch->queue) +
         // A receiver thread already waits for a message.
         !receiver;
@@ -392,7 +393,9 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     SET_KDEBUG_INFO(current, receive_from, recv_ch);
     arch_thread_switch(current, receiver);
 
-    // Received a message or a notification, or the IPC operation is aborted.
+    // Sleep until a thread sends a message/notification to `recv_ch` (or a IPC
+    // operation has been aborted in the sender thread)...
+
     // Read and clear the notification field and go back to the userspace.
     m->notification = atomic_swap(&recv_ch->notification, 0);
     IPC_TRACE(m, "recv (fastpath): %pC <- @%d (header=%p, notification=%p)",

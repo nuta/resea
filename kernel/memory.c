@@ -8,7 +8,7 @@
 #include <support/kasan.h>
 #include <support/stats.h>
 
-/// The PAGE_SIZE-sized memory pool.
+/// The memory pool PAGE_SIZE-sized objects (e.g. page table).
 struct kmalloc_arena page_arena;
 /// The memory pool for small objects.
 struct kmalloc_arena object_arena;
@@ -46,7 +46,10 @@ void arena_init(struct kmalloc_arena *arena, vaddr_t addr, size_t arena_size,
 }
 
 /// Allocates a memory. Don't use this directly; use KMALLOC() macro.
-/// TODO: Prepare zero-filled pages in idle threads.
+///
+/// TODO: Add an option KMALLOC_ZERO_FILLED, which returns zeroed pages. Filling
+///       unused pages in idle threads in advance would be a good way to
+///       eliminate memset costs.
 void *kmalloc_from(struct kmalloc_arena *arena) {
     if (list_is_empty(&arena->free_list)) {
         PANIC("Run out of kernel memory.");
@@ -97,6 +100,7 @@ MUST_USE error_t vmarea_create(struct process *process, vaddr_t start,
     return OK;
 }
 
+// TODO: Not tested!
 void vmarea_destroy(struct vmarea *vma) {
     list_remove(&vma->next);
     kfree(&object_arena, vma);
@@ -162,7 +166,7 @@ paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
                 PANIC("link_page returned an error: %d", err);
             }
 
-            // Now we've done what we have to do. Return to the exception
+            // Successfully filled the accessed page. Return to the exception
             // handler and resume the thread.
             return paddr;
         }
