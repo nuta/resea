@@ -282,16 +282,19 @@ static MUST_USE error_t sys_ipc(cid_t cid, uint32_t syscall) {
         // Sleep until a thread sends a message/notification to `recv_ch` (or
         // an IPC operation has been aborted in the sender thread)...
 
-        if (current->abort_reason != OK) {
-            WARN("aborted IPC!");
-            return atomic_swap(&current->abort_reason, OK);
-        }
-
         // Read and clear the notification field atomically.
         m->notification = atomic_swap(&recv_ch->notification, 0);
+
         IPC_TRACE(m, "recv: %pC <- @%d (header=%p, notification=%p)",
                   recv_ch, m->from, m->header, m->notification);
         SET_KDEBUG_INFO(current, receive_from, NULL);
+
+        if (current->abort_reason != OK) {
+            // TODO: Remove this warning once the kernel gets stable.
+            WARN("aborted IPC!");
+        }
+
+        return atomic_swap(&current->abort_reason, OK);
     }
 
     return OK;
@@ -401,6 +404,7 @@ static error_t sys_ipc_fastpath(cid_t cid) {
     IPC_TRACE(m, "recv (fastpath): %pC <- @%d (header=%p, notification=%p)",
               recv_ch, m->from, m->header, m->notification);
     SET_KDEBUG_INFO(current, receive_from, NULL);
+
     return atomic_swap(&current->abort_reason, OK);
 
 slowpath_fallback:
