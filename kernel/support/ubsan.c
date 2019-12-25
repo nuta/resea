@@ -14,11 +14,10 @@ void __ubsan_handle_type_mismatch_v1(struct ubsan_mismatch_data_v1 *data,
                                      vaddr_t ptr) {
     if (!ptr) {
         report_ubsan_event("NULL pointer dereference");
-    } else if (data->align != 0 && (ptr & (data->align - 1)) != 0) {
-        report_ubsan_event("misaligned access");
+    } else if (data->align != 0 && (ptr & ((1 << data->align) - 1)) != 0) {
+        PANIC("pointer %p is not aligned to %d", ptr, 1 << data->align);
     } else {
-        PANIC("pointer %p is not large enough for %s",
-              ptr, data->type->name);
+        PANIC("pointer %p is not large enough for %s", ptr, data->type->name);
     }
 }
 
