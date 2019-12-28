@@ -105,7 +105,6 @@ void x64_ack_interrupt(void) {
 }
 
 void x64_apic_timer_init(void) {
-    x64_ioapic_enable_irq(APIC_TIMER_VECTOR, 0);
     x64_write_apic(APIC_REG_TIMER_INITCNT, 0xffffffff);
     x64_write_apic(APIC_REG_LVT_TIMER, APIC_TIMER_VECTOR | 0x20000);
     x64_write_apic(APIC_REG_TIMER_DIV, APIC_TIMER_DIV);
