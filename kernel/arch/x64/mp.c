@@ -28,7 +28,7 @@ static void start_aps() {
         (size_t) x64_ap_boot_end - (size_t) x64_ap_boot);
 
     for (unsigned apic_id = 1; apic_id < x64_num_cpus(); apic_id++) {
-        INFO("booting CPU #%d", arch_get_cpu_id());
+        INFO("booting CPU #%d", apic_id);
 
         x64_send_ipi(0, IPI_DEST_UNICAST, apic_id, IPI_MODE_INIT);
         udelay(20000);
