@@ -28,7 +28,7 @@ addons:
       - i386-elf-grub
       - doxygen
       - graphviz
-      - python3
+      - python
   apt:
     packages:
       - llvm-8
@@ -44,6 +44,7 @@ addons:
       - python3-setuptools
 
 install:
+  - brew link --overwrite python
   - pip3 install -r tools/requirements.txt
   - cargo install xargo || true
   - cargo install mdbook || true
