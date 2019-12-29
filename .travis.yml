@@ -28,6 +28,7 @@ addons:
       - i386-elf-grub
       - doxygen
       - graphviz
+      - python3
   apt:
     packages:
       - llvm-8
