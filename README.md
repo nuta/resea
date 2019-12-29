@@ -1,6 +1,6 @@
 Resea
 =====
-[![Build Status](https://travis-ci.com/seiyanuta/resea.svg?branch=master)](https://travis-ci.com/seiyanuta/resea)
+[![Build Status](https://travis-ci.com/nuta/resea.svg?branch=master)](https://travis-ci.com/nuta/resea)
 
 
 ![screenshot](https://seiya.me/resea/screenshot.png)
