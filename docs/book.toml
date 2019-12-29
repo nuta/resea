@@ -10,7 +10,7 @@ build-dir = "build"
 
 [output.html]
 mathjax-support = true
-git-repository-url = "https://github.com/seiyanuta/resea"
+git-repository-url = "https://github.com/nuta/resea"
 
 [output.html.search]
 limit-results = 20

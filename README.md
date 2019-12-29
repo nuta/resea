@@ -25,7 +25,7 @@ Documentation
 
 Contributing
 ------------
-We accept bug reports, feature requests, and patches on [GitHub](https://github.com/seiyanuta/resea).
+We accept bug reports, feature requests, and patches on [GitHub](https://github.com/nuta/resea).
 
 License
 -------

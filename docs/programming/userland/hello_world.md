@@ -5,7 +5,7 @@ In this section, we'll create a server named `rand`, which replies random number
 
 ## 1. Clone the Repository
 ```
-$ git clone https://github.com/seiyanuta/resea
+$ git clone https://github.com/nuta/resea
 $ cd resea
 ```
 
