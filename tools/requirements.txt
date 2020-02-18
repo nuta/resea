@@ -1,3 +1,0 @@
-colorama
-lark-parser
-jinja2

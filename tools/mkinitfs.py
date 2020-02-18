@@ -7,70 +7,49 @@ import sys
 VERSION = 1
 PAGE_SIZE = 4096
 JUMP_CODE_SIZE = 16
-FS_HEADER_SIZE = 128
-FILE_HEADER_SIZE = 64
+FILE_ENTRY_SIZE = 64
+INITFS_MAX_SIZE = 8 *1024 * 1024
 
-# Don't change this value: the kernel memory map layout assumes that initfs.bin
-# is smaller than 16MiB!
-INITFS_MAX_SIZE = (16 *1024 * 1024) - 1
-
-def construct_file_header(name, data, length):
-    assert len(str(name)) < 48
-    padding = PAGE_SIZE - (length % PAGE_SIZE)
-    header = struct.pack("48sIH10x", str(name).encode("utf-8"), length, padding)
-    return header, padding
-
-def make_image(startup, root_dir, file_list):
-    image = bytes()
-
-    # Append the startup code.
-    num_files = 1
-    startup_bin = open(startup, "rb") .read()
-    startup_len = len(startup_bin) - FS_HEADER_SIZE - FILE_HEADER_SIZE
-    header, padding = construct_file_header(Path(startup).name, startup_bin,
-        startup_len)
-    image += startup_bin + bytearray(padding)
-    image = image[:FS_HEADER_SIZE] + header + image[FS_HEADER_SIZE+len(header):]
-
-    # Append files.
-    for file in Path(root_dir).glob("**/*"):
-        if not file.is_file():
-            continue
-
-        name = file.relative_to(root_dir)
-        if file_list and str(name) not in file_list:
-            print(f"mkinitfs: Excluding '{name}'")
-            continue
-
-        if len(str(name)) >= 32:
-            sys.exit(f"too long file name: {name}")
-
-        data = open(file, "rb").read()
-        header, padding = construct_file_header(name, data, len(data))
-        image += header + data + struct.pack(f"{padding}x")
-        num_files += 1
-
-    # Write the file system header.
-    fs_header = struct.pack("III", VERSION, len(image), num_files)
-    image = image[:JUMP_CODE_SIZE] + fs_header + \
-        image[JUMP_CODE_SIZE+len(fs_header):]
-
-    if len(image) > INITFS_MAX_SIZE:
-        sys.exit(f"initfs.bin is too big ({len(image) / 1024}KiB)")
-    return image
+def align_up(value, align):
+    return (value + align - 1) & ~(align - 1)
 
 def main():
-    parser = argparse.ArgumentParser(description="Generates a initfs image.")
+    parser = argparse.ArgumentParser(description="Generates a initfs initfs.")
     parser.add_argument("-o", dest="output", help="The output file.")
-    parser.add_argument("-s", dest="startup",
-        help="The init server executable.")
-    parser.add_argument("--file-list", help="Files to include.")
-    parser.add_argument("dir",
-        help="The root directory of initfs to be embeddded.")
+    parser.add_argument("--init", dest="init", help="The init binary.")
+    parser.add_argument("files", nargs="*", help="Files.")
     args = parser.parse_args()
 
+    # Write the init binary and the file system header.
+    init_bin = open(args.init, "rb").read()
+    header = struct.pack("IIII", VERSION, len(init_bin), len(args.files), 0)
+    initfs = init_bin[:JUMP_CODE_SIZE] + header + init_bin[JUMP_CODE_SIZE+len(header):]
+
+    # Append files.
+    file_contents = bytes()
+    file_off = align_up(len(initfs) + FILE_ENTRY_SIZE * len(args.files), PAGE_SIZE)
+    for path in args.files:
+        name = str(Path(path).stem)
+        if len(name) >= 48:
+            sys.exit(f"too long file name: {name}")
+
+        data = open(path, "rb").read()
+        file_contents += data
+        initfs += struct.pack("48sII8x", name.encode("ascii"), file_off, len(data))
+
+        padding = align_up(len(file_contents), PAGE_SIZE) - len(file_contents)
+        file_contents += struct.pack(f"{padding}x")
+        file_off += len(data) + padding
+
+    padding = align_up(len(initfs), PAGE_SIZE) - len(initfs)    
+    initfs += struct.pack(f"{padding}x")
+    initfs += file_contents
+
+    if len(initfs) > INITFS_MAX_SIZE:
+        sys.exit(f"initfs.bin is too big ({len(initfs) / 1024}MB)")
+
     with open(args.output, "wb") as f:
-        f.write(make_image(args.startup, args.dir, args.file_list))
+        f.write(initfs)
 
 if __name__ == "__main__":
     main()

@@ -1,185 +1,120 @@
+#include "memory.h"
 #include <arch.h>
-#include <list.h>
-#include <memory.h>
-#include <support/printk.h>
-#include <process.h>
-#include <table.h>
-#include <thread.h>
-#include <support/kasan.h>
-#include <support/stats.h>
+#include <message.h>
+#include <string.h>
+#include "ipc.h"
+#include "printk.h"
+#include "syscall.h"
+#include "task.h"
 
-/// The memory pool PAGE_SIZE-sized objects (e.g. page table).
-struct kmalloc_arena page_arena;
-/// The memory pool for small objects.
-struct kmalloc_arena object_arena;
+extern char __kernel_heap[];
+extern char __kernel_heap_end[];
+extern char __initfs[];
 
-static void add_free_list(struct kmalloc_arena *arena, vaddr_t addr,
-                          size_t num_objects) {
-    struct free_list *free_list = (struct free_list *) addr;
-#ifdef DEBUG_BUILD
-    kasan_check_double_free(free_list);
-    // Fill the shadow memory to access `free_list`.
-    kasan_init_area(ASAN_UNINITIALIZED, free_list, sizeof(*free_list));
-    free_list->magic1 = FREE_LIST_MAGIC1;
-    free_list->magic2 = FREE_LIST_MAGIC2;
-#endif
+static list_t heap;
 
-    free_list->num_objects = num_objects;
-    list_push_back(&arena->free_list, &free_list->next);
-
-#ifdef DEBUG_BUILD
-    kasan_init_area(ASAN_FREED, free_list->padding, sizeof(free_list->padding));
-#endif
+static void add_free_list(void *addr, size_t num_pages) {
+    struct free_list *free = addr;
+    free->num_pages = num_pages;
+    free->magic1 = FREE_LIST_MAGIC1;
+    free->magic2 = FREE_LIST_MAGIC2;
+    list_push_back(&heap, &free->next);
 }
 
-/// Creates a new memory pool.
-void arena_init(struct kmalloc_arena *arena, vaddr_t addr, size_t arena_size,
-                size_t object_size) {
-    ASSERT(arena_size > object_size);
-    ASSERT(arena_size > sizeof(struct free_list));
-
-    size_t num_objects = arena_size / object_size;
-    arena->object_size = object_size;
-    arena->num_objects = num_objects;
-    list_init(&arena->free_list);
-    add_free_list(arena, addr, num_objects);
-}
-
-/// Allocates a memory. Don't use this directly; use KMALLOC() macro.
-///
-/// TODO: Add an option KMALLOC_ZERO_FILLED, which returns zeroed pages. Filling
-///       unused pages in idle threads in advance would be a good way to
-///       eliminate memset costs.
-void *kmalloc_from(struct kmalloc_arena *arena) {
-    if (list_is_empty(&arena->free_list)) {
+/// Allocates a memory space in the kernel heap. The address is always aligned
+/// to PAGE_SIZE.
+void *kmalloc(size_t size) {
+    if (list_is_empty(&heap)) {
         PANIC("Run out of kernel memory.");
     }
 
-    struct free_list *free_list = LIST_CONTAINER(
-        list_pop_front(&arena->free_list), struct free_list, next);
+    struct free_list *free =
+        LIST_CONTAINER(list_pop_front(&heap), struct free_list, next);
 
-    DEBUG_ASSERT(free_list->magic1 == FREE_LIST_MAGIC1);
-    DEBUG_ASSERT(free_list->magic2 == FREE_LIST_MAGIC2);
-    DEBUG_ASSERT(free_list->num_objects >= 1);
+    ASSERT(size <= PAGE_SIZE);
+    ASSERT(free->magic1 == FREE_LIST_MAGIC1);
+    ASSERT(free->magic2 == FREE_LIST_MAGIC2);
+    ASSERT(free->num_pages >= 1);
 
-    free_list->num_objects--;
-    if (free_list->num_objects > 0) {
-        list_push_back(&arena->free_list, &free_list->next);
+    free->num_pages--;
+    if (free->num_pages > 0) {
+        list_push_back(&heap, &free->next);
     }
 
-    vaddr_t allocated =
-        (vaddr_t) free_list + free_list->num_objects * arena->object_size;
-#ifdef DEBUG_BUILD
-    kasan_init_area(ASAN_UNINITIALIZED, (void *) allocated, arena->object_size);
-#endif
-    return (void *) allocated;
+    void *ptr = (void *) ((vaddr_t) free + free->num_pages * PAGE_SIZE);
+    return ptr;
 }
 
 /// Frees a memory.
-void kfree(struct kmalloc_arena *arena, void *ptr) {
-    add_free_list(arena, (vaddr_t) ptr, 1);
+void kfree(void *ptr) {
+    add_free_list(ptr, 1);
 }
 
-/// Adds a new vm area.
-MUST_USE error_t vmarea_create(struct process *process, vaddr_t start,
-                               vaddr_t end, pager_t pager, void *pager_arg,
-                               int flags) {
-    struct vmarea *vma = KMALLOC(&object_arena, sizeof(struct vmarea));
-    if (!vma) {
-        return ERR_OUT_OF_MEMORY;
+/// Calls the pager task. It always returns a valid paddr: if the memory access
+/// is invalid, the pager kills the task instead of replying the page fault
+/// message.
+static paddr_t user_pager(vaddr_t addr, pagefault_t fault, pageattrs_t *attrs) {
+    struct message m;
+    m.type = PAGE_FAULT_MSG;
+    m.page_fault.task = CURRENT->tid;
+    m.page_fault.vaddr = addr;
+    m.page_fault.fault = fault;
+
+    error_t err = kernel_ipc(CURRENT->pager, CURRENT->pager->tid, &m,
+                             IPC_SEND | IPC_RECV);
+    if (IS_ERROR(err)) {
+        WARN("%s: aborted kernel ipc", CURRENT->name);
+        task_exit(EXP_ABORTED_KERNEL_IPC);
     }
 
-    TRACE("new vmarea: vaddr=%p-%p", start, end);
-    vma->start = start;
-    vma->end = end;
-    vma->pager = pager;
-    vma->arg = pager_arg;
-    vma->flags = flags;
+    // Check if the reply is valid.
+    if (m.type != PAGE_FAULT_REPLY_MSG) {
+        WARN("%d: %s: not page fault reply %p (%d)", mp_cpuid(), CURRENT->name,
+             addr, m.type);
+        task_exit(EXP_INVALID_PAGE_FAULT_REPLY);
+    }
 
-    list_push_back(&process->vmareas, &vma->next);
-    return OK;
+    *attrs = PAGE_USER | m.page_fault_reply.attrs;
+    return m.page_fault_reply.paddr;
 }
 
-// TODO: Not tested!
-void vmarea_destroy(struct vmarea *vma) {
-    list_remove(&vma->next);
-    kfree(&object_arena, vma);
+/// Handles page faults in the initial task.
+static paddr_t init_task_pager(vaddr_t vaddr, pageattrs_t *attrs) {
+    paddr_t paddr;
+    if (INITFS_ADDR <= vaddr && vaddr < INITFS_END) {
+        // Initfs contents.
+        paddr = into_paddr(__initfs + (vaddr - INITFS_ADDR));
+    } else if (STRAIGHT_MAP_ADDR <= vaddr && vaddr < STRAIGHT_MAP_END) {
+        // Straight-mapping: virtual addresses are equal to physical.
+        paddr = vaddr;
+    } else {
+        PANIC("init_task tried to access invalid memory address %p", vaddr);
+    }
+
+    *attrs = PAGE_USER | PAGE_WRITABLE;
+    return paddr;
 }
 
-/// Checks if `vma` includes `addr` and allows the requested access.
-static int is_valid_page_fault_for(struct vmarea *vma, vaddr_t vaddr,
-                                   uintmax_t flags) {
-    if (!(vma->start <= vaddr && vaddr < vma->end)) {
-        return 0;
-    }
-
-    if (flags & PF_USER && vma->flags & !(PAGE_USER)) {
-        return 0;
-    }
-
-    if (flags & PF_WRITE && vma->flags & !(PAGE_WRITABLE)) {
-        return 0;
-    }
-
-    return 1;
-}
-
-/// The page fault handler. It calls a pager and updates the page table. If the
-/// page fault is invalid (e.g., segfault or NULL pointer dereference), kill
-/// the current thread.
-paddr_t page_fault_handler(vaddr_t addr, uintmax_t flags) {
-    // TRACE("page_fault_handler: addr=%p", addr);
-    INC_STAT(page_fault_total);
-
-    if (!(flags & PF_USER)) {
-        // This will never occur. NEVER!
-        PANIC("page fault in the kernel space");
-    }
-
-    if (flags & PF_PRESENT) {
-        // Invalid access. For instance the user thread has tried to write to
-        // readonly area.
-        WARN("page fault: already present: addr=%p (perhaps segfault?)", addr);
-        thread_kill_current();
-    }
-
-    // Look for the associated vm area.
+/// The page fault handler. It calls a pager and updates the page table.
+void handle_page_fault(vaddr_t addr, pagefault_t fault) {
+    // Ask the associated pager to resolve the page fault.
     vaddr_t aligned_vaddr = ALIGN_DOWN(addr, PAGE_SIZE);
-    struct process *process = CURRENT->process;
-    LIST_FOR_EACH(vma, &process->vmareas, struct vmarea, next) {
-        if (is_valid_page_fault_for(vma, aligned_vaddr, flags)) {
-            // Ask the associated pager to fill a physical page.
-            // TRACE(
-            //     "calling pager: pager=%p, vaddr=%p", vma->pager, aligned_vaddr);
-            paddr_t paddr = vma->pager(vma, aligned_vaddr);
-
-            if (!paddr) {
-                TRACE("failed to fill a page");
-                thread_kill_current();
-            }
-
-            // Register the filled page with the page table.
-            // TRACE("#PF: link vaddr %p to %p", aligned_vaddr, paddr);
-            error_t err =
-                link_page(&process->page_table, aligned_vaddr, paddr, 1, vma->flags);
-            if (err != OK) {
-                PANIC("link_page returned an error: %d", err);
-            }
-
-            // Successfully filled the accessed page. Return to the exception
-            // handler and resume the thread.
-            return paddr;
-        }
+    paddr_t paddr;
+    pageattrs_t attrs;
+    if (CURRENT->tid == INIT_TASK_TID) {
+        paddr = init_task_pager(aligned_vaddr, &attrs);
+    } else {
+        paddr = user_pager(aligned_vaddr, fault, &attrs);
     }
 
-    // No appropriate vm area. The user thread must have accessed unallocated
-    // area (e.g. NULL pointer dereference).
-    PANIC("page fault: no appropriate vmarea: addr=%p", addr);
-    thread_kill_current();
+    vm_link(&CURRENT->vm, aligned_vaddr, paddr, attrs);
 }
 
 /// Initializes the memory subsystem.
 void memory_init(void) {
-    arena_init(&object_arena, OBJECT_ARENA_ADDR, OBJECT_ARENA_LEN, OBJ_MAX_SIZE);
-    arena_init(&page_arena, PAGE_ARENA_ADDR, PAGE_ARENA_LEN, PAGE_SIZE);
+    size_t heap_size = (vaddr_t) __kernel_heap_end - (vaddr_t) __kernel_heap;
+    INFO("kernel heap: %p - %p (%dKiB)", (vaddr_t) __kernel_heap,
+         (vaddr_t) __kernel_heap_end, heap_size / 1024);
+    list_init(&heap);
+    add_free_list((void *) __kernel_heap, heap_size / PAGE_SIZE);
 }
