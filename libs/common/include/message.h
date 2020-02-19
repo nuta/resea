@@ -284,6 +284,6 @@ STATIC_ASSERT(sizeof(struct message) <= 128);
 
 /// The maximum size of a message. Note that a message can be larger than
 /// `sizeof(struct message)`.
-#define MESSAGE_MAX_SIZE 2048
+#define MESSAGE_MAX_SIZE 2047
 
 #endif
