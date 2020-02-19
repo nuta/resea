@@ -3,6 +3,8 @@
 
 #include <types.h>
 
+typedef int handle_t;
+
 //
 //  Network Device Driver
 //

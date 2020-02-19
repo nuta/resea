@@ -11,8 +11,6 @@ typedef unsigned uint32_t;
 typedef unsigned long long uint64_t;
 
 typedef int tid_t;
-typedef int handle_t;
-
 typedef unsigned msec_t;
 #define MSEC_MAX 0xffffffff
 

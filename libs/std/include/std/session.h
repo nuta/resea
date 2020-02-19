@@ -3,6 +3,7 @@
 
 #include <list.h>
 #include <types.h>
+#include <message.h>
 
 #define HANDLES_MAX 256
 
