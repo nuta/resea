@@ -45,7 +45,7 @@ static inline int mp_cpuid(void) {
     return *((volatile uint32_t *) from_paddr(0xfee00020)) >> 24;
 }
 
-static inline bool is_bsp_cpu(void) {
+static inline bool mp_is_bsp(void) {
     return mp_cpuid() == 0;
 }
 

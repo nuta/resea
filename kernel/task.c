@@ -228,7 +228,7 @@ void handle_irq(unsigned irq) {
         // seconds.
 
         // Handle task timeouts.
-        if (is_bsp_cpu()) {
+        if (mp_is_bsp()) {
             for (int i = 0; i < TASKS_MAX; i++) {
                 struct task *task = &tasks[i];
                 if (task->state == TASK_UNUSED || !task->timeout) {
