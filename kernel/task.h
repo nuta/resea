@@ -78,6 +78,9 @@ struct task {
     /// receiving a message. When this task become TASK_RECEIVING, it notifies
     /// all threads registered in this table with `NOTIFY_READY`.
     ///
+    /// Note that task ID is 1-origin, i.e., `listened_by[1]` is used by task
+    /// #2, not #1.
+    ///
     /// FIXME: This requires O(n) operaions.
     bool listened_by[TASKS_MAX];
     /// A (intrusive) list element in the runqueue.
