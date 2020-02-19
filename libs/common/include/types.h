@@ -34,6 +34,7 @@ typedef char bool;
 #define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)
 #define IS_ALIGNED(value, align) (((value) & ((align) -1)) == 0)
 #define STATIC_ASSERT(expr)      _Static_assert(expr, #expr);
+#define POW2(n) (1 << (n))
 #define MAX(a, b)                                                              \
     ({                                                                         \
         __typeof__(a) __a = (a);                                               \

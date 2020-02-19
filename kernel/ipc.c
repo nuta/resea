@@ -9,7 +9,7 @@
 /// checked by the caller.
 error_t ipc(struct task *dst, tid_t src, tid_t send_as, uint32_t flags) {
     if (flags & IPC_TIMER) {
-        CURRENT->timeout = 1 << IPC_TIMEOUT(flags);
+        CURRENT->timeout = POW2(IPC_TIMEOUT(flags));
     }
 
     // Register the current task as a listener.
