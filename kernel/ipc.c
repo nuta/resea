@@ -30,7 +30,8 @@ static error_t send(struct task *dst, tid_t send_as, uint32_t flags) {
         }
     }
 
-    // Copy the message into the receiver's buffer and resume it.
+    // Copy the message into the receiver's buffer and resume it. The size of
+    // message (`IPC_SEND_LEN(flags)`) is guaranteed less than MESSAGE_MAX_SIZE.
     memcpy(dst->buffer, CURRENT->buffer, IPC_SEND_LEN(flags));
     dst->buffer->src = send_as;
     dst->buffer->len = IPC_SEND_LEN(flags);
@@ -74,8 +75,7 @@ static error_t recv(tid_t src) {
     return OK;
 }
 
-/// Sends and/or receives a message. The send length in `flags` is already
-/// checked by the caller.
+/// Sends and/or receives a message.
 error_t ipc(struct task *dst, tid_t src, tid_t send_as, uint32_t flags) {
     if (flags & IPC_TIMER) {
         CURRENT->timeout = POW2(IPC_TIMEOUT(flags));

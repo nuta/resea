@@ -46,10 +46,6 @@ static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, userptr_t r,
         return ERR_NOT_PERMITTED;
     }
 
-    if (IPC_SEND_LEN(flags) >= MESSAGE_MAX_SIZE) {
-        return ERR_TOO_LARGE;
-    }
-
     if (src < 0 || src > TASKS_MAX) {
         return ERR_INVALID_ARG;
     }
