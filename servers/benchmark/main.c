@@ -33,11 +33,10 @@ void main(void) {
     //  IPC round-trip benchmark
     //
     cycles_t iters[NUM_ITERS];
-    struct message m = { .type = NOP_MSG };
-    struct message r;
     for (int i = 0; i < NUM_ITERS; i++) {
+        struct message m = { .type = NOP_MSG };
         cycles_t start = cycle_counter();
-        ipc_call(INIT_TASK_TID, &m, sizeof(m), &r, sizeof(r));
+        ipc_call(INIT_TASK_TID, &m);
         iters[i] = cycle_counter() - start;
     }
 

@@ -60,7 +60,7 @@ struct task {
     /// switches into the next task (so-called preemptive context switching).
     unsigned quantum;
     /// The message buffer.
-    struct message *buffer;
+    struct message buffer;
     /// The acceptable sender task ID. If it's IPC_ANY, the task accepts
     /// messages from any tasks.
     tid_t src;

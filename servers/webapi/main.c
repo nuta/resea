@@ -108,20 +108,19 @@ void main(void) {
     handle_t sock = tcpip_listen(80, 16);
     ASSERT_OK(sock);
 
-    size_t m_len = sizeof(struct message) + TCP_DATA_LEN_MAX;
-    struct message *m = malloc(m_len);
     size_t buf_len = 1024;
     uint8_t *buf = malloc(buf_len);
 
     INFO("ready");
     while (1) {
-        error_t err = ipc_recv(IPC_ANY, m, m_len);
+        struct message m;
+        error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
-        switch (m->type) {
+        switch (m.type) {
             case TCP_NEW_CLIENT_MSG: {
-                DBG("new client! %d", m->tcp_new_client.handle);
-                handle_t new_handle = tcpip_accept(m->tcp_new_client.handle);
+                DBG("new client! %d", m.tcp_new_client.handle);
+                handle_t new_handle = tcpip_accept(m.tcp_new_client.handle);
                 ASSERT_OK(new_handle);
 
                 struct client *client = malloc(sizeof(*client));
@@ -137,7 +136,7 @@ void main(void) {
                 break;
             }
             case TCP_CLOSED_MSG: {
-                handle_t handle = m->tcp_closed.handle;
+                handle_t handle = m.tcp_closed.handle;
                 struct session *sess = session_get(tcpip_server(), handle);
                 struct client *client = (struct client *) sess->data;
                 ASSERT(client);
@@ -149,7 +148,7 @@ void main(void) {
             case TCP_RECEIVED_MSG: {
                 DBG("new data");
                 struct session *sess =
-                    session_get(tcpip_server(), m->tcp_received.handle);
+                    session_get(tcpip_server(), m.tcp_received.handle);
                 struct client *client = (struct client *) sess->data;
                 ASSERT(client);
 
@@ -158,7 +157,7 @@ void main(void) {
                 break;
             }
             default:
-                WARN("unknown message type (type=%d)", m->type);
+                WARN("unknown message type (type=%d)", m.type);
         }
     }
 }

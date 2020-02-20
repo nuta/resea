@@ -6,8 +6,8 @@
 
 static list_t pending;
 
-void async_send(tid_t dst, struct message *m, size_t len) {
-    error_t err = ipc_send_noblock(dst, m, len);
+void async_send(tid_t dst, struct message *m) {
+    error_t err = ipc_send_noblock(dst, m);
     // TODO: Should we handle other errors?
     switch (err) {
         case OK:
@@ -15,11 +15,10 @@ void async_send(tid_t dst, struct message *m, size_t len) {
         case ERR_WOULD_BLOCK: {
             // The receiver is not ready. We need to enqueue it and try later in
             // `async_flush()`.
-            struct message *buf = malloc(len);
-            memcpy(buf, m, len);
+            struct message *buf = malloc(sizeof(*buf));
+            memcpy(buf, m, sizeof(*buf));
             struct async_message *am = malloc(sizeof(*am));
             am->dst = dst;
-            am->len = len;
             am->m = buf;
             list_push_back(&pending, &am->next);
             ipc_listen(dst);
@@ -30,7 +29,7 @@ void async_send(tid_t dst, struct message *m, size_t len) {
 
 void async_flush(void) {
     LIST_FOR_EACH (am, &pending, struct async_message, next) {
-        error_t err = ipc_send_noblock(am->dst, am->m, am->len);
+        error_t err = ipc_send_noblock(am->dst, am->m);
         // TODO: Should we handle other errors?
         switch (err) {
             case OK:

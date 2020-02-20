@@ -214,12 +214,13 @@ void main(void) {
     INFO("ready");
     while (true) {
         struct message m;
-        error_t err = ipc_recv(IPC_ANY, &m, sizeof(m));
+        error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
         switch (m.type) {
             case NOP_MSG:
-                ipc_send(m.src, NULL, 0);
+                m.type = NOP_MSG;
+                ipc_send(m.src, &m);
                 break;
             case EXCEPTION_MSG: {
                 if (m.src != KERNEL_TASK_TID) {
@@ -253,7 +254,7 @@ void main(void) {
                     m.type = PAGE_FAULT_REPLY_MSG;
                     m.page_fault_reply.paddr = paddr;
                     m.page_fault_reply.attrs = PAGE_WRITABLE;
-                    error_t err = ipc_send_noblock(tcb->tid, &m, sizeof(m));
+                    error_t err = ipc_send_noblock(tcb->tid, &m);
                     ASSERT_OK(err);
                 } else {
                     kill(tcb);
@@ -278,7 +279,7 @@ void main(void) {
 
                 m.type = LOOKUP_REPLY_MSG;
                 m.lookup_reply.task = tcb->tid;
-                ipc_send(m.src, &m, sizeof(m));
+                ipc_send(m.src, &m);
                 break;
             }
             case ALLOC_PAGES_MSG: {
@@ -297,7 +298,7 @@ void main(void) {
                 m.type = ALLOC_PAGES_REPLY_MSG;
                 m.alloc_pages_reply.vaddr = vaddr;
                 m.alloc_pages_reply.paddr = paddr;
-                ipc_send(m.src, &m, sizeof(m));
+                ipc_send(m.src, &m);
                 break;
             }
             default:

@@ -74,13 +74,13 @@ typedef int error_t;
 #define IPC_ANY     0 /* So-called "open receive". */
 #define IPC_SEND    (1 << 0)
 #define IPC_RECV    (1 << 1)
+#define IPC_CALL    (IPC_SEND | IPC_RECV)
 #define IPC_LISTEN  (1 << 2)
 #define IPC_NOBLOCK (1 << 3)
 #define IPC_TIMER   (1 << 4)
-#define IPC_FLAGS(op, send_len, recv_len, timeout)                             \
-    (((timeout) << 28) | ((recv_len) << 17) | ((send_len) << 6) | (op))
-#define IPC_SEND_LEN(flags) (((flags) >> 6) & 0x7ff)
-#define IPC_RECV_LEN(flags) (((flags) >> 17) & 0x7ff)
+#define IPC_KERNEL  (1 << 5) /* Internally used by kernel. */
+#define IPC_FLAGS(op, timeout)                                                 \
+    (((timeout) << 28) | (op))
 #define IPC_TIMEOUT(flags)  (((flags) >> 28) & 0xf)
 
 typedef uint32_t caps_t;

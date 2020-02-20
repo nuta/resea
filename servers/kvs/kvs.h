@@ -15,7 +15,6 @@ struct entry {
 struct listener {
     list_elem_t next;
     tid_t task;
-    bool changed;
 };
 
 #endif

@@ -84,7 +84,7 @@ static void handle_irq(void) {
                 struct message m;
                 m.type = KBD_ON_PRESSED_MSG;
                 m.kbd_on_pressed.keycode = keycode;
-                async_send(shell_server, &m, sizeof(m));
+                async_send(shell_server, &m);
             }
         }
     }
@@ -104,7 +104,7 @@ void main(void) {
     INFO("ready");
     while (true) {
         struct message m;
-        error_t err = ipc_recv(IPC_ANY, &m, sizeof(m));
+        error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
         switch (m.type) {

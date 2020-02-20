@@ -60,8 +60,8 @@ static paddr_t user_pager(vaddr_t addr, pagefault_t fault, pageattrs_t *attrs) {
     m.page_fault.vaddr = addr;
     m.page_fault.fault = fault;
 
-    error_t err = kernel_ipc(CURRENT->pager, CURRENT->pager->tid, &m,
-                             IPC_SEND | IPC_RECV);
+    error_t err = ipc(CURRENT->pager, CURRENT->pager->tid, &m,
+                      IPC_CALL | IPC_KERNEL);
     if (IS_ERROR(err)) {
         WARN("%s: aborted kernel ipc", CURRENT->name);
         task_exit(EXP_ABORTED_KERNEL_IPC);

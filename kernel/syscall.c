@@ -40,10 +40,15 @@ static void strncpy_from_user(char *dst, userptr_t src, size_t max_len) {
     arch_strncpy_from_user(dst, src, max_len);
 }
 
-static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, userptr_t r,
-                       uint32_t flags) {
+static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
+    struct message buf;
+
     if (!CAPABLE(CAP_IPC)) {
         return ERR_NOT_PERMITTED;
+    }
+
+    if (flags & IPC_KERNEL) {
+        return ERR_INVALID_ARG;
     }
 
     if (src < 0 || src > TASKS_MAX) {
@@ -56,25 +61,19 @@ static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, userptr_t r,
         if (!dst_task) {
             return ERR_INVALID_ARG;
         }
-
-        if (flags & IPC_SEND) {
-            memcpy_from_user(CURRENT->buffer, m, IPC_SEND_LEN(flags));
-        }
     }
 
-    error_t err = ipc(dst_task, src, CURRENT->tid, flags);
+    if (flags & IPC_SEND) {
+        memcpy_from_user(&buf, m, sizeof(struct message));
+    }
+
+    error_t err = ipc(dst_task, src, &buf, flags);
     if (IS_ERROR(err)) {
         return err;
     }
 
     if (flags & IPC_RECV) {
-        if (IPC_RECV_LEN(flags) < CURRENT->buffer->len) {
-            return ERR_TOO_SMALL;
-        }
-
-        // Copy it into the user's buffer. The size of a message is already
-        // checked in the sender.
-        memcpy_to_user(r, CURRENT->buffer, CURRENT->buffer->len);
+        memcpy_to_user(m, &buf, sizeof(struct message));
     }
 
     return OK;
@@ -185,7 +184,7 @@ uintmax_t handle_syscall(uintmax_t syscall, uintmax_t arg1, uintmax_t arg2,
     uintmax_t ret;
     switch (syscall) {
         case SYSCALL_IPC:
-            ret = (uintmax_t) sys_ipc(arg1, arg2, arg3, arg4, arg5);
+            ret = (uintmax_t) sys_ipc(arg1, arg2, arg3, arg4);
             break;
         case SYSCALL_TASKCTL:
             ret = (uintmax_t) sys_taskctl(arg1, arg2, arg3, arg4, arg5);

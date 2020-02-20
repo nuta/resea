@@ -30,21 +30,19 @@ static device_t get_device_by_tid(tid_t tid) {
 static void transmit(device_t device, mbuf_t pkt) {
     tid_t driver = (tid_t) device->arg;
 
-    struct message *m = malloc(sizeof(*m) + NET_PACKET_LEN_MAX);
     size_t len = mbuf_len(pkt);
     if (len > NET_PACKET_LEN_MAX) {
         WARN("too long TX packet (len=%d), discarding...", len);
         mbuf_delete(pkt);
-        free(m);
         return;
     }
 
-    m->type = NET_TX_MSG;
-    m->net_tx.len = len;
-    mbuf_read(&pkt, m->net_tx.payload, NET_PACKET_LEN_MAX);
+    struct message m;
+    m.type = NET_TX_MSG;
+    m.net_tx.len = len;
+    mbuf_read(&pkt, m.net_tx.payload, sizeof(m.net_tx.payload));
     mbuf_delete(pkt);
-    async_send(driver, m, sizeof(*m) + m->net_tx.len);
-    free(m);
+    async_send(driver, &m);
 }
 
 static error_t do_process_event(struct event *e) {
@@ -56,7 +54,7 @@ static error_t do_process_event(struct event *e) {
             struct message m;
             m.type = TCP_NEW_CLIENT_MSG;
             m.tcp_new_client.handle = sock->session->handle;
-            error_t err = ipc_send_noblock(sock->session->owner, &m, sizeof(m));
+            error_t err = ipc_send_noblock(sock->session->owner, &m);
             ASSERT(err == OK || err == ERR_WOULD_BLOCK);
 
             if (err == ERR_WOULD_BLOCK) {
@@ -76,7 +74,7 @@ static error_t do_process_event(struct event *e) {
             struct message m;
             m.type = TCP_RECEIVED_MSG;
             m.tcp_received.handle = sock->session->handle;
-            error_t err = ipc_send_noblock(sock->session->owner, &m, sizeof(m));
+            error_t err = ipc_send_noblock(sock->session->owner, &m);
             ASSERT(err == OK || err == ERR_WOULD_BLOCK);
 
             if (err == ERR_WOULD_BLOCK) {
@@ -158,23 +156,21 @@ void main(void) {
     error_t err = timer_set(TIMER_INTERVAL);
     ASSERT_OK(err);
 
-    size_t m_len = sizeof(struct message) + TCP_DATA_LEN_MAX;
-    struct message *m = malloc(m_len);
-
     // The mainloop: receive and handle messages.
     INFO("ready");
     while (true) {
-        error_t err = ipc_recv(IPC_ANY, m, m_len);
+        struct message m;
+        error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
-        switch (m->type) {
+        switch (m.type) {
             case NOTIFICATIONS_MSG:
-                if ((m->notifications.data & NOTIFY_READY) != 0) {
+                if ((m.notifications.data & NOTIFY_READY) != 0) {
                     // Do nothing here: we just need to do deferred_work()
                     // below.
                 }
 
-                if ((m->notifications.data & NOTIFY_TIMER) != 0) {
+                if ((m.notifications.data & NOTIFY_TIMER) != 0) {
                     error_t err = timer_set(TIMER_INTERVAL);
                     ASSERT_OK(err);
                     uptime += TIMER_INTERVAL;
@@ -185,80 +181,80 @@ void main(void) {
                 ipaddr_t any_ipaddr;
                 any_ipaddr.type = IP_TYPE_V4;
                 any_ipaddr.v4 = IPV4_ADDR_UNSPECIFIED;
-                tcp_bind(sock, &any_ipaddr, m->tcp_listen.port);
-                tcp_listen(sock, m->tcp_listen.backlog);
+                tcp_bind(sock, &any_ipaddr, m.tcp_listen.port);
+                tcp_listen(sock, m.tcp_listen.backlog);
 
-                sock->session = session_alloc(m->src);
+                sock->session = session_alloc(m.src);
                 sock->session->data = sock;
 
-                m->type = TCP_LISTEN_REPLY_MSG;
-                m->tcp_listen_reply.handle = sock->session->handle;
-                ipc_send_noblock(m->src, m, sizeof(*m));
+                m.type = TCP_LISTEN_REPLY_MSG;
+                m.tcp_listen_reply.handle = sock->session->handle;
+                ipc_send_noblock(m.src, &m);
                 break;
             }
             case TCP_ACCEPT_MSG: {
                 struct session *sess =
-                    session_get(m->src, m->tcp_accept.handle);
+                    session_get(m.src, m.tcp_accept.handle);
                 if (!sess) {
-                    ipc_send_err(m->src, ERR_INVALID_ARG);
+                    ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
 
                 tcp_sock_t new_sock = tcp_accept(sess->data);
                 if (!new_sock) {
-                    ipc_send_err(m->src, ERR_NOT_FOUND);
+                    ipc_send_err(m.src, ERR_NOT_FOUND);
                     break;
                 }
 
-                new_sock->session = session_alloc(m->src);
+                new_sock->session = session_alloc(m.src);
                 new_sock->session->data = new_sock;
 
-                m->type = TCP_ACCEPT_REPLY_MSG;
-                m->tcp_accept_reply.new_handle = new_sock->session->handle;
-                ipc_send(m->src, m, sizeof(*m));
+                m.type = TCP_ACCEPT_REPLY_MSG;
+                m.tcp_accept_reply.new_handle = new_sock->session->handle;
+                ipc_send(m.src, &m);
                 break;
             }
             case TCP_READ_MSG: {
-                size_t len = m->tcp_read.len;
-                struct session *sess = session_get(m->src, m->tcp_read.handle);
+                size_t len = m.tcp_read.len;
+                struct session *sess = session_get(m.src, m.tcp_read.handle);
                 if (!sess) {
-                    ipc_send_err(m->src, ERR_INVALID_ARG);
+                    ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
 
-                m->type = TCP_READ_REPLY_MSG;
-                m->tcp_read_reply.len =
-                    tcp_read(sess->data, m->tcp_read_reply.data,
+                m.type = TCP_READ_REPLY_MSG;
+                m.tcp_read_reply.len =
+                    tcp_read(sess->data, m.tcp_read_reply.data,
                              MIN(len, TCP_DATA_LEN_MAX));
-                ipc_send(m->src, m, sizeof(*m) + m->tcp_read_reply.len);
+                ipc_send(m.src, &m);
                 break;
             }
             case TCP_WRITE_MSG: {
-                struct session *sess = session_get(m->src, m->tcp_read.handle);
+                struct session *sess = session_get(m.src, m.tcp_read.handle);
                 if (!sess) {
-                    ipc_send_err(m->src, ERR_INVALID_ARG);
+                    ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
 
-                tcp_write(sess->data, m->tcp_write.data, m->tcp_write.len);
-                ipc_send_err(m->src, OK);
+                tcp_write(sess->data, m.tcp_write.data, m.tcp_write.len);
+                ipc_send_err(m.src, OK);
                 break;
             }
             case TCPIP_REGISTER_DEVICE_MSG:
-                register_device(m->src, &m->tcpip_register_device.macaddr);
+                register_device(m.src, &m.tcpip_register_device.macaddr);
                 break;
             case NET_RX_MSG: {
-                device_t device = get_device_by_tid(m->src);
+                device_t device = get_device_by_tid(m.src);
                 if (!device) {
                     break;
                 }
 
-                ethernet_receive(device, m->net_rx.payload, m->net_rx.len);
+                ethernet_receive(device, m.net_rx.payload, m.net_rx.len);
                 dhcp_receive();
                 break;
             }
             default:
-                WARN("unknown message type (type=%d)", m->type);
+                WARN("unknown message type (type=%d)", m.type);
         }
 
         deferred_work();

@@ -9,7 +9,7 @@ typedef int handle_t;
 //  Network Device Driver
 //
 
-#define NET_PACKET_LEN_MAX 1024
+#define NET_PACKET_LEN_MAX 1000
 
 //
 //  Console Device Driver
@@ -43,12 +43,12 @@ typedef uint16_t keycode_t;
 //  KVS Server
 //
 #define KVS_KEY_LEN      64
-#define KVS_DATA_LEN_MAX 1024
+#define KVS_DATA_LEN_MAX 512
 
 //
 //  TCP/IP Server
 //
-#define TCP_DATA_LEN_MAX 1024
+#define TCP_DATA_LEN_MAX 1000
 
 /// Message Types.
 enum message_type {
@@ -103,9 +103,8 @@ enum message_type {
 
 /// Message.
 struct message {
-    enum message_type type;
+    int type;
     tid_t src;
-    size_t len;
     union {
         // KVS
         union {
@@ -116,13 +115,13 @@ struct message {
 
             struct {
                 size_t len;
-                uint8_t data[];
+                uint8_t data[KVS_DATA_LEN_MAX];
             } get_reply;
 
             struct {
                 size_t len;
                 char key[KVS_KEY_LEN];
-                uint8_t data[];
+                uint8_t data[KVS_DATA_LEN_MAX];
             } set;
 
             struct {
@@ -170,7 +169,7 @@ struct message {
         struct {
             handle_t handle;
             size_t len;
-            uint8_t data[];
+            uint8_t data[TCP_DATA_LEN_MAX];
         } tcp_write;
 
         struct {
@@ -188,7 +187,7 @@ struct message {
 
         struct {
             size_t len;
-            uint8_t data[];
+            uint8_t data[TCP_DATA_LEN_MAX];
         } tcp_read_reply;
 
         struct {
@@ -227,12 +226,12 @@ struct message {
 
         struct {
             size_t len;
-            uint8_t payload[];
+            uint8_t payload[NET_PACKET_LEN_MAX];
         } net_tx;
 
         struct {
             size_t len;
-            uint8_t payload[];
+            uint8_t payload[NET_PACKET_LEN_MAX];
         } net_rx;
 
         struct {
@@ -280,10 +279,6 @@ struct message {
 };
 
 // Ensure that a message is not too big.
-STATIC_ASSERT(sizeof(struct message) <= 128);
-
-/// The maximum size of a message. Note that a message can be larger than
-/// `sizeof(struct message)`.
-#define MESSAGE_MAX_SIZE 2047
+STATIC_ASSERT(sizeof(struct message) <= 1024);
 
 #endif

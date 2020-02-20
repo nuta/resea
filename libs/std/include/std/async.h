@@ -3,15 +3,15 @@
 
 #include <list.h>
 #include <types.h>
+#include <message.h>
 
 struct async_message {
     tid_t dst;
     struct message *m;
-    size_t len;
     list_elem_t next;
 };
 
-void async_send(tid_t dst, struct message *m, size_t len);
+void async_send(tid_t dst, struct message *m);
 void async_flush(void);
 void async_init(void);
 

@@ -60,7 +60,7 @@ void main(void) {
     INFO("ready");
     while (true) {
         struct message m;
-        error_t err = ipc_recv(IPC_ANY, &m, sizeof(m));
+        error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
         switch (m.type) {
@@ -81,7 +81,7 @@ void main(void) {
                 m.type = DISPLAY_GET_SIZE_REPLY_MSG;
                 m.display_get_size_reply.width = SCREEN_WIDTH;
                 m.display_get_size_reply.height = SCREEN_HEIGHT;
-                ipc_send(m.src, &m, sizeof(m));
+                ipc_send(m.src, &m);
                 break;
             }
             default:

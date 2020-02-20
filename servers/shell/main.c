@@ -23,7 +23,7 @@ static void newline(void) {
     } else {
         struct message m;
         m.type = SCROLL_DISPLAY_MSG;
-        ipc_send(display_server, &m, sizeof(m));
+        ipc_send(display_server, &m);
     }
 }
 
@@ -32,13 +32,13 @@ static void update_cursor(void) {
     m.type = MOVE_CURSOR_MSG;
     m.move_cursor.y = cursor_y;
     m.move_cursor.x = cursor_x;
-    ipc_send(display_server, &m, sizeof(m));
+    ipc_send(display_server, &m);
 }
 
 static void clear_screen(void) {
     struct message m;
     m.type = CLEAR_DISPLAY_MSG;
-    ipc_send(display_server, &m, sizeof(m));
+    ipc_send(display_server, &m);
 }
 
 void logputc(char ch) {
@@ -94,7 +94,7 @@ void logputc(char ch) {
         m.draw_char.y = cursor_y;
         m.draw_char.fg_color = text_color;
         m.draw_char.bg_color = COLOR_BLACK;
-        ipc_send(display_server, &m, sizeof(m));
+        ipc_send(display_server, &m);
 
         cursor_x++;
         if (cursor_x == width) {
@@ -147,18 +147,19 @@ static void get_command(int argc, char **argv) {
         return;
     }
 
-    size_t m_len = sizeof(struct message) + KVS_DATA_LEN_MAX;
-    struct message *m = malloc(m_len);
-    m->type = KVS_GET_MSG;
-    strncpy(m->kvs.get.key, argv[1], sizeof(m->kvs.get.key));
-    error_t err = ipc_call(kvs_server, m, sizeof(m), m, m_len);
+    struct message m;
+    m.type = KVS_GET_MSG;
+    strncpy(m.kvs.get.key, argv[1], sizeof(m.kvs.get.key));
+    error_t err = ipc_call(kvs_server, &m);
     if (IS_ERROR(err)) {
         logputstr("failed read the key\n");
         return;
     }
 
-    for (size_t i = 0; i < m->kvs.get_reply.len; i++) {
-        logputc(m->kvs.get_reply.data[i]);
+    ASSERT(m.type == KVS_GET_REPLY_MSG);
+
+    for (size_t i = 0; i < m.kvs.get_reply.len; i++) {
+        logputc(m.kvs.get_reply.data[i]);
     }
 
     logputc('\n');
@@ -170,19 +171,18 @@ static void set_command(int argc, char **argv) {
         return;
     }
 
-    size_t m_len = sizeof(struct message) + KVS_DATA_LEN_MAX;
-    struct message *m = malloc(m_len);
-    m->type = KVS_SET_MSG;
-    m->kvs.set.len = strlen(argv[2]);
-    if (m->kvs.set.len > KVS_DATA_LEN_MAX) {
+    struct message m;
+    m.type = KVS_SET_MSG;
+    m.kvs.set.len = strlen(argv[2]);
+    if (m.kvs.set.len > KVS_DATA_LEN_MAX) {
         logputstr("too long value\n");
         return;
     }
 
-    strncpy(m->kvs.set.key, argv[1], sizeof(m->kvs.set.key));
-    strncpy((char *) m->kvs.set.data, argv[2], KVS_DATA_LEN_MAX);
+    strncpy(m.kvs.set.key, argv[1], sizeof(m.kvs.set.key));
+    strncpy((char *) m.kvs.set.data, argv[2], KVS_DATA_LEN_MAX);
     error_t err =
-        ipc_call(kvs_server, m, sizeof(*m) + m->kvs.set.len, m, sizeof(err));
+        ipc_call(kvs_server, &m);
     if (IS_ERROR(err)) {
         logputstr("failed set the value\n");
         return;
@@ -284,7 +284,7 @@ static void get_screen_size(void) {
     struct message m;
     m.type = DISPLAY_GET_SIZE_MSG;
 
-    error_t err = ipc_call(display_server, &m, sizeof(m), &m, sizeof(m));
+    error_t err = ipc_call(display_server, &m);
     ASSERT_OK(err);
     ASSERT(m.type == DISPLAY_GET_SIZE_REPLY_MSG);
 
@@ -309,7 +309,7 @@ void main(void) {
     prompt();
     while (true) {
         struct message m;
-        error_t err = ipc_recv(IPC_ANY, &m, sizeof(m));
+        error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
         switch (m.type) {

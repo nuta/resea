@@ -16,13 +16,12 @@ static void receive(const void *payload, size_t len) {
     }
 
     TRACE("received %d bytes", len);
-    struct message *m = malloc(sizeof(*m) + len);
-    m->type = NET_RX_MSG;
-    m->net_rx.len = len;
-    memcpy(m->net_rx.payload, payload, len);
-    error_t err = ipc_send(tcpip_tid, m, sizeof(*m) + len);
+    struct message m;
+    m.type = NET_RX_MSG;
+    m.net_rx.len = len;
+    memcpy(m.net_rx.payload, payload, len);
+    error_t err = ipc_send(tcpip_tid, &m);
     ASSERT_OK(err);
-    free(m);
 }
 
 void main(void) {
@@ -53,33 +52,30 @@ void main(void) {
     tcpip_tid = ipc_lookup("tcpip");
     ASSERT_OK(tcpip_tid);
 
-    // Allocate a large enough buffer for receiving NET_TX_MSG messages.
-    size_t m_len = sizeof(struct message) + NET_PACKET_LEN_MAX;
-    struct message *m = malloc(m_len);
-
     // Register this driver.
-    m->type = TCPIP_REGISTER_DEVICE_MSG;
-    memcpy(m->tcpip_register_device.macaddr, mac, 6);
-    err = ipc_send(tcpip_tid, m, sizeof(*m));
+    struct message m;
+    m.type = TCPIP_REGISTER_DEVICE_MSG;
+    memcpy(m.tcpip_register_device.macaddr, mac, 6);
+    err = ipc_send(tcpip_tid, &m);
     ASSERT_OK(err);
 
     // The mainloop: receive and handle messages.
     INFO("ready");
     while (true) {
-        error_t err = ipc_recv(IPC_ANY, m, m_len);
+        error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
-        switch (m->type) {
+        switch (m.type) {
             case NOTIFICATIONS_MSG:
-                if (m->notifications.data & NOTIFY_IRQ) {
+                if (m.notifications.data & NOTIFY_IRQ) {
                     e1000_handle_interrupt(receive);
                 }
                 break;
             case NET_TX_MSG:
-                e1000_transmit(m->net_tx.payload, m->net_tx.len);
+                e1000_transmit(m.net_tx.payload, m.net_tx.len);
                 break;
             default:
-                TRACE("unknown message %d", m->type);
+                TRACE("unknown message %d", m.type);
         }
     }
 }

@@ -33,22 +33,14 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
         return ERR_ALREADY_EXISTS;
     }
 
-    // Allocate a message buffer.
-    struct message *buffer = kmalloc(MESSAGE_MAX_SIZE);
-    if (!buffer) {
-        return ERR_NO_MEMORY;
-    }
-
     // Initialize the page table.
     error_t err;
     if ((err = vm_create(&task->vm)) != OK) {
-        kfree(buffer);
         return err;
     }
 
     // Do arch-specific initialization.
     if ((err = arch_task_create(task, ip)) != OK) {
-        kfree(buffer);
         vm_destroy(&task->vm);
         return err;
     }
@@ -61,7 +53,6 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     task->pager = pager;
     task->timeout = 0;
     task->quantum = 0;
-    task->buffer = buffer;
     strncpy(task->name, name, sizeof(task->name));
     list_init(&task->senders);
     list_nullify(&task->runqueue_next);
@@ -98,7 +89,6 @@ error_t task_destroy(struct task *task) {
     list_remove(&task->sender_next);
     vm_destroy(&task->vm);
     arch_task_destroy(task);
-    kfree(task->buffer);
     task->state = TASK_UNUSED;
 
     // Abort sender IPC operations.
@@ -108,6 +98,12 @@ error_t task_destroy(struct task *task) {
     }
 
     for (unsigned i = 0; i < TASKS_MAX; i++) {
+        // Ensure that this task is not a pager task.
+        if (tasks[i].pager == task) {
+            PANIC("a pager task '%s' (#%d) is being killed", task->name,
+                  task->tid);
+        }
+
         // Notify all listener tasks that this task has been aborted.
         if (task->listened_by[i]) {
             notify(task_lookup(i + 1), NOTIFY_ABORTED);
@@ -115,12 +111,6 @@ error_t task_destroy(struct task *task) {
 
         // Unlisten from each task.
         tasks[i].listened_by[task->tid - 1] = false;
-
-        // Ensure that this task is not a pager task.
-        if (tasks[i].pager == task) {
-            PANIC("a pager task '%s' (#%d) is being killed", task->name,
-                  task->tid);
-        }
     }
 
     for (unsigned irq = 0; irq < IRQ_MAX; irq++) {
@@ -142,7 +132,7 @@ NORETURN void task_exit(enum exception_type exp) {
     m.type = EXCEPTION_MSG;
     m.exception.task = CURRENT->tid;
     m.exception.exception = exp;
-    kernel_ipc(CURRENT->pager, 0, &m, IPC_SEND);
+    ipc(CURRENT->pager, 0, &m, IPC_SEND | IPC_KERNEL);
 
     // Wait until the pager task destroys this task...
     CURRENT->state = TASK_EXITED;
