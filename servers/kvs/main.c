@@ -63,13 +63,11 @@ static void changed(struct entry *e) {
     m.type = KVS_CHANGED_MSG;
     strncpy(m.kvs.changed.key, e->key, sizeof(m.kvs.changed.key));
     LIST_FOR_EACH (listener, &e->listeners, struct listener, next) {
-        INFO("asend to %d", listener->task);
         async_send(listener->task, &m);
     }
 }
 
 static void deferred_work(void) {
-    DBG("flush");
     async_flush();
 }
 
