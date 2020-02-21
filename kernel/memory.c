@@ -69,8 +69,8 @@ static paddr_t user_pager(vaddr_t addr, pagefault_t fault, pageattrs_t *attrs) {
 
     // Check if the reply is valid.
     if (m.type != PAGE_FAULT_REPLY_MSG) {
-        WARN("%d: %s: not page fault reply %p (%d)", mp_cpuid(), CURRENT->name,
-             addr, m.type);
+        WARN("%s: invalid page fault reply (type=%d, addr=%p, pager=%s)",
+             CURRENT->name, m.type, addr, CURRENT->pager->name);
         task_exit(EXP_INVALID_PAGE_FAULT_REPLY);
     }
 
