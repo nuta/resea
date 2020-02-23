@@ -1,11 +1,9 @@
-
 # V           = <Empty by default>
 ARCH        ?= x64
 BUILD       ?= debug
 BUILD_DIR   ?= build
 INIT        ?= init
 SERVERS     ?= kvs tcpip ps2kbd display e1000 shell webapi benchmark hello
-SERVERS     ?= display shell hello
 USER_LIBS   := std stubs
 # LLVM_PREFIX = <empty by default>
 # LLVM_SUFFIX = <empty by default>
