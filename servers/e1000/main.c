@@ -18,8 +18,8 @@ static void receive(const void *payload, size_t len) {
     TRACE("received %d bytes", len);
     struct message m;
     m.type = NET_RX_MSG;
-    m.net_rx.len = len;
-    memcpy(m.net_rx.payload, payload, len);
+    m.net_device.rx.len = len;
+    memcpy(m.net_device.rx.payload, payload, len);
     error_t err = ipc_send(tcpip_tid, &m);
     ASSERT_OK(err);
 }
@@ -55,7 +55,7 @@ void main(void) {
     // Register this driver.
     struct message m;
     m.type = TCPIP_REGISTER_DEVICE_MSG;
-    memcpy(m.tcpip_register_device.macaddr, mac, 6);
+    memcpy(m.tcpip.register_device.macaddr, mac, 6);
     err = ipc_send(tcpip_tid, &m);
     ASSERT_OK(err);
 
@@ -72,7 +72,7 @@ void main(void) {
                 }
                 break;
             case NET_TX_MSG:
-                e1000_transmit(m.net_tx.payload, m.net_tx.len);
+                e1000_transmit(m.net_device.tx.payload, m.net_device.tx.len);
                 break;
             default:
                 TRACE("unknown message %d", m.type);

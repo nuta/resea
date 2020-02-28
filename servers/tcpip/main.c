@@ -39,8 +39,8 @@ static void transmit(device_t device, mbuf_t pkt) {
 
     struct message m;
     m.type = NET_TX_MSG;
-    m.net_tx.len = len;
-    mbuf_read(&pkt, m.net_tx.payload, sizeof(m.net_tx.payload));
+    m.net_device.tx.len = len;
+    mbuf_read(&pkt, m.net_device.tx.payload, sizeof(m.net_device.tx.payload));
     mbuf_delete(pkt);
     async_send(driver, &m);
 }
@@ -52,8 +52,8 @@ static error_t do_process_event(struct event *e) {
             tcp_sock_t sock = e->tcp_new_client.listen_sock;
 
             struct message m;
-            m.type = TCP_NEW_CLIENT_MSG;
-            m.tcp_new_client.handle = sock->session->handle;
+            m.type = TCPIP_NEW_CLIENT_MSG;
+            m.tcpip.new_client.handle = sock->session->handle;
             error_t err = ipc_send_noblock(sock->session->owner, &m);
             ASSERT(err == OK || err == ERR_WOULD_BLOCK);
 
@@ -72,8 +72,8 @@ static error_t do_process_event(struct event *e) {
             }
 
             struct message m;
-            m.type = TCP_RECEIVED_MSG;
-            m.tcp_received.handle = sock->session->handle;
+            m.type = TCPIP_RECEIVED_MSG;
+            m.tcpip.received.handle = sock->session->handle;
             error_t err = ipc_send_noblock(sock->session->owner, &m);
             ASSERT(err == OK || err == ERR_WOULD_BLOCK);
 
@@ -176,25 +176,25 @@ void main(void) {
                     uptime += TIMER_INTERVAL;
                 }
                 break;
-            case TCP_LISTEN_MSG: {
+            case TCPIP_LISTEN_MSG: {
                 tcp_sock_t sock = tcp_new();
                 ipaddr_t any_ipaddr;
                 any_ipaddr.type = IP_TYPE_V4;
                 any_ipaddr.v4 = IPV4_ADDR_UNSPECIFIED;
-                tcp_bind(sock, &any_ipaddr, m.tcp_listen.port);
-                tcp_listen(sock, m.tcp_listen.backlog);
+                tcp_bind(sock, &any_ipaddr, m.tcpip.listen.port);
+                tcp_listen(sock, m.tcpip.listen.backlog);
 
                 sock->session = session_alloc(m.src);
                 sock->session->data = sock;
 
-                m.type = TCP_LISTEN_REPLY_MSG;
-                m.tcp_listen_reply.handle = sock->session->handle;
+                m.type = TCPIP_LISTEN_REPLY_MSG;
+                m.tcpip.listen_reply.handle = sock->session->handle;
                 ipc_send_noblock(m.src, &m);
                 break;
             }
-            case TCP_ACCEPT_MSG: {
+            case TCPIP_ACCEPT_MSG: {
                 struct session *sess =
-                    session_get(m.src, m.tcp_accept.handle);
+                    session_get(m.src, m.tcpip.accept.handle);
                 if (!sess) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
@@ -209,39 +209,39 @@ void main(void) {
                 new_sock->session = session_alloc(m.src);
                 new_sock->session->data = new_sock;
 
-                m.type = TCP_ACCEPT_REPLY_MSG;
-                m.tcp_accept_reply.new_handle = new_sock->session->handle;
+                m.type = TCPIP_ACCEPT_REPLY_MSG;
+                m.tcpip.accept_reply.new_handle = new_sock->session->handle;
                 ipc_send(m.src, &m);
                 break;
             }
-            case TCP_READ_MSG: {
-                size_t len = m.tcp_read.len;
-                struct session *sess = session_get(m.src, m.tcp_read.handle);
+            case TCPIP_READ_MSG: {
+                size_t len = m.tcpip.read.len;
+                struct session *sess = session_get(m.src, m.tcpip.read.handle);
                 if (!sess) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
 
-                m.type = TCP_READ_REPLY_MSG;
-                m.tcp_read_reply.len =
-                    tcp_read(sess->data, m.tcp_read_reply.data,
+                m.type = TCPIP_READ_REPLY_MSG;
+                m.tcpip.read_reply.len =
+                    tcp_read(sess->data, m.tcpip.read_reply.data,
                              MIN(len, TCP_DATA_LEN_MAX));
                 ipc_send(m.src, &m);
                 break;
             }
-            case TCP_WRITE_MSG: {
-                struct session *sess = session_get(m.src, m.tcp_read.handle);
+            case TCPIP_WRITE_MSG: {
+                struct session *sess = session_get(m.src, m.tcpip.read.handle);
                 if (!sess) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
 
-                tcp_write(sess->data, m.tcp_write.data, m.tcp_write.len);
+                tcp_write(sess->data, m.tcpip.write.data, m.tcpip.write.len);
                 ipc_send_err(m.src, OK);
                 break;
             }
             case TCPIP_REGISTER_DEVICE_MSG:
-                register_device(m.src, &m.tcpip_register_device.macaddr);
+                register_device(m.src, &m.tcpip.register_device.macaddr);
                 break;
             case NET_RX_MSG: {
                 device_t device = get_device_by_tid(m.src);
@@ -249,7 +249,7 @@ void main(void) {
                     break;
                 }
 
-                ethernet_receive(device, m.net_rx.payload, m.net_rx.len);
+                ethernet_receive(device, m.net_device.rx.payload, m.net_device.rx.len);
                 dhcp_receive();
                 break;
             }

@@ -63,34 +63,33 @@ enum message_type {
     NOP_MSG,
     LOOKUP_MSG,
     LOOKUP_REPLY_MSG,
-
     ALLOC_PAGES_MSG,
     ALLOC_PAGES_REPLY_MSG,
 
     NET_TX_MSG,
     NET_RX_MSG,
 
-    KBD_ON_PRESSED_MSG,
+    SCREEN_DRAW_CHAR_MSG,
+    SCREEN_MOVE_CURSOR_MSG,
+    SCREEN_CLEAR_MSG,
+    SCREEN_SCROLL_MSG,
+    SCREEN_GET_SIZE_MSG,
+    SCREEN_GET_SIZE_REPLY_MSG,
 
-    DRAW_CHAR_MSG,
-    MOVE_CURSOR_MSG,
-    CLEAR_DISPLAY_MSG,
-    SCROLL_DISPLAY_MSG,
-    DISPLAY_GET_SIZE_MSG,
-    DISPLAY_GET_SIZE_REPLY_MSG,
+    SHELL_KEY_PRESSED_MSG,
 
     TCPIP_REGISTER_DEVICE_MSG,
-    TCP_LISTEN_MSG,
-    TCP_LISTEN_REPLY_MSG,
-    TCP_ACCEPT_MSG,
-    TCP_ACCEPT_REPLY_MSG,
-    TCP_WRITE_MSG,
-    TCP_READ_MSG,
-    TCP_READ_REPLY_MSG,
-    TCP_NEW_CLIENT_MSG,
-    TCP_CLOSE_MSG,
-    TCP_CLOSED_MSG,
-    TCP_RECEIVED_MSG,
+    TCPIP_LISTEN_MSG,
+    TCPIP_LISTEN_REPLY_MSG,
+    TCPIP_ACCEPT_MSG,
+    TCPIP_ACCEPT_REPLY_MSG,
+    TCPIP_WRITE_MSG,
+    TCPIP_READ_MSG,
+    TCPIP_READ_REPLY_MSG,
+    TCPIP_NEW_CLIENT_MSG,
+    TCPIP_CLOSE_MSG,
+    TCPIP_CLOSED_MSG,
+    TCPIP_RECEIVED_MSG,
 
     KVS_GET_MSG,
     KVS_GET_REPLY_MSG,
@@ -106,6 +105,53 @@ struct message {
     int type;
     tid_t src;
     union {
+        // Kernel Messages
+        union {
+            struct {
+                notifications_t data;
+            } notifications;
+
+            struct {
+                tid_t task;
+                enum exception_type exception;
+            } exception;
+
+            struct {
+                tid_t task;
+                vaddr_t vaddr;
+                pagefault_t fault;
+            } page_fault;
+
+            struct {
+                paddr_t paddr;
+                pageattrs_t attrs;
+            } page_fault_reply;
+        };
+
+        // Memory Manager (memmgr)
+        union {
+           struct {
+               char name[64];
+           } lookup;
+    
+           struct {
+               tid_t task;
+           } lookup_reply;
+    
+           struct {
+           } nop;
+ 
+             struct {
+                size_t num_pages;
+                paddr_t paddr;
+            } alloc_pages;
+
+            struct {
+                vaddr_t vaddr;
+                paddr_t paddr;
+            } alloc_pages_reply;
+        };
+
         // KVS
         union {
             struct {
@@ -141,141 +187,112 @@ struct message {
             } changed;
         } kvs;
 
-        struct {
-            uint8_t macaddr[6];
-        } tcpip_register_device;
+        // TCP/IP
+        union {
+            struct {
+                uint8_t macaddr[6];
+            } register_device;
 
-        struct {
-            uint16_t port;
-            int backlog;
-        } tcp_listen;
+            struct {
+                uint16_t port;
+                int backlog;
+            } listen;
 
-        struct {
-            handle_t handle;
-        } tcp_listen_reply;
+            struct {
+                handle_t handle;
+            } listen_reply;
 
-        struct {
-            handle_t handle;
-        } tcp_closed;
+            struct {
+                handle_t handle;
+            } closed;
 
-        struct {
-            handle_t handle;
-        } tcp_close;
+            struct {
+                handle_t handle;
+            } close;
 
-        struct {
-            handle_t handle;
-        } tcp_new_client;
+            struct {
+                handle_t handle;
+            } new_client;
 
-        struct {
-            handle_t handle;
-            size_t len;
-            uint8_t data[TCP_DATA_LEN_MAX];
-        } tcp_write;
+            struct {
+                handle_t handle;
+                size_t len;
+                uint8_t data[TCP_DATA_LEN_MAX];
+            } write;
 
-        struct {
-            handle_t handle;
-        } tcp_accept;
+            struct {
+                handle_t handle;
+            } accept;
 
-        struct {
-            handle_t new_handle;
-        } tcp_accept_reply;
+            struct {
+                handle_t new_handle;
+            } accept_reply;
 
-        struct {
-            handle_t handle;
-            size_t len;
-        } tcp_read;
+            struct {
+                handle_t handle;
+                size_t len;
+            } read;
 
-        struct {
-            size_t len;
-            uint8_t data[TCP_DATA_LEN_MAX];
-        } tcp_read_reply;
+            struct {
+                size_t len;
+                uint8_t data[TCP_DATA_LEN_MAX];
+            } read_reply;
 
-        struct {
-            handle_t handle;
-        } tcp_received;
+            struct {
+                handle_t handle;
+            } received;
+        } tcpip;
 
-        struct {
-            notifications_t data;
-        } notifications;
+        // Shell
+        union {
+            struct {
+                uint16_t keycode;
+            } key_pressed;
+        } shell;
 
-        struct {
-            tid_t task;
-            enum exception_type exception;
-        } exception;
+        // Network Device Driver
+        union {
+            struct {
+                size_t len;
+                uint8_t payload[NET_PACKET_LEN_MAX];
+            } tx;
 
-        struct {
-            tid_t task;
-            vaddr_t vaddr;
-            pagefault_t fault;
-        } page_fault;
+            struct {
+                size_t len;
+                uint8_t payload[NET_PACKET_LEN_MAX];
+            } rx;
+        } net_device;
 
-        struct {
-            paddr_t paddr;
-            pageattrs_t attrs;
-        } page_fault_reply;
+        // Screen Device Driver
+        union {
+            struct {
+                char ch;
+                color_t fg_color;
+                color_t bg_color;
+                unsigned x;
+                unsigned y;
+            } draw_char;
 
-        struct {
-            size_t num_pages;
-            paddr_t paddr;
-        } alloc_pages;
+            struct {
+                unsigned x;
+                unsigned y;
+            } move_cursor;
 
-        struct {
-            vaddr_t vaddr;
-            paddr_t paddr;
-        } alloc_pages_reply;
+            struct {
+            } clear_display;
 
-        struct {
-            size_t len;
-            uint8_t payload[NET_PACKET_LEN_MAX];
-        } net_tx;
+            struct {
+            } scroll_display;
 
-        struct {
-            size_t len;
-            uint8_t payload[NET_PACKET_LEN_MAX];
-        } net_rx;
+            struct {
+            } display_get_size;
 
-        struct {
-            uint16_t keycode;
-        } kbd_on_pressed;
-
-        struct {
-            char ch;
-            color_t fg_color;
-            color_t bg_color;
-            unsigned x;
-            unsigned y;
-        } draw_char;
-
-        struct {
-            unsigned x;
-            unsigned y;
-        } move_cursor;
-
-        struct {
-        } clear_display;
-
-        struct {
-        } scroll_display;
-
-        struct {
-        } display_get_size;
-
-        struct {
-            unsigned width;
-            unsigned height;
-        } display_get_size_reply;
-
-        struct {
-            char name[64];
-        } lookup;
-
-        struct {
-            tid_t task;
-        } lookup_reply;
-
-        struct {
-        } nop;
-    };
+            struct {
+                unsigned width;
+                unsigned height;
+            } display_get_size_reply;
+        } screen_device;
+   };
 };
 
 // Ensure that a message is not too big.

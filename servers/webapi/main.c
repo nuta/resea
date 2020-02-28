@@ -118,9 +118,9 @@ void main(void) {
         ASSERT_OK(err);
 
         switch (m.type) {
-            case TCP_NEW_CLIENT_MSG: {
-                DBG("new client! %d", m.tcp_new_client.handle);
-                handle_t new_handle = tcpip_accept(m.tcp_new_client.handle);
+            case TCPIP_NEW_CLIENT_MSG: {
+                DBG("new client! %d", m.tcpip.new_client.handle);
+                handle_t new_handle = tcpip_accept(m.tcpip.new_client.handle);
                 ASSERT_OK(new_handle);
 
                 struct client *client = malloc(sizeof(*client));
@@ -135,8 +135,8 @@ void main(void) {
                 sess->data = client;
                 break;
             }
-            case TCP_CLOSED_MSG: {
-                handle_t handle = m.tcp_closed.handle;
+            case TCPIP_CLOSED_MSG: {
+                handle_t handle = m.tcpip.closed.handle;
                 struct session *sess = session_get(tcpip_server(), handle);
                 struct client *client = (struct client *) sess->data;
                 ASSERT(client);
@@ -145,10 +145,10 @@ void main(void) {
                 session_delete(tcpip_server(), handle);
                 break;
             }
-            case TCP_RECEIVED_MSG: {
+            case TCPIP_RECEIVED_MSG: {
                 DBG("new data");
                 struct session *sess =
-                    session_get(tcpip_server(), m.tcp_received.handle);
+                    session_get(tcpip_server(), m.tcpip.received.handle);
                 struct client *client = (struct client *) sess->data;
                 ASSERT(client);
 

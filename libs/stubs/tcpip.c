@@ -27,29 +27,29 @@ handle_t tcpip_listen(uint16_t port, int backlog) {
     DEBUG_ASSERT(server && "tcpip_init() is not called");
 
     struct message m;
-    m.type = TCP_LISTEN_MSG;
-    m.tcp_listen.port = port;
-    m.tcp_listen.backlog = backlog;
+    m.type = TCPIP_LISTEN_MSG;
+    m.tcpip.listen.port = port;
+    m.tcpip.listen.backlog = backlog;
     error_t err = ipc_call(server, &m);
     if (err != OK) {
         return err;
     }
 
-    return m.tcp_listen_reply.handle;
+    return m.tcpip.listen_reply.handle;
 }
 
 handle_t tcpip_accept(handle_t handle) {
     DEBUG_ASSERT(server && "tcpip_init() is not called");
 
     struct message m;
-    m.type = TCP_ACCEPT_MSG;
-    m.tcp_accept.handle = handle;
+    m.type = TCPIP_ACCEPT_MSG;
+    m.tcpip.accept.handle = handle;
     error_t err = ipc_call(server, &m);
     if (err != OK) {
         return err;
     }
 
-    return m.tcp_accept_reply.new_handle;
+    return m.tcpip.accept_reply.new_handle;
 }
 
 error_t tcpip_write(handle_t handle, const void *data, size_t len) {
@@ -57,10 +57,10 @@ error_t tcpip_write(handle_t handle, const void *data, size_t len) {
     ASSERT(len <= TCP_DATA_LEN_MAX);
 
     struct message m;
-    m.type = TCP_WRITE_MSG;
-    m.tcp_write.handle = handle;
-    m.tcp_write.len = len;
-    memcpy(&m.tcp_write.data, data, len);
+    m.type = TCPIP_WRITE_MSG;
+    m.tcpip.write.handle = handle;
+    m.tcpip.write.len = len;
+    memcpy(&m.tcpip.write.data, data, len);
     return ipc_call(server, &m);
 }
 
@@ -68,15 +68,15 @@ error_t tcpip_read(handle_t handle, void *buf, size_t buf_len) {
     DEBUG_ASSERT(server && "tcpip_init() is not called");
 
     struct message m;
-    m.type = TCP_READ_MSG;
-    m.tcp_read.handle = handle;
-    m.tcp_read.len = buf_len;
+    m.type = TCPIP_READ_MSG;
+    m.tcpip.read.handle = handle;
+    m.tcpip.read.len = buf_len;
     error_t err = ipc_call(server, &m);
     if (IS_ERROR(err)) {
         return err;
     }
 
-    memcpy(buf, m.tcp_read_reply.data, MIN(m.tcp_read_reply.len, buf_len));
+    memcpy(buf, m.tcpip.read_reply.data, MIN(m.tcpip.read_reply.len, buf_len));
     return err;
 }
 
@@ -84,7 +84,7 @@ error_t tcpip_close(handle_t handle) {
     DEBUG_ASSERT(server && "tcpip_init() is not called");
 
     struct message m;
-    m.type = TCP_CLOSE_MSG;
-    m.tcp_close.handle = handle;
+    m.type = TCPIP_CLOSE_MSG;
+    m.tcpip.close.handle = handle;
     return ipc_call(server, &m);
 }

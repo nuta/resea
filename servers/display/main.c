@@ -64,23 +64,23 @@ void main(void) {
         ASSERT_OK(err);
 
         switch (m.type) {
-            case DRAW_CHAR_MSG:
-                draw_char(m.draw_char.y, m.draw_char.x, m.draw_char.ch,
-                          m.draw_char.fg_color, m.draw_char.bg_color);
+            case SCREEN_DRAW_CHAR_MSG:
+                draw_char(m.screen_device.draw_char.y, m.screen_device.draw_char.x, m.screen_device.draw_char.ch,
+                          m.screen_device.draw_char.fg_color, m.screen_device.draw_char.bg_color);
                 break;
-            case MOVE_CURSOR_MSG:
-                move_cursor(m.move_cursor.y, m.move_cursor.x);
+            case SCREEN_MOVE_CURSOR_MSG:
+                move_cursor(m.screen_device.move_cursor.y, m.screen_device.move_cursor.x);
                 break;
-            case CLEAR_DISPLAY_MSG:
+            case SCREEN_CLEAR_MSG:
                 clear();
                 break;
-            case SCROLL_DISPLAY_MSG:
+            case SCREEN_SCROLL_MSG:
                 scroll();
                 break;
-            case DISPLAY_GET_SIZE_MSG: {
-                m.type = DISPLAY_GET_SIZE_REPLY_MSG;
-                m.display_get_size_reply.width = SCREEN_WIDTH;
-                m.display_get_size_reply.height = SCREEN_HEIGHT;
+            case SCREEN_GET_SIZE_MSG: {
+                m.type = SCREEN_GET_SIZE_REPLY_MSG;
+                m.screen_device.display_get_size_reply.width = SCREEN_WIDTH;
+                m.screen_device.display_get_size_reply.height = SCREEN_HEIGHT;
                 ipc_send(m.src, &m);
                 break;
             }

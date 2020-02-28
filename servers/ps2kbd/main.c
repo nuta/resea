@@ -82,8 +82,8 @@ static void handle_irq(void) {
                 //       keycode);
 
                 struct message m;
-                m.type = KBD_ON_PRESSED_MSG;
-                m.kbd_on_pressed.keycode = keycode;
+                m.type = SHELL_KEY_PRESSED_MSG;
+                m.shell.key_pressed.keycode = keycode;
                 async_send(shell_server, &m);
             }
         }
