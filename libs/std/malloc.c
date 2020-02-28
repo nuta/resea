@@ -60,7 +60,6 @@ void *malloc(size_t size) {
 
     // Align up to 16-bytes boundary. Allocate 16 bytes if len equals 0.
     size = ALIGN_UP(size, 16);
-    size += 0x1000;  // FIXME:
 
     for (struct malloc_chunk *chunk = chunks; chunk; chunk = chunk->next) {
         ASSERT(chunk->magic == MALLOC_FREE || chunk->magic == MALLOC_IN_USE);
