@@ -7,7 +7,7 @@
 
 /// Initializes the kernel and starts the first task.
 void kmain(void) {
-    printf("\nBooting Resea...\n");
+    printf("\nBooting Resea " VERSION "...\n");
     memory_init();
     task_init();
     mp_start();

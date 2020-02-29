@@ -1,4 +1,5 @@
 # V           = <Empty by default>
+VERSION     ?= v0.1.0
 ARCH        ?= x64
 BUILD       ?= debug
 BUILD_DIR   ?= build
@@ -32,6 +33,7 @@ CFLAGS += -Werror=pointer-integer-compare
 CFLAGS += -Werror=tautological-constant-out-of-range-compare
 CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
+CFLAGS += -DVERSION='"$(VERSION)"'
 
 ifeq ($(BUILD),release)
 CFLAGS += -O2 -flto
