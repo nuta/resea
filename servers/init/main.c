@@ -107,7 +107,6 @@ static paddr_t pager(struct tcb *tcb, vaddr_t vaddr, pagefault_t fault) {
     LIST_FOR_EACH (area, &tcb->page_areas, struct page_area, next) {
         if (area->vaddr <= vaddr
             && vaddr < area->vaddr + area->num_pages * PAGE_SIZE) {
-            INFO("page_area = %p", area->paddr + (vaddr - area->vaddr));
             return area->paddr + (vaddr - area->vaddr);
         }
     }
