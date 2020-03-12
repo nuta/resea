@@ -138,7 +138,7 @@ static paddr_t pager(struct tcb *tcb, vaddr_t vaddr, pagefault_t fault) {
     }
 
     if (!phdr) {
-        WARN("invalid memory access, killing %s...", tcb->name);
+        WARN("invalid memory access (addr=%p), killing %s...", vaddr, tcb->name);
         return 0;
     }
     // Allocate a page and fill it with the file data.
