@@ -66,7 +66,6 @@ enum message_type {
     ALLOC_PAGES_MSG,
     ALLOC_PAGES_REPLY_MSG,
 
-    NET_TX_MSG,
     NET_RX_MSG,
 
     SCREEN_DRAW_CHAR_MSG,
@@ -254,7 +253,7 @@ struct message {
         union {
             struct {
                 size_t len;
-                uint8_t payload[NET_PACKET_LEN_MAX];
+                uint8_t *payload;
             } tx;
 
             struct {
@@ -294,6 +293,13 @@ struct message {
         } screen_device;
    };
 };
+
+#define DEFINE_MSG __COUNTER__
+#define DEFINE_MSG_WITH_BULK(bulk_ptr, bulk_len)                               \
+    (DEFINE_MSG | MSG_BULK(offsetof(struct message, bulk_ptr),                 \
+                           offsetof(struct message, bulk_len)))
+
+#define NET_TX_MSG DEFINE_MSG_WITH_BULK(net_device.tx.payload, net_device.tx.len)
 
 // Ensure that a message is not too big.
 STATIC_ASSERT(sizeof(struct message) <= 1024);

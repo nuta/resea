@@ -37,10 +37,13 @@ static void transmit(device_t device, mbuf_t pkt) {
         return;
     }
 
+    uint8_t tmpbuf[1024];
+    mbuf_read(&pkt, tmpbuf, sizeof(tmpbuf));
+
     struct message m;
     m.type = NET_TX_MSG;
+    m.net_device.tx.payload = tmpbuf;
     m.net_device.tx.len = len;
-    mbuf_read(&pkt, m.net_device.tx.payload, sizeof(m.net_device.tx.payload));
     mbuf_delete(pkt);
     async_send(driver, &m);
 }

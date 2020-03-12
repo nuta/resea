@@ -73,6 +73,7 @@ void main(void) {
                 break;
             case NET_TX_MSG:
                 e1000_transmit(m.net_device.tx.payload, m.net_device.tx.len);
+                free(m.net_device.tx.payload);
                 break;
             default:
                 TRACE("unknown message %d", m.type);
