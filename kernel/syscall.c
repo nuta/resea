@@ -40,14 +40,17 @@ static void strncpy_from_user(char *dst, userptr_t src, size_t max_len) {
     arch_strncpy_from_user(dst, src, max_len);
 }
 
-static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len) {
+static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len, msec_t timeout) {
     if (!CAPABLE(CAP_IPC)) {
         return ERR_NOT_PERMITTED;
     }
 
-    // Resolve page faults in advance. Handling them in the sender context
-    // would be pretty tricky...
     if (bulk_ptr) {
+        CURRENT->bulk_ptr = bulk_ptr;
+        CURRENT->bulk_len = bulk_len;
+
+        // Resolve page faults in advance. Handling them in the sender context
+        // would be pretty tricky...
         size_t remaining = bulk_len;
         size_t offset = 0;
         while (remaining > 0) {
@@ -61,8 +64,10 @@ static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len) {
         }
     }
 
-    CURRENT->bulk_ptr = bulk_ptr;
-    CURRENT->bulk_len = bulk_len;
+    if (timeout) {
+        CURRENT->timeout = timeout;
+    }
+
     return OK;
 }
 
@@ -213,7 +218,7 @@ uintmax_t handle_syscall(uintmax_t syscall, uintmax_t arg1, uintmax_t arg2,
             ret = (uintmax_t) sys_ipc(arg1, arg2, arg3, arg4);
             break;
         case SYSCALL_IPCCTL:
-            ret = (uintmax_t) sys_ipcctl(arg1, arg2);
+            ret = (uintmax_t) sys_ipcctl(arg1, arg2, arg3);
             break;
         case SYSCALL_TASKCTL:
             ret = (uintmax_t) sys_taskctl(arg1, arg2, arg3, arg4, arg5);

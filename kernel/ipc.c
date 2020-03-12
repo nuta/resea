@@ -20,10 +20,6 @@ static void resume_sender_task(struct task *task) {
 
 /// Sends and receives a message.
 error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
-    if (flags & IPC_TIMER) {
-        CURRENT->timeout = POW2(IPC_GET_TIMEOUT(flags));
-    }
-
     // Register the current task as a listener.
     if (flags & IPC_LISTEN) {
         dst->listened_by[CURRENT->tid - 1] = true;
@@ -60,8 +56,8 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
         memcpy(&dst->m, m, sizeof(struct message));
 
         // Copy the bulk payload.
-        unsigned ptr_offset = MSG_GET_BULK_PTR(dst->m.type);
-        unsigned len_offset = MSG_GET_BULK_LEN(dst->m.type);
+        unsigned ptr_offset = MSG_BULK_PTR(dst->m.type);
+        unsigned len_offset = MSG_BULK_LEN(dst->m.type);
         if (ptr_offset) {
             size_t len = *((size_t *) ((uintptr_t) &dst->m + len_offset));
             userptr_t src_buf = *((userptr_t *) ((uintptr_t) &dst->m + ptr_offset));

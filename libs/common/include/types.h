@@ -34,7 +34,6 @@ typedef char bool;
 #define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)
 #define IS_ALIGNED(value, align) (((value) & ((align) -1)) == 0)
 #define STATIC_ASSERT(expr)      _Static_assert(expr, #expr);
-#define POW2(n) (1 << (n))
 #define MAX(a, b)                                                              \
     ({                                                                         \
         __typeof__(a) __a = (a);                                               \
@@ -80,16 +79,13 @@ typedef int error_t;
 #define IPC_CALL    (IPC_SEND | IPC_RECV)
 #define IPC_LISTEN  (1 << 2)
 #define IPC_NOBLOCK (1 << 3)
-#define IPC_TIMER   (1 << 4)
 #define IPC_KERNEL  (1 << 5) /* Internally used by kernel. */
-#define IPC_TIMEOUT(timeout) (((timeout) << 12) | IPC_TIMER)
-#define IPC_GET_TIMEOUT(flags)  (((flags) >> 12) & 0xf)
 
 // Message Type (m->type).
 #define MSG_BULK(offset, len) (((offset) << 16) | ((len) << 24))
 // Returns *offsets* in the message of bulk pointer/length fields.
-#define MSG_GET_BULK_PTR(msg_type) (((msg_type) >> 16) & 0xff)
-#define MSG_GET_BULK_LEN(msg_type) (((msg_type) >> 24) & 0xff)
+#define MSG_BULK_PTR(msg_type) (((msg_type) >> 16) & 0xff)
+#define MSG_BULK_LEN(msg_type) (((msg_type) >> 24) & 0xff)
 
 typedef uint32_t caps_t;
 #define CAP_NONE 0

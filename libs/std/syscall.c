@@ -11,8 +11,9 @@ error_t ipc(tid_t dst, tid_t src, struct message *m, unsigned flags) {
     return syscall(SYSCALL_IPC, dst, src, (uintptr_t) m, flags, 0);
 }
 
-error_t ipcctl(const void *bulk_ptr, size_t bulk_len) {
-    return syscall(SYSCALL_IPCCTL, (uint64_t) bulk_ptr, bulk_len, 0, 0, 0);
+error_t ipcctl(const void *bulk_ptr, size_t bulk_len, msec_t timeout) {
+    return syscall(SYSCALL_IPCCTL, (uint64_t) bulk_ptr, bulk_len, timeout,
+                   0, 0);
 }
 
 tid_t taskctl(tid_t tid, const char *name, vaddr_t ip, tid_t pager,
@@ -78,12 +79,12 @@ void ipc_reply_err(tid_t dst, error_t error) {
 error_t ipc_recv(tid_t src, struct message *m) {
     if (!bulk_ptr) {
         bulk_ptr = malloc(bulk_len);
-        ASSERT_OK(ipcctl(bulk_ptr, bulk_len));
+        ASSERT_OK(ipcctl(bulk_ptr, bulk_len, 0));
     }
 
     error_t err = ipc(0, src, m, IPC_RECV);
 
-    if (MSG_GET_BULK_PTR(m->type)) {
+    if (MSG_BULK_PTR(m->type)) {
         bulk_ptr = NULL;
     }
 
@@ -95,12 +96,12 @@ error_t ipc_recv(tid_t src, struct message *m) {
 error_t ipc_call(tid_t dst, struct message *m) {
     if (!bulk_ptr) {
         bulk_ptr = malloc(bulk_len);
-        ASSERT_OK(ipcctl(bulk_ptr, bulk_len));
+        ASSERT_OK(ipcctl(bulk_ptr, bulk_len, 0));
     }
 
     error_t err = ipc(dst, dst, m, IPC_CALL);
 
-    if (MSG_GET_BULK_PTR(m->type)) {
+    if (MSG_BULK_PTR(m->type)) {
         bulk_ptr = NULL;
     }
 
@@ -114,15 +115,7 @@ error_t ipc_listen(tid_t dst) {
 }
 
 error_t timer_set(msec_t timeout) {
-    ASSERT(timeout < (1UL << 0xf));
-
-    // Compute exp = log2(timeout).
-    unsigned exp = 0;
-    while (timeout > (1ULL << exp)) {
-        exp++;
-    }
-
-    return ipc(0, 0, NULL, IPC_TIMEOUT(exp));
+    return ipcctl(bulk_ptr, bulk_len, timeout);
 }
 
 error_t irq_acquire(unsigned irq) {
