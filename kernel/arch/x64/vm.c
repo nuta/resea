@@ -24,8 +24,8 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
             table[index] = (uint64_t) into_paddr(page);
         }
 
-        // Update attributes.
-        table[index] = ENTRY_PADDR(table[index]) | attrs;
+        // Update attributes if given.
+        table[index] = table[index] | attrs;
 
         // Go into the next level paging table.
         table = (uint64_t *) from_paddr(ENTRY_PADDR(table[index]));
@@ -78,7 +78,6 @@ error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
         return ERR_NO_MEMORY;
     }
 
-    // `table` now points to the PT.
     *entry = paddr | attrs;
     asm_invlpg(vaddr);
     return OK;
@@ -93,7 +92,6 @@ void vm_unlink(struct vm *vm, vaddr_t vaddr) {
         return;
     }
 
-    // `table` now points to the PT.
     *entry = 0;
     asm_invlpg(vaddr);
 }
