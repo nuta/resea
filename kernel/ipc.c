@@ -57,14 +57,14 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
         }
 
         // Copy the message into the receiver's buffer.
-        memcpy(&dst->buffer, m, sizeof(struct message));
+        memcpy(&dst->m, m, sizeof(struct message));
 
         // Copy the bulk payload.
-        unsigned ptr_offset = MSG_GET_BULK_PTR(dst->buffer.type);
-        unsigned len_offset = MSG_GET_BULK_LEN(dst->buffer.type);
+        unsigned ptr_offset = MSG_GET_BULK_PTR(dst->m.type);
+        unsigned len_offset = MSG_GET_BULK_LEN(dst->m.type);
         if (ptr_offset) {
-            size_t len = *((size_t *) ((uintptr_t) &dst->buffer + len_offset));
-            userptr_t src_buf = *((userptr_t *) ((uintptr_t) &dst->buffer + ptr_offset));
+            size_t len = *((size_t *) ((uintptr_t) &dst->m + len_offset));
+            userptr_t src_buf = *((userptr_t *) ((uintptr_t) &dst->m + ptr_offset));
             userptr_t dst_buf = dst->bulk_ptr;
             if (!dst_buf) {
                 resume_sender_task(dst);
@@ -89,10 +89,10 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
                 dst_buf += copy_len;
             }
 
-            *((userptr_t *) ((uintptr_t) &dst->buffer + ptr_offset)) = dst->bulk_ptr;
+            *((userptr_t *) ((uintptr_t) &dst->m + ptr_offset)) = dst->bulk_ptr;
         }
 
-        dst->buffer.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
+        dst->m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
         task_set_state(dst, TASK_RUNNABLE);
     }
 
@@ -125,7 +125,7 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
         task_switch();
 
         // Received a message. Copy it into the receiver buffer and return.
-        memcpy(m, &CURRENT->buffer, sizeof(struct message));
+        memcpy(m, &CURRENT->m, sizeof(struct message));
     }
 
     return OK;
@@ -135,9 +135,9 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
 void notify(struct task *dst, notifications_t notifications) {
     if (dst->state == TASK_RECEIVING && dst->src == IPC_ANY) {
         // Send a NOTIFICATIONS_MSG message immediately.
-        dst->buffer.type = NOTIFICATIONS_MSG;
-        dst->buffer.src = KERNEL_TASK_TID;
-        dst->buffer.notifications.data = dst->notifications | notifications;
+        dst->m.type = NOTIFICATIONS_MSG;
+        dst->m.src = KERNEL_TASK_TID;
+        dst->m.notifications.data = dst->notifications | notifications;
         dst->notifications = 0;
         task_set_state(dst, TASK_RUNNABLE);
     } else {
