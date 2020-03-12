@@ -18,7 +18,8 @@ static void resume_sender_task(struct task *task) {
     }
 }
 
-/// Sends and receives a message.
+/// Sends and receives a message. Note that `m` is a user pointer if
+/// IPC_KERNEL is not set!
 error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
     // Register the current task as a listener.
     if (flags & IPC_LISTEN) {
@@ -53,7 +54,11 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
         }
 
         // Copy the message into the receiver's buffer.
-        memcpy(&dst->m, m, sizeof(struct message));
+        if (flags & IPC_KERNEL) {
+            memcpy(&dst->m, m, sizeof(struct message));
+        } else {
+            memcpy_from_user(&dst->m, (userptr_t) m, sizeof(struct message));
+        }
 
         // Copy the bulk payload.
         unsigned ptr_offset = MSG_BULK_PTR(dst->m.type);
@@ -120,8 +125,12 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
         task_set_state(CURRENT, TASK_RECEIVING);
         task_switch();
 
-        // Received a message. Copy it into the receiver buffer and return.
-        memcpy(m, &CURRENT->m, sizeof(struct message));
+        // Received a message. Copy it into the receiver buffer.
+        if (flags & IPC_KERNEL) {
+            memcpy(m, &CURRENT->m, sizeof(struct message));
+        } else {
+            memcpy_to_user((userptr_t) m, &CURRENT->m, sizeof(struct message));
+        }
     }
 
     return OK;

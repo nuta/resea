@@ -22,7 +22,7 @@ void memcpy_from_user(void *dst, userptr_t src, size_t len) {
 
 /// Copies bytes into the userspace. If the user's pointer is invalid, this
 /// function or the page fault handler kills the current task.
-static void memcpy_to_user(userptr_t dst, const void *src, size_t len) {
+void memcpy_to_user(userptr_t dst, const void *src, size_t len) {
     if (is_kernel_addr_range(dst, len)) {
         task_exit(EXP_INVALID_MEMORY_ACCESS);
     }
@@ -72,8 +72,6 @@ static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len, msec_t timeout) {
 }
 
 static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
-    struct message buf;
-
     if (!CAPABLE(CAP_IPC)) {
         return ERR_NOT_PERMITTED;
     }
@@ -94,17 +92,9 @@ static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
         }
     }
 
-    if (flags & IPC_SEND) {
-        memcpy_from_user(&buf, m, sizeof(struct message));
-    }
-
-    error_t err = ipc(dst_task, src, &buf, flags);
+    error_t err = ipc(dst_task, src, (struct message *) m, flags);
     if (IS_ERROR(err)) {
         return err;
-    }
-
-    if (flags & IPC_RECV) {
-        memcpy_to_user(m, &buf, sizeof(struct message));
     }
 
     return OK;
