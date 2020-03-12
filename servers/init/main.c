@@ -124,6 +124,11 @@ static paddr_t pager(struct tcb *tcb, vaddr_t vaddr, pagefault_t fault) {
     // Look for the associated program header.
     struct elf64_phdr *phdr = NULL;
     for (unsigned i = 0; i < tcb->ehdr->e_phnum; i++) {
+        // Ignore GNU_STACK
+        if (!tcb->phdrs[i].p_vaddr) {
+            continue;
+        }
+
         vaddr_t start = tcb->phdrs[i].p_vaddr;
         vaddr_t end = start + tcb->phdrs[i].p_memsz;
         if (start <= vaddr && vaddr <= end) {
