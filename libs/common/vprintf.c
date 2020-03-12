@@ -253,6 +253,7 @@ static const char *error_names[] = {
     [-ERR_INVALID_ARG] = "Invalid Arg",
     [-ERR_ALREADY_EXISTS] = "Already Exists",
     [-ERR_UNAVAILABLE] = "Unavailable",
+    [-ERR_NOT_ACCEPTABLE] = "Not Acceptable",
 };
 
 const char *err2str(error_t err) {

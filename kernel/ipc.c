@@ -3,12 +3,25 @@
 #include <types.h>
 #include "ipc.h"
 #include "printk.h"
+#include "syscall.h"
 #include "task.h"
+
+extern uint8_t __temp_page[];
+
+static void resume_sender_task(struct task *task) {
+    LIST_FOR_EACH (sender, &task->senders, struct task, sender_next) {
+        if (task->src == IPC_ANY || task->src == sender->tid) {
+            task_set_state(sender, TASK_RUNNABLE);
+            list_remove(&sender->sender_next);
+            break;
+        }
+    }
+}
 
 /// Sends and receives a message.
 error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
     if (flags & IPC_TIMER) {
-        CURRENT->timeout = POW2(IPC_TIMEOUT(flags));
+        CURRENT->timeout = POW2(IPC_GET_TIMEOUT(flags));
     }
 
     // Register the current task as a listener.
@@ -43,8 +56,42 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
             }
         }
 
-        // Copy the message into the receiver's buffer and resume it.
+        // Copy the message into the receiver's buffer.
         memcpy(&dst->buffer, m, sizeof(struct message));
+
+        // Copy the bulk payload.
+        unsigned ptr_offset = MSG_GET_BULK_PTR(dst->buffer.type);
+        unsigned len_offset = MSG_GET_BULK_LEN(dst->buffer.type);
+        if (ptr_offset) {
+            size_t len = *((size_t *) ((uintptr_t) &dst->buffer + len_offset));
+            userptr_t src_buf = *((userptr_t *) ((uintptr_t) &dst->buffer + ptr_offset));
+            userptr_t dst_buf = dst->bulk_ptr;
+            if (!dst_buf) {
+                resume_sender_task(dst);
+                return ERR_NOT_ACCEPTABLE;
+            }
+
+            if (len > dst->bulk_len) {
+                resume_sender_task(dst);
+                return ERR_TOO_LARGE;
+            }
+
+            size_t remaining = len;
+            while (remaining > 0) {
+                size_t copy_len = MIN(MIN(remaining, PAGE_SIZE - (src_buf % PAGE_SIZE)),
+                                        PAGE_SIZE - (dst_buf % PAGE_SIZE));
+                paddr_t paddr = vm_resolve(&dst->vm, ALIGN_DOWN(dst_buf, PAGE_SIZE));
+                DEBUG_ASSERT(paddr);
+
+                vm_link(&CURRENT->vm, (vaddr_t) __temp_page, paddr, PAGE_WRITABLE);
+                memcpy_from_user(&__temp_page[dst_buf % PAGE_SIZE], src_buf, copy_len);
+                remaining -= copy_len;
+                dst_buf += copy_len;
+            }
+
+            *((userptr_t *) ((uintptr_t) &dst->buffer + ptr_offset)) = dst->bulk_ptr;
+        }
+
         dst->buffer.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
         task_set_state(dst, TASK_RUNNABLE);
     }
@@ -61,15 +108,6 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
             return OK;
         }
 
-        // Resume a sender task.
-        LIST_FOR_EACH (sender, &CURRENT->senders, struct task, sender_next) {
-            if (src == IPC_ANY || src == sender->tid) {
-                task_set_state(sender, TASK_RUNNABLE);
-                list_remove(&sender->sender_next);
-                break;
-            }
-        }
-
         // Notify the listeners that this task is now waiting for a message.
         for (unsigned i = 0; i < TASKS_MAX; i++) {
             if (CURRENT->listened_by[i]) {
@@ -77,6 +115,9 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
                 CURRENT->listened_by[i] = false;
             }
         }
+
+        // Resume a sender task.
+        resume_sender_task(CURRENT);
 
         // Sleep until a sender task resumes this task...
         CURRENT->src = src;

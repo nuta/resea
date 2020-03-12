@@ -1,9 +1,18 @@
 #include <message.h>
+#include <std/malloc.h>
 #include <std/printf.h>
 #include <std/syscall.h>
 
+/// The internal buffer to receive bulk payloads.
+static void *bulk_ptr = NULL;
+static const size_t bulk_len = 8192;
+
 error_t ipc(tid_t dst, tid_t src, struct message *m, unsigned flags) {
     return syscall(SYSCALL_IPC, dst, src, (uintptr_t) m, flags, 0);
+}
+
+error_t ipcctl(const void *bulk_ptr, size_t bulk_len) {
+    return syscall(SYSCALL_IPCCTL, (uint64_t) bulk_ptr, bulk_len, 0, 0, 0);
 }
 
 tid_t taskctl(tid_t tid, const char *name, vaddr_t ip, tid_t pager,
@@ -43,11 +52,11 @@ void caps_drop(caps_t caps) {
 }
 
 error_t ipc_send(tid_t dst, struct message *m) {
-    return ipc(dst, 0, m, IPC_FLAGS(IPC_SEND, 0));
+    return ipc(dst, 0, m, IPC_SEND);
 }
 
 error_t ipc_send_noblock(tid_t dst, struct message *m) {
-    return ipc(dst, 0, m, IPC_FLAGS(IPC_SEND | IPC_NOBLOCK, 0));
+    return ipc(dst, 0, m, IPC_SEND | IPC_NOBLOCK);
 }
 
 error_t ipc_send_err(tid_t dst, error_t error) {
@@ -67,7 +76,16 @@ void ipc_reply_err(tid_t dst, error_t error) {
 }
 
 error_t ipc_recv(tid_t src, struct message *m) {
-    error_t err = ipc(0, src, m, IPC_FLAGS(IPC_RECV, 0));
+    if (!bulk_ptr) {
+        bulk_ptr = malloc(bulk_len);
+        ASSERT_OK(ipcctl(bulk_ptr, bulk_len));
+    }
+
+    error_t err = ipc(0, src, m, IPC_RECV);
+
+    if (MSG_GET_BULK_PTR(m->type)) {
+        bulk_ptr = NULL;
+    }
 
     // Handle the case when m.type is negative: a message represents an error
     // (sent by `ipc_send_err()`).
@@ -75,7 +93,16 @@ error_t ipc_recv(tid_t src, struct message *m) {
 }
 
 error_t ipc_call(tid_t dst, struct message *m) {
-    error_t err = ipc(dst, dst, m, IPC_FLAGS(IPC_CALL, 0));
+    if (!bulk_ptr) {
+        bulk_ptr = malloc(bulk_len);
+        ASSERT_OK(ipcctl(bulk_ptr, bulk_len));
+    }
+
+    error_t err = ipc(dst, dst, m, IPC_CALL);
+
+    if (MSG_GET_BULK_PTR(m->type)) {
+        bulk_ptr = NULL;
+    }
 
     // Handle the case when `r->type` is negative: a message represents an error
     // (sent by `ipc_send_err()`).
@@ -83,7 +110,7 @@ error_t ipc_call(tid_t dst, struct message *m) {
 }
 
 error_t ipc_listen(tid_t dst) {
-    return ipc(dst, 0, NULL, IPC_FLAGS(IPC_LISTEN, 0));
+    return ipc(dst, 0, NULL, IPC_LISTEN);
 }
 
 error_t timer_set(msec_t timeout) {
@@ -95,7 +122,7 @@ error_t timer_set(msec_t timeout) {
         exp++;
     }
 
-    return ipc(0, 0, NULL, IPC_FLAGS(IPC_TIMER, exp));
+    return ipc(0, 0, NULL, IPC_TIMEOUT(exp));
 }
 
 error_t irq_acquire(unsigned irq) {

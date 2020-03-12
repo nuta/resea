@@ -12,7 +12,7 @@
 
 /// Copies bytes from the userspace. If the user's pointer is invalid, this
 /// function or the page fault handler kills the current task.
-static void memcpy_from_user(void *dst, userptr_t src, size_t len) {
+void memcpy_from_user(void *dst, userptr_t src, size_t len) {
     if (is_kernel_addr_range(src, len)) {
         task_exit(EXP_INVALID_MEMORY_ACCESS);
     }
@@ -38,6 +38,32 @@ static void strncpy_from_user(char *dst, userptr_t src, size_t max_len) {
     }
 
     arch_strncpy_from_user(dst, src, max_len);
+}
+
+static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len) {
+    if (!CAPABLE(CAP_IPC)) {
+        return ERR_NOT_PERMITTED;
+    }
+
+    // Resolve page faults in advance. Handling them in the sender context
+    // would be pretty tricky...
+    if (bulk_ptr) {
+        size_t remaining = bulk_len;
+        size_t offset = 0;
+        while (remaining > 0) {
+            userptr_t addr = ALIGN_DOWN(bulk_ptr + offset, PAGE_SIZE);
+            if (!vm_resolve(&CURRENT->vm, addr)) {
+                handle_page_fault(addr, PF_USER | PF_WRITE);
+            }
+
+            remaining -= MIN(remaining, PAGE_SIZE);
+            offset += PAGE_SIZE;
+        }
+    }
+
+    CURRENT->bulk_ptr = bulk_ptr;
+    CURRENT->bulk_len = bulk_len;
+    return OK;
 }
 
 static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
@@ -185,6 +211,9 @@ uintmax_t handle_syscall(uintmax_t syscall, uintmax_t arg1, uintmax_t arg2,
     switch (syscall) {
         case SYSCALL_IPC:
             ret = (uintmax_t) sys_ipc(arg1, arg2, arg3, arg4);
+            break;
+        case SYSCALL_IPCCTL:
+            ret = (uintmax_t) sys_ipcctl(arg1, arg2);
             break;
         case SYSCALL_TASKCTL:
             ret = (uintmax_t) sys_taskctl(arg1, arg2, arg3, arg4, arg5);

@@ -10,6 +10,9 @@ typedef vaddr_t userptr_t;
 uintmax_t handle_syscall(uintmax_t syscall, uintmax_t arg1, uintmax_t arg2,
                          uintmax_t arg3, uintmax_t arg4, uintmax_t arg5);
 
+// TODO: remove
+void memcpy_from_user(void *dst, userptr_t src, size_t len);
+
 // Implemented in arch.
 struct task;
 void arch_memcpy_from_user(void *dst, userptr_t src, size_t len);

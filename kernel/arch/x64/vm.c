@@ -4,8 +4,13 @@
 #include <string.h>
 #include "vm.h"
 
+extern char __temp_page[];
+
 static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
                                      pageattrs_t attrs) {
+    ASSERT(vaddr < KERNEL_BASE_ADDR || vaddr == (vaddr_t) __temp_page);
+    ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
+
     uint64_t *table = from_paddr(pml4);
     for (int level = 4; level > 1; level--) {
         int index = NTH_LEVEL_INDEX(level, vaddr);
@@ -68,7 +73,7 @@ void vm_destroy(struct vm *vm) {
 
 error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
                 pageattrs_t attrs) {
-    ASSERT(vaddr < KERNEL_BASE_ADDR && "tried to link a kernel page");
+    ASSERT(vaddr < KERNEL_BASE_ADDR || vaddr == (vaddr_t) __temp_page);
     ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
@@ -84,7 +89,7 @@ error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
 }
 
 void vm_unlink(struct vm *vm, vaddr_t vaddr) {
-    ASSERT(vaddr < KERNEL_BASE_ADDR && "tried to link a kernel page");
+    ASSERT(vaddr < KERNEL_BASE_ADDR && "tried to unlink a kernel page");
     ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
 
     uint64_t *entry = traverse_page_table(vm->pml4, vaddr, 0);
@@ -94,4 +99,9 @@ void vm_unlink(struct vm *vm, vaddr_t vaddr) {
 
     *entry = 0;
     asm_invlpg(vaddr);
+}
+
+paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr) {
+    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, 0);
+    return (entry) ? ENTRY_PADDR(*entry) : 0;
 }

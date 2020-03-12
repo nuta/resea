@@ -51,6 +51,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     task->caps = caps;
     task->notifications = 0;
     task->pager = pager;
+    task->bulk_ptr = 0;
     task->timeout = 0;
     task->quantum = 0;
     strncpy(task->name, name, sizeof(task->name));

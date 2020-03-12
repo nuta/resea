@@ -73,6 +73,9 @@ SECTIONS {
     . = LMA_OFFSET + 0x3000000;
     __kernel_heap_end = .;
 
+    /* A temporary page used internally by kernel (virtual address). */
+    __temp_page = 0xffff0000;
+
     /DISCARD/ :{
         *(*.eh_frame);
     }

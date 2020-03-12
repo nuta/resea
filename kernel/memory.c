@@ -10,6 +10,7 @@
 extern char __kernel_heap[];
 extern char __kernel_heap_end[];
 extern char __initfs[];
+extern char __temp_page[];
 
 static list_t heap;
 
@@ -96,7 +97,12 @@ static paddr_t init_task_pager(vaddr_t vaddr, pageattrs_t *attrs) {
 }
 
 /// The page fault handler. It calls a pager and updates the page table.
-void handle_page_fault(vaddr_t addr, pagefault_t fault) {
+paddr_t handle_page_fault(vaddr_t addr, pagefault_t fault) {
+    if (is_kernel_addr_range(addr, 0) || addr == (vaddr_t) __temp_page) {
+        // The user is not allowed to access the page.
+        task_exit(EXP_INVALID_MEMORY_ACCESS);
+    }
+
     // Ask the associated pager to resolve the page fault.
     vaddr_t aligned_vaddr = ALIGN_DOWN(addr, PAGE_SIZE);
     paddr_t paddr;
@@ -108,6 +114,7 @@ void handle_page_fault(vaddr_t addr, pagefault_t fault) {
     }
 
     vm_link(&CURRENT->vm, aligned_vaddr, paddr, attrs);
+    return paddr;
 }
 
 /// Initializes the memory subsystem.

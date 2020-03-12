@@ -64,13 +64,16 @@ typedef int error_t;
 #define ERR_INVALID_ARG    (-8)
 #define ERR_ALREADY_EXISTS (-9)
 #define ERR_UNAVAILABLE    (-10)
-#define ERR_END            (-11)
+#define ERR_NOT_ACCEPTABLE (-11)
+#define ERR_END            (-12)
 
 #define SYSCALL_IPC     1
-#define SYSCALL_TASKCTL 2
-#define SYSCALL_IRQCTL  3
-#define SYSCALL_KLOGCTL 4
+#define SYSCALL_IPCCTL  2
+#define SYSCALL_TASKCTL 3
+#define SYSCALL_IRQCTL  4
+#define SYSCALL_KLOGCTL 5
 
+// IPC options.
 #define IPC_ANY     0 /* So-called "open receive". */
 #define IPC_SEND    (1 << 0)
 #define IPC_RECV    (1 << 1)
@@ -79,9 +82,14 @@ typedef int error_t;
 #define IPC_NOBLOCK (1 << 3)
 #define IPC_TIMER   (1 << 4)
 #define IPC_KERNEL  (1 << 5) /* Internally used by kernel. */
-#define IPC_FLAGS(op, timeout)                                                 \
-    (((timeout) << 28) | (op))
-#define IPC_TIMEOUT(flags)  (((flags) >> 28) & 0xf)
+#define IPC_TIMEOUT(timeout) (((timeout) << 12) | IPC_TIMER)
+#define IPC_GET_TIMEOUT(flags)  (((flags) >> 12) & 0xf)
+
+// Message Type (m->type).
+#define MSG_BULK(offset, len) (((offset) << 16) | ((len) << 24))
+// Returns *offsets* in the message of bulk pointer/length fields.
+#define MSG_GET_BULK_PTR(msg_type) (((msg_type) >> 16) & 0xff)
+#define MSG_GET_BULK_LEN(msg_type) (((msg_type) >> 24) & 0xff)
 
 typedef uint32_t caps_t;
 #define CAP_NONE 0

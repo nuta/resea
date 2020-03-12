@@ -19,7 +19,7 @@ struct free_list {
 
 void *kmalloc(size_t size);
 void kfree(void *ptr);
-void handle_page_fault(vaddr_t addr, pagefault_t fault);
+paddr_t handle_page_fault(vaddr_t addr, pagefault_t fault);
 void memory_init(void);
 
 // Implemented in arch.
@@ -28,5 +28,6 @@ error_t vm_create(struct vm *vm);
 void vm_destroy(struct vm *vm);
 error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr, pageattrs_t attrs);
 void vm_unlink(struct vm *vm, vaddr_t vaddr);
+paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr);
 
 #endif

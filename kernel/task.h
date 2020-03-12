@@ -64,6 +64,10 @@ struct task {
     /// The acceptable sender task ID. If it's IPC_ANY, the task accepts
     /// messages from any tasks.
     tid_t src;
+    /// The receive buffer for bulk IPC. Be careful since it's a user pointer.
+    vaddr_t bulk_ptr;
+    /// The size of the receiver buffer for bulk IPC.
+    size_t bulk_len;
     /// The pending notifications. It's cleared when the task received them as
     /// an message (NOTIFICATIONS_MSG).
     notifications_t notifications;
