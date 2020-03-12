@@ -1,0 +1,14 @@
+[book]
+authors = ["Seiya Nuta"]
+language = "en"
+multilingual = false
+src = "docs"
+title = "Resea"
+
+[output.html]
+default-theme = "rust"
+git-repository-url = "https://github.com/nuta/resea"
+
+[output.html.fold]
+enable = false
+level = 0

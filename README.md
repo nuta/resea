@@ -12,7 +12,6 @@ to extend the functionality.
 Features
 --------
 - A *pure* microkernel with x86_64 (SMP) support
-- Simple storage server (kvs)
 - TCP/IP server
 - Some device drivers (PS/2 keyboard, e1000 network card, and text-mode screen)
 
@@ -20,6 +19,7 @@ Road Map in 2020
 ----------------
 - Documentation
 - GUI server
+- File System server
 - Kernel-level handles like [IPC Gate in Fiasco (L4)](https://l4re.org/doc/group__l4__kernel__object__gate__api.html)
 - RISC-V support
 - [Rust](https://www.rust-lang.org/) in userland
