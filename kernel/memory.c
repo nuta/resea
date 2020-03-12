@@ -75,6 +75,8 @@ static paddr_t user_pager(vaddr_t addr, pagefault_t fault, pageattrs_t *attrs) {
         task_exit(EXP_INVALID_PAGE_FAULT_REPLY);
     }
 
+    // FIXME: Check that paddr is not in kernel area.
+
     *attrs = PAGE_USER | m.page_fault_reply.attrs;
     return m.page_fault_reply.paddr;
 }
