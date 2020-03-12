@@ -92,12 +92,7 @@ static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
         }
     }
 
-    error_t err = ipc(dst_task, src, (struct message *) m, flags);
-    if (IS_ERROR(err)) {
-        return err;
-    }
-
-    return OK;
+    return ipc(dst_task, src, (struct message *) m, flags);
 }
 
 /// The taskctl system call does all task-related operations. The operation is
