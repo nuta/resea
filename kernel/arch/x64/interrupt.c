@@ -88,7 +88,7 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
             if (ip == (uint64_t) usercopy1 || ip == (uint64_t) usercopy2) {
                 // We don't do lock() here beucase we already have the lock
                 // in usercopy functions.
-                TRACE("page fault in usercopy, handling as user's fault");
+                TRACE("%s: page fault in usercopy (addr=%p)", CURRENT->name, addr);
                 fault |= PF_USER;
                 needs_unlock = false;
             } else {
