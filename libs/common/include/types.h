@@ -64,7 +64,8 @@ typedef int error_t;
 #define ERR_ALREADY_EXISTS (-9)
 #define ERR_UNAVAILABLE    (-10)
 #define ERR_NOT_ACCEPTABLE (-11)
-#define ERR_END            (-12)
+#define ERR_EMPTY          (-12)
+#define ERR_END            (-13)
 
 #define SYSCALL_IPC     1
 #define SYSCALL_IPCCTL  2
