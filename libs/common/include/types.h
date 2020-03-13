@@ -98,10 +98,11 @@ typedef uint32_t caps_t;
 #define CAP_KLOG (1 << 3)
 
 typedef uint32_t notifications_t;
-#define NOTIFY_TIMER   (1 << 0)
-#define NOTIFY_IRQ     (1 << 1)
-#define NOTIFY_READY   (1 << 2)
-#define NOTIFY_ABORTED (1 << 3)
+#define NOTIFY_TIMER    (1 << 0)
+#define NOTIFY_IRQ      (1 << 1)
+#define NOTIFY_READY    (1 << 2)
+#define NOTIFY_ABORTED  (1 << 3)
+#define NOTIFY_NEW_DATA (1 << 4)
 
 enum exception_type {
     EXP_GRACE_EXIT,
