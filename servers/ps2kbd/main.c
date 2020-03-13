@@ -1,11 +1,14 @@
 #include <message.h>
-#include <std/async.h>
 #include <std/io.h>
 #include <std/lookup.h>
 #include <std/printf.h>
 #include <std/syscall.h>
 #include "ps2kbd.h"
 
+#define QUEUE_SIZE 64
+static uint16_t queue[QUEUE_SIZE];
+static int queue_head = 0;
+static int queue_tail = 0;
 static tid_t shell_server;
 
 // Modifier keys. True if the key is being pressed.
@@ -81,10 +84,9 @@ static void handle_irq(void) {
                 // TRACE("key event: scancode=%02x, keycode=%04x", scancode,
                 //       keycode);
 
-                struct message m;
-                m.type = SHELL_KEY_PRESSED_MSG;
-                m.shell.key_pressed.keycode = keycode;
-                async_send(shell_server, &m);
+                queue[queue_head] = keycode;
+                queue_head = (queue_head + 1) % QUEUE_SIZE;
+                ipc_notify(shell_server, NOTIFY_NEW_DATA);
             }
         }
     }
@@ -109,13 +111,20 @@ void main(void) {
 
         switch (m.type) {
             case NOTIFICATIONS_MSG:
-                if (m.notifications.data & NOTIFY_READY) {
-                    async_flush();
-                }
-
                 if (m.notifications.data & NOTIFY_IRQ) {
                     handle_irq();
                 }
+                break;
+            case KBD_GET_KEYCODE_MSG:
+                if (queue_head == queue_tail) {
+                    ipc_reply_err(m.src, ERR_EMPTY);
+                    break;
+                }
+
+                m.type = KBD_KEYCODE_MSG;
+                m.shell.key_pressed.keycode = queue[queue_tail];
+                queue_tail = (queue_tail + 1) % QUEUE_SIZE;
+                ipc_reply(m.src, &m);
                 break;
             default:
                 TRACE("unknown message %d", m.type);

@@ -24,6 +24,15 @@ static void receive(const void *payload, size_t len) {
     ASSERT_OK(err);
 }
 
+void transmit(void) {
+    struct message m;
+    m.type = NET_GET_TX_MSG;
+    ASSERT_OK(ipc_call(tcpip_tid, &m));
+    ASSERT(m.type == NET_TX_MSG);
+    e1000_transmit(m.net_device.tx.payload, m.net_device.tx.len);
+    free(m.net_device.tx.payload);
+}
+
 void main(void) {
     error_t err;
     INFO("starting...");
@@ -70,10 +79,10 @@ void main(void) {
                 if (m.notifications.data & NOTIFY_IRQ) {
                     e1000_handle_interrupt(receive);
                 }
-                break;
-            case NET_TX_MSG:
-                e1000_transmit(m.net_device.tx.payload, m.net_device.tx.len);
-                free(m.net_device.tx.payload);
+
+                if (m.notifications.data & NOTIFY_NEW_DATA) {
+                    transmit();
+                }
                 break;
             default:
                 TRACE("unknown message %d", m.type);

@@ -1,6 +1,5 @@
 #include <list.h>
 #include <message.h>
-#include <std/async.h>
 #include <std/malloc.h>
 #include <std/printf.h>
 #include <std/session.h>
@@ -17,10 +16,10 @@ static list_t drivers;
 static list_t pending_events;
 static msec_t uptime = 0;
 
-static device_t get_device_by_tid(tid_t tid) {
+static struct driver *get_driver_by_tid(tid_t tid) {
     LIST_FOR_EACH (driver, &drivers, struct driver, next) {
         if (driver->tid == tid) {
-            return driver->device;
+            return driver;
         }
     }
 
@@ -28,28 +27,26 @@ static device_t get_device_by_tid(tid_t tid) {
 }
 
 static void transmit(device_t device, mbuf_t pkt) {
-    tid_t driver = (tid_t) device->arg;
-
     size_t len = mbuf_len(pkt);
-    if (len > NET_PACKET_LEN_MAX) {
-        WARN("too long TX packet (len=%d), discarding...", len);
-        mbuf_delete(pkt);
-        return;
-    }
+    DEBUG_ASSERT(len <= 2048 && "too long packet");
 
-    uint8_t tmpbuf[1024];
-    mbuf_read(&pkt, tmpbuf, sizeof(tmpbuf));
-
-    struct message m;
-    m.type = NET_TX_MSG;
-    m.net_device.tx.payload = tmpbuf;
-    m.net_device.tx.len = len;
+    uint8_t *payload = malloc(len);
+    mbuf_read(&pkt, payload, len);
     mbuf_delete(pkt);
-    async_send(driver, &m);
+
+    struct driver *driver = device->arg;
+    struct packet *packet = malloc(sizeof(*packet));
+    packet->dst = driver->tid;
+    packet->m.type = NET_TX_MSG;
+    packet->m.net_device.tx.payload = payload;
+    packet->m.net_device.tx.len = len;
+    list_push_back(&driver->tx_queue, &packet->next);
+
+    OOPS_OK(ipc_notify(driver->tid, NOTIFY_NEW_DATA));
 }
 
 static error_t do_process_event(struct event *e) {
-    // FIXME: Use async_send() instead.
+    // FIXME: Use ipc_notify
     switch (e->type) {
         case TCP_NEW_CLIENT: {
             tcp_sock_t sock = e->tcp_new_client.listen_sock;
@@ -93,7 +90,6 @@ static error_t do_process_event(struct event *e) {
 }
 
 static void deferred_work(void) {
-    async_flush();
     tcp_flush();
 
     LIST_FOR_EACH (event, &pending_events, struct event, next) {
@@ -111,21 +107,24 @@ static void register_device(tid_t driver_task, macaddr_t *macaddr) {
         return;
     }
 
+    struct driver *driver = malloc(sizeof(*driver));
+    next_driver_id++;
+    driver->tid = driver_task;
+    list_init(&driver->tx_queue);
+
     // Create a new device.
     char name[] = {'n', 'e', 't', '0' + next_driver_id, '\0'};
     device_t device = device_new(name, ethernet_transmit, transmit,
-                                 (void *) (uintptr_t) driver_task);
+                                 (void *) (uintptr_t) driver);
     if (!device) {
         WARN("failed to create a device");
+        free(driver);
         return;
     }
 
-    device_set_macaddr(device, macaddr);
-    next_driver_id++;
-    struct driver *driver = malloc(sizeof(*driver));
-    driver->tid = driver_task;
-    driver->device = device;
     list_push_back(&drivers, &driver->next);
+    device_set_macaddr(device, macaddr);
+    driver->device = device;
 
     device_enable_dhcp(device);
     INFO("registered new net device '%s'", name);
@@ -247,13 +246,30 @@ void main(void) {
                 register_device(m.src, &m.tcpip.register_device.macaddr);
                 break;
             case NET_RX_MSG: {
-                device_t device = get_device_by_tid(m.src);
-                if (!device) {
+                struct driver *driver = get_driver_by_tid(m.src);
+                if (!driver) {
                     break;
                 }
 
-                ethernet_receive(device, m.net_device.rx.payload, m.net_device.rx.len);
+                ethernet_receive(driver->device, m.net_device.rx.payload, m.net_device.rx.len);
                 dhcp_receive();
+                break;
+            }
+            case NET_GET_TX_MSG: {
+                struct driver *driver = get_driver_by_tid(m.src);
+                if (!driver) {
+                    break;
+                }
+
+                struct packet *pkt = LIST_POP_FRONT(&driver->tx_queue, struct packet, next);
+                if (!pkt) {
+                    ipc_reply_err(m.src, ERR_EMPTY);
+                    break;
+                }
+
+                ipc_reply(m.src, &pkt->m);
+                free(pkt->m.net_device.tx.payload);
+                free(pkt);
                 break;
             }
             default:

@@ -247,6 +247,9 @@ void main(void) {
     display_server = ipc_lookup("display");
     ASSERT_OK(display_server);
 
+    tid_t kbd_server = ipc_lookup("ps2kbd");
+    ASSERT_OK(kbd_server);
+
     get_screen_size();
     clear_screen();
     timer_set(200);
@@ -261,13 +264,18 @@ void main(void) {
 
         switch (m.type) {
             case NOTIFICATIONS_MSG:
+                if (m.notifications.data & NOTIFY_NEW_DATA) {
+                    struct message m;
+                    m.type = KBD_GET_KEYCODE_MSG;
+                    ASSERT_OK(ipc_call(kbd_server, &m));
+                    ASSERT(m.type == KBD_KEYCODE_MSG);
+                    input(m.shell.key_pressed.keycode);
+                }
+
                 if (m.notifications.data & NOTIFY_TIMER) {
                     poll_kernel_log();
                     timer_set(200);
                 }
-                break;
-            case SHELL_KEY_PRESSED_MSG:
-                input(m.shell.key_pressed.keycode);
                 break;
             default:
                 WARN("unknown message type (type=%d)", m.type);
