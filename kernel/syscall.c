@@ -90,7 +90,6 @@ static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
         if (!dst_task) {
             return ERR_INVALID_ARG;
         }
-        *((volatile int *) 0xabc0) = 123;
 
         if (flags & IPC_NOTIFY) {
             notify(dst_task, m);
