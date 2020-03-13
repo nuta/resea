@@ -9,9 +9,11 @@ void halt(void);
 #ifdef KERNEL
 #    define printf printk
 void printk(const char *fmt, ...);
+void panic_lock(void);
 #else
 void printf(const char *fmt, ...);
 void task_exit(void);
+static inline void panic_lock(void) {}
 #endif
 
 const char *__program_name(void);
@@ -115,6 +117,7 @@ const char *__program_name(void);
 
 #define PANIC(fmt, ...)                                                        \
     do {                                                                       \
+        panic_lock();                                                          \
         printf(SGR_ERR "[%s] PANIC: " fmt SGR_RESET "\n", __program_name(),    \
                ##__VA_ARGS__);                                                 \
         backtrace();                                                           \

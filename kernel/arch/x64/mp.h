@@ -109,4 +109,6 @@ enum ipi_mode {
 #define UNLOCKED      0xc0be
 #define NO_LOCK_OWNER -1
 
+void panic_unlock(void);
+
 #endif

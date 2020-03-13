@@ -107,6 +107,7 @@ void task_init(void);
 
 // Implemented in arch.
 void lock(void);
+void panic_lock(void);
 void unlock(void);
 int mp_cpuid(void);
 int mp_num_cpus(void);

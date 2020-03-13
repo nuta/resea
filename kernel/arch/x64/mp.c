@@ -118,6 +118,14 @@ void mp_start(void) {
     start_aps();
 }
 
+void mp_reschedule(void) {
+    send_ipi(VECTOR_IPI_RESCHEDULE, IPI_DEST_ALL_BUT_SELF, 0, IPI_MODE_FIXED);
+}
+
+static void halt_other_cpus(void) {
+    send_ipi(VECTOR_IPI_HALT, IPI_DEST_ALL_BUT_SELF, 0, IPI_MODE_FIXED);
+}
+
 static int big_lock = UNLOCKED;
 static int lock_owner = NO_LOCK_OWNER;
 
@@ -133,17 +141,25 @@ void lock(void) {
     lock_owner = mp_cpuid();
 }
 
+void panic_lock(void) {
+    halt_other_cpus();
+    lock_owner = mp_cpuid();
+}
+
 void unlock(void) {
+    DEBUG_ASSERT(lock_owner == mp_cpuid());
     lock_owner = NO_LOCK_OWNER;
     __sync_bool_compare_and_swap(&big_lock, LOCKED, UNLOCKED);
 }
 
-void mp_reschedule(void) {
-    send_ipi(VECTOR_IPI_RESCHEDULE, IPI_DEST_ALL_BUT_SELF, 0, IPI_MODE_FIXED);
+void panic_unlock(void) {
+    if (mp_cpuid() == lock_owner) {
+        lock_owner = NO_LOCK_OWNER;
+    }
 }
 
 void halt(void) {
-    send_ipi(VECTOR_IPI_HALT, IPI_DEST_ALL_BUT_SELF, 0, IPI_MODE_FIXED);
+    halt_other_cpus();
     while (true) {
         __asm__ __volatile__("cli; hlt");
     }

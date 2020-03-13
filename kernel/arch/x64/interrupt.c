@@ -53,20 +53,19 @@ void arch_disable_irq(unsigned irq) {
 
 // Dumps the interrupt frame (for debugging).
 static void dump_frame(struct iframe *frame) {
-    printf("RIP = %p CS  = %p  RFL = %p\n", frame->rip, frame->cs,
-           frame->rflags);
-    printf("SS  = %p RSP = %p  RBP = %p\n", frame->ss, frame->rsp, frame->rbp);
-    printf("RAX = %p RBX = %p  RCX = %p\n", frame->rax, frame->rbx, frame->rcx);
-    printf("RDX = %p RSI = %p  RDI = %p\n", frame->rdx, frame->rsi, frame->rdi);
-    printf("R8  = %p R9  = %p  R10 = %p\n", frame->r8, frame->r9, frame->r10);
-    printf("R11 = %p R12 = %p  R13 = %p\n", frame->r11, frame->r12, frame->r13);
-    printf("R14 = %p R15 = %p  ERR = %p\n", frame->r14, frame->r15,
-           frame->error);
+    WARN("RIP = %p CS  = %p  RFL = %p", frame->rip, frame->cs, frame->rflags);
+    WARN("SS  = %p RSP = %p  RBP = %p", frame->ss, frame->rsp, frame->rbp);
+    WARN("RAX = %p RBX = %p  RCX = %p", frame->rax, frame->rbx, frame->rcx);
+    WARN("RDX = %p RSI = %p  RDI = %p", frame->rdx, frame->rsi, frame->rdi);
+    WARN("R8  = %p R9  = %p  R10 = %p", frame->r8, frame->r9, frame->r10);
+    WARN("R11 = %p R12 = %p  R13 = %p", frame->r11, frame->r12, frame->r13);
+    WARN("R14 = %p R15 = %p  ERR = %p", frame->r14, frame->r15, frame->error);
 }
 
 void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
     if (vec == VECTOR_IPI_HALT) {
         // Halt the CPU silently...
+        panic_unlock();
         while (true) {
             __asm__ __volatile__("cli; hlt");
         }
@@ -85,6 +84,13 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
                     "#PF: RSVD bit violation (page table is presumably corrupted!)");
             }
 
+            if ((fault & PF_USER) == 0) {
+                // This will never occur. NEVER!
+                panic_lock();
+                dump_frame(frame);
+                PANIC("page fault in the kernel space (addr=%p)", addr);
+            }
+
             if (ip == (uint64_t) usercopy1 || ip == (uint64_t) usercopy2) {
                 // We don't do lock() here beucase we already have the lock
                 // in usercopy functions.
@@ -93,12 +99,6 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
                 needs_unlock = false;
             } else {
                 lock();
-            }
-
-            if ((fault & PF_USER) == 0) {
-                // This will never occur. NEVER!
-                dump_frame(frame);
-                PANIC("page fault in the kernel space (addr=%p)", addr);
             }
 
             handle_page_fault(addr, fault);
@@ -111,7 +111,7 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
         default:
             lock();
             if (vec <= 20) {
-                printf("Exception #%d\n", vec);
+                WARN("Exception #%d\n", vec);
                 dump_frame(frame);
                 if (frame->cs == KERNEL_CS) {
                     PANIC("Exception #%d occurred in the kernel space!", vec);
