@@ -119,10 +119,10 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
         }
 
         // Resume a sender task.
+        CURRENT->src = src;
         resume_sender_task(CURRENT);
 
         // Sleep until a sender task resumes this task...
-        CURRENT->src = src;
         task_set_state(CURRENT, TASK_RECEIVING);
         task_switch();
 
