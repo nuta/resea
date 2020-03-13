@@ -85,16 +85,16 @@ static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
     }
 
     struct task *dst_task = NULL;
-    if (flags & (IPC_SEND | IPC_LISTEN)) {
+    if (flags & (IPC_SEND | IPC_LISTEN | IPC_NOTIFY)) {
         dst_task = task_lookup(dst);
         if (!dst_task) {
             return ERR_INVALID_ARG;
         }
-    }
 
-    if (flags & IPC_NOTIFY) {
-        notify(dst_task, m);
-        return OK;
+        if (flags & IPC_NOTIFY) {
+            notify(dst_task, m);
+            return OK;
+        }
     }
 
     return ipc(dst_task, src, (struct message *) m, flags);
