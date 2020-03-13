@@ -11,6 +11,7 @@ extern uint8_t __temp_page[];
 static void resume_sender_task(struct task *task) {
     LIST_FOR_EACH (sender, &task->senders, struct task, sender_next) {
         if (task->src == IPC_ANY || task->src == sender->tid) {
+            DEBUG_ASSERT(sender->state == TASK_SENDING);
             task_set_state(sender, TASK_RUNNABLE);
             list_remove(&sender->sender_next);
             break;
