@@ -23,6 +23,7 @@ error_t ipc_send(tid_t dst, struct message *m);
 error_t ipc_send_noblock(tid_t dst, struct message *m);
 void ipc_reply(tid_t dst, struct message *m);
 void ipc_reply_err(tid_t dst, error_t error);
+error_t ipc_notify(tid_t dst, notifications_t notifications);
 error_t ipc_recv(tid_t src, struct message *m);
 error_t ipc_call(tid_t dst, struct message *m);
 error_t ipc_listen(tid_t dst);

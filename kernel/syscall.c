@@ -92,6 +92,11 @@ static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
         }
     }
 
+    if (flags & IPC_NOTIFY) {
+        notify(dst_task, m);
+        return OK;
+    }
+
     return ipc(dst_task, src, (struct message *) m, flags);
 }
 

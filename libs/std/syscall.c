@@ -76,6 +76,10 @@ void ipc_reply_err(tid_t dst, error_t error) {
     ipc_send_noblock(dst, &m);
 }
 
+error_t ipc_notify(tid_t dst, notifications_t notifications) {
+    return ipc(dst, 0, (void *) (uintptr_t) notifications, IPC_NOTIFY);
+}
+
 error_t ipc_recv(tid_t src, struct message *m) {
     if (!bulk_ptr) {
         bulk_ptr = malloc(bulk_len);

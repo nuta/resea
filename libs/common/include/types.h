@@ -79,6 +79,7 @@ typedef int error_t;
 #define IPC_CALL    (IPC_SEND | IPC_RECV)
 #define IPC_LISTEN  (1 << 2)
 #define IPC_NOBLOCK (1 << 3)
+#define IPC_NOTIFY  (1 << 4)
 #define IPC_KERNEL  (1 << 5) /* Internally used by kernel. */
 
 // Message Type (m->type).
