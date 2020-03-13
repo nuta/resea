@@ -40,12 +40,6 @@ typedef uint16_t keycode_t;
 #define KEY_MOD_ALT  (1 << 9)
 
 //
-//  KVS Server
-//
-#define KVS_KEY_LEN      64
-#define KVS_DATA_LEN_MAX 512
-
-//
 //  TCP/IP Server
 //
 #define TCP_DATA_LEN_MAX 1000
@@ -89,14 +83,6 @@ enum message_type {
     TCPIP_CLOSE_MSG,
     TCPIP_CLOSED_MSG,
     TCPIP_RECEIVED_MSG,
-
-    KVS_GET_MSG,
-    KVS_GET_REPLY_MSG,
-    KVS_SET_MSG,
-    KVS_DELETE_MSG,
-    KVS_LISTEN_MSG,
-    KVS_UNLISTEN_MSG,
-    KVS_CHANGED_MSG,
 };
 
 /// Message.
@@ -150,41 +136,6 @@ struct message {
                 paddr_t paddr;
             } alloc_pages_reply;
         };
-
-        // KVS
-        union {
-            struct {
-                size_t len;
-                char key[KVS_KEY_LEN];
-            } get;
-
-            struct {
-                size_t len;
-                uint8_t data[KVS_DATA_LEN_MAX];
-            } get_reply;
-
-            struct {
-                size_t len;
-                char key[KVS_KEY_LEN];
-                uint8_t data[KVS_DATA_LEN_MAX];
-            } set;
-
-            struct {
-                char key[KVS_KEY_LEN];
-            } delete;
-
-            struct {
-                char key[KVS_KEY_LEN];
-            } listen;
-
-            struct {
-                char key[KVS_KEY_LEN];
-            } unlisten;
-
-            struct {
-                char key[KVS_KEY_LEN];
-            } changed;
-        } kvs;
 
         // TCP/IP
         union {

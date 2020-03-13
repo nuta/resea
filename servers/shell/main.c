@@ -6,7 +6,6 @@
 #include <string.h>
 
 static tid_t display_server;
-static tid_t kvs_server;
 
 static int cursor_x = 0;
 static int cursor_y = 0;
@@ -141,54 +140,6 @@ static void clear_command(UNUSED int argc, UNUSED char **argv) {
     cursor_y = 0;
 }
 
-static void get_command(int argc, char **argv) {
-    if (argc < 2) {
-        logputstr("Usage: get key\n");
-        return;
-    }
-
-    struct message m;
-    m.type = KVS_GET_MSG;
-    strncpy(m.kvs.get.key, argv[1], sizeof(m.kvs.get.key));
-    error_t err = ipc_call(kvs_server, &m);
-    if (IS_ERROR(err)) {
-        logputstr("failed read the key\n");
-        return;
-    }
-
-    ASSERT(m.type == KVS_GET_REPLY_MSG);
-
-    for (size_t i = 0; i < m.kvs.get_reply.len; i++) {
-        logputc(m.kvs.get_reply.data[i]);
-    }
-
-    logputc('\n');
-}
-
-static void set_command(int argc, char **argv) {
-    if (argc < 3) {
-        logputstr("Usage: set key value\n");
-        return;
-    }
-
-    struct message m;
-    m.type = KVS_SET_MSG;
-    m.kvs.set.len = strlen(argv[2]);
-    if (m.kvs.set.len > KVS_DATA_LEN_MAX) {
-        logputstr("too long value\n");
-        return;
-    }
-
-    strncpy(m.kvs.set.key, argv[1], sizeof(m.kvs.set.key));
-    strncpy((char *) m.kvs.set.data, argv[2], KVS_DATA_LEN_MAX);
-    error_t err =
-        ipc_call(kvs_server, &m);
-    if (IS_ERROR(err)) {
-        logputstr("failed set the value\n");
-        return;
-    }
-}
-
 struct command {
     const char *name;
     void (*run)(int argc, char **argv);
@@ -197,8 +148,6 @@ struct command {
 static struct command commands[] = {
     { .name = "echo", .run = echo_command },
     { .name = "clear", .run = clear_command },
-    { .name = "get", .run = get_command },
-    { .name = "set", .run = set_command },
     { .name = NULL, .run = NULL },
 };
 
@@ -297,8 +246,6 @@ void main(void) {
 
     display_server = ipc_lookup("display");
     ASSERT_OK(display_server);
-    kvs_server = ipc_lookup("kvs");
-    ASSERT_OK(kvs_server);
 
     get_screen_size();
     clear_screen();
