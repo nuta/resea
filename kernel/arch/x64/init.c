@@ -138,7 +138,7 @@ static void common_setup(void) {
     asm_write_cr4(asm_read_cr4() | CR4_FSGSBASE | CR4_OSXSAVE);
     // Set RDGSBASE to enable the CPUVAR macro.
     struct gsbase *gsbase =
-        from_paddr((paddr_t) __cpuvar_base + mp_cpuid() * CPUVAR_SIZE_MAX);
+        from_paddr((paddr_t) __cpuvar_base + mp_self() * CPUVAR_SIZE_MAX);
     asm_wrgsbase((uint64_t) gsbase);
 
     apic_init();
@@ -160,7 +160,7 @@ void init(void) {
 
 void mpinit(void) {
     lock();
-    INFO("Booting CPU #%d...", mp_cpuid());
+    INFO("Booting CPU #%d...", mp_self());
     common_setup();
     mpmain();
 }

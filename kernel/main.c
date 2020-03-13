@@ -29,7 +29,7 @@ void mpmain(void) {
     CURRENT = IDLE_TASK;
 
     // Do the very first context switch on this CPU.
-    INFO("Booted CPU #%d", mp_cpuid());
+    INFO("Booted CPU #%d", mp_self());
     task_switch();
 
     // We're now in the current CPU's idle task.

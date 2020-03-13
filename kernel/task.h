@@ -109,7 +109,7 @@ void task_init(void);
 void lock(void);
 void panic_lock(void);
 void unlock(void);
-int mp_cpuid(void);
+int mp_self(void);
 int mp_num_cpus(void);
 void mp_reschedule(void);
 error_t arch_task_create(struct task *task, vaddr_t ip);

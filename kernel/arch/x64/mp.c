@@ -73,7 +73,7 @@ static void read_mp_table(void) {
             case MP_BASETABLE_PROCESSOR_ENTRY:
                 size = sizeof(struct mp_processor_entry);
                 struct mp_processor_entry *entry = entry_ptr;
-                if (entry->localapic_id != mp_cpuid()) {
+                if (entry->localapic_id != mp_self()) {
                     num_cpus++;
                 }
                 break;
@@ -130,30 +130,30 @@ static int big_lock = UNLOCKED;
 static int lock_owner = NO_LOCK_OWNER;
 
 void lock(void) {
-    if (mp_cpuid() == lock_owner) {
-        PANIC("recusive lock (#%d)", mp_cpuid());
+    if (mp_self() == lock_owner) {
+        PANIC("recusive lock (#%d)", mp_self());
     }
 
     while (!__sync_bool_compare_and_swap(&big_lock, UNLOCKED, LOCKED)) {
         __asm__ __volatile__("pause");
     }
 
-    lock_owner = mp_cpuid();
+    lock_owner = mp_self();
 }
 
 void panic_lock(void) {
     halt_other_cpus();
-    lock_owner = mp_cpuid();
+    lock_owner = mp_self();
 }
 
 void unlock(void) {
-    DEBUG_ASSERT(lock_owner == mp_cpuid());
+    DEBUG_ASSERT(lock_owner == mp_self());
     lock_owner = NO_LOCK_OWNER;
     __sync_bool_compare_and_swap(&big_lock, LOCKED, UNLOCKED);
 }
 
 void panic_unlock(void) {
-    if (mp_cpuid() == lock_owner) {
+    if (mp_self() == lock_owner) {
         lock_owner = NO_LOCK_OWNER;
     }
 }

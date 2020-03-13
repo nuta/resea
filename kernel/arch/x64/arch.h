@@ -41,12 +41,12 @@ static inline bool is_kernel_addr_range(vaddr_t base, size_t len) {
            || base + len >= KERNEL_BASE_ADDR;
 }
 
-static inline int mp_cpuid(void) {
+static inline int mp_self(void) {
     return *((volatile uint32_t *) from_paddr(0xfee00020)) >> 24;
 }
 
 static inline bool mp_is_bsp(void) {
-    return mp_cpuid() == 0;
+    return mp_self() == 0;
 }
 
 //
