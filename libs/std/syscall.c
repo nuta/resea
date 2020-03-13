@@ -114,10 +114,6 @@ error_t ipc_call(tid_t dst, struct message *m) {
     return (IS_OK(err) && m->type < 0) ? m->type : err;
 }
 
-error_t ipc_listen(tid_t dst) {
-    return ipc(dst, 0, NULL, IPC_LISTEN);
-}
-
 error_t timer_set(msec_t timeout) {
     return ipcctl(bulk_ptr, bulk_len, timeout);
 }

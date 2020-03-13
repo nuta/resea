@@ -78,10 +78,9 @@ typedef int error_t;
 #define IPC_SEND    (1 << 0)
 #define IPC_RECV    (1 << 1)
 #define IPC_CALL    (IPC_SEND | IPC_RECV)
-#define IPC_LISTEN  (1 << 2)
-#define IPC_NOBLOCK (1 << 3)
-#define IPC_NOTIFY  (1 << 4)
-#define IPC_KERNEL  (1 << 5) /* Internally used by kernel. */
+#define IPC_NOBLOCK (1 << 2)
+#define IPC_NOTIFY  (1 << 3)
+#define IPC_KERNEL  (1 << 4) /* Internally used by kernel. */
 
 // Message Type (m->type).
 #define MSG_BULK(offset, len) (((offset) << 16) | ((len) << 24))
@@ -100,9 +99,8 @@ typedef uint32_t caps_t;
 typedef uint32_t notifications_t;
 #define NOTIFY_TIMER    (1 << 0)
 #define NOTIFY_IRQ      (1 << 1)
-#define NOTIFY_READY    (1 << 2)
-#define NOTIFY_ABORTED  (1 << 3)
-#define NOTIFY_NEW_DATA (1 << 4)
+#define NOTIFY_ABORTED  (1 << 2)
+#define NOTIFY_NEW_DATA (1 << 3)
 
 enum exception_type {
     EXP_GRACE_EXIT,

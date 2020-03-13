@@ -22,12 +22,6 @@ static void resume_sender_task(struct task *task) {
 /// Sends and receives a message. Note that `m` is a user pointer if
 /// IPC_KERNEL is not set!
 error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
-    // Register the current task as a listener.
-    if (flags & IPC_LISTEN) {
-        dst->listened_by[CURRENT->tid - 1] = true;
-        return OK;
-    }
-
     // Send a message.
     if (flags & IPC_SEND) {
         // Wait until the destination (receiver) task gets ready for receiving.
@@ -108,14 +102,6 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
             m->notifications.data = CURRENT->notifications;
             CURRENT->notifications = 0;
             return OK;
-        }
-
-        // Notify the listeners that this task is now waiting for a message.
-        for (unsigned i = 0; i < TASKS_MAX; i++) {
-            if (CURRENT->listened_by[i]) {
-                notify(task_lookup(i + 1), NOTIFY_READY);
-                CURRENT->listened_by[i] = false;
-            }
         }
 
         // Resume a sender task.

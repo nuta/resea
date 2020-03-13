@@ -59,10 +59,6 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     list_nullify(&task->runqueue_next);
     list_nullify(&task->sender_next);
 
-    for (unsigned i = 0; i < TASKS_MAX; i++) {
-        task->listened_by[i] = false;
-    }
-
     // Append the newly created task into the runqueue.
     if (task != IDLE_TASK) {
         task_set_state(task, TASK_RUNNABLE);
@@ -104,14 +100,6 @@ error_t task_destroy(struct task *task) {
             PANIC("a pager task '%s' (#%d) is being killed", task->name,
                   task->tid);
         }
-
-        // Notify all listener tasks that this task has been aborted.
-        if (task->listened_by[i]) {
-            notify(task_lookup(i + 1), NOTIFY_ABORTED);
-        }
-
-        // Unlisten from each task.
-        tasks[i].listened_by[task->tid - 1] = false;
     }
 
     for (unsigned irq = 0; irq < IRQ_MAX; irq++) {
