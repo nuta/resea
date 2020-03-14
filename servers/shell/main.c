@@ -6,6 +6,7 @@
 #include <string.h>
 
 static tid_t display_server;
+static tid_t kbd_server;
 
 static int cursor_x = 0;
 static int cursor_y = 0;
@@ -104,7 +105,7 @@ void logputc(char ch) {
     update_cursor();
 }
 
-static void poll_kernel_log(void) {
+static void pull_kernel_log(void) {
     while (true) {
         char buf[512];
         size_t read_len = klog_read(buf, sizeof(buf));
@@ -229,6 +230,19 @@ static void input(char ch) {
     }
 }
 
+static void pull_input(void) {
+    struct message m;
+    m.type = KBD_GET_KEYCODE_MSG;
+    error_t err = ipc_call(kbd_server, &m);
+    if (err == ERR_EMPTY) {
+        return;
+    }
+
+    ASSERT_OK(err);
+    ASSERT(m.type == KBD_KEYCODE_MSG);
+    input(m.shell.key_pressed.keycode);
+}
+
 static void get_screen_size(void) {
     struct message m;
     m.type = SCREEN_GET_SIZE_MSG;
@@ -247,13 +261,13 @@ void main(void) {
     display_server = ipc_lookup("display");
     ASSERT_OK(display_server);
 
-    tid_t kbd_server = ipc_lookup("ps2kbd");
+    kbd_server = ipc_lookup("ps2kbd");
     ASSERT_OK(kbd_server);
 
     get_screen_size();
     clear_screen();
-    timer_set(200);
-    poll_kernel_log();
+    ASSERT_OK(klog_listen());
+    pull_kernel_log();
 
     // The mainloop: receive and handle messages.
     prompt();
@@ -265,16 +279,8 @@ void main(void) {
         switch (m.type) {
             case NOTIFICATIONS_MSG:
                 if (m.notifications.data & NOTIFY_NEW_DATA) {
-                    struct message m;
-                    m.type = KBD_GET_KEYCODE_MSG;
-                    ASSERT_OK(ipc_call(kbd_server, &m));
-                    ASSERT(m.type == KBD_KEYCODE_MSG);
-                    input(m.shell.key_pressed.keycode);
-                }
-
-                if (m.notifications.data & NOTIFY_TIMER) {
-                    poll_kernel_log();
-                    timer_set(200);
+                    pull_kernel_log();
+                    pull_input();
                 }
                 break;
             default:
