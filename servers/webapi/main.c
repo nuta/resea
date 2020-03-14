@@ -3,6 +3,7 @@
 #include <std/printf.h>
 #include <std/session.h>
 #include <std/syscall.h>
+#include <std/lookup.h>
 #include <string.h>
 #include <stubs/tcpip.h>
 #include <vprintf.h>
@@ -102,6 +103,7 @@ malformed:
 
 void main(void) {
     INFO("starting...");
+    tid_t tcpip_server = ipc_lookup("tcpip");
     tcpip_init();
     session_init();
 
@@ -118,44 +120,52 @@ void main(void) {
         ASSERT_OK(err);
 
         switch (m.type) {
-            case TCPIP_NEW_CLIENT_MSG: {
-                DBG("new client! %d", m.tcpip.new_client.handle);
-                handle_t new_handle = tcpip_accept(m.tcpip.new_client.handle);
-                ASSERT_OK(new_handle);
-
-                struct client *client = malloc(sizeof(*client));
-                client->handle = new_handle;
-                client->request = NULL;
-                client->request_len = 0;
-                client->done = false;
-                DBG("new_handle: %d", new_handle);
-                struct session *sess =
-                    session_alloc_at(tcpip_server(), new_handle);
-                ASSERT(sess);
-                sess->data = client;
+            case NOTIFICATIONS_MSG: {
+                if (m.notifications.data & NOTIFY_NEW_DATA) {
+                    m.type = TCPIP_PULL_MSG;
+                    ASSERT_OK(ipc_call(tcpip_server, &m));
+                    switch (m.type) {
+                        case TCPIP_RECEIVED_MSG: {
+                            DBG("new data");
+                            struct session *sess =
+                                session_get(tcpip_server, m.tcpip.received.handle);
+                            struct client *client = (struct client *) sess->data;
+                            ASSERT(client);
+                            tcpip_read(client->handle, buf, buf_len);
+                            process(client, buf, buf_len);
+                            break;
+                        }
+                        case TCPIP_NEW_CLIENT_MSG: {
+                            DBG("new client! %d", m.tcpip.new_client.handle);
+                            handle_t new_handle = tcpip_accept(m.tcpip.new_client.handle);
+                            ASSERT_OK(new_handle);
+            
+                            struct client *client = malloc(sizeof(*client));
+                            client->handle = new_handle;
+                            client->request = NULL;
+                            client->request_len = 0;
+                            client->done = false;
+                            DBG("new_handle: %d", new_handle);
+                            struct session *sess =
+                                session_alloc_at(tcpip_server, new_handle);
+                            ASSERT(sess);
+                            sess->data = client;
+                            break;
+                        }
+                        case TCPIP_CLOSED_MSG: {
+                            handle_t handle = m.tcpip.closed.handle;
+                            struct session *sess = session_get(tcpip_server, handle);
+                            struct client *client = (struct client *) sess->data;
+                            ASSERT(client);
+                            free(client->request);
+                            free(client);
+                            session_delete(tcpip_server, handle);
+                            break;
+                        }
+                    }
+                }
                 break;
-            }
-            case TCPIP_CLOSED_MSG: {
-                handle_t handle = m.tcpip.closed.handle;
-                struct session *sess = session_get(tcpip_server(), handle);
-                struct client *client = (struct client *) sess->data;
-                ASSERT(client);
-                free(client->request);
-                free(client);
-                session_delete(tcpip_server(), handle);
-                break;
-            }
-            case TCPIP_RECEIVED_MSG: {
-                DBG("new data");
-                struct session *sess =
-                    session_get(tcpip_server(), m.tcpip.received.handle);
-                struct client *client = (struct client *) sess->data;
-                ASSERT(client);
-
-                tcpip_read(client->handle, buf, buf_len);
-                process(client, buf, buf_len);
-                break;
-            }
+            };
             default:
                 WARN("unknown message type (type=%d)", m.type);
         }

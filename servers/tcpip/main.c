@@ -11,9 +11,15 @@
 #include "tcp.h"
 #include "udp.h"
 
+struct pending {
+    list_elem_t next;
+    struct message m;
+};
+
 static unsigned next_driver_id = 0;
 static list_t drivers;
 static list_t pending_events;
+static list_t pending_msgs;
 static msec_t uptime = 0;
 
 static struct driver *get_driver_by_tid(tid_t tid) {
@@ -46,47 +52,33 @@ static void transmit(device_t device, mbuf_t pkt) {
 }
 
 static error_t do_process_event(struct event *e) {
-    // FIXME: Use ipc_notify
+    struct pending *pending = malloc(sizeof(*pending));
     switch (e->type) {
         case TCP_NEW_CLIENT: {
             tcp_sock_t sock = e->tcp_new_client.listen_sock;
 
-            struct message m;
-            m.type = TCPIP_NEW_CLIENT_MSG;
-            m.tcpip.new_client.handle = sock->session->handle;
-            error_t err = ipc_send_noblock(sock->session->owner, &m);
-            ASSERT(err == OK || err == ERR_WOULD_BLOCK);
-
-            if (err == ERR_WOULD_BLOCK) {
-                ipc_listen(sock->session->owner);
-            }
-
-            return err;
+            pending->m.type = TCPIP_NEW_CLIENT_MSG;
+            pending->m.tcpip.new_client.handle = sock->session->handle;
+            ipc_notify(sock->session->owner, NOTIFY_NEW_DATA);
+            break;
         }
         case TCP_RECEIVED: {
             tcp_sock_t sock = e->tcp_received.sock;
             if (!sock->session) {
                 // Not yet accepted by the owner task.
-                WARN("not accepted");
+                free(pending);
                 return ERR_NOT_FOUND;
             }
 
-            struct message m;
-            m.type = TCPIP_RECEIVED_MSG;
-            m.tcpip.received.handle = sock->session->handle;
-            error_t err = ipc_send_noblock(sock->session->owner, &m);
-            ASSERT(err == OK || err == ERR_WOULD_BLOCK);
-
-            if (err == ERR_WOULD_BLOCK) {
-                WARN("woud block");
-                ipc_listen(sock->session->owner);
-            }
-
-            return err;
+            pending->m.type = TCPIP_RECEIVED_MSG;
+            pending->m.tcpip.received.handle = sock->session->handle;
+            ipc_notify(sock->session->owner, NOTIFY_NEW_DATA);
         }
     }
 
-    UNREACHABLE();
+    // TODO: Use client-local queues.
+    list_push_back(&pending_msgs, &pending->next);
+    return OK;
 }
 
 static void deferred_work(void) {
@@ -146,6 +138,7 @@ msec_t sys_uptime(void) {
 void main(void) {
     INFO("starting...");
     list_init(&pending_events);
+    list_init(&pending_msgs);
     list_init(&drivers);
     session_init();
 
@@ -167,11 +160,6 @@ void main(void) {
 
         switch (m.type) {
             case NOTIFICATIONS_MSG:
-                if ((m.notifications.data & NOTIFY_READY) != 0) {
-                    // Do nothing here: we just need to do deferred_work()
-                    // below.
-                }
-
                 if ((m.notifications.data & NOTIFY_TIMER) != 0) {
                     error_t err = timer_set(TIMER_INTERVAL);
                     ASSERT_OK(err);
@@ -245,6 +233,17 @@ void main(void) {
             case TCPIP_REGISTER_DEVICE_MSG:
                 register_device(m.src, &m.tcpip.register_device.macaddr);
                 break;
+            case TCPIP_PULL_MSG: {
+                struct pending *pending =
+                    LIST_POP_FRONT(&pending_msgs, struct pending, next);
+                if (!pending) {
+                    ipc_reply_err(m.src, ERR_EMPTY);
+                }
+
+                ipc_reply(m.src, &pending->m);
+                free(pending);
+                break;
+            }
             case NET_RX_MSG: {
                 struct driver *driver = get_driver_by_tid(m.src);
                 if (!driver) {
