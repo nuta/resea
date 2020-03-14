@@ -249,13 +249,21 @@ struct message {
 };
 
 #define DEFINE_MSG __COUNTER__
+#define _NTH_MEMBER(member) \
+    ({ \
+        STATIC_ASSERT(offsetof(struct message, member) % sizeof(uintptr_t) == 0); \
+        STATIC_ASSERT(offsetof(struct message, member) / sizeof(uintptr_t) <= 7); \
+        (int) (offsetof(struct message, member) / sizeof(uintptr_t)); \
+    })
+
 #define DEFINE_MSG_WITH_BULK(bulk_ptr, bulk_len)                               \
-    (DEFINE_MSG | MSG_BULK(offsetof(struct message, bulk_ptr),                 \
-                           offsetof(struct message, bulk_len)))
+    (DEFINE_MSG | MSG_BULK(_NTH_MEMBER(bulk_ptr), _NTH_MEMBER(bulk_len)))
 
 #define NET_TX_MSG DEFINE_MSG_WITH_BULK(net_device.tx.payload, net_device.tx.len)
 
 // Ensure that a message is not too big.
 STATIC_ASSERT(sizeof(struct message) <= 1024);
+// Ensure that bulk ptr/len offsets cannot point beyond the message.
+STATIC_ASSERT(0x7 * sizeof(uintptr_t) < sizeof(struct message) - sizeof(uintptr_t));
 
 #endif

@@ -83,10 +83,11 @@ typedef int error_t;
 #define IPC_KERNEL  (1 << 4) /* Internally used by kernel. */
 
 // Message Type (m->type).
-#define MSG_BULK(offset, len) (((offset) << 16) | ((len) << 24))
-// Returns *offsets* in the message of bulk pointer/length fields.
-#define MSG_BULK_PTR(msg_type) (((msg_type) >> 16) & 0xff)
-#define MSG_BULK_LEN(msg_type) (((msg_type) >> 24) & 0xff)
+#define MSG_BULK(offset, len) (((offset) << 16) | ((len) << 19))
+// Returns `offset / sizeof(uintptr_t)` in the message of bulk pointer/length
+// fields.
+#define MSG_BULK_PTR(msg_type) (((msg_type) >> 16) & 0x7)
+#define MSG_BULK_LEN(msg_type) (((msg_type) >> 19) & 0x7)
 
 // klogctl operations.
 #define KLOGCTL_READ     1

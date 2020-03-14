@@ -56,12 +56,9 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
         }
 
         // Copy the bulk payload.
-        unsigned ptr_offset = MSG_BULK_PTR(dst->m.type);
-        unsigned len_offset = MSG_BULK_LEN(dst->m.type);
+        unsigned ptr_offset = MSG_BULK_PTR(dst->m.type) * sizeof(uintptr_t);
+        unsigned len_offset = MSG_BULK_LEN(dst->m.type) * sizeof(uintptr_t);
         if (!IS_ERROR(dst->m.type) && ptr_offset) {
-            DEBUG_ASSERT(ptr_offset % sizeof(uintptr_t) == 0
-                   && len_offset % sizeof(uintptr_t) == 0
-                /* TODO: Compute len_offset * sizeof(uintptr_t) instead. */);
             size_t len = *((size_t *) ((uintptr_t) &dst->m + len_offset));
             userptr_t src_buf = *((userptr_t *) ((uintptr_t) &dst->m + ptr_offset));
             userptr_t dst_buf = dst->bulk_ptr;
