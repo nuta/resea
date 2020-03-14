@@ -72,8 +72,8 @@ const char *__program_name(void);
 #define ASSERT(expr)                                                           \
     do {                                                                       \
         if (!(expr)) {                                                         \
-            printf(SGR_ERR "[%s] ASSERTION FAILURE: " #expr SGR_RESET "\n",    \
-                   __program_name());                                          \
+            printf(SGR_ERR "[%s] ASSERTION FAILURE: %s" SGR_RESET "\n",        \
+                   __program_name(), #expr);                                   \
             backtrace();                                                       \
             halt();                                                            \
             __builtin_unreachable();                                           \
