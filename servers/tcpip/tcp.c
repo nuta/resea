@@ -259,7 +259,7 @@ void tcp_transmit(tcp_sock_t sock) {
     sock->retransmit_at =
         sys_uptime()
         + MIN(TCP_RXT_MAX_TIMEOUT,
-              TCP_RXT_INITIAL_TIMEOUT << sock->num_retransmits);
+              TCP_RXT_INITIAL_TIMEOUT << MIN(sock->num_retransmits, 8));
     sock->last_seqno = sock->next_seqno;
 }
 
