@@ -19,6 +19,7 @@ SECTIONS {
     __mp_boot_gdtr = .;
 
     . = KERNEL_BOOT_ADDR;
+    __kernel_image = .; // paddr_t
     .boot : AT(KERNEL_BOOT_ADDR) {
         KEEP(*(.boot));
     } :boot
@@ -47,7 +48,11 @@ SECTIONS {
         __bss_end = .;
     } :data
 
+    . = ALIGN(4096);
+    __kernel_image_end = . - KERNEL_BASE_ADDR + KERNEL_BOOT_ADDR; // paddr_t
+
     . = 0x1000000;
+    __kernel_data = .; // paddr_t
 
     /* The kernel page table (paddr_t). */
     . = ALIGN(4096);
@@ -72,6 +77,9 @@ SECTIONS {
     __kernel_heap = .;
     . = LMA_OFFSET + 0x3000000;
     __kernel_heap_end = .;
+
+    . = ALIGN(4096);
+    __kernel_data_end = . - LMA_OFFSET; // paddr_t
 
     /* A temporary page used internally by kernel (virtual address). */
     __temp_page = 0xffff0000;

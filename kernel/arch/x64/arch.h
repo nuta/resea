@@ -41,6 +41,22 @@ static inline bool is_kernel_addr_range(vaddr_t base, size_t len) {
            || base + len >= KERNEL_BASE_ADDR;
 }
 
+// Note that these symbols point to *physical* addresses.
+extern char __kernel_image[];
+extern char __kernel_image_end[];
+extern char __kernel_data[];
+extern char __kernel_data_end[];
+
+/// Retuns whether the memory address range [base, base_len) overlaps with the
+/// kernel memory pages.
+static inline bool is_kernel_paddr(paddr_t paddr) {
+    return 
+        ((paddr_t) __kernel_image <= paddr
+            && paddr <= (paddr_t) __kernel_image_end)
+        || ((paddr_t) __kernel_data <= paddr
+            && paddr <= (paddr_t) __kernel_data_end);
+}
+
 static inline int mp_self(void) {
     return *((volatile uint32_t *) from_paddr(0xfee00020)) >> 24;
 }

@@ -70,15 +70,21 @@ static paddr_t user_pager(vaddr_t addr, pagefault_t fault, pageattrs_t *attrs) {
 
     // Check if the reply is valid.
     if (m.type != PAGE_FAULT_REPLY_MSG) {
-        WARN("%s: invalid page fault reply (type=%d, addr=%p, pager=%s)",
+        WARN("%s: invalid page fault reply (type=%d, vaddr=%p, pager=%s)",
              CURRENT->name, m.type, addr, CURRENT->pager->name);
         task_exit(EXP_INVALID_PAGE_FAULT_REPLY);
     }
 
-    // FIXME: Check that paddr is not in kernel area.
+    // Check that paddr is not in kernel area.
+    paddr_t paddr = m.page_fault_reply.paddr;
+    if (is_kernel_paddr(paddr)) {
+        WARN("%s: pager returned a kernel page (vaddr=%p, paddr=%p, pager=%s)",
+             CURRENT->name, addr, paddr, CURRENT->pager->name);
+        task_exit(EXP_INVALID_PAGE_FAULT_REPLY);
+    }
 
     *attrs = PAGE_USER | m.page_fault_reply.attrs;
-    return m.page_fault_reply.paddr;
+    return paddr;
 }
 
 /// Handles page faults in the initial task.
