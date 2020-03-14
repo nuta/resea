@@ -161,40 +161,51 @@ static error_t sys_irqctl(unsigned irq, bool enable) {
     }
 }
 
-static int sys_klogctl(userptr_t buf, size_t buf_len, bool write) {
+static int sys_klogctl(int op, userptr_t buf, size_t buf_len) {
     if (!CAPABLE(CAP_KLOG)) {
         return ERR_NOT_PERMITTED;
     }
 
-    if (write) {
-        char kbuf[256];
-        int remaining = buf_len;
-        while (remaining > 0) {
-            int copy_len = MIN(remaining, (int) sizeof(kbuf));
-            memcpy_from_user(kbuf, buf, copy_len);
-            for (int i = 0; i < copy_len; i++) {
-                printk("%c", kbuf[i]);
+    switch (op) {
+        case KLOGCTL_READ: {
+            char kbuf[256];
+            int remaining = buf_len;
+            while (remaining > 0) {
+                int max_len = MIN(remaining, (int) sizeof(kbuf));
+                int read_len = klog_read(kbuf, max_len);
+                if (!read_len) {
+                    break;
+                }
+    
+                memcpy_to_user(buf, kbuf, read_len);
+                buf += read_len;
+                remaining -= read_len;
             }
-            remaining -= copy_len;
+    
+            return buf_len - remaining;
         }
-
-        return OK;
-    } else {
-        char kbuf[256];
-        int remaining = buf_len;
-        while (remaining > 0) {
-            int read_len = klog_read(kbuf, MIN(remaining, (int) sizeof(kbuf)));
-            if (!read_len) {
-                break;
+        case KLOGCTL_WRITE: {
+            char kbuf[256];
+            int remaining = buf_len;
+            while (remaining > 0) {
+                int copy_len = MIN(remaining, (int) sizeof(kbuf));
+                memcpy_from_user(kbuf, buf, copy_len);
+                for (int i = 0; i < copy_len; i++) {
+                    printk("%c", kbuf[i]);
+                }
+                remaining -= copy_len;
             }
-
-            memcpy_to_user(buf, kbuf, read_len);
-            buf += read_len;
-            remaining -= read_len;
+            return OK;
         }
-
-        return buf_len - remaining;
+        case KLOGCTL_LISTEN:
+            klog_listen(CURRENT);
+            return OK;
+        case KLOGCTL_UNLISTEN:
+            klog_unlisten(CURRENT);
+            return OK;
     }
+
+    return OK;
 }
 
 /// The system call handler.

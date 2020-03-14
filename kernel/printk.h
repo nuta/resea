@@ -15,6 +15,9 @@ struct klog {
 
 void klog_write(char ch);
 size_t klog_read(char *buf, size_t buf_len);
+struct task;
+void klog_listen(struct task *task);
+void klog_unlisten(struct task *task);
 void printk(const char *fmt, ...);
 
 // Implemented in arch.

@@ -1,8 +1,10 @@
 #include "printk.h"
+#include "ipc.h"
 #include <string.h>
 #include <vprintf.h>
 
 static struct klog klog;
+static struct task *listener = NULL;
 
 /// Reads the kernel log buffer.
 size_t klog_read(char *buf, size_t buf_len) {
@@ -29,6 +31,20 @@ void klog_write(char ch) {
     if (klog.head == klog.tail) {
         // The buffer is full. Discard a character by moving the tail.
         klog.tail = (klog.tail + 1) % KLOG_BUF_SIZE;
+    }
+
+    if (ch == '\n' && listener) {
+        notify(listener, NOTIFY_NEW_DATA);
+    }
+}
+
+void klog_listen(struct task *task) {
+    listener = task;
+}
+
+void klog_unlisten(struct task *task) {
+    if (task == listener) {
+        listener = NULL;
     }
 }
 

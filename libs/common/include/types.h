@@ -88,6 +88,12 @@ typedef int error_t;
 #define MSG_BULK_PTR(msg_type) (((msg_type) >> 16) & 0xff)
 #define MSG_BULK_LEN(msg_type) (((msg_type) >> 24) & 0xff)
 
+// klogctl operations.
+#define KLOGCTL_READ     1
+#define KLOGCTL_WRITE    2
+#define KLOGCTL_LISTEN   3
+#define KLOGCTL_UNLISTEN 4
+
 typedef uint32_t caps_t;
 #define CAP_NONE 0
 #define CAP_ALL  0xffffffff

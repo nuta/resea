@@ -25,8 +25,8 @@ error_t irqctl(unsigned irq, bool enable) {
     return syscall(SYSCALL_IRQCTL, irq, enable, 0, 0, 0);
 }
 
-int klogctl(char *buf, size_t buf_len, bool write) {
-    return syscall(SYSCALL_KLOGCTL, (uintptr_t) buf, buf_len, write, 0, 0);
+int klogctl(int op, char *buf, size_t buf_len) {
+    return syscall(SYSCALL_KLOGCTL, op, (uintptr_t) buf, buf_len, 0, 0);
 }
 
 tid_t task_create(tid_t tid, const char *name, vaddr_t ip, tid_t pager,
@@ -126,9 +126,17 @@ error_t irq_release(unsigned irq) {
 }
 
 void klog_write(const char *str, int len) {
-    klogctl((char *) str, len, true);
+    klogctl(KLOGCTL_WRITE, (char *) str, len);
 }
 
 int klog_read(char *buf, int buf_len) {
-    return klogctl(buf, buf_len, false);
+    return klogctl(KLOGCTL_READ, buf, buf_len);
+}
+
+error_t klog_listen(void) {
+    return klogctl(KLOGCTL_LISTEN, NULL, 0);
+}
+
+error_t klog_unlisten(void) {
+    return klogctl(KLOGCTL_UNLISTEN, NULL, 0);
 }

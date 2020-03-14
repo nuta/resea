@@ -10,7 +10,7 @@ error_t ipc(tid_t dst, tid_t src, struct message *m, unsigned flags);
 error_t ipcctl(const void *bulk_ptr, size_t bulk_len, msec_t timeout);
 tid_t taskctl(tid_t tid, const char *name, vaddr_t ip, tid_t page, caps_t caps);
 error_t irqctl(unsigned irq, bool enable);
-int klogctl(char *buf, size_t buf_len, bool write);
+int klogctl(int op, char *buf, size_t buf_len);
 
 // Wrapper functions.
 tid_t task_create(tid_t tid, const char *name, vaddr_t ip, tid_t pager,
@@ -32,5 +32,7 @@ error_t irq_acquire(unsigned irq);
 error_t irq_release(unsigned irq);
 void klog_write(const char *str, int len);
 int klog_read(char *buf, int len);
+error_t klog_listen(void);
+error_t klog_unlisten(void);
 
 #endif
