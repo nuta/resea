@@ -55,6 +55,7 @@ static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len, msec_t timeout) {
         size_t offset = 0;
         while (remaining > 0) {
             userptr_t addr = ALIGN_DOWN(bulk_ptr + offset, PAGE_SIZE);
+            // TODO: Use copy_from_user or copy_to_user instead.
             if (!vm_resolve(&CURRENT->vm, addr)) {
                 handle_page_fault(addr, PF_USER | PF_WRITE);
             }
