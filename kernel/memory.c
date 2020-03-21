@@ -76,6 +76,8 @@ static paddr_t user_pager(vaddr_t addr, pagefault_t fault, pageattrs_t *attrs) {
     }
 
     // Check that paddr is not in kernel area.
+    // TODO: Replace with vm_resolve(m.page_fault_reply.vaddr) in case the pager
+    // is malicious.
     paddr_t paddr = m.page_fault_reply.paddr;
     if (is_kernel_paddr(paddr)) {
         WARN("%s: pager returned a kernel page (vaddr=%p, paddr=%p, pager=%s)",
