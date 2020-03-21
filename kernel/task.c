@@ -94,11 +94,19 @@ error_t task_destroy(struct task *task) {
         list_remove(&sender->sender_next);
     }
 
-    for (unsigned i = 0; i < TASKS_MAX; i++) {
+    for (tid_t tid = 1; tid <= TASKS_MAX; tid++) {
+        struct task *task2 = task_lookup(tid);
+        DEBUG_ASSERT(task2);
+
         // Ensure that this task is not a pager task.
-        if (tasks[i].pager == task) {
+        if (task2->state != TASK_UNUSED && task2->pager == task) {
             PANIC("a pager task '%s' (#%d) is being killed", task->name,
                   task->tid);
+        }
+
+        // Notify that this task is being destroyed.
+        if (CAPABLE(task, tid)) {
+            notify(task2, NOTIFY_CLOSED(task->tid));
         }
     }
 

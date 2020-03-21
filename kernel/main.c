@@ -25,7 +25,7 @@ void mpmain(void) {
 
     // Initialize the idle task for this CPU.
     IDLE_TASK->tid = 0;
-    task_create(IDLE_TASK, "(idle)", 0, 0, CAP_IPC);
+    task_create(IDLE_TASK, "(idle)", 0, 0, CAP_ALL);
     CURRENT = IDLE_TASK;
 
     // Do the very first context switch on this CPU.

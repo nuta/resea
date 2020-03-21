@@ -10,7 +10,9 @@ typedef unsigned short uint16_t;
 typedef unsigned uint32_t;
 typedef unsigned long long uint64_t;
 
+#define TASKS_MAX 16
 typedef int tid_t;
+
 typedef unsigned msec_t;
 #define MSEC_MAX 0xffffffff
 
@@ -95,19 +97,21 @@ typedef int error_t;
 #define KLOGCTL_LISTEN   3
 #define KLOGCTL_UNLISTEN 4
 
-typedef uint32_t caps_t;
-#define CAP_NONE 0
-#define CAP_ALL  0xffffffff
-#define CAP_TASK (1 << 0)
-#define CAP_IPC  (1 << 1)
-#define CAP_IO   (1 << 2)
-#define CAP_KLOG (1 << 3)
+typedef uint64_t caps_t;
+#define CAP_ALL  0xffffffffffffffffULL
+#define CAP_TASK (1ULL << 0)
+#define CAP_IO   (1ULL << 1)
+#define CAP_KLOG (1ULL << 2)
+#define CAP_IPC_WITH(tid)  (1ULL << (3 + (tid) - 1))
+STATIC_ASSERT(3 + TASKS_MAX < sizeof(caps_t) * 8);
 
-typedef uint32_t notifications_t;
-#define NOTIFY_TIMER    (1 << 0)
-#define NOTIFY_IRQ      (1 << 1)
-#define NOTIFY_ABORTED  (1 << 2)
-#define NOTIFY_NEW_DATA (1 << 3)
+typedef uint64_t notifications_t;
+#define NOTIFY_TIMER    (1ULL << 0)
+#define NOTIFY_IRQ      (1ULL << 1)
+#define NOTIFY_ABORTED  (1ULL << 2)
+#define NOTIFY_NEW_DATA (1ULL << 3)
+#define NOTIFY_CLOSED(tid) (1ULL << (4 + (tid) - 1))
+STATIC_ASSERT(4 + TASKS_MAX < sizeof(notifications_t) * 8);
 
 enum exception_type {
     EXP_GRACE_EXIT,

@@ -7,7 +7,6 @@
 #include "memory.h"
 
 #define TASK_TIME_SLICE ((10 * TICK_HZ) / 1000) /* 10 milliseconds */
-#define TASKS_MAX       16
 #define TASK_NAME_LEN   16
 
 //
@@ -28,7 +27,7 @@
 #define TASK_EXITED 5
 
 /// Determines if the current task has the given capability.
-#define CAPABLE(cap) ((CURRENT->caps & (cap)) != 0)
+#define CAPABLE(task, cap) ((task)->caps & (cap))
 
 // struct arch_cpuvar *
 #define ARCH_CPUVAR (&get_cpuvar()->arch)

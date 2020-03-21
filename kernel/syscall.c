@@ -41,10 +41,6 @@ static void strncpy_from_user(char *dst, userptr_t src, size_t max_len) {
 }
 
 static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len, msec_t timeout) {
-    if (!CAPABLE(CAP_IPC)) {
-        return ERR_NOT_PERMITTED;
-    }
-
     if (bulk_ptr) {
         CURRENT->bulk_ptr = bulk_ptr;
         CURRENT->bulk_len = bulk_len;
@@ -73,10 +69,6 @@ static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len, msec_t timeout) {
 }
 
 static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
-    if (!CAPABLE(CAP_IPC)) {
-        return ERR_NOT_PERMITTED;
-    }
-
     if (flags & IPC_KERNEL) {
         return ERR_INVALID_ARG;
     }
@@ -90,6 +82,10 @@ static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
         dst_task = task_lookup(dst);
         if (!dst_task) {
             return ERR_INVALID_ARG;
+        }
+
+        if (!CAPABLE(CURRENT, CAP_IPC_WITH(dst_task->tid))) {
+            return ERR_NOT_PERMITTED;
         }
 
         if (flags & IPC_NOTIFY) {
@@ -124,7 +120,8 @@ static tid_t sys_taskctl(tid_t tid, userptr_t name, vaddr_t ip, tid_t pager,
     }
 
     // Check the capability before handling privileged operations.
-    if (!CAPABLE(CAP_TASK)) {
+    if (!CAPABLE(CURRENT, CAP_TASK)) {
+        OOPS("caps = %x %x", CURRENT->caps, CAP_TASK);
         return ERR_NOT_PERMITTED;
     }
 
@@ -151,7 +148,7 @@ static tid_t sys_taskctl(tid_t tid, userptr_t name, vaddr_t ip, tid_t pager,
 }
 
 static error_t sys_irqctl(unsigned irq, bool enable) {
-    if (!CAPABLE(CAP_IO)) {
+    if (!CAPABLE(CURRENT, CAP_IO)) {
         return ERR_NOT_PERMITTED;
     }
 
@@ -163,7 +160,7 @@ static error_t sys_irqctl(unsigned irq, bool enable) {
 }
 
 static int sys_klogctl(int op, userptr_t buf, size_t buf_len) {
-    if (!CAPABLE(CAP_KLOG)) {
+    if (!CAPABLE(CURRENT, CAP_KLOG)) {
         return ERR_NOT_PERMITTED;
     }
 

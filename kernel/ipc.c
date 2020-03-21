@@ -95,11 +95,11 @@ error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
     // Receive a message.
     if (flags & IPC_RECV) {
         // Check if there're pending notifications.
-        if (src == IPC_ANY && CURRENT->notifications) {
-            // Receive the pending notifications.
+        notifications_t pending = CURRENT->notifications;
+        if (src == IPC_ANY && pending) {
             m->type = NOTIFICATIONS_MSG;
             m->src = KERNEL_TASK_TID;
-            m->notifications.data = CURRENT->notifications;
+            m->notifications.data = pending;
             CURRENT->notifications = 0;
             return OK;
         }
