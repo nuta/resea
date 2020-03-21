@@ -16,7 +16,7 @@ void session_init(void) {
     initialized = true;
 }
 
-static handle_t alloc_handle_id(tid_t task) {
+static handle_t alloc_handle_id(task_t task) {
     for (handle_t handle = 1; handle < HANDLES_MAX; handle++) {
         bool duplicated = false;
         LIST_FOR_EACH (sess, &sessions, struct session, next) {
@@ -34,7 +34,7 @@ static handle_t alloc_handle_id(tid_t task) {
     return 0;
 }
 
-struct session *session_alloc(tid_t task) {
+struct session *session_alloc(task_t task) {
     DEBUG_ASSERT(initialized);
 
     handle_t handle = alloc_handle_id(task);
@@ -46,7 +46,7 @@ struct session *session_alloc(tid_t task) {
     return session_alloc_at(task, handle);
 }
 
-struct session *session_alloc_at(tid_t task, handle_t handle) {
+struct session *session_alloc_at(task_t task, handle_t handle) {
     DEBUG_ASSERT(initialized);
     DEBUG_ASSERT(!session_get(task, handle));
 
@@ -58,7 +58,7 @@ struct session *session_alloc_at(tid_t task, handle_t handle) {
     return sess;
 }
 
-struct session *session_get(tid_t task, handle_t handle) {
+struct session *session_get(task_t task, handle_t handle) {
     DEBUG_ASSERT(initialized);
 
     LIST_FOR_EACH (sess, &sessions, struct session, next) {
@@ -70,7 +70,7 @@ struct session *session_get(tid_t task, handle_t handle) {
     return NULL;
 }
 
-struct session *session_delete(tid_t task, handle_t handle) {
+struct session *session_delete(task_t task, handle_t handle) {
     DEBUG_ASSERT(initialized);
 
     LIST_FOR_EACH (sess, &sessions, struct session, next) {

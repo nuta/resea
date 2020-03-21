@@ -91,7 +91,7 @@ enum message_type {
 /// Message.
 struct message {
     int type;
-    tid_t src;
+    task_t src;
     union {
         // Kernel Messages
         union {
@@ -100,12 +100,12 @@ struct message {
             } notifications;
 
             struct {
-                tid_t task;
+                task_t task;
                 enum exception_type exception;
             } exception;
 
             struct {
-                tid_t task;
+                task_t task;
                 vaddr_t vaddr;
                 pagefault_t fault;
             } page_fault;
@@ -123,7 +123,7 @@ struct message {
            } lookup;
     
            struct {
-               tid_t task;
+               task_t task;
            } lookup_reply;
     
            struct {

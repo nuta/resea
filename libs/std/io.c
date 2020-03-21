@@ -5,7 +5,7 @@
 #include <std/syscall.h>
 
 void *io_alloc_pages(size_t num_pages, paddr_t map_to, paddr_t *paddr) {
-    tid_t init = 1;
+    task_t init = 1;
 
     // Request alloc_pages.
     struct message m;

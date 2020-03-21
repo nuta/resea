@@ -22,7 +22,7 @@ static list_t pending_events;
 static list_t pending_msgs;
 static msec_t uptime = 0;
 
-static struct driver *get_driver_by_tid(tid_t tid) {
+static struct driver *get_driver_by_tid(task_t tid) {
     LIST_FOR_EACH (driver, &drivers, struct driver, next) {
         if (driver->tid == tid) {
             return driver;
@@ -93,7 +93,7 @@ static void deferred_work(void) {
     }
 }
 
-static void register_device(tid_t driver_task, macaddr_t *macaddr) {
+static void register_device(task_t driver_task, macaddr_t *macaddr) {
     if (next_driver_id > 9) {
         WARN("too many devices");
         return;

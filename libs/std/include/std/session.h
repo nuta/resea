@@ -9,15 +9,15 @@
 
 struct session {
     list_elem_t next;
-    tid_t owner;
+    task_t owner;
     handle_t handle;
     void *data;
 };
 
 void session_init(void);
-struct session *session_alloc(tid_t task);
-struct session *session_alloc_at(tid_t task, handle_t handle);
-struct session *session_get(tid_t task, handle_t handle);
-struct session *session_delete(tid_t task, handle_t handle);
+struct session *session_alloc(task_t task);
+struct session *session_alloc_at(task_t task, handle_t handle);
+struct session *session_get(task_t task, handle_t handle);
+struct session *session_delete(task_t task, handle_t handle);
 
 #endif

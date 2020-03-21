@@ -28,7 +28,7 @@ struct page_area {
 /// Task Control Block (TCB).
 struct tcb {
     bool in_use;
-    tid_t tid;
+    task_t tid;
     const char *name;
     struct initfs_file *file;
     struct elf64_ehdr *ehdr;
@@ -40,7 +40,7 @@ struct tcb {
 static struct tcb tcbs[TCBS_MAX];
 
 /// Look for the task in the our task table.
-static struct tcb *get_task_by_tid(tid_t tid) {
+static struct tcb *get_task_by_tid(task_t tid) {
     if (tid <= 0 || tid > TCBS_MAX) {
         PANIC("invalid tid %d", tid);
     }

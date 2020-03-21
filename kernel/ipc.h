@@ -5,7 +5,7 @@
 
 struct task;
 struct message;
-error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags);
+error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags);
 void notify(struct task *dst, notifications_t notifications);
 
 #endif

@@ -103,7 +103,7 @@ malformed:
 
 void main(void) {
     INFO("starting...");
-    tid_t tcpip_server = ipc_lookup("tcpip");
+    task_t tcpip_server = ipc_lookup("tcpip");
     tcpip_init();
     session_init();
 

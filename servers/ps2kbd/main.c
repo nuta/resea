@@ -9,7 +9,7 @@
 static uint16_t queue[QUEUE_SIZE];
 static int queue_head = 0;
 static int queue_tail = 0;
-static tid_t shell_server;
+static task_t shell_server;
 
 // Modifier keys. True if the key is being pressed.
 static bool shift_left = false;

@@ -7,7 +7,7 @@
 static void *bulk_ptr = NULL;
 static const size_t bulk_len = 8192;
 
-error_t ipc(tid_t dst, tid_t src, struct message *m, unsigned flags) {
+error_t ipc(task_t dst, task_t src, struct message *m, unsigned flags) {
     return syscall(SYSCALL_IPC, dst, src, (uintptr_t) m, flags, 0);
 }
 
@@ -16,7 +16,7 @@ error_t ipcctl(const void *bulk_ptr, size_t bulk_len, msec_t timeout) {
                    0, 0);
 }
 
-tid_t taskctl(tid_t tid, const char *name, vaddr_t ip, tid_t pager,
+task_t taskctl(task_t tid, const char *name, vaddr_t ip, task_t pager,
               caps_t caps) {
     return syscall(SYSCALL_TASKCTL, tid, (uintptr_t) name, ip, pager, caps);
 }
@@ -29,13 +29,13 @@ int klogctl(int op, char *buf, size_t buf_len) {
     return syscall(SYSCALL_KLOGCTL, op, (uintptr_t) buf, buf_len, 0, 0);
 }
 
-tid_t task_create(tid_t tid, const char *name, vaddr_t ip, tid_t pager,
+task_t task_create(task_t tid, const char *name, vaddr_t ip, task_t pager,
                   caps_t caps) {
     DEBUG_ASSERT(tid && pager);
     return taskctl(tid, name, ip, pager, caps);
 }
 
-error_t task_destroy(tid_t tid) {
+error_t task_destroy(task_t tid) {
     DEBUG_ASSERT(tid);
     return taskctl(tid, NULL, 0, 0, 0);
 }
@@ -44,7 +44,7 @@ void task_exit(void) {
     taskctl(0, NULL, 0, 0, 0);
 }
 
-tid_t task_self(void) {
+task_t task_self(void) {
     return taskctl(0, NULL, 0, -1, 0);
 }
 
@@ -52,35 +52,35 @@ void caps_drop(caps_t caps) {
     taskctl(0, NULL, 0, -1, caps);
 }
 
-error_t ipc_send(tid_t dst, struct message *m) {
+error_t ipc_send(task_t dst, struct message *m) {
     return ipc(dst, 0, m, IPC_SEND);
 }
 
-error_t ipc_send_noblock(tid_t dst, struct message *m) {
+error_t ipc_send_noblock(task_t dst, struct message *m) {
     return ipc(dst, 0, m, IPC_SEND | IPC_NOBLOCK);
 }
 
-error_t ipc_send_err(tid_t dst, error_t error) {
+error_t ipc_send_err(task_t dst, error_t error) {
     struct message m;
     m.type = error;
     return ipc_send(dst, &m);
 }
 
-void ipc_reply(tid_t dst, struct message *m) {
+void ipc_reply(task_t dst, struct message *m) {
     ipc_send_noblock(dst, m);
 }
 
-void ipc_reply_err(tid_t dst, error_t error) {
+void ipc_reply_err(task_t dst, error_t error) {
     struct message m;
     m.type = error;
     ipc_send_noblock(dst, &m);
 }
 
-error_t ipc_notify(tid_t dst, notifications_t notifications) {
+error_t ipc_notify(task_t dst, notifications_t notifications) {
     return ipc(dst, 0, (void *) (uintptr_t) notifications, IPC_NOTIFY);
 }
 
-error_t ipc_recv(tid_t src, struct message *m) {
+error_t ipc_recv(task_t src, struct message *m) {
     if (!bulk_ptr) {
         bulk_ptr = malloc(bulk_len);
         ASSERT_OK(ipcctl(bulk_ptr, bulk_len, 0));
@@ -97,7 +97,7 @@ error_t ipc_recv(tid_t src, struct message *m) {
     return (IS_OK(err) && m->type < 0) ? m->type : err;
 }
 
-error_t ipc_call(tid_t dst, struct message *m) {
+error_t ipc_call(task_t dst, struct message *m) {
     if (!bulk_ptr) {
         bulk_ptr = malloc(bulk_len);
         ASSERT_OK(ipcctl(bulk_ptr, bulk_len, 0));

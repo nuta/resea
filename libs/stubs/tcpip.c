@@ -6,10 +6,10 @@
 #include <string.h>
 #include <stubs/tcpip.h>
 
-static tid_t server = 0;
+static task_t server = 0;
 
 error_t tcpip_init(void) {
-    tid_t tid = ipc_lookup("tcpip");
+    task_t tid = ipc_lookup("tcpip");
     if (IS_ERROR(tid)) {
         return tid;
     }
@@ -18,7 +18,7 @@ error_t tcpip_init(void) {
     return OK;
 }
 
-tid_t tcpip_server(void) {
+task_t tcpip_server(void) {
     DEBUG_ASSERT(server && "tcpip_init() is not called");
     return server;
 }

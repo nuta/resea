@@ -18,7 +18,7 @@ static struct task *irq_owners[IRQ_MAX];
 
 /// Returns the task struct for the task ID. It returns NULL if the ID is
 /// invalid.
-struct task *task_lookup(tid_t tid) {
+struct task *task_lookup(task_t tid) {
     if (tid <= 0 || tid > TASKS_MAX) {
         return NULL;
     }
@@ -94,7 +94,7 @@ error_t task_destroy(struct task *task) {
         list_remove(&sender->sender_next);
     }
 
-    for (tid_t tid = 1; tid <= TASKS_MAX; tid++) {
+    for (task_t tid = 1; tid <= TASKS_MAX; tid++) {
         struct task *task2 = task_lookup(tid);
         DEBUG_ASSERT(task2);
 

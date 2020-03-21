@@ -5,14 +5,14 @@
 
 struct driver {
     list_elem_t next;
-    tid_t tid;
+    task_t tid;
     device_t device;
     list_t tx_queue;
 };
 
 struct packet {
     list_elem_t next;
-    tid_t dst;
+    task_t dst;
     struct message m;
 };
 

@@ -7,7 +7,7 @@
 #include "e1000.h"
 #include "pci.h"
 
-static tid_t tcpip_tid;
+static task_t tcpip_tid;
 
 static void receive(const void *payload, size_t len) {
     if (len > NET_PACKET_LEN_MAX) {

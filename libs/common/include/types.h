@@ -11,7 +11,7 @@ typedef unsigned uint32_t;
 typedef unsigned long long uint64_t;
 
 #define TASKS_MAX 16
-typedef int tid_t;
+typedef int task_t;
 
 typedef unsigned msec_t;
 #define MSEC_MAX 0xffffffff

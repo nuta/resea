@@ -21,7 +21,7 @@ static void resume_sender_task(struct task *task) {
 
 /// Sends and receives a message. Note that `m` is a user pointer if
 /// IPC_KERNEL is not set!
-error_t ipc(struct task *dst, tid_t src, struct message *m, unsigned flags) {
+error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
     // Send a message.
     if (flags & IPC_SEND) {
         // Wait until the destination (receiver) task gets ready for receiving.

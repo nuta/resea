@@ -68,7 +68,7 @@ static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len, msec_t timeout) {
     return OK;
 }
 
-static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
+static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
     if (flags & IPC_KERNEL) {
         return ERR_INVALID_ARG;
     }
@@ -105,7 +105,7 @@ static error_t sys_ipc(tid_t dst, tid_t src, userptr_t m, unsigned flags) {
 ///  tid   |     > 0     |      > 0     |    0      |    ---    |     ---
 ///  pager |     > 0     |       0      |    0      |    -1     |     -1
 ///
-static tid_t sys_taskctl(tid_t tid, userptr_t name, vaddr_t ip, tid_t pager,
+static task_t sys_taskctl(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
                          caps_t caps) {
     // Since task_exit(), task_self(), and caps_drop() are unprivileged, we
     // don't need to check the capabilities here.

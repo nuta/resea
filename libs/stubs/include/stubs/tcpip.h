@@ -4,7 +4,7 @@
 #include <types.h>
 
 error_t tcpip_init(void);
-tid_t tcpip_server(void);
+task_t tcpip_server(void);
 handle_t tcpip_listen(uint16_t port, int backlog);
 handle_t tcpip_accept(handle_t handle);
 error_t tcpip_write(handle_t handle, const void *data, size_t len);

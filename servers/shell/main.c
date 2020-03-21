@@ -5,8 +5,8 @@
 #include <std/syscall.h>
 #include <string.h>
 
-static tid_t display_server;
-static tid_t kbd_server;
+static task_t display_server;
+static task_t kbd_server;
 
 static int cursor_x = 0;
 static int cursor_y = 0;

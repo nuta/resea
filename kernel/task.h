@@ -42,7 +42,7 @@ struct task {
     /// The arch-specific fields.
     struct arch_task arch;
     /// The task ID. Starts with 1.
-    tid_t tid;
+    task_t tid;
     /// The state.
     int state;
     /// The name of task terminated by NUL.
@@ -62,7 +62,7 @@ struct task {
     struct message m;
     /// The acceptable sender task ID. If it's IPC_ANY, the task accepts
     /// messages from any tasks.
-    tid_t src;
+    task_t src;
     /// The receive buffer for bulk IPC. Be careful since it's a user pointer.
     vaddr_t bulk_ptr;
     /// The size of the receiver buffer for bulk IPC.
@@ -96,7 +96,7 @@ error_t task_destroy(struct task *task);
 NORETURN void task_exit(enum exception_type exp);
 void task_set_state(struct task *task, int state);
 void task_notify(struct task *task, notifications_t notifications);
-struct task *task_lookup(tid_t tid);
+struct task *task_lookup(task_t tid);
 void task_switch(void);
 error_t task_listen_irq(struct task *task, unsigned irq);
 error_t task_unlisten_irq(struct task *task, unsigned irq);
