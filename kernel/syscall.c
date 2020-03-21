@@ -121,7 +121,6 @@ static task_t sys_taskctl(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
 
     // Check the capability before handling privileged operations.
     if (!CAPABLE(CURRENT, CAP_TASK)) {
-        OOPS("caps = %x %x", CURRENT->caps, CAP_TASK);
         return ERR_NOT_PERMITTED;
     }
 
