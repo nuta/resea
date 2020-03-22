@@ -10,7 +10,7 @@ default: build
 -include .config.mk
 
 # Determine if we need to load ".config".
-non_config_targets := menuconfig
+non_config_targets := defconfig menuconfig
 load_config := y
 ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
 load_config :=
@@ -91,6 +91,9 @@ lint:$(BUILD_DIR)/compile_commands.json
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)
+
+.PHONY: defconfig
+defconfig: .config.mk
 
 .PHONY: menuconfig
 menuconfig:

@@ -1,5 +1,5 @@
 language: c
-cache: 
+cache:
 
 notifications:
   email: false
@@ -10,7 +10,6 @@ jobs:
       osx_image: xcode11.2
     - os: linux
       dist: bionic
-      env: LLVM_SUFFIX=-8
 
 addons:
   homebrew:
@@ -30,6 +29,8 @@ addons:
 
 install:
   - "if [[ \"$TRAVIS_OS_NAME\" == osx ]]; then brew link --overwrite python; fi"
+  - pip3 install --user -r tools/requirements.txt
 
 script:
-  - make build
+  - make defconfig
+  - make build -j2
