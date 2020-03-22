@@ -1,16 +1,39 @@
-# V           = <Empty by default>
+# Enable verbose output if $(V) is set.
+ifeq ($(V),)
+.SILENT:
+endif
+
+# The default build target.
+.PHONY: default
+default: build
+
+-include .config.mk
+
+# Determine if we need to load ".config".
+non_config_targets := menuconfig
+load_config := y
+ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
+load_config :=
+endif
+# The default target (build) needs ".config".
+ifeq ($(MAKECMDGOALS),)
+load_config := y
+endif
+
+# Include other makefiles.
+ifeq ($(load_config), y)
+ifeq ($(wildcard .config.mk),)
+$(error .config.mk does not exist (run 'make menuconfig' first))
+endif
+
 VERSION     ?= v0.1.0
-ARCH        ?= x64
-BUILD       ?= debug
-BUILD_DIR   ?= build
 INIT        ?= init
 SERVERS     ?= tcpip ps2kbd display e1000 shell webapi benchmark hello
 USER_LIBS   := std stubs
-# LLVM_PREFIX = <empty by default>
-# LLVM_SUFFIX = <empty by default>
 
-ifeq ($(shell uname),Darwin)
-LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
+kernel_image := $(BUILD_DIR)/resea.elf
+include kernel/arch/$(ARCH)/arch.mk
+include libs/common/lib.mk
 endif
 
 CC         := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
@@ -41,24 +64,11 @@ else
 CFLAGS += -O1 -DDEBUG -fsanitize=undefined
 endif
 
-# The default build target.
-.PHONY: default
-default: build
-
-# Enable verbose output if $(V) is set.
-ifeq ($(V),)
-.SILENT:
-endif
-
 # Disable builtin implicit rules and variables.
 MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 .SUFFIXES:
 
-kernel_image := $(BUILD_DIR)/resea.elf
 kernel_objs += main.o task.o ipc.o syscall.o memory.o printk.o kdebug.o
-
-include kernel/arch/$(ARCH)/arch.mk
-include libs/common/lib.mk
 
 initfs_files := $(foreach name, $(SERVERS), $(BUILD_DIR)/user/$(name).elf)
 kernel_objs := \
@@ -81,6 +91,10 @@ lint:$(BUILD_DIR)/compile_commands.json
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)
+
+.PHONY: menuconfig
+menuconfig:
+	./tools/config.py --menuconfig
 
 #
 #  Build Rules
@@ -185,6 +199,10 @@ $(BUILD_DIR)/user/$(1).elf: $(BUILD_DIR)/user/$(1).debug.elf
 -include $(BUILD_DIR)/user/$(1)/servers/*.deps
 endef
 $(foreach server, $(INIT) $(SERVERS), $(eval $(call server-build-rule,$(server))))
+
+.config.mk:
+	$(PROGRESS) "CONFIG" $@
+	./tools/config.py --default
 
 # JSON compilation database.
 # https://clang.llvm.org/docs/JSONCompilationDatabase.html
