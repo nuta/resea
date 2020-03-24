@@ -80,15 +80,8 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
             uint64_t ip = frame->rip;
 
             if (fault & (1 << 3)) {
-                PANIC(
-                    "#PF: RSVD bit violation (page table is presumably corrupted!)");
-            }
-
-            if ((fault & PF_USER) == 0) {
-                // This will never occur. NEVER!
-                panic_lock();
-                dump_frame(frame);
-                PANIC("page fault in the kernel space (addr=%p)", addr);
+                PANIC("#PF: RSVD bit violation "
+                      "(page table is presumably corrupted!)");
             }
 
             if (ip == (uint64_t) usercopy1 || ip == (uint64_t) usercopy2) {
@@ -97,6 +90,11 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
                 TRACE("%s: page fault in usercopy (addr=%p)", CURRENT->name, addr);
                 fault |= PF_USER;
                 needs_unlock = false;
+            } else if ((fault & PF_USER) == 0) {
+                // This will never occur. NEVER!
+                panic_lock();
+                dump_frame(frame);
+                PANIC("page fault in the kernel space (addr=%p)", addr);
             } else {
                 lock();
             }
