@@ -6,12 +6,6 @@
 typedef int handle_t;
 
 //
-//  Network Device Driver
-//
-
-#define NET_PACKET_LEN_MAX 1000
-
-//
 //  Console Device Driver
 //
 
@@ -39,231 +33,196 @@ typedef uint16_t keycode_t;
 #define KEY_MOD_CTRL (1 << 8)
 #define KEY_MOD_ALT  (1 << 9)
 
-//
-//  TCP/IP Server
-//
-#define TCP_DATA_LEN_MAX 1000
-
-/// Message Types.
-enum message_type {
-    /// An unused type. If you've received this message, there must be a bug!
-    NULL_MSG,
-
-    NOTIFICATIONS_MSG,
-    EXCEPTION_MSG,
-    PAGE_FAULT_MSG,
-    PAGE_FAULT_REPLY_MSG,
-
-    NOP_MSG,
-    LOOKUP_MSG,
-    LOOKUP_REPLY_MSG,
-    ALLOC_PAGES_MSG,
-    ALLOC_PAGES_REPLY_MSG,
-
-    NET_RX_MSG,
-    NET_GET_TX_MSG,
-
-    SCREEN_DRAW_CHAR_MSG,
-    SCREEN_MOVE_CURSOR_MSG,
-    SCREEN_CLEAR_MSG,
-    SCREEN_SCROLL_MSG,
-    SCREEN_GET_SIZE_MSG,
-    SCREEN_GET_SIZE_REPLY_MSG,
-
-    KBD_KEYCODE_MSG,
-    KBD_GET_KEYCODE_MSG,
-
-    TCPIP_REGISTER_DEVICE_MSG,
-    TCPIP_LISTEN_MSG,
-    TCPIP_LISTEN_REPLY_MSG,
-    TCPIP_ACCEPT_MSG,
-    TCPIP_ACCEPT_REPLY_MSG,
-    TCPIP_WRITE_MSG,
-    TCPIP_READ_MSG,
-    TCPIP_READ_REPLY_MSG,
-    TCPIP_PULL_MSG,
-    TCPIP_NEW_CLIENT_MSG,
-    TCPIP_CLOSE_MSG,
-    TCPIP_CLOSED_MSG,
-    TCPIP_RECEIVED_MSG,
-};
-
-/// Message.
-struct message {
-    int type;
-    task_t src;
-    union {
-        // Kernel Messages
-        union {
-            struct {
-                notifications_t data;
-            } notifications;
-
-            struct {
-                task_t task;
-                enum exception_type exception;
-            } exception;
-
-            struct {
-                task_t task;
-                vaddr_t vaddr;
-                pagefault_t fault;
-            } page_fault;
-
-            struct {
-                paddr_t paddr;
-                pageattrs_t attrs;
-            } page_fault_reply;
-        };
-
-        // Memory Manager (memmgr)
-        union {
-           struct {
-               char name[64];
-           } lookup;
-    
-           struct {
-               task_t task;
-           } lookup_reply;
-    
-           struct {
-           } nop;
- 
-             struct {
-                size_t num_pages;
-                paddr_t paddr;
-            } alloc_pages;
-
-            struct {
-                vaddr_t vaddr;
-                paddr_t paddr;
-            } alloc_pages_reply;
-        };
-
-        // TCP/IP
-        union {
-            struct {
-                uint8_t macaddr[6];
-            } register_device;
-
-            struct {
-                uint16_t port;
-                int backlog;
-            } listen;
-
-            struct {
-                handle_t handle;
-            } listen_reply;
-
-            struct {
-                handle_t handle;
-            } closed;
-
-            struct {
-                handle_t handle;
-            } close;
-
-            struct {
-                handle_t handle;
-            } new_client;
-
-            struct {
-                handle_t handle;
-                size_t len;
-                uint8_t data[TCP_DATA_LEN_MAX];
-            } write;
-
-            struct {
-                handle_t handle;
-            } accept;
-
-            struct {
-                handle_t new_handle;
-            } accept_reply;
-
-            struct {
-                handle_t handle;
-                size_t len;
-            } read;
-
-            struct {
-                size_t len;
-                uint8_t data[TCP_DATA_LEN_MAX];
-            } read_reply;
-
-            struct {
-                handle_t handle;
-            } received;
-        } tcpip;
-
-        // Shell
-        union {
-            struct {
-                uint16_t keycode;
-            } key_pressed;
-        } shell;
-
-        // Network Device Driver
-        union {
-            struct {
-                size_t len;
-                uint8_t *payload;
-            } tx;
-
-            struct {
-                size_t len;
-                uint8_t payload[NET_PACKET_LEN_MAX];
-            } rx;
-        } net_device;
-
-        // Screen Device Driver
-        union {
-            struct {
-                char ch;
-                color_t fg_color;
-                color_t bg_color;
-                unsigned x;
-                unsigned y;
-            } draw_char;
-
-            struct {
-                unsigned x;
-                unsigned y;
-            } move_cursor;
-
-            struct {
-            } clear_display;
-
-            struct {
-            } scroll_display;
-
-            struct {
-            } display_get_size;
-
-            struct {
-                unsigned width;
-                unsigned height;
-            } display_get_size_reply;
-        } screen_device;
-   };
-};
-
-#define DEFINE_MSG __COUNTER__
+#define ID(x)  (x)
 #define _NTH_MEMBER(member) \
     ({ \
         STATIC_ASSERT(offsetof(struct message, member) % sizeof(uintptr_t) == 0); \
         STATIC_ASSERT(offsetof(struct message, member) / sizeof(uintptr_t) <= 7); \
         (int) (offsetof(struct message, member) / sizeof(uintptr_t)); \
     })
+#define BULK(bulk_ptr, bulk_len)                               \
+    (MSG_BULK(_NTH_MEMBER(bulk_ptr), _NTH_MEMBER(bulk_len)))
 
-#define DEFINE_MSG_WITH_BULK(bulk_ptr, bulk_len)                               \
-    (DEFINE_MSG | MSG_BULK(_NTH_MEMBER(bulk_ptr), _NTH_MEMBER(bulk_len)))
+/// Message.
+struct message {
+    int type;
+    task_t src;
+    union {
+        uint8_t raw[64 - sizeof(int) - sizeof(task_t)];
 
-#define NET_TX_MSG DEFINE_MSG_WITH_BULK(net_device.tx.payload, net_device.tx.len)
+        #define NOTIFICATIONS_MSG ID(1)
+        struct {
+            notifications_t data;
+        } notifications;
 
-// Ensure that a message is not too big.
-STATIC_ASSERT(sizeof(struct message) <= 1024);
-// Ensure that bulk ptr/len offsets cannot point beyond the message.
-STATIC_ASSERT(0x7 * sizeof(uintptr_t) < sizeof(struct message) - sizeof(uintptr_t));
+        #define EXCEPTION_MSG ID(2)
+        struct {
+            task_t task;
+            enum exception_type exception;
+        } exception;
+
+        #define PAGE_FAULT_MSG ID(3)
+        struct {
+            task_t task;
+            vaddr_t vaddr;
+            pagefault_t fault;
+        } page_fault;
+
+        #define PAGE_FAULT_REPLY_MSG ID(4)
+        struct {
+            paddr_t paddr;
+            pageattrs_t attrs;
+        } page_fault_reply;
+
+        #define LOOKUP_MSG ID(5)
+        struct {
+            char name[32];
+        } lookup;
+
+        #define LOOKUP_REPLY_MSG ID(6)
+        struct {
+            task_t task;
+        } lookup_reply;
+
+        #define NOP_MSG ID(10)
+        struct {
+        } nop;
+
+        #define ALLOC_PAGES_MSG ID(11)
+        struct {
+            size_t num_pages;
+            paddr_t paddr;
+        } alloc_pages;
+
+        #define ALLOC_PAGES_REPLY_MSG ID(12)
+        struct {
+            vaddr_t vaddr;
+            paddr_t paddr;
+        } alloc_pages_reply;
+
+        #define TCPIP_REGISTER_DEVICE_MSG ID(70)
+        struct {
+            uint8_t macaddr[6];
+        } tcpip_register_device;
+
+        #define TCPIP_LISTEN_MSG ID(71)
+        struct {
+            uint16_t port;
+            int backlog;
+        } tcpip_listen;
+
+        #define TCPIP_LISTEN_REPLY_MSG ID(72)
+        struct {
+            handle_t handle;
+        } tcpip_listen_reply;
+
+        #define TCPIP_CLOSED_MSG ID(73)
+        struct {
+            handle_t handle;
+        } tcpip_closed;
+
+        #define TCPIP_CLOSE_MSG ID(74)
+        struct {
+            handle_t handle;
+        } tcpip_close;
+
+        #define TCPIP_NEW_CLIENT_MSG ID(75)
+        struct {
+            handle_t handle;
+        } tcpip_new_client;
+
+        #define TCPIP_WRITE_MSG (ID(76) | BULK(tcpip_write.data, tcpip_write.len))
+        struct {
+            void *data;
+            size_t len;
+            handle_t handle;
+        } tcpip_write;
+
+        #define TCPIP_ACCEPT_MSG ID(78)
+        struct {
+            handle_t handle;
+        } tcpip_accept;
+
+        #define TCPIP_ACCEPT_REPLY_MSG ID(79)
+        struct {
+            handle_t new_handle;
+        } tcpip_accept_reply;
+
+        #define TCPIP_READ_MSG ID(80)
+        struct {
+            handle_t handle;
+            size_t len;
+        } tcpip_read;
+
+        #define TCPIP_READ_REPLY_MSG (ID(81) | BULK(tcpip_read_reply.data, tcpip_read_reply.len))
+        struct {
+            void *data;
+            size_t len;
+        } tcpip_read_reply;
+
+        // FIXME:
+        #define TCPIP_PULL_MSG ID(82)
+        #define TCPIP_RECEIVED_MSG ID(83)
+        struct {
+            handle_t handle;
+        } tcpip_received;
+
+        // FIXME:
+        #define NET_GET_TX_MSG ID(100)
+        #define NET_TX_MSG (ID(101) | BULK(net_tx.payload, net_tx.len))
+        struct {
+            void *payload;
+            size_t len;
+        } net_tx;
+
+        #define NET_RX_MSG (ID(102) | BULK(net_rx.payload, net_rx.len))
+        struct {
+            void *payload;
+            size_t len;
+        } net_rx;
+
+        // FIXME:
+        #define KBD_GET_KEYCODE_MSG ID(110)
+        #define KBD_KEYCODE_MSG ID(110)
+        struct {
+            uint16_t keycode;
+        } key_pressed;
+
+        #define TEXTSCREEN_DRAW_CHAR_MSG ID(150)
+        struct {
+            char ch;
+            color_t fg_color;
+            color_t bg_color;
+            unsigned x;
+            unsigned y;
+        } textscreen_draw_char;
+
+        #define TEXTSCREEN_MOVE_CURSOR_MSG ID(151)
+        struct {
+            unsigned x;
+            unsigned y;
+        } textscreen_move_cursor;
+
+        #define TEXTSCREEN_CLEAR_MSG ID(152)
+        struct {
+        } textscreen_clear;
+
+        #define TEXTSCREEN_SCROLL_MSG ID(153)
+        struct {
+        } textscreen_scroll;
+
+        #define TEXTSCREEN_GET_SIZE_MSG ID(154)
+        struct {
+        } textscreen_get_size;
+
+        #define TEXTSCREEN_GET_SIZE_REPLY_MSG ID(155)
+        struct {
+            unsigned width;
+            unsigned height;
+        } textscreen_get_size_reply;
+   };
+};
+
+STATIC_ASSERT(sizeof(struct message) == 64);
 
 #endif

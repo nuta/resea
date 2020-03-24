@@ -22,22 +22,22 @@ static void newline(void) {
         cursor_y++;
     } else {
         struct message m;
-        m.type = SCREEN_SCROLL_MSG;
+        m.type = TEXTSCREEN_SCROLL_MSG;
         ipc_send(display_server, &m);
     }
 }
 
 static void update_cursor(void) {
     struct message m;
-    m.type = SCREEN_MOVE_CURSOR_MSG;
-    m.screen_device.move_cursor.y = cursor_y;
-    m.screen_device.move_cursor.x = cursor_x;
+    m.type = TEXTSCREEN_MOVE_CURSOR_MSG;
+    m.textscreen_move_cursor.y = cursor_y;
+    m.textscreen_move_cursor.x = cursor_x;
     ipc_send(display_server, &m);
 }
 
 static void clear_screen(void) {
     struct message m;
-    m.type = SCREEN_CLEAR_MSG;
+    m.type = TEXTSCREEN_CLEAR_MSG;
     ipc_send(display_server, &m);
 }
 
@@ -88,12 +88,12 @@ void logputc(char ch) {
 
     if (ch != '\n') {
         struct message m;
-        m.type = SCREEN_DRAW_CHAR_MSG;
-        m.screen_device.draw_char.ch = ch;
-        m.screen_device.draw_char.x = cursor_x;
-        m.screen_device.draw_char.y = cursor_y;
-        m.screen_device.draw_char.fg_color = text_color;
-        m.screen_device.draw_char.bg_color = COLOR_BLACK;
+        m.type = TEXTSCREEN_DRAW_CHAR_MSG;
+        m.textscreen_draw_char.ch = ch;
+        m.textscreen_draw_char.x = cursor_x;
+        m.textscreen_draw_char.y = cursor_y;
+        m.textscreen_draw_char.fg_color = text_color;
+        m.textscreen_draw_char.bg_color = COLOR_BLACK;
         ipc_send(display_server, &m);
 
         cursor_x++;
@@ -240,19 +240,19 @@ static void pull_input(void) {
 
     ASSERT_OK(err);
     ASSERT(m.type == KBD_KEYCODE_MSG);
-    input(m.shell.key_pressed.keycode);
+    input(m.key_pressed.keycode);
 }
 
 static void get_screen_size(void) {
     struct message m;
-    m.type = SCREEN_GET_SIZE_MSG;
+    m.type = TEXTSCREEN_GET_SIZE_MSG;
 
     error_t err = ipc_call(display_server, &m);
     ASSERT_OK(err);
-    ASSERT(m.type == SCREEN_GET_SIZE_REPLY_MSG);
+    ASSERT(m.type == TEXTSCREEN_GET_SIZE_REPLY_MSG);
 
-    height = m.screen_device.display_get_size_reply.height;
-    width = m.screen_device.display_get_size_reply.width;
+    height = m.textscreen_get_size_reply.height;
+    width = m.textscreen_get_size_reply.width;
 }
 
 void main(void) {

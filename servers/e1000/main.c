@@ -10,16 +10,11 @@
 static task_t tcpip_tid;
 
 static void receive(const void *payload, size_t len) {
-    if (len > NET_PACKET_LEN_MAX) {
-        WARN("received too long packet (len=%d), ignoring...", len);
-        return;
-    }
-
     TRACE("received %d bytes", len);
     struct message m;
     m.type = NET_RX_MSG;
-    m.net_device.rx.len = len;
-    memcpy(m.net_device.rx.payload, payload, len);
+    m.net_rx.len = len;
+    m.net_rx.payload = (void *) payload;
     error_t err = ipc_send(tcpip_tid, &m);
     ASSERT_OK(err);
 }
@@ -29,8 +24,8 @@ void transmit(void) {
     m.type = NET_GET_TX_MSG;
     ASSERT_OK(ipc_call(tcpip_tid, &m));
     ASSERT(m.type == NET_TX_MSG);
-    e1000_transmit(m.net_device.tx.payload, m.net_device.tx.len);
-    free(m.net_device.tx.payload);
+    e1000_transmit(m.net_tx.payload, m.net_tx.len);
+    free(m.net_tx.payload);
 }
 
 void main(void) {
@@ -64,7 +59,7 @@ void main(void) {
     // Register this driver.
     struct message m;
     m.type = TCPIP_REGISTER_DEVICE_MSG;
-    memcpy(m.tcpip.register_device.macaddr, mac, 6);
+    memcpy(m.tcpip_register_device.macaddr, mac, 6);
     err = ipc_send(tcpip_tid, &m);
     ASSERT_OK(err);
 

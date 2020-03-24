@@ -64,23 +64,23 @@ void main(void) {
         ASSERT_OK(err);
 
         switch (m.type) {
-            case SCREEN_DRAW_CHAR_MSG:
-                draw_char(m.screen_device.draw_char.y, m.screen_device.draw_char.x, m.screen_device.draw_char.ch,
-                          m.screen_device.draw_char.fg_color, m.screen_device.draw_char.bg_color);
+            case TEXTSCREEN_DRAW_CHAR_MSG:
+                draw_char(m.textscreen_draw_char.y, m.textscreen_draw_char.x, m.textscreen_draw_char.ch,
+                          m.textscreen_draw_char.fg_color, m.textscreen_draw_char.bg_color);
                 break;
-            case SCREEN_MOVE_CURSOR_MSG:
-                move_cursor(m.screen_device.move_cursor.y, m.screen_device.move_cursor.x);
+            case TEXTSCREEN_MOVE_CURSOR_MSG:
+                move_cursor(m.textscreen_move_cursor.y, m.textscreen_move_cursor.x);
                 break;
-            case SCREEN_CLEAR_MSG:
+            case TEXTSCREEN_CLEAR_MSG:
                 clear();
                 break;
-            case SCREEN_SCROLL_MSG:
+            case TEXTSCREEN_SCROLL_MSG:
                 scroll();
                 break;
-            case SCREEN_GET_SIZE_MSG: {
-                m.type = SCREEN_GET_SIZE_REPLY_MSG;
-                m.screen_device.display_get_size_reply.width = SCREEN_WIDTH;
-                m.screen_device.display_get_size_reply.height = SCREEN_HEIGHT;
+            case TEXTSCREEN_GET_SIZE_MSG: {
+                m.type = TEXTSCREEN_GET_SIZE_REPLY_MSG;
+                m.textscreen_get_size_reply.width = SCREEN_WIDTH;
+                m.textscreen_get_size_reply.height = SCREEN_HEIGHT;
                 ipc_send(m.src, &m);
                 break;
             }

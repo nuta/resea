@@ -28,14 +28,14 @@ handle_t tcpip_listen(uint16_t port, int backlog) {
 
     struct message m;
     m.type = TCPIP_LISTEN_MSG;
-    m.tcpip.listen.port = port;
-    m.tcpip.listen.backlog = backlog;
+    m.tcpip_listen.port = port;
+    m.tcpip_listen.backlog = backlog;
     error_t err = ipc_call(server, &m);
     if (err != OK) {
         return err;
     }
 
-    return m.tcpip.listen_reply.handle;
+    return m.tcpip_listen_reply.handle;
 }
 
 handle_t tcpip_accept(handle_t handle) {
@@ -43,41 +43,40 @@ handle_t tcpip_accept(handle_t handle) {
 
     struct message m;
     m.type = TCPIP_ACCEPT_MSG;
-    m.tcpip.accept.handle = handle;
+    m.tcpip_accept.handle = handle;
     error_t err = ipc_call(server, &m);
     if (err != OK) {
         return err;
     }
 
-    return m.tcpip.accept_reply.new_handle;
+    return m.tcpip_accept_reply.new_handle;
 }
 
 error_t tcpip_write(handle_t handle, const void *data, size_t len) {
     DEBUG_ASSERT(server && "tcpip_init() is not called");
-    ASSERT(len <= TCP_DATA_LEN_MAX);
 
     struct message m;
     m.type = TCPIP_WRITE_MSG;
-    m.tcpip.write.handle = handle;
-    m.tcpip.write.len = len;
-    memcpy(&m.tcpip.write.data, data, len);
+    m.tcpip_write.handle = handle;
+    m.tcpip_write.data = (void *) data;
+    m.tcpip_write.len = len;
     return ipc_call(server, &m);
 }
 
-error_t tcpip_read(handle_t handle, void *buf, size_t buf_len) {
+void *tcpip_read(handle_t handle, size_t *len) {
     DEBUG_ASSERT(server && "tcpip_init() is not called");
 
     struct message m;
     m.type = TCPIP_READ_MSG;
-    m.tcpip.read.handle = handle;
-    m.tcpip.read.len = buf_len;
+    m.tcpip_read.handle = handle;
+    m.tcpip_read.len = *len;
     error_t err = ipc_call(server, &m);
     if (IS_ERROR(err)) {
-        return err;
+        return NULL;
     }
 
-    memcpy(buf, m.tcpip.read_reply.data, MIN(m.tcpip.read_reply.len, buf_len));
-    return err;
+    *len = m.tcpip_read_reply.len;
+    return m.tcpip_read_reply.data;
 }
 
 error_t tcpip_close(handle_t handle) {
@@ -85,6 +84,6 @@ error_t tcpip_close(handle_t handle) {
 
     struct message m;
     m.type = TCPIP_CLOSE_MSG;
-    m.tcpip.close.handle = handle;
+    m.tcpip_close.handle = handle;
     return ipc_call(server, &m);
 }

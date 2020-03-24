@@ -83,6 +83,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
                 memcpy_from_user(&__temp_page[dst_buf % PAGE_SIZE], src_buf, copy_len);
                 remaining -= copy_len;
                 dst_buf += copy_len;
+                src_buf += copy_len;
             }
 
             *((userptr_t *) ((uintptr_t) &dst->m + ptr_offset)) = dst->bulk_ptr;

@@ -122,7 +122,7 @@ void main(void) {
                 }
 
                 m.type = KBD_KEYCODE_MSG;
-                m.shell.key_pressed.keycode = queue[queue_tail];
+                m.key_pressed.keycode = queue[queue_tail];
                 queue_tail = (queue_tail + 1) % QUEUE_SIZE;
                 ipc_reply(m.src, &m);
                 break;
