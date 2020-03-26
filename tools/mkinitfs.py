@@ -46,7 +46,7 @@ def main():
     initfs += file_contents
 
     if len(initfs) > INITFS_MAX_SIZE:
-        sys.exit(f"initfs.bin is too big ({len(initfs) / 1024}MB)")
+        sys.exit(f"initfs.bin is too big ({len(initfs) / 1024}KB)")
 
     with open(args.output, "wb") as f:
         f.write(initfs)
