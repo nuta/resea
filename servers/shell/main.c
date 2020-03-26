@@ -188,7 +188,7 @@ int parse(char *cmdline, char **argv, int argv_max) {
     return argc;
 }
 
-void run_app(const char *name) {
+static error_t run_app(const char *name) {
     char path[128];
     strncpy(path, "/apps/", sizeof(path));
     strncpy(&path[6], name, sizeof(path) - 6);
@@ -200,8 +200,7 @@ void run_app(const char *name) {
     m.fs_open.len = strlen(path) + 1;
     error_t err = ipc_call(fs_server, &m);
     if (IS_ERROR(err)) {
-        WARN("failed to open %s", path);
-        return;
+        return err;
     }
     ASSERT(m.type == FS_OPEN_REPLY_MSG);
 
@@ -211,14 +210,16 @@ void run_app(const char *name) {
     m.exec.server = fs_server;
     strncpy(m.exec.name, name, sizeof(m.exec.name));
     err = ipc_call(appmgr_server, &m);
-    task_t task = m.exec_reply.task;
+    if (err != OK) {
+        return err;
+    }
 
     // Wait until the task exits.
+    task_t task = m.exec_reply.task;
     m.type = JOIN_MSG;
     m.join.task = task;
     err = ipc_call(appmgr_server, &m);
-
-    ASSERT_OK(err);
+    return err;
 }
 
 void run(const char *cmd_name, int argc, char **argv) {
@@ -229,8 +230,12 @@ void run(const char *cmd_name, int argc, char **argv) {
         }
     }
 
-    run_app(cmd_name);
-    logputstr("shell: no such command\n");
+    error_t err = run_app(cmd_name);
+    if (err == OK) {
+        return;
+    }
+
+    WARN("failed invoke command: %s", cmd_name);
 }
 
 static char cmdline[CMDLINE_MAX];
