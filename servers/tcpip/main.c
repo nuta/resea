@@ -11,6 +11,12 @@
 #include "tcp.h"
 #include "udp.h"
 
+struct client {
+    task_t task;
+    handle_t handle;
+    tcp_sock_t sock;
+};
+
 struct pending {
     list_elem_t next;
     struct message m;
@@ -58,21 +64,21 @@ static error_t do_process_event(struct event *e) {
             tcp_sock_t sock = e->tcp_new_client.listen_sock;
 
             pending->m.type = TCPIP_NEW_CLIENT_MSG;
-            pending->m.tcpip_new_client.handle = sock->session->handle;
-            ipc_notify(sock->session->owner, NOTIFY_NEW_DATA);
+            pending->m.tcpip_new_client.handle = sock->client->handle;
+            ipc_notify(sock->client->task, NOTIFY_NEW_DATA);
             break;
         }
         case TCP_RECEIVED: {
             tcp_sock_t sock = e->tcp_received.sock;
-            if (!sock->session) {
+            if (!sock->client) {
                 // Not yet accepted by the owner task.
                 free(pending);
                 return ERR_NOT_FOUND;
             }
 
             pending->m.type = TCPIP_RECEIVED_MSG;
-            pending->m.tcpip_received.handle = sock->session->handle;
-            ipc_notify(sock->session->owner, NOTIFY_NEW_DATA);
+            pending->m.tcpip_received.handle = sock->client->handle;
+            ipc_notify(sock->client->task, NOTIFY_NEW_DATA);
         }
     }
 
@@ -174,40 +180,47 @@ void main(void) {
                 tcp_bind(sock, &any_ipaddr, m.tcpip_listen.port);
                 tcp_listen(sock, m.tcpip_listen.backlog);
 
-                sock->session = session_alloc(m.src);
-                sock->session->data = sock;
+                handle_t handle = session_new();
+                sock->client = malloc(sizeof(*sock->client));
+                sock->client->sock = sock;
+                sock->client->task = m.src;
+                sock->client->handle = handle;
+                session_set(handle, sock->client);
 
                 m.type = TCPIP_LISTEN_REPLY_MSG;
-                m.tcpip_listen_reply.handle = sock->session->handle;
+                m.tcpip_listen_reply.handle = sock->client->handle;
                 ipc_send_noblock(m.src, &m);
                 break;
             }
             case TCPIP_ACCEPT_MSG: {
-                struct session *sess =
-                    session_get(m.src, m.tcpip_accept.handle);
-                if (!sess) {
+                struct client *c = session_get(m.tcpip_accept.handle);
+                if (!c) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
 
-                tcp_sock_t new_sock = tcp_accept(sess->data);
+                tcp_sock_t new_sock = tcp_accept(c->sock);
                 if (!new_sock) {
                     ipc_send_err(m.src, ERR_NOT_FOUND);
                     break;
                 }
 
-                new_sock->session = session_alloc(m.src);
-                new_sock->session->data = new_sock;
+                handle_t new_handle = session_new();
+                new_sock->client = malloc(sizeof(*new_sock->client));
+                new_sock->client->sock = new_sock;
+                new_sock->client->task = m.src;
+                new_sock->client->handle = new_handle;
+                session_set(new_handle, new_sock->client);
 
                 m.type = TCPIP_ACCEPT_REPLY_MSG;
-                m.tcpip_accept_reply.new_handle = new_sock->session->handle;
+                m.tcpip_accept_reply.new_handle = new_sock->client->handle;
                 ipc_send(m.src, &m);
                 break;
             }
             case TCPIP_READ_MSG: {
                 size_t max_len = MIN(4096, m.tcpip_read.len);
-                struct session *sess = session_get(m.src, m.tcpip_read.handle);
-                if (!sess) {
+                struct client *c = session_get(m.tcpip_read.handle);
+                if (!c) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
@@ -215,19 +228,19 @@ void main(void) {
                 m.type = TCPIP_READ_REPLY_MSG;
                 uint8_t *buf = malloc(max_len);
                 m.tcpip_read_reply.data = buf;
-                m.tcpip_read_reply.len = tcp_read(sess->data, buf, max_len);
+                m.tcpip_read_reply.len = tcp_read(c->sock, buf, max_len);
                 ipc_reply(m.src, &m);
                 free(buf);
                 break;
             }
             case TCPIP_WRITE_MSG: {
-                struct session *sess = session_get(m.src, m.tcpip_write.handle);
-                if (!sess) {
+                struct client *c = session_get(m.tcpip_write.handle);
+                if (!c) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
 
-                tcp_write(sess->data, m.tcpip_write.data, m.tcpip_write.len);
+                tcp_write(c->sock, m.tcpip_write.data, m.tcpip_write.len);
                 ipc_send_err(m.src, OK);
                 free(m.tcpip_write.data);
                 break;

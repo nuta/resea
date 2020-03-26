@@ -124,20 +124,17 @@ void main(void) {
                     switch (m.type) {
                         case TCPIP_RECEIVED_MSG: {
                             DBG("new data");
-                            struct session *sess =
-                                session_get(tcpip_server, m.tcpip_received.handle);
-                            struct client *client = (struct client *) sess->data;
-                            ASSERT(client);
+                            struct client *c = session_get(m.tcpip_received.handle);
+                            ASSERT(c);
                             size_t len = 4096;
-                            void *buf = tcpip_read(client->handle, &len);
+                            void *buf = tcpip_read(c->handle, &len);
                             if (buf) {
-                                process(client, buf, len);
+                                process(c, buf, len);
                                 free(buf);
                             }
                             break;
                         }
                         case TCPIP_NEW_CLIENT_MSG: {
-                            DBG("new client! %d", m.tcpip_new_client.handle);
                             handle_t new_handle = tcpip_accept(m.tcpip_new_client.handle);
                             ASSERT_OK(new_handle);
 
@@ -147,20 +144,12 @@ void main(void) {
                             client->request_len = 0;
                             client->done = false;
                             DBG("new_handle: %d", new_handle);
-                            struct session *sess =
-                                session_alloc_at(tcpip_server, new_handle);
-                            ASSERT(sess);
-                            sess->data = client;
+                            ASSERT_OK(session_alloc(new_handle));
+                            session_set(new_handle, client);
                             break;
                         }
                         case TCPIP_CLOSED_MSG: {
-                            handle_t handle = m.tcpip_closed.handle;
-                            struct session *sess = session_get(tcpip_server, handle);
-                            struct client *client = (struct client *) sess->data;
-                            ASSERT(client);
-                            free(client->request);
-                            free(client);
-                            session_delete(tcpip_server, handle);
+                            session_delete(m.tcpip_closed.handle);
                             break;
                         }
                     }

@@ -23,6 +23,7 @@ struct event {
     };
 };
 
+
 void sys_process_event(struct event *event);
 msec_t sys_uptime(void);
 

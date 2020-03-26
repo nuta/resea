@@ -25,6 +25,8 @@ enum tcp_pending_flag {
     TCP_PEND_FIN = 1 << 1,
 };
 
+struct client;
+
 #define TCP_SOCKETS_MAX         512
 #define TCP_RXT_INITIAL_TIMEOUT 500
 #define TCP_RXT_MAX_TIMEOUT     5000
@@ -52,7 +54,7 @@ struct tcp_socket {
     list_t backlog_socks;
     list_elem_t next;
     list_elem_t backlog_next;
-    struct session *session;
+    struct client *client;
 };
 
 typedef struct tcp_socket *tcp_sock_t;

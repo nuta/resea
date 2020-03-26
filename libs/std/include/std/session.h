@@ -5,19 +5,13 @@
 #include <types.h>
 #include <message.h>
 
-#define HANDLES_MAX 256
-
-struct session {
-    list_elem_t next;
-    task_t owner;
-    handle_t handle;
-    void *data;
-};
+#define SESSIONS_MAX 256
 
 void session_init(void);
-struct session *session_alloc(task_t task);
-struct session *session_alloc_at(task_t task, handle_t handle);
-struct session *session_get(task_t task, handle_t handle);
-struct session *session_delete(task_t task, handle_t handle);
+handle_t session_new(void);
+error_t session_alloc(handle_t handle);
+void session_delete(handle_t handle);
+void *session_get(handle_t handle);
+void session_set(handle_t handle, void *data);
 
 #endif

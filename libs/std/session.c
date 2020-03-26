@@ -1,84 +1,89 @@
-/// TODO: Consider kernel-level capability mechanism to allow users to delegate
-/// handles. Refer "IPC Gate" concept in Fiasco L4 mickrokernel.
-#include <list.h>
 #include <std/malloc.h>
 #include <std/session.h>
+
+struct session {
+    bool in_use;
+    handle_t handle;
+    void *data;
+};
 
 /// Whether this session library has been initialized.
 static bool initialized = false;
 
 /// Sessions. For simplicity, we use doubly-linked list while hash table is
 /// way better choice.
-static list_t sessions;
+static struct session sessions[SESSIONS_MAX];
 
-void session_init(void) {
-    list_init(&sessions);
-    initialized = true;
-}
-
-static handle_t alloc_handle_id(task_t task) {
-    for (handle_t handle = 1; handle < HANDLES_MAX; handle++) {
-        bool duplicated = false;
-        LIST_FOR_EACH (sess, &sessions, struct session, next) {
-            if (sess->owner == task && sess->handle == handle) {
-                duplicated = true;
-                break;
-            }
-        }
-
-        if (!duplicated) {
-            return handle;
+static struct session *alloc(void) {
+    for (int i = 0; i < SESSIONS_MAX; i++) {
+        if (!sessions[i].in_use) {
+            sessions[i].in_use = true;
+            return &sessions[i];
         }
     }
 
-    return 0;
+    return NULL;
 }
 
-struct session *session_alloc(task_t task) {
+struct session *lookup(handle_t handle) {
     DEBUG_ASSERT(initialized);
 
-    handle_t handle = alloc_handle_id(task);
-    if (!handle) {
-        // Too many handles.
+    for (int i = 0; i < SESSIONS_MAX; i++) {
+        if (sessions[i].in_use && sessions[i].handle == handle) {
+            return &sessions[i];
+        }
+    }
+
+    return NULL;
+}
+
+void session_init(void) {
+    initialized = true;
+    for (int i = 0; i < SESSIONS_MAX; i++) {
+        sessions[i].in_use = false;
+        sessions[i].handle = i + 1;
+    }
+}
+
+handle_t session_new(void) {
+    DEBUG_ASSERT(initialized);
+
+    struct session *sess = alloc();
+    ASSERT(sess);
+    return sess->handle;
+}
+
+error_t session_alloc(handle_t handle) {
+    DEBUG_ASSERT(initialized);
+
+    if (lookup(handle)) {
+        return ERR_ALREADY_EXISTS;
+    }
+
+    struct session *sess = alloc();
+    sess->handle = handle;
+    return OK;
+}
+
+void session_delete(handle_t handle) {
+    // TODO:
+}
+
+void *session_get(handle_t handle) {
+    DEBUG_ASSERT(initialized);
+
+    struct session *sess = lookup(handle);
+    if (!sess) {
         return NULL;
     }
 
-    return session_alloc_at(task, handle);
+    return sess->data;
 }
 
-struct session *session_alloc_at(task_t task, handle_t handle) {
-    DEBUG_ASSERT(initialized);
-    DEBUG_ASSERT(!session_get(task, handle));
-
-    struct session *sess = malloc(sizeof(*sess));
-    sess->owner = task;
-    sess->handle = handle;
-    sess->data = NULL;
-    list_push_back(&sessions, &sess->next);
-    return sess;
-}
-
-struct session *session_get(task_t task, handle_t handle) {
+void session_set(handle_t handle, void *data) {
     DEBUG_ASSERT(initialized);
 
-    LIST_FOR_EACH (sess, &sessions, struct session, next) {
-        if (sess->owner == task && sess->handle == handle) {
-            return sess;
-        }
-    }
-
-    return NULL;
-}
-
-struct session *session_delete(task_t task, handle_t handle) {
-    DEBUG_ASSERT(initialized);
-
-    LIST_FOR_EACH (sess, &sessions, struct session, next) {
-        if (sess->owner == task && sess->handle == handle) {
-            list_remove(&sess->next);
-            free(sess);
-        }
-    }
-
-    return NULL;
+    struct session *sess = lookup(handle);
+    ASSERT(sess);
+    sess->data = data;
 }
