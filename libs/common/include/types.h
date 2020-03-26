@@ -10,7 +10,7 @@ typedef unsigned short uint16_t;
 typedef unsigned uint32_t;
 typedef unsigned long long uint64_t;
 
-#define TASKS_MAX 16
+#define TASKS_MAX 32
 typedef int task_t;
 
 typedef unsigned msec_t;
