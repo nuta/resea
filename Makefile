@@ -28,7 +28,8 @@ endif
 
 VERSION     ?= v0.1.0
 INIT        ?= init
-SERVERS     ?= tcpip ps2kbd display e1000 shell webapi benchmark hello
+SERVERS     ?= ramdisk fatfs shell display ps2kbd appmgr tcpip webapi e1000
+APPS        ?= hello benchmark
 USER_LIBS   := std stubs
 
 kernel_image := $(BUILD_DIR)/resea.elf
@@ -202,6 +203,7 @@ $(BUILD_DIR)/user/$(1).elf: $(BUILD_DIR)/user/$(1).debug.elf
 -include $(BUILD_DIR)/user/$(1)/servers/*.deps
 endef
 $(foreach server, $(INIT) $(SERVERS), $(eval $(call server-build-rule,$(server))))
+$(foreach app, $(APPS), $(eval $(call server-build-rule,$(app))))
 
 .config.mk:
 	$(PROGRESS) "CONFIG" $@
