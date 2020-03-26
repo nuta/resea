@@ -181,6 +181,18 @@ struct message {
             size_t len;
         } net_rx;
 
+        #define BLK_READ_MSG ID(120)
+        struct {
+            offset_t sector;
+            size_t num_sectors;
+        } blk_read;
+
+        #define BLK_READ_REPLY_MSG (ID(121) | BULK(blk_read_reply.data, blk_read_reply.len))
+        struct {
+            uint8_t *data;
+            size_t len;
+        } blk_read_reply;
+
         // FIXME:
         #define KBD_GET_KEYCODE_MSG ID(110)
         #define KBD_KEYCODE_MSG ID(110)
