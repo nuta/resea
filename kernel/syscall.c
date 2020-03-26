@@ -173,12 +173,12 @@ static int sys_klogctl(int op, userptr_t buf, size_t buf_len) {
                 if (!read_len) {
                     break;
                 }
-    
+
                 memcpy_to_user(buf, kbuf, read_len);
                 buf += read_len;
                 remaining -= read_len;
             }
-    
+
             return buf_len - remaining;
         }
         case KLOGCTL_WRITE: {
