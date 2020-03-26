@@ -43,6 +43,17 @@ static void clear_screen(void) {
     ipc_send(display_server, &m);
 }
 
+static void draw_char(int x, int y, char ch, color_t fg_color, color_t bg_color) {
+    struct message m;
+    m.type = TEXTSCREEN_DRAW_CHAR_MSG;
+    m.textscreen_draw_char.ch = ch;
+    m.textscreen_draw_char.x = x;
+    m.textscreen_draw_char.y = y;
+    m.textscreen_draw_char.fg_color = fg_color;
+    m.textscreen_draw_char.bg_color = bg_color;
+    ipc_send(display_server, &m);
+}
+
 void logputc(char ch) {
     if (ch == '\e') {
         in_esc = true;
@@ -89,15 +100,7 @@ void logputc(char ch) {
     }
 
     if (ch != '\n') {
-        struct message m;
-        m.type = TEXTSCREEN_DRAW_CHAR_MSG;
-        m.textscreen_draw_char.ch = ch;
-        m.textscreen_draw_char.x = cursor_x;
-        m.textscreen_draw_char.y = cursor_y;
-        m.textscreen_draw_char.fg_color = text_color;
-        m.textscreen_draw_char.bg_color = COLOR_BLACK;
-        ipc_send(display_server, &m);
-
+        draw_char(cursor_x, cursor_y, ch, text_color, COLOR_BLACK);
         cursor_x++;
         if (cursor_x == width) {
             newline();
@@ -249,24 +252,36 @@ void prompt(void) {
 static void input(char ch) {
     int argv_max = 8;
     char **argv = malloc(sizeof(char *) * argv_max);
-    logputc(ch);
     switch (ch) {
-        case '\n': {
-            cmdline[cursor] = '\0';
-            int argc = parse(cmdline, argv, argv_max);
-            if (argc > 0) {
-                run(argv[0], argc, argv);
+        case '\b':
+            if (cursor > 0) {
+                cursor_x--;
+                draw_char(cursor_x, cursor_y, ' ', COLOR_NORMAL, COLOR_BLACK);
+                update_cursor();
+                cursor--;
+                cmdline[cursor] = '\0';
             }
-            prompt();
             break;
-        }
         default:
-            if (cursor == CMDLINE_MAX - 1) {
-                logputstr("\nshell: too long input\n");
-                prompt();
-            } else {
-                cmdline[cursor] = ch;
-                cursor++;
+            logputc(ch);
+            switch (ch) {
+                case '\n': {
+                    cmdline[cursor] = '\0';
+                    int argc = parse(cmdline, argv, argv_max);
+                    if (argc > 0) {
+                        run(argv[0], argc, argv);
+                    }
+                    prompt();
+                    break;
+                }
+                default:
+                    if (cursor == CMDLINE_MAX - 1) {
+                        logputstr("\nshell: too long input\n");
+                        prompt();
+                    } else {
+                        cmdline[cursor] = ch;
+                        cursor++;
+                    }
             }
     }
 }
