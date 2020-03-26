@@ -5,6 +5,8 @@
 #include <std/syscall.h>
 #include <string.h>
 
+static task_t appmgr_server;
+static task_t fs_server;
 static task_t display_server;
 static task_t kbd_server;
 
@@ -186,6 +188,39 @@ int parse(char *cmdline, char **argv, int argv_max) {
     return argc;
 }
 
+void run_app(const char *name) {
+    char path[128];
+    strncpy(path, "/apps/", sizeof(path));
+    strncpy(&path[6], name, sizeof(path) - 6);
+
+    // Open the executable file.
+    struct message m;
+    m.type = FS_OPEN_MSG;
+    m.fs_open.path = path;
+    m.fs_open.len = strlen(path) + 1;
+    error_t err = ipc_call(fs_server, &m);
+    if (IS_ERROR(err)) {
+        WARN("failed to open %s", path);
+        return;
+    }
+    ASSERT(m.type == FS_OPEN_REPLY_MSG);
+
+    // Spawn a task.
+    m.type = EXEC_MSG;
+    m.exec.handle = m.fs_open_reply.handle;
+    m.exec.server = fs_server;
+    strncpy(m.exec.name, name, sizeof(m.exec.name));
+    err = ipc_call(appmgr_server, &m);
+    task_t task = m.exec_reply.task;
+
+    // Wait until the task exits.
+    m.type = JOIN_MSG;
+    m.join.task = task;
+    err = ipc_call(appmgr_server, &m);
+
+    ASSERT_OK(err);
+}
+
 void run(const char *cmd_name, int argc, char **argv) {
     for (int i = 0; commands[i].name != NULL; i++) {
         if (!strcmp(commands[i].name, cmd_name)) {
@@ -194,6 +229,7 @@ void run(const char *cmd_name, int argc, char **argv) {
         }
     }
 
+    run_app(cmd_name);
     logputstr("shell: no such command\n");
 }
 
@@ -257,6 +293,12 @@ static void get_screen_size(void) {
 
 void main(void) {
     INFO("starting...");
+
+    appmgr_server = ipc_lookup("appmgr");
+    ASSERT_OK(appmgr_server);
+
+    fs_server = ipc_lookup("fatfs");
+    ASSERT_OK(fs_server);
 
     display_server = ipc_lookup("display");
     ASSERT_OK(display_server);
