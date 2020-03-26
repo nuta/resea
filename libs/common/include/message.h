@@ -100,6 +100,39 @@ struct message {
             paddr_t paddr;
         } alloc_pages_reply;
 
+        #define FS_OPEN_MSG (ID(50) | BULK(fs_open.path, fs_open.len))
+        struct {
+            char *path;
+            size_t len;
+        } fs_open;
+
+        #define FS_OPEN_REPLY_MSG ID(51)
+        struct {
+            handle_t handle;
+        } fs_open_reply;
+
+        #define FS_CLOSE_MSG ID(52)
+        struct {
+            handle_t handle;
+        } fs_close;
+
+        #define FS_CLOSE_REPLY_MSG ID(53)
+        struct {
+        } fs_close_reply;
+
+        #define FS_READ_MSG ID(54)
+        struct {
+            handle_t handle;
+            offset_t offset;
+            size_t len;
+        } fs_read;
+
+        #define FS_READ_REPLY_MSG (ID(55 | BULK(fs_read_reply.data, fs_read_reply.len)))
+        struct {
+            void *data;
+            size_t len;
+        } fs_read_reply;
+
         #define TCPIP_REGISTER_DEVICE_MSG ID(70)
         struct {
             uint8_t macaddr[6];

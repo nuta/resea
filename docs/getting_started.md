@@ -9,12 +9,12 @@
 
 ### macOS
 ```
-$ brew install llvm python3 qemu bochs i386-elf-grub xorriso
+$ brew install llvm python3 qemu bochs i386-elf-grub xorriso mtools
 ```
 
 ### Ubuntu 18.04
 ```
-$ apt install llvm-8 lld-8 clang-8 qemu bochs grub2 xorriso \
+$ apt install llvm-8 lld-8 clang-8 qemu bochs grub2 xorriso mtools \
     python3 python3-dev python3-pip python3-setuptools
 ```
 
