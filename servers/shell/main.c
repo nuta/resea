@@ -271,6 +271,7 @@ static void input(char ch) {
                     if (argc > 0) {
                         run(argv[0], argc, argv);
                     }
+                    pull_kernel_log();
                     prompt();
                     break;
                 }
