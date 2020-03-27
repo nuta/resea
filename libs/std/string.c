@@ -39,6 +39,18 @@ void string_delete(string_t str) {
     free(str);
 }
 
+string_t string_dup(string_t str) {
+    return string_from_bytes(str->buf, str->len);
+}
+
+unsigned string_hash(string_t str) {
+    unsigned hash = 0;
+    for (size_t i = 0; i < str->len; i++) {
+        hash += str->buf[str->len];
+    }
+    return hash;
+}
+
 uint8_t *string_data(string_t str) {
     return str->buf;
 }
