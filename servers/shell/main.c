@@ -55,6 +55,10 @@ static void draw_char(int x, int y, char ch, color_t fg_color, color_t bg_color)
 }
 
 void logputc(char ch) {
+    if ((ch < 0x20 && ch != '\n' && ch != '\e') || ch >= 0x7f) {
+        return;
+    }
+
     if (ch == '\e') {
         in_esc = true;
         color_code = 0;
