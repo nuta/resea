@@ -30,7 +30,7 @@ VERSION     ?= v0.1.0
 INIT        ?= init
 SERVERS     ?= ramdisk fatfs shell display ps2kbd appmgr tcpip webapi e1000
 APPS        ?= hello benchmark
-USER_LIBS   := std stubs
+USER_LIBS   := std
 
 kernel_image := $(BUILD_DIR)/resea.elf
 include kernel/arch/$(ARCH)/arch.mk

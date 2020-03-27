@@ -2,12 +2,15 @@
 #include <std/syscall.h>
 #include <std/lookup.h>
 #include <std/malloc.h>
-#include <std/session.h>
+#include <std/map.h>
+#include <std/string.h>
+#include <std/rand.h>
 #include <message.h>
 #include <cstring.h>
 #include "fat.h"
 
 static task_t ramdisk_server;
+static map_t clients;
 
 void blk_read(size_t sector, void *buf, size_t num_sectors) {
     struct message m;
@@ -26,7 +29,7 @@ void blk_write(size_t offset, const void *buf, size_t len) {
 
 void main(void) {
     TRACE("starting...");
-    session_init();
+    clients = map_new();
 
     ramdisk_server = ipc_lookup("ramdisk");
     ASSERT_OK(ramdisk_server);
@@ -61,8 +64,9 @@ void main(void) {
                     break;
                 }
 
-                handle_t handle = session_new();
-                session_set(handle, file);
+                handle_t handle;
+                rand_bytes((uint8_t *) &handle, sizeof(handle));
+                map_set_handle(clients, &handle, file);
 
                 m.type = FS_OPEN_REPLY_MSG;
                 m.fs_open_reply.handle = handle;
@@ -70,7 +74,8 @@ void main(void) {
                 break;
             }
             case FS_READ_MSG: {
-                struct fat_file *file = session_get(m.fs_read.handle);
+                struct fat_file *file =
+                    map_get_handle(clients, &m.fs_read.handle);
                 if (!file) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;

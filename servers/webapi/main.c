@@ -5,9 +5,11 @@
 #include <std/syscall.h>
 #include <std/lookup.h>
 #include <cstring.h>
-#include <stubs/tcpip.h>
 #include <vprintf.h>
 #include "webapi.h"
+
+static map_t clients;
+static task_t tcpip_server;
 
 #define INDEX_HTML                                                             \
     "<!DOCTYPE html>"                                                          \
@@ -39,8 +41,12 @@ static void write_response(struct client *client, const char *status,
         return;
     }
 
-    error_t err = tcpip_write(client->handle, buf, strlen(buf));
-    ASSERT_OK(err);
+    struct message m;
+    m.type = TCPIP_WRITE_MSG;
+    m.tcpip_write.handle = client->handle;
+    m.tcpip_write.data = buf;
+    m.tcpip_write.len = strlen(buf);
+    ASSERT_OK(ipc_call(tcpip_server, &m));
     free(buf);
 }
 
@@ -97,24 +103,25 @@ static void process(struct client *client, uint8_t *data, size_t len) {
     client->done = true;
     return;
 
+    struct message m;
 malformed:
-    tcpip_close(client->handle);
+    m.type = TCPIP_CLOSE_MSG;
+    m.tcpip_close.handle = client->handle;
+    ipc_call(tcpip_server, &m);
 }
-
-static map_t clients;
 
 void main(void) {
     INFO("starting...");
-    task_t tcpip_server = ipc_lookup("tcpip");
-    tcpip_init();
+    tcpip_server = ipc_lookup("tcpip");
     clients = map_new();
 
-    handle_t sock = tcpip_listen(80, 16);
-    ASSERT_OK(sock);
-
+    struct message m;
+    m.type = TCPIP_LISTEN_MSG;
+    m.tcpip_listen.port = 80;
+    m.tcpip_listen.backlog = 16;
+    ASSERT_OK(ipc_call(tcpip_server, &m));
     INFO("ready");
     while (1) {
-        struct message m;
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
@@ -126,15 +133,16 @@ void main(void) {
                     switch (m.type) {
                         case TCPIP_RECEIVED_MSG: {
                             DBG("new data");
-                            string_t str =
-                                string_from_bytes(&m.tcpip_received.handle,
-                                    sizeof(m.tcpip_received.handle));
-                            struct client *c = map_get(clients, str);
+                            struct client *c =
+                                map_get_handle(clients, &m.tcpip_received.handle);
                             ASSERT(c);
-                            string_delete(str);
 
-                            size_t len = 4096;
-                            void *buf = tcpip_read(c->handle, &len);
+                            m.type = TCPIP_READ_MSG;
+                            m.tcpip_read.handle = c->handle;
+                            m.tcpip_read.len = 4096;
+                            ASSERT_OK(ipc_call(tcpip_server, &m));
+                            uint8_t *buf = m.tcpip_read_reply.data;
+                            size_t len = m.tcpip_read_reply.len;
                             if (buf) {
                                 process(c, buf, len);
                                 free(buf);
@@ -142,27 +150,21 @@ void main(void) {
                             break;
                         }
                         case TCPIP_NEW_CLIENT_MSG: {
-                            handle_t new_handle = tcpip_accept(m.tcpip_new_client.handle);
-                            ASSERT_OK(new_handle);
+                            m.type = TCPIP_ACCEPT_MSG;
+                            m.tcpip_accept.handle = m.tcpip_new_client.handle;
+                            ASSERT_OK(ipc_call(tcpip_server, &m));
+                            handle_t new_handle = m.tcpip_accept_reply.new_handle;
 
                             struct client *client = malloc(sizeof(*client));
                             client->handle = new_handle;
                             client->request = NULL;
                             client->request_len = 0;
                             client->done = false;
-                            DBG("new_handle: %d", new_handle);
-                            string_t str =
-                                string_from_bytes(&new_handle, sizeof(new_handle));
-                            map_set(clients, str, client);
-                            string_delete(str);
+                            map_set_handle(clients, &new_handle, client);
                             break;
                         }
                         case TCPIP_CLOSED_MSG: {
-                            string_t str =
-                                string_from_bytes(&m.tcpip_closed.handle,
-                                    sizeof(m.tcpip_closed.handle));
-                            map_remove(clients, str);
-                            string_delete(str);
+                            map_remove_handle(clients, &m.tcpip_closed.handle);
                             break;
                         }
                     }

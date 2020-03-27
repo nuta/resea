@@ -3,7 +3,9 @@
 
 #include <types.h>
 
-typedef int handle_t;
+typedef struct {
+    uint8_t id[16];
+} handle_t;
 
 //
 //  Console Device Driver

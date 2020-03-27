@@ -245,7 +245,7 @@ static char cmdline[CMDLINE_MAX];
 static int cursor = 0;
 
 void prompt(void) {
-    logputstr("shell> ");
+    logputstr(">>> ");
     cursor = 0;
 }
 

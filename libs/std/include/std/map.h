@@ -4,6 +4,7 @@
 #include <types.h>
 #include <list.h>
 #include <std/string.h>
+#include <message.h>
 
 /// An element in a map.
 struct map_elem {
@@ -34,5 +35,8 @@ bool map_is_empty(map_t map);
 void *map_get(map_t map, string_t key);
 void *map_set(map_t map, string_t key, void *value);
 void *map_remove(map_t map, string_t key);
+void *map_get_handle(map_t map, handle_t *key);
+void *map_set_handle(map_t map, handle_t *key, void *value);
+void *map_remove_handle(map_t map, handle_t *key);
 
 #endif

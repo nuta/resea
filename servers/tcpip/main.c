@@ -2,8 +2,9 @@
 #include <message.h>
 #include <std/malloc.h>
 #include <std/printf.h>
-#include <std/session.h>
+#include <std/map.h>
 #include <std/syscall.h>
+#include <std/rand.h>
 #include "device.h"
 #include "dhcp.h"
 #include "main.h"
@@ -22,6 +23,7 @@ struct pending {
     struct message m;
 };
 
+static map_t clients;
 static unsigned next_driver_id = 0;
 static list_t drivers;
 static list_t pending_events;
@@ -146,7 +148,7 @@ void main(void) {
     list_init(&pending_events);
     list_init(&pending_msgs);
     list_init(&drivers);
-    session_init();
+    clients = map_new();
 
     // Initialize the TCP/IP protocol stack.
     device_init();
@@ -180,12 +182,14 @@ void main(void) {
                 tcp_bind(sock, &any_ipaddr, m.tcpip_listen.port);
                 tcp_listen(sock, m.tcpip_listen.backlog);
 
-                handle_t handle = session_new();
+                handle_t handle;
+                rand_bytes((uint8_t *) &handle, sizeof(handle));
+
                 sock->client = malloc(sizeof(*sock->client));
                 sock->client->sock = sock;
                 sock->client->task = m.src;
                 sock->client->handle = handle;
-                session_set(handle, sock->client);
+                map_set_handle(clients, &handle, sock->client);
 
                 m.type = TCPIP_LISTEN_REPLY_MSG;
                 m.tcpip_listen_reply.handle = sock->client->handle;
@@ -193,7 +197,8 @@ void main(void) {
                 break;
             }
             case TCPIP_ACCEPT_MSG: {
-                struct client *c = session_get(m.tcpip_accept.handle);
+                struct client *c =
+                    map_get_handle(clients, &m.tcpip_accept.handle);
                 if (!c) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
@@ -205,12 +210,14 @@ void main(void) {
                     break;
                 }
 
-                handle_t new_handle = session_new();
+                handle_t new_handle;
+                rand_bytes((uint8_t *) &new_handle, sizeof(new_handle));
+
                 new_sock->client = malloc(sizeof(*new_sock->client));
                 new_sock->client->sock = new_sock;
                 new_sock->client->task = m.src;
                 new_sock->client->handle = new_handle;
-                session_set(new_handle, new_sock->client);
+                map_set_handle(clients, &new_handle, new_sock->client);
 
                 m.type = TCPIP_ACCEPT_REPLY_MSG;
                 m.tcpip_accept_reply.new_handle = new_sock->client->handle;
@@ -219,7 +226,8 @@ void main(void) {
             }
             case TCPIP_READ_MSG: {
                 size_t max_len = MIN(4096, m.tcpip_read.len);
-                struct client *c = session_get(m.tcpip_read.handle);
+                struct client *c =
+                    map_get_handle(clients, &m.tcpip_read.handle);
                 if (!c) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
@@ -234,7 +242,8 @@ void main(void) {
                 break;
             }
             case TCPIP_WRITE_MSG: {
-                struct client *c = session_get(m.tcpip_write.handle);
+                struct client *c =
+                    map_get_handle(clients, &m.tcpip_write.handle);
                 if (!c) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;

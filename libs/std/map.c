@@ -107,3 +107,18 @@ void *map_remove(map_t map, string_t key) {
         return NULL;
     }
 }
+
+void *map_get_handle(map_t map, handle_t *key) {
+    string_t tmp = string_from_bytes(key, sizeof(*key));
+    return map_get(map, tmp);
+}
+
+void *map_set_handle(map_t map, handle_t *key, void *value) {
+    string_t tmp = string_from_bytes(key, sizeof(*key));
+    return map_set(map, tmp, value);
+}
+
+void *map_remove_handle(map_t map, handle_t *key) {
+    string_t tmp = string_from_bytes(key, sizeof(*key));
+    return map_remove(map, tmp);
+}

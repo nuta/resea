@@ -2,7 +2,6 @@
 #define __TCP_H__
 
 #include <list.h>
-#include <std/session.h>
 #include "mbuf.h"
 #include "tcpip.h"
 
