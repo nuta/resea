@@ -64,7 +64,7 @@ static error_t read_file(task_t fs_server, handle_t handle, offset_t off,
 }
 
 static task_t exec(const char *name, task_t fs_server, handle_t handle) {
-    INFO("launching %s...", name);
+    TRACE("launching %s...", name);
 
     // Look for an unused task ID.
     struct task *task = NULL;
@@ -200,7 +200,7 @@ void main(void) {
             case EXCEPTION_MSG: {
                 struct task *task = get_task_by_tid(m.join.task);
                 ASSERT(task);
-                WARN("%s exited", task->name);
+                TRACE("%s exited", task->name);
                 task->exited = true;
                 if (task->waiter) {
                     m.type = JOIN_REPLY_MSG;
