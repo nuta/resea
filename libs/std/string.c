@@ -56,7 +56,7 @@ bool string_equals(string_t str1, string_t str2) {
 }
 
 bool string_equals_bytes(string_t str, const void *data, size_t len) {
-    return str->len == len && memcmp(str->buf, data, len);
+    return str->len == len && !memcmp(str->buf, data, len);
 }
 
 bool string_equals_cstr(string_t str, const char *cstr) {
