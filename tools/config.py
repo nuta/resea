@@ -40,6 +40,8 @@ def generate_mk(config_file):
     config_mk += "\n"
     if "CONFIG_ARCH_X64=y" in config_mk:
         config_mk += "CONFIG_ARCH=x64\n"
+    if "CONFIG_BUILD_RELEASE=y" in config_mk:
+        config_mk += "BUILD=release\n"
 
     config_mk = re.sub(r"(^|\n)CONFIG_([^=]+)=\"?([^\"\n]*)\"?", r"\n\2:=\3", config_mk)
     open(config_file + ".mk", "w").write(config_mk)
