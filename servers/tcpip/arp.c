@@ -121,7 +121,6 @@ void arp_receive(struct device *device, mbuf_t pkt) {
             break;
         case ARP_OP_REPLY: {
             struct arp_entry *e = arp_lookup(&device->arp_table, sender_addr);
-            INFO("arp op reply: e=%p, sender=%pI4", e, sender_addr);
             if (!e) {
                 break;
             }
