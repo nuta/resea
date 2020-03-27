@@ -4,7 +4,7 @@
 #include <std/session.h>
 #include <std/syscall.h>
 #include <std/lookup.h>
-#include <string.h>
+#include <cstring.h>
 #include <stubs/tcpip.h>
 #include <vprintf.h>
 #include "webapi.h"

@@ -1,7 +1,7 @@
 #ifndef __WEBAPI_H__
 #define __WEBAPI_H__
 
-#include <string.h>
+#include <cstring.h>
 #include <types.h>
 
 struct client {

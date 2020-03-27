@@ -1,5 +1,5 @@
 #include "kdebug.h"
-#include <string.h>
+#include <cstring.h>
 #include "task.h"
 
 static void quit(void) {

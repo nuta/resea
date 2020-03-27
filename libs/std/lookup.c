@@ -1,6 +1,6 @@
 #include <message.h>
 #include <std/syscall.h>
-#include <string.h>
+#include <cstring.h>
 
 task_t ipc_lookup(const char *name) {
     struct message m;

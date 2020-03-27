@@ -1,7 +1,7 @@
 #include "fat.h"
 #include <std/printf.h>
 #include <std/malloc.h>
-#include <string.h>
+#include <cstring.h>
 #include <std/ctype.h>
 
 error_t fat_probe(struct fat *fs,

@@ -1,5 +1,5 @@
-#ifndef __STRING_H__
-#define __STRING_H__
+#ifndef __CSTRING_H__
+#define __CSTRING_H__
 
 #include <types.h>
 

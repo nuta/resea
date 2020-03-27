@@ -1,7 +1,7 @@
 #include "memory.h"
 #include <arch.h>
 #include <message.h>
-#include <string.h>
+#include <cstring.h>
 #include "ipc.h"
 #include "printk.h"
 #include "syscall.h"

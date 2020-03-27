@@ -4,7 +4,7 @@
 #include <std/malloc.h>
 #include <std/session.h>
 #include <message.h>
-#include <string.h>
+#include <cstring.h>
 #include "fat.h"
 
 static task_t ramdisk_server;

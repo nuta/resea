@@ -3,7 +3,7 @@
 #include <std/malloc.h>
 #include <std/printf.h>
 #include <std/syscall.h>
-#include <string.h>
+#include <cstring.h>
 
 static task_t appmgr_server;
 static task_t fs_server;

@@ -2,7 +2,7 @@
 #include <std/syscall.h>
 #include <std/malloc.h>
 #include <message.h>
-#include <string.h>
+#include <cstring.h>
 
 #define SECTOR_SIZE 512
 #define BUF_SIZE 8192

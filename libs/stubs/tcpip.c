@@ -3,7 +3,7 @@
 #include <std/malloc.h>
 #include <std/printf.h>
 #include <std/syscall.h>
-#include <string.h>
+#include <cstring.h>
 #include <stubs/tcpip.h>
 
 static task_t server = 0;

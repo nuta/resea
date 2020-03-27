@@ -1,7 +1,7 @@
 #include "task.h"
 #include <arch.h>
 #include <list.h>
-#include <string.h>
+#include <cstring.h>
 #include "ipc.h"
 #include "kdebug.h"
 #include "memory.h"

@@ -3,7 +3,7 @@
 #include <std/malloc.h>
 #include <std/printf.h>
 #include <std/syscall.h>
-#include <string.h>
+#include <cstring.h>
 #include "elf.h"
 #include "initfs.h"
 #include "pages.h"

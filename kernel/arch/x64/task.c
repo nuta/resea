@@ -1,5 +1,5 @@
 #include <arch.h>
-#include <string.h>
+#include <cstring.h>
 #include <syscall.h>
 #include <task.h>
 #include "interrupt.h"

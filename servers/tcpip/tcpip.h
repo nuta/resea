@@ -1,7 +1,7 @@
 #ifndef __TCPIP_H__
 #define __TCPIP_H__
 
-#include <string.h>
+#include <cstring.h>
 #include <types.h>
 
 #define MACADDR_LEN       6

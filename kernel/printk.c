@@ -1,6 +1,6 @@
 #include "printk.h"
 #include "ipc.h"
-#include <string.h>
+#include <cstring.h>
 #include <vprintf.h>
 
 static struct klog klog;

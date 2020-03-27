@@ -1,5 +1,5 @@
 #include <std/printf.h>
-#include <string.h>
+#include <cstring.h>
 #include "device.h"
 #include "dhcp.h"
 #include "ipv4.h"

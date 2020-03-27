@@ -4,7 +4,7 @@
 #include <std/printf.h>
 #include <std/syscall.h>
 #include <std/lookup.h>
-#include <string.h>
+#include <cstring.h>
 #include "elf.h"
 
 static task_t init_server;

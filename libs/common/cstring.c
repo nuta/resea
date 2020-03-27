@@ -1,4 +1,4 @@
-#include <string.h>
+#include <cstring.h>
 
 size_t strlen(const char *s) {
     size_t len = 0;

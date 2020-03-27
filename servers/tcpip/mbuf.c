@@ -1,5 +1,5 @@
 #include <std/malloc.h>
-#include <string.h>
+#include <cstring.h>
 #include "mbuf.h"
 
 mbuf_t mbuf_alloc(void) {

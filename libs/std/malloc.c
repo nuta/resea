@@ -1,7 +1,7 @@
 #include <list.h>
 #include <std/malloc.h>
 #include <std/printf.h>
-#include <string.h>
+#include <cstring.h>
 
 extern char __heap[];
 extern char __heap_end[];

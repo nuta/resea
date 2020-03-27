@@ -2,7 +2,7 @@
 #include <std/io.h>
 #include <std/printf.h>
 #include <std/syscall.h>
-#include <string.h>
+#include <cstring.h>
 
 #define BLANK_CHAR    0x0f20 /* whitespace */
 #define SCREEN_HEIGHT 25
