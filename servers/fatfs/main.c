@@ -39,12 +39,21 @@ void main(void) {
         PANIC("failed to locate a FAT file system");
     }
 
+    DBG("Files ---------------------------------------------");
     struct fat_dir dir;
     struct fat_dirent *e;
+    char tmp[11];
+    ASSERT_OK(fat_opendir(&fs, &dir, "/"));
+    while ((e = fat_readdir(&fs, &dir)) != NULL) {
+        strncpy(tmp, (const char *) e->name, sizeof(tmp));
+        DBG("/%s", tmp);
+    }
     ASSERT_OK(fat_opendir(&fs, &dir, "/apps"));
     while ((e = fat_readdir(&fs, &dir)) != NULL) {
-        DBG("/APPS/%s", e->name);
+        strncpy(tmp, (const char *) e->name, sizeof(tmp));
+        DBG("/APPS/%s", tmp);
     }
+    DBG("---------------------------------------------------");
 
     TRACE("ready");
     while (true) {
