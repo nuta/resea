@@ -80,11 +80,7 @@ const char *__program_name(void);
         }                                                                      \
     } while (0)
 
-#ifdef DEBUG
-#    define DEBUG_ASSERT(expr) ASSERT(expr)
-#else
-#    define DEBUG_ASSERT(expr)
-#endif
+#define DEBUG_ASSERT(expr) ASSERT(expr)
 
 #define ASSERT_OK(expr)                                                        \
     do {                                                                       \
@@ -133,5 +129,13 @@ const char *__program_name(void);
         halt();                                                                \
         __builtin_unreachable();                                               \
     } while (0)
+
+
+#if !defined(DEBUG)
+#    undef DEBUG_ASSERT
+#    define DEBUG_ASSERT(expr)
+#    undef TRACE
+#    define TRACE(fmt, ...)
+#endif
 
 #endif
