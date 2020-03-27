@@ -1,7 +1,7 @@
 #include <message.h>
 #include <std/malloc.h>
 #include <std/printf.h>
-#include <std/session.h>
+#include <std/map.h>
 #include <std/syscall.h>
 #include <std/lookup.h>
 #include <cstring.h>
@@ -101,11 +101,13 @@ malformed:
     tcpip_close(client->handle);
 }
 
+static map_t clients;
+
 void main(void) {
     INFO("starting...");
     task_t tcpip_server = ipc_lookup("tcpip");
     tcpip_init();
-    session_init();
+    clients = map_new();
 
     handle_t sock = tcpip_listen(80, 16);
     ASSERT_OK(sock);
@@ -124,8 +126,13 @@ void main(void) {
                     switch (m.type) {
                         case TCPIP_RECEIVED_MSG: {
                             DBG("new data");
-                            struct client *c = session_get(m.tcpip_received.handle);
+                            string_t str =
+                                string_from_bytes(&m.tcpip_received.handle,
+                                    sizeof(m.tcpip_received.handle));
+                            struct client *c = map_get(clients, str);
                             ASSERT(c);
+                            string_delete(str);
+
                             size_t len = 4096;
                             void *buf = tcpip_read(c->handle, &len);
                             if (buf) {
@@ -144,12 +151,18 @@ void main(void) {
                             client->request_len = 0;
                             client->done = false;
                             DBG("new_handle: %d", new_handle);
-                            ASSERT_OK(session_alloc(new_handle));
-                            session_set(new_handle, client);
+                            string_t str =
+                                string_from_bytes(&new_handle, sizeof(new_handle));
+                            map_set(clients, str, client);
+                            string_delete(str);
                             break;
                         }
                         case TCPIP_CLOSED_MSG: {
-                            session_delete(m.tcpip_closed.handle);
+                            string_t str =
+                                string_from_bytes(&m.tcpip_closed.handle,
+                                    sizeof(m.tcpip_closed.handle));
+                            map_remove(clients, str);
+                            string_delete(str);
                             break;
                         }
                     }
