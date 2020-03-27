@@ -117,6 +117,10 @@ void *realloc(void *ptr, size_t size) {
 }
 
 void free(void *ptr) {
+    if (!ptr) {
+        return;
+    }
+
     struct malloc_chunk *chunk = get_chunk_from_ptr(ptr);
     if (chunk->magic == MALLOC_FREE) {
         PANIC("double-free bug!");
