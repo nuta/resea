@@ -2,7 +2,7 @@ Resea
 =====
 [![Build Status](https://travis-ci.com/nuta/resea.svg?branch=master)](https://travis-ci.com/nuta/resea)
 
-![screenshot](https://gist.githubusercontent.com/nuta/95388285b0d6efca0329641e8c52f4e7/raw/223000d67ba4a304698c48cd3eca8467dbc99b24/screenshot.png)
+![screenshot](https://gist.githubusercontent.com/nuta/18bb9fb757bcb547f2432c4fc5197dcf/raw/6faa6cd38b2ad23cfdbfdabff5107f99aead12f9/demo.gif)
 
 Resea *[ríːseə]* is a microkernel-based operating system written from scratch.
 It aims to provide an attractive developer experience and be *hackable*:
@@ -11,18 +11,19 @@ to extend the functionality.
 
 Features
 --------
-- A *pure* microkernel with x86_64 (SMP) support
-- TCP/IP server
-- Some device drivers (PS/2 keyboard, e1000 network card, and text-mode screen)
+- A *pure* microkernel with x86_64 (SMP) support.
+- FAT file system server.
+- TCP/IP server.
+- Text-based user interface.
+- Device drivers for PS/2 keyboard, e1000 network card, etc.
 
 Road Map in 2020
 ----------------
 - Documentation
-- GUI server
-- File System server
-- Kernel-level handles like [IPC Gate in Fiasco (L4)](https://l4re.org/doc/group__l4__kernel__object__gate__api.html)
 - RISC-V support
 - [Rust](https://www.rust-lang.org/) in userland
+- Developer tools improvements: userland debugger, fuzzer, unit testing, etc.
+- GUI server
 
 Contributing
 ------------
