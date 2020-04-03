@@ -28,7 +28,7 @@ endif
 
 VERSION     ?= v0.1.0
 INIT        ?= init
-SERVERS     ?= ramdisk fatfs shell display ps2kbd appmgr tcpip webapi e1000
+SERVERS     ?= ramdisk fatfs shell display ps2kbd appmgr network webapi e1000
 APPS        ?= hello benchmark
 USER_LIBS   := std
 

@@ -7,7 +7,7 @@
 #include "e1000.h"
 #include "pci.h"
 
-static task_t tcpip_tid;
+static task_t network_tid;
 
 static void receive(const void *payload, size_t len) {
     TRACE("received %d bytes", len);
@@ -15,14 +15,14 @@ static void receive(const void *payload, size_t len) {
     m.type = NET_RX_MSG;
     m.net_rx.len = len;
     m.net_rx.payload = (void *) payload;
-    error_t err = ipc_send(tcpip_tid, &m);
+    error_t err = ipc_send(network_tid, &m);
     ASSERT_OK(err);
 }
 
 void transmit(void) {
     struct ipc_msg_t m;
     m.type = NET_GET_TX_MSG;
-    ASSERT_OK(ipc_call(tcpip_tid, &m));
+    ASSERT_OK(ipc_call(network_tid, &m));
     ASSERT(m.type == NET_TX_MSG);
     e1000_transmit(m.net_tx.payload, m.net_tx.len);
     free(m.net_tx.payload);
@@ -53,14 +53,14 @@ void main(void) {
          mac[3], mac[4], mac[5]);
 
     // Wait for the tcpip server.
-    tcpip_tid = ipc_lookup("tcpip");
-    ASSERT_OK(tcpip_tid);
+    network_tid = ipc_lookup("network");
+    ASSERT_OK(network_tid);
 
     // Register this driver.
     struct ipc_msg_t m;
     m.type = TCPIP_REGISTER_DEVICE_MSG;
     memcpy(m.tcpip_register_device.macaddr, mac, 6);
-    err = ipc_send(tcpip_tid, &m);
+    err = ipc_send(network_tid, &m);
     ASSERT_OK(err);
 
     // The mainloop: receive and handle messages.

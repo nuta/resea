@@ -9,7 +9,7 @@
 #include "webapi.h"
 
 static map_t clients;
-static task_t tcpip_server;
+static task_t network_server;
 
 #define INDEX_HTML                                                             \
     "<!DOCTYPE html>"                                                          \
@@ -46,7 +46,7 @@ static void write_response(struct client *client, const char *status,
     m.tcpip_write.handle = client->handle;
     m.tcpip_write.data = buf;
     m.tcpip_write.len = strlen(buf);
-    ASSERT_OK(ipc_call(tcpip_server, &m));
+    ASSERT_OK(ipc_call(network_server, &m));
     free(buf);
 }
 
@@ -107,19 +107,19 @@ static void process(struct client *client, uint8_t *data, size_t len) {
 malformed:
     m.type = TCPIP_CLOSE_MSG;
     m.tcpip_close.handle = client->handle;
-    ipc_call(tcpip_server, &m);
+    ipc_call(network_server, &m);
 }
 
 void main(void) {
     INFO("starting...");
-    tcpip_server = ipc_lookup("tcpip");
+    network_server = ipc_lookup("network");
     clients = map_new();
 
     struct ipc_msg_t m;
     m.type = TCPIP_LISTEN_MSG;
     m.tcpip_listen.port = 80;
     m.tcpip_listen.backlog = 16;
-    ASSERT_OK(ipc_call(tcpip_server, &m));
+    ASSERT_OK(ipc_call(network_server, &m));
     INFO("ready");
     while (1) {
         error_t err = ipc_recv(IPC_ANY, &m);
@@ -129,7 +129,7 @@ void main(void) {
             case NOTIFICATIONS_MSG: {
                 if (m.notifications.data & NOTIFY_NEW_DATA) {
                     m.type = TCPIP_PULL_MSG;
-                    ASSERT_OK(ipc_call(tcpip_server, &m));
+                    ASSERT_OK(ipc_call(network_server, &m));
                     switch (m.type) {
                         case TCPIP_RECEIVED_MSG: {
                             DBG("new data");
@@ -140,7 +140,7 @@ void main(void) {
                             m.type = TCPIP_READ_MSG;
                             m.tcpip_read.handle = c->handle;
                             m.tcpip_read.len = 4096;
-                            ASSERT_OK(ipc_call(tcpip_server, &m));
+                            ASSERT_OK(ipc_call(network_server, &m));
                             uint8_t *buf = m.tcpip_read_reply.data;
                             size_t len = m.tcpip_read_reply.len;
                             if (buf) {
@@ -152,7 +152,7 @@ void main(void) {
                         case TCPIP_NEW_CLIENT_MSG: {
                             m.type = TCPIP_ACCEPT_MSG;
                             m.tcpip_accept.handle = m.tcpip_new_client.handle;
-                            ASSERT_OK(ipc_call(tcpip_server, &m));
+                            ASSERT_OK(ipc_call(network_server, &m));
                             handle_t new_handle = m.tcpip_accept_reply.new_handle;
 
                             struct client *client = malloc(sizeof(*client));
