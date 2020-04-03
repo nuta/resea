@@ -13,7 +13,7 @@ void main(void) {
     TRACE("ready");
     size_t disk_size = (uintptr_t) __image_end - (uintptr_t) __image;
     while (true) {
-        struct message m;
+        struct ipc_msg_t m;
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 

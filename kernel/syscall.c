@@ -94,7 +94,7 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
         }
     }
 
-    return ipc(dst_task, src, (struct message *) m, flags);
+    return ipc(dst_task, src, (struct ipc_msg_t *) m, flags);
 }
 
 /// The taskctl system call does all task-related operations. The operation is

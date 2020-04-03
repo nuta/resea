@@ -38,15 +38,15 @@ typedef uint16_t keycode_t;
 #define ID(x)  (x)
 #define _NTH_MEMBER(member) \
     ({ \
-        STATIC_ASSERT(offsetof(struct message, member) % sizeof(uintptr_t) == 0); \
-        STATIC_ASSERT(offsetof(struct message, member) / sizeof(uintptr_t) <= 7); \
-        (int) (offsetof(struct message, member) / sizeof(uintptr_t)); \
+        STATIC_ASSERT(offsetof(struct ipc_msg_t, member) % sizeof(uintptr_t) == 0); \
+        STATIC_ASSERT(offsetof(struct ipc_msg_t, member) / sizeof(uintptr_t) <= 7); \
+        (int) (offsetof(struct ipc_msg_t, member) / sizeof(uintptr_t)); \
     })
 #define BULK(bulk_ptr, bulk_len)                               \
     (MSG_BULK(_NTH_MEMBER(bulk_ptr), _NTH_MEMBER(bulk_len)))
 
 /// Message.
-struct message {
+struct ipc_msg_t {
     int type;
     task_t src;
     union {
@@ -291,6 +291,6 @@ struct message {
    };
 };
 
-STATIC_ASSERT(sizeof(struct message) == 64);
+STATIC_ASSERT(sizeof(struct ipc_msg_t) == 64);
 
 #endif

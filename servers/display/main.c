@@ -59,7 +59,7 @@ void main(void) {
     // The mainloop: receive and handle messages.
     INFO("ready");
     while (true) {
-        struct message m;
+        struct ipc_msg_t m;
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 

@@ -55,7 +55,7 @@ void kfree(void *ptr) {
 /// is invalid, the pager kills the task instead of replying the page fault
 /// message.
 static paddr_t user_pager(vaddr_t addr, pagefault_t fault, pageattrs_t *attrs) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = PAGE_FAULT_MSG;
     m.page_fault.task = CURRENT->tid;
     m.page_fault.vaddr = addr;

@@ -46,7 +46,7 @@ static struct task *get_task_by_tid(task_t tid) {
 
 static error_t read_file(task_t fs_server, handle_t handle, offset_t off,
                          void *buf, size_t len) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = FS_READ_MSG;
     m.fs_read.handle = handle;
     m.fs_read.offset = off;
@@ -108,7 +108,7 @@ static task_t exec(const char *name, task_t fs_server, handle_t handle) {
 }
 
 static void *alloc_page(paddr_t *paddr) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = ALLOC_PAGES_MSG;
     m.alloc_pages.num_pages = 1;
     m.alloc_pages.paddr = 0;
@@ -192,7 +192,7 @@ void main(void) {
     // The mainloop: receive and handle messages.
     INFO("ready");
     while (true) {
-        struct message m;
+        struct ipc_msg_t m;
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 

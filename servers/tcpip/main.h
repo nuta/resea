@@ -13,7 +13,7 @@ struct driver {
 struct packet {
     list_elem_t next;
     task_t dst;
-    struct message m;
+    struct ipc_msg_t m;
 };
 
 #endif

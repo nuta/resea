@@ -13,7 +13,7 @@ static task_t ramdisk_server;
 static map_t clients;
 
 void blk_read(size_t sector, void *buf, size_t num_sectors) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = BLK_READ_MSG;
     m.blk_read.sector = sector;
     m.blk_read.num_sectors = num_sectors;
@@ -57,7 +57,7 @@ void main(void) {
 
     TRACE("ready");
     while (true) {
-        struct message m;
+        struct ipc_msg_t m;
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 

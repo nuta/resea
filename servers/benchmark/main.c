@@ -34,7 +34,7 @@ void main(void) {
     //
     cycles_t iters[NUM_ITERS];
     for (int i = 0; i < NUM_ITERS; i++) {
-        struct message m = { .type = NOP_MSG };
+        struct ipc_msg_t m = { .type = NOP_MSG };
         cycles_t start = cycle_counter();
         ipc_call(INIT_TASK_TID, &m);
         iters[i] = cycle_counter() - start;

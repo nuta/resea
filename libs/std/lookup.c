@@ -3,7 +3,7 @@
 #include <cstring.h>
 
 task_t ipc_lookup(const char *name) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = LOOKUP_MSG;
     strncpy(m.lookup.name, name, sizeof(m.lookup.name));
 

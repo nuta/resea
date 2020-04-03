@@ -8,7 +8,7 @@ void *io_alloc_pages(size_t num_pages, paddr_t map_to, paddr_t *paddr) {
     task_t init = 1;
 
     // Request alloc_pages.
-    struct message m;
+    struct ipc_msg_t m;
     m.type = ALLOC_PAGES_MSG;
     m.alloc_pages.paddr = map_to;
     m.alloc_pages.num_pages = num_pages;

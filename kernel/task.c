@@ -125,7 +125,7 @@ NORETURN void task_exit(enum exception_type exp) {
     ASSERT(CURRENT != IDLE_TASK);
 
     // Tell its pager that this task has exited.
-    struct message m;
+    struct ipc_msg_t m;
     m.type = EXCEPTION_MSG;
     m.exception.task = CURRENT->tid;
     m.exception.exception = exp;

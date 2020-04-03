@@ -23,14 +23,14 @@ static void newline(void) {
     if (cursor_y < height - 1) {
         cursor_y++;
     } else {
-        struct message m;
+        struct ipc_msg_t m;
         m.type = TEXTSCREEN_SCROLL_MSG;
         ipc_send(display_server, &m);
     }
 }
 
 static void update_cursor(void) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = TEXTSCREEN_MOVE_CURSOR_MSG;
     m.textscreen_move_cursor.y = cursor_y;
     m.textscreen_move_cursor.x = cursor_x;
@@ -38,13 +38,13 @@ static void update_cursor(void) {
 }
 
 static void clear_screen(void) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = TEXTSCREEN_CLEAR_MSG;
     ipc_send(display_server, &m);
 }
 
 static void draw_char(int x, int y, char ch, color_t fg_color, color_t bg_color) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = TEXTSCREEN_DRAW_CHAR_MSG;
     m.textscreen_draw_char.ch = ch;
     m.textscreen_draw_char.x = x;
@@ -201,7 +201,7 @@ static error_t run_app(const char *name) {
     strncpy(&path[6], name, sizeof(path) - 6);
 
     // Open the executable file.
-    struct message m;
+    struct ipc_msg_t m;
     m.type = FS_OPEN_MSG;
     m.fs_open.path = path;
     m.fs_open.len = strlen(path) + 1;
@@ -292,7 +292,7 @@ static void input(char ch) {
 }
 
 static void pull_input(void) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = KBD_GET_KEYCODE_MSG;
     error_t err = ipc_call(kbd_server, &m);
     if (err == ERR_EMPTY) {
@@ -305,7 +305,7 @@ static void pull_input(void) {
 }
 
 static void get_screen_size(void) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = TEXTSCREEN_GET_SIZE_MSG;
 
     error_t err = ipc_call(display_server, &m);
@@ -339,7 +339,7 @@ void main(void) {
     // The mainloop: receive and handle messages.
     prompt();
     while (true) {
-        struct message m;
+        struct ipc_msg_t m;
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 

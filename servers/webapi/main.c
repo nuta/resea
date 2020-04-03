@@ -41,7 +41,7 @@ static void write_response(struct client *client, const char *status,
         return;
     }
 
-    struct message m;
+    struct ipc_msg_t m;
     m.type = TCPIP_WRITE_MSG;
     m.tcpip_write.handle = client->handle;
     m.tcpip_write.data = buf;
@@ -103,7 +103,7 @@ static void process(struct client *client, uint8_t *data, size_t len) {
     client->done = true;
     return;
 
-    struct message m;
+    struct ipc_msg_t m;
 malformed:
     m.type = TCPIP_CLOSE_MSG;
     m.tcpip_close.handle = client->handle;
@@ -115,7 +115,7 @@ void main(void) {
     tcpip_server = ipc_lookup("tcpip");
     clients = map_new();
 
-    struct message m;
+    struct ipc_msg_t m;
     m.type = TCPIP_LISTEN_MSG;
     m.tcpip_listen.port = 80;
     m.tcpip_listen.backlog = 16;

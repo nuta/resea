@@ -11,7 +11,7 @@ static task_t tcpip_tid;
 
 static void receive(const void *payload, size_t len) {
     TRACE("received %d bytes", len);
-    struct message m;
+    struct ipc_msg_t m;
     m.type = NET_RX_MSG;
     m.net_rx.len = len;
     m.net_rx.payload = (void *) payload;
@@ -20,7 +20,7 @@ static void receive(const void *payload, size_t len) {
 }
 
 void transmit(void) {
-    struct message m;
+    struct ipc_msg_t m;
     m.type = NET_GET_TX_MSG;
     ASSERT_OK(ipc_call(tcpip_tid, &m));
     ASSERT(m.type == NET_TX_MSG);
@@ -57,7 +57,7 @@ void main(void) {
     ASSERT_OK(tcpip_tid);
 
     // Register this driver.
-    struct message m;
+    struct ipc_msg_t m;
     m.type = TCPIP_REGISTER_DEVICE_MSG;
     memcpy(m.tcpip_register_device.macaddr, mac, 6);
     err = ipc_send(tcpip_tid, &m);
