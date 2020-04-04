@@ -102,7 +102,7 @@ static void dhcp_process(struct device *device, mbuf_t payload) {
 
                 type = opt.dhcp_type;
                 break;
-            }  // case DHCP_OPTION_DHCP_TYPE
+            }
             case DHCP_OPTION_NETMASK: {
                 struct dhcp_netmask_option opt;
                 if (mbuf_read(&payload, &opt, sizeof(opt)) != sizeof(opt)) {
@@ -111,7 +111,7 @@ static void dhcp_process(struct device *device, mbuf_t payload) {
 
                 netmask = ntoh32(opt.netmask);
                 break;
-            }  // case DHCP_OPTION_ROUTER
+            }
             case DHCP_OPTION_ROUTER: {
                 struct dhcp_router_option opt;
                 if (mbuf_read(&payload, &opt, sizeof(opt)) != sizeof(opt)) {
@@ -120,7 +120,7 @@ static void dhcp_process(struct device *device, mbuf_t payload) {
 
                 gateway = ntoh32(opt.router);
                 break;
-            }  // case DHCP_OPTION_ROUTER
+            }
         }
     }
 
