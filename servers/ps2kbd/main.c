@@ -94,7 +94,7 @@ static void handle_irq(void) {
 
 void main(void) {
     error_t err;
-    INFO("starting...");
+    TRACE("starting...");
 
     shell_server = ipc_lookup("shell");
     ASSERT_OK(shell_server);

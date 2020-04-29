@@ -56,7 +56,7 @@ static void read_file(struct initfs_file *file, offset_t off, void *buf, size_t 
 }
 
 static task_t launch_server(struct initfs_file *file) {
-    INFO("launching %s...", file->name);
+    TRACE("launching %s...", file->name);
 
     // Look for an unused task ID.
     struct task *task = NULL;
@@ -194,7 +194,7 @@ static error_t alloc_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
 }
 
 void main(void) {
-    INFO("starting...");
+    TRACE("starting...");
     pages_init();
 
     for (int i = 0; i < TASKS_MAX; i++) {

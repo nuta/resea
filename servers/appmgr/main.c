@@ -179,7 +179,7 @@ static void kill(struct task *task) {
 }
 
 void main(void) {
-    INFO("starting...");
+    TRACE("starting...");
 
     for (int i = 0; i < TASKS_MAX; i++) {
         tasks[i].in_use = false;

@@ -158,7 +158,7 @@ msec_t sys_uptime(void) {
 }
 
 void main(void) {
-    INFO("starting...");
+    TRACE("starting...");
     list_init(&pending_events);
     list_init(&pending_msgs);
     list_init(&drivers);

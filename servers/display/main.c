@@ -51,7 +51,7 @@ static void draw_char(unsigned y, unsigned x, char ch, color_t fg, color_t bg) {
 }
 
 void main(void) {
-    INFO("starting...");
+    TRACE("starting...");
 
     paddr_t paddr;
     screen = io_alloc_pages(1, 0xb8000, &paddr);

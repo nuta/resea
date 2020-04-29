@@ -111,7 +111,7 @@ malformed:
 }
 
 void main(void) {
-    INFO("starting...");
+    TRACE("starting...");
     tcpip_server = ipc_lookup("tcpip");
     clients = map_new();
 

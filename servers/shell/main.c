@@ -317,7 +317,7 @@ static void get_screen_size(void) {
 }
 
 void main(void) {
-    INFO("starting...");
+    TRACE("starting...");
 
     appmgr_server = ipc_lookup("appmgr");
     ASSERT_OK(appmgr_server);

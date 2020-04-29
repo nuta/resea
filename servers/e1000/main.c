@@ -30,7 +30,7 @@ void transmit(void) {
 
 void main(void) {
     error_t err;
-    INFO("starting...");
+    TRACE("starting...");
 
     struct pci_device pcidev;
     if (!pci_find_device(&pcidev, 0x8086, 0x100e)) {
