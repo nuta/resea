@@ -99,6 +99,18 @@ static void deferred_work(void) {
             free(event);
         }
     }
+
+    // TODO:
+    LIST_FOR_EACH(driver, &drivers, struct driver, next) {
+        if (!driver->device->dhcp_enabled
+            && driver->dhcp_discover_retires < 10
+            && driver->last_dhcp_discover + 200 < sys_uptime()) {
+            WARN("retrying DHCP discover...");
+            dhcp_transmit(driver->device, DHCP_TYPE_DISCOVER, IPV4_ADDR_UNSPECIFIED);
+            driver->last_dhcp_discover = sys_uptime();
+            driver->dhcp_discover_retires++;
+        }
+    }
 }
 
 static void register_device(task_t driver_task, macaddr_t *macaddr) {
@@ -125,6 +137,8 @@ static void register_device(task_t driver_task, macaddr_t *macaddr) {
     list_push_back(&drivers, &driver->next);
     device_set_macaddr(device, macaddr);
     driver->device = device;
+    driver->dhcp_discover_retires = 0;
+    driver->last_dhcp_discover = sys_uptime();
 
     device_enable_dhcp(device);
     INFO("registered new net device '%s'", name);
