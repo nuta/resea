@@ -16,8 +16,11 @@ typedef int task_t;
 typedef unsigned msec_t;
 #define MSEC_MAX 0xffffffff
 
-// FIXME: Use uintmax_t
+#if __LP64__
 typedef unsigned long long offset_t;
+#else
+typedef unsigned long offset_t;
+#endif
 
 typedef char bool;
 #define true 1
