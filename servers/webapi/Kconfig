@@ -1,0 +1,2 @@
+config WEBAPI_SERVER
+    bool "Web API server"

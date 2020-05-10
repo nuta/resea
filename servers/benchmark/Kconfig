@@ -1,0 +1,2 @@
+config BENCHMARK_SERVER
+    bool "Microbenchmark"

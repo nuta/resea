@@ -1,0 +1,2 @@
+config E1000_SERVER
+    bool "E1000 network card driver"

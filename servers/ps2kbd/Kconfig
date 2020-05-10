@@ -1,0 +1,2 @@
+config PS2KBD_SERVER
+    bool "PS/2 keyboard driver"

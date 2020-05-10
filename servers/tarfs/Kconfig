@@ -1,0 +1,2 @@
+config TARFS_SERVER
+    bool "Tarball (ephemeral) file system server"

@@ -1,0 +1,2 @@
+config DISPLAY_SERVER
+    bool "Text-based display driver"

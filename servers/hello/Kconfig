@@ -1,0 +1,4 @@
+config HELLO_SERVER
+    bool "Hello"
+    help
+        Prints "Hello World!" and terminates.

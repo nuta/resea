@@ -1,0 +1,2 @@
+config SHELL_SERVER
+    bool "Shell"

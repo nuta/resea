@@ -1,0 +1,2 @@
+config MINLIN_SERVER
+    bool "Linux ABI compatibility layer (experimental)"

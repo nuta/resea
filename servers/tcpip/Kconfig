@@ -1,0 +1,2 @@
+config TCPIP_SERVER
+    bool "TCP/IP protocol stack"

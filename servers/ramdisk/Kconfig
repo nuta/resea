@@ -1,0 +1,2 @@
+config RAMDISK_SERVER
+    bool "ramdisk (ephemeral) storage device"
