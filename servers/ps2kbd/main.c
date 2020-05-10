@@ -96,7 +96,7 @@ void main(void) {
     error_t err;
     TRACE("starting...");
 
-    shell_server = ipc_lookup("shell");
+    shell_server = ipc_lookup("minlin");
     ASSERT_OK(shell_server);
 
     err = irq_acquire(KEYBOARD_IRQ);

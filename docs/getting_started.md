@@ -6,6 +6,7 @@
 - QEMU
 - Bochs *(optional)*
 - GRUB and xorriso *(optional)*
+- Docker *(optional: Linux ABI emulation uses Docker to build packages)*
 
 ### macOS
 ```
