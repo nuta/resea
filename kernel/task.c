@@ -103,11 +103,6 @@ error_t task_destroy(struct task *task) {
             PANIC("a pager task '%s' (#%d) is being killed", task->name,
                   task->tid);
         }
-
-        // Notify that this task is being destroyed.
-        if (CAPABLE(task, tid)) {
-            notify(task2, NOTIFY_CLOSED(task->tid));
-        }
     }
 
     for (unsigned irq = 0; irq < IRQ_MAX; irq++) {

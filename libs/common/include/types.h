@@ -112,8 +112,6 @@ typedef uint64_t notifications_t;
 #define NOTIFY_IRQ      (1ULL << 1)
 #define NOTIFY_ABORTED  (1ULL << 2)
 #define NOTIFY_NEW_DATA (1ULL << 3)
-#define NOTIFY_CLOSED(tid) (1ULL << (4 + (tid) - 1))
-STATIC_ASSERT(4 + TASKS_MAX < sizeof(notifications_t) * 8);
 
 enum exception_type {
     EXP_GRACE_EXIT,
