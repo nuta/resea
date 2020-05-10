@@ -31,3 +31,7 @@ config GRUB_PREFIX
     string "GRUB commands prefix"
     default "$(DEFAULT_GRUB_PREFIX)"
 endmenu
+
+menu "Servers"
+    source "servers/*/Kconfig"
+endmenu

@@ -7,6 +7,8 @@ import re
 import platform
 import os
 import sys
+from glob import glob
+from pathlib import Path
 
 def defconfig(config_file):
     # Search for toolchains.
@@ -42,6 +44,13 @@ def generate_mk(config_file):
         config_mk += "CONFIG_ARCH=x64\n"
     if "CONFIG_BUILD_RELEASE=y" in config_mk:
         config_mk += "BUILD=release\n"
+
+    servers = []
+    for server in glob("servers/*"):
+        name = Path(server).name
+        if f"CONFIG_{name.upper()}_SERVER=y" in config_mk:
+            servers.append(name)
+    config_mk += "SERVERS := " + " ".join(servers) + "\n"
 
     config_mk = re.sub(r"(^|\n)CONFIG_([^=]+)=\"?([^\"\n]*)\"?", r"\n\2:=\3", config_mk)
     open(config_file + ".mk", "w").write(config_mk)
