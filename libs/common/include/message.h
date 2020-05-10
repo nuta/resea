@@ -156,6 +156,18 @@ struct message {
             size_t len;
         } fs_read_reply;
 
+        #define FS_STAT_MSG (ID(56) | BULK(fs_stat.path, fs_stat.len))
+        struct {
+            handle_t handle;
+            char *path;
+            size_t len;
+        } fs_stat;
+
+        #define FS_STAT_REPLY_MSG ID(57)
+        struct {
+            size_t size;
+        } fs_stat_reply;
+
         #define TCPIP_REGISTER_DEVICE_MSG ID(70)
         struct {
             uint8_t macaddr[6];
