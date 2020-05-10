@@ -36,8 +36,8 @@ error_t arch_task_create(struct task *task, vaddr_t ip) {
     uint64_t *rsp = (uint64_t *) task->arch.interrupt_stack;
 
     // Push a IRET frame.
-    *--rsp = USER_DS | USER_RPL;    // DS
-    *--rsp = 0;                     // SS
+    *--rsp = USER_DS | USER_RPL;    // SS
+    *--rsp = 0;                     // RSP
     *--rsp = 0x202;                 // RFLAGS (interrupts enabled).
     *--rsp = USER_CS64 | USER_RPL;  // CS
     *--rsp = ip;                    // RIP

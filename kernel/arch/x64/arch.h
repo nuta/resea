@@ -52,7 +52,7 @@ extern char __kernel_data_end[];
 /// Retuns whether the memory address range [base, base_len) overlaps with the
 /// kernel memory pages.
 static inline bool is_kernel_paddr(paddr_t paddr) {
-    return 
+    return
         ((paddr_t) __kernel_image <= paddr
             && paddr <= (paddr_t) __kernel_image_end)
         || ((paddr_t) __kernel_data <= paddr
