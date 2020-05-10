@@ -69,6 +69,7 @@ struct message {
         struct {
             task_t task;
             vaddr_t vaddr;
+            vaddr_t ip;
             pagefault_t fault;
         } page_fault;
 

@@ -98,7 +98,7 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
                 lock();
             }
 
-            handle_page_fault(addr, fault);
+            handle_page_fault(addr, ip, fault);
             break;
         }
         case VECTOR_IPI_RESCHEDULE:

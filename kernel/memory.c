@@ -54,11 +54,13 @@ void kfree(void *ptr) {
 /// Calls the pager task. It always returns a valid paddr: if the memory access
 /// is invalid, the pager kills the task instead of replying the page fault
 /// message.
-static paddr_t user_pager(vaddr_t addr, pagefault_t fault, pageattrs_t *attrs) {
+static paddr_t user_pager(vaddr_t addr, vaddr_t ip, pagefault_t fault,
+                          pageattrs_t *attrs) {
     struct message m;
     m.type = PAGE_FAULT_MSG;
     m.page_fault.task = CURRENT->tid;
     m.page_fault.vaddr = addr;
+    m.page_fault.ip = ip;
     m.page_fault.fault = fault;
 
     error_t err = ipc(CURRENT->pager, CURRENT->pager->tid, &m,
@@ -91,6 +93,7 @@ static paddr_t user_pager(vaddr_t addr, pagefault_t fault, pageattrs_t *attrs) {
 
 /// Handles page faults in the initial task.
 static paddr_t init_task_pager(vaddr_t vaddr, pageattrs_t *attrs) {
+    vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
     paddr_t paddr;
     if (INITFS_ADDR <= vaddr && vaddr < INITFS_END) {
         // Initfs contents.
@@ -107,23 +110,22 @@ static paddr_t init_task_pager(vaddr_t vaddr, pageattrs_t *attrs) {
 }
 
 /// The page fault handler. It calls a pager and updates the page table.
-paddr_t handle_page_fault(vaddr_t addr, pagefault_t fault) {
+paddr_t handle_page_fault(vaddr_t addr, vaddr_t ip, pagefault_t fault) {
     if (is_kernel_addr_range(addr, 0) || addr == (vaddr_t) __temp_page) {
         // The user is not allowed to access the page.
         task_exit(EXP_INVALID_MEMORY_ACCESS);
     }
 
     // Ask the associated pager to resolve the page fault.
-    vaddr_t aligned_vaddr = ALIGN_DOWN(addr, PAGE_SIZE);
     paddr_t paddr;
     pageattrs_t attrs;
     if (CURRENT->tid == INIT_TASK_TID) {
-        paddr = init_task_pager(aligned_vaddr, &attrs);
+        paddr = init_task_pager(addr, &attrs);
     } else {
-        paddr = user_pager(aligned_vaddr, fault, &attrs);
+        paddr = user_pager(addr, ip, fault, &attrs);
     }
 
-    vm_link(&CURRENT->vm, aligned_vaddr, paddr, attrs);
+    vm_link(&CURRENT->vm, ALIGN_DOWN(addr, PAGE_SIZE), paddr, attrs);
     return paddr;
 }
 

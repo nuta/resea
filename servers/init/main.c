@@ -98,6 +98,8 @@ static task_t launch_server(struct initfs_file *file) {
 }
 
 static paddr_t pager(struct task *task, vaddr_t vaddr, pagefault_t fault) {
+    vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
+
     if (fault & PF_PRESENT) {
         // Invalid access. For instance the user thread has tried to write to
         // readonly area.
