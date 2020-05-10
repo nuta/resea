@@ -1,5 +1,5 @@
-#ifndef __SYSCALL_H__
-#define __SYSCALL_H__
+#ifndef __STD_SYSCALL_H__
+#define __STD_SYSCALL_H__
 
 #include <arch/syscall.h>
 #include <types.h>
