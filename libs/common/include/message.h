@@ -45,12 +45,14 @@ typedef uint16_t keycode_t;
 #define BULK(bulk_ptr, bulk_len)                               \
     (MSG_BULK(_NTH_MEMBER(bulk_ptr), _NTH_MEMBER(bulk_len)))
 
+#define MESSAGE_SIZE 256
+
 /// Message.
 struct message {
     int type;
     task_t src;
     union {
-        uint8_t raw[64 - sizeof(int) - sizeof(task_t)];
+        uint8_t raw[MESSAGE_SIZE - sizeof(int) - sizeof(task_t)];
 
         #define NOTIFICATIONS_MSG ID(1)
         struct {
@@ -303,6 +305,6 @@ struct message {
    };
 };
 
-STATIC_ASSERT(sizeof(struct message) == 64);
+STATIC_ASSERT(sizeof(struct message) == MESSAGE_SIZE);
 
 #endif
