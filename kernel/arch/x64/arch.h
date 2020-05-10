@@ -122,8 +122,19 @@ struct idtr {
 //
 //  Control Registers
 //
-#define CR4_FSGSBASE (1ul << 16)
-#define CR4_OSXSAVE  (1ul << 18)
+#define CR0_MP          (1ul << 1)
+#define CR0_EM          (1ul << 2)
+#define CR0_TS          (1ul << 3)
+#define CR4_FSGSBASE    (1ul << 16)
+#define CR4_OSXSAVE     (1ul << 18)
+#define CR4_OSFXSR      (1ul << 9)
+#define CR4_OSXMMEXCPT  (1ul << 10)
+
+//
+//  Extended Control Register 0 (XCR0)
+//
+#define XCR0_SSE (1ul << 1)
+#define XCR0_AVX (1ul << 2)
 
 //
 //  Model Specific Registers (MSR)
@@ -370,6 +381,17 @@ static inline void asm_xsave(void *xsave) {
 static inline void asm_xrstor(void *xsave) {
     __asm__ __volatile__("xrstor (%0)" :: "r"(xsave) : "memory");
 }
+
+static inline uint64_t asm_xgetbv(uint32_t xcr) {
+    uint32_t low, high;
+    __asm__ __volatile__("xgetbv" : "=a"(low), "=d"(high) : "c"(xcr));
+    return ((uint64_t) high << 32) | low;
+}
+
+static inline void asm_xsetbv(uint32_t xcr, uint64_t value) {
+    __asm__ __volatile__("xsetbv" :: "a"(value), "c"(xcr));
+}
+
 // clang-format on
 
 #endif

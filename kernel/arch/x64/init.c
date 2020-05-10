@@ -134,8 +134,12 @@ static void common_setup(void) {
     STATIC_ASSERT(sizeof(struct cpuvar) <= CPUVAR_SIZE_MAX);
     STATIC_ASSERT(IS_ALIGNED(CPUVAR_SIZE_MAX, PAGE_SIZE));
 
-    // Activate RDGSBASE/WRGSBASE and XSAVE/XRSTOR instructions.
-    asm_write_cr4(asm_read_cr4() | CR4_FSGSBASE | CR4_OSXSAVE);
+    // Enable some CPU features.
+    asm_write_cr0((asm_read_cr0() | CR0_MP) & (~CR0_EM) & (~CR0_TS));
+    asm_write_cr4(asm_read_cr4() | CR4_FSGSBASE | CR4_OSXSAVE | CR4_OSFXSR
+                  | CR4_OSXMMEXCPT);
+    asm_xsetbv(0, asm_xgetbv(0) | XCR0_SSE | XCR0_AVX);
+
     // Set RDGSBASE to enable the CPUVAR macro.
     struct gsbase *gsbase =
         from_paddr((paddr_t) __cpuvar_base + mp_self() * CPUVAR_SIZE_MAX);
