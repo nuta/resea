@@ -84,10 +84,6 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
             return ERR_INVALID_ARG;
         }
 
-        if (!CAPABLE(CURRENT, CAP_IPC_WITH(dst_task->tid))) {
-            return ERR_NOT_PERMITTED;
-        }
-
         if (flags & IPC_NOTIFY) {
             notify(dst_task, m);
             return OK;
