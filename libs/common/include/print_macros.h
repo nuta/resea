@@ -121,6 +121,15 @@ const char *__program_name(void);
         __builtin_unreachable();                                               \
     } while (0)
 
+#define NYI()                                                                  \
+    do {                                                                       \
+        panic_lock();                                                          \
+        printf(SGR_ERR "[%s] %s(): not yet ymplemented: %s:%d\n",              \
+               __program_name(), __func__, __FILE__, __LINE__);                \
+        halt();                                                                \
+        __builtin_unreachable();                                               \
+    } while (0)
+
 #define UNREACHABLE()                                                          \
     do {                                                                       \
         printf(SGR_ERR "Unreachable at %s:%d (%s)\n" SGR_RESET, __FILE__,      \
