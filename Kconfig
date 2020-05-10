@@ -23,6 +23,10 @@ config LLVM_PREFIX
     string "Clang/LLD/LLVM toolchain prefix"
     default "$(DEFAULT_LLVM_PREFIX)"
 
+config LLVM_SUFFIX
+    string "Clang/LLD/LLVM toolchain suffix"
+    default "$(DEFAULT_LLVM_SUFFIX)"
+
 config GRUB_PREFIX
     string "GRUB commands prefix"
     default "$(DEFAULT_GRUB_PREFIX)"
