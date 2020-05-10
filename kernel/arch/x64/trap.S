@@ -28,11 +28,14 @@ syscall_entry:
     swapgs
 
     // Switch to the kernel stack.
-    mov rax, rsp
+    mov gs:[GS_RSP3], rsp
     mov rsp, gs:[GS_RSP0]
 
+    test byte ptr gs:[GS_ABI_EMU], 1
+    jnz abi_emu_entry
+
     // Save SYSRET context and callee-saved registers onto the kernel stack.
-    push rax // User RSP.
+    push gs:[GS_RSP3] // User RSP.
     push r11 // User RFLAGS.
     push rcx // User RIP.
     push rbp
@@ -45,6 +48,7 @@ syscall_entry:
     mov rcx, r10 // arg3
     call x64_handle_syscall
 
+return_to_user:
     // Restore callee-saved registers.
     pop r15
     pop r14
@@ -74,6 +78,68 @@ syscall_entry:
     // atomic operation. If an interrupt occurred between SWAPGS and SYSRETQ
     // (thus the GS base points to the user one), the interrupt handler won't
     // perform SWAPGS since the interrupt has occurred in kernel mode.
+    cli
+    swapgs
+    sysretq
+
+abi_emu_entry:
+    push gs:[GS_RSP3] // User RSP.
+    push r15
+    push r14
+    push r13
+    push r12
+    push r10
+    push r9
+    push r8
+    push rsi
+    push rdi
+    push rdx
+    push rbx
+    push rax
+    push rbp
+    push r11 // User RFLAGS.
+    push rcx // User RIP.
+
+    // User GS base.
+    swapgs
+    rdgsbase rax
+    swapgs
+    push rax
+
+    // User FS base.
+    rdfsbase rax
+    push rax
+
+    mov rdi, rsp
+    call x64_abi_emu_hook
+
+    // User FS base.
+    pop rax
+    wrfsbase rax
+
+    // User GS base.
+    pop rax
+    swapgs
+    wrgsbase rax
+    swapgs
+
+    pop rcx // User RIP.
+    pop r11 // User RFLAGS.
+    pop rbp
+    pop rax
+    pop rbx
+    pop rdx
+    pop rdi
+    pop rsi
+    pop r8
+    pop r9
+    pop r10
+    pop r12
+    pop r13
+    pop r14
+    pop r15
+    pop rsp
+
     cli
     swapgs
     sysretq
@@ -200,6 +266,49 @@ userland_entry:
     call stack_set_canary
     mov rsp, rbx
 
+    test byte ptr gs:[GS_ABI_EMU], 1
+    jz 1f
+
+    sub rsp, 18 * 8
+    mov rdi, rsp
+    mov rsi, 1 // ABI_HOOK_INITIAL
+    call x64_abi_emu_hook_initial
+    call unlock
+
+    // User FS base.
+    pop rax
+    wrfsbase rax
+
+    // User GS base.
+    pop rax
+    swapgs
+    wrgsbase rax
+    swapgs
+
+    pop rcx // User RIP.
+    pop r11 // User RFLAGS.
+    pop rbp
+    pop rax
+    pop rbx
+    pop rdx
+    pop rdi
+    pop rsi
+    pop r8
+    pop r9
+    pop r10
+    pop r12
+    pop r13
+    pop r14
+    pop r15
+
+    mov [rsp + 8], rcx  // RIP in a IRET frame
+    mov [rsp + 24], r11 // RFLAGS in a IRET frame
+    pop rcx
+    mov [rsp + 24], rcx // RSP in a IRET frame
+    mov rcx, [rsp + 0]
+
+    jmp 2f
+1:
     call unlock
 
     // Sanitize registers to prevent information leak.
@@ -219,6 +328,7 @@ userland_entry:
     xor r15, r15
     xor rbp, rbp
 
+2:
     cli
     swapgs
     iretq

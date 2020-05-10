@@ -245,6 +245,11 @@ extern char __mp_boot_gdtr[];           // paddr_t
 /// CPU-local variables. Accessible through GS segment in kernel mode.
 struct arch_cpuvar {
     uint64_t rsp0;
+    // Temporarily used to switch the stack at the beginning of the syscall
+    // handler.
+    uint64_t rsp3;
+    // Set to 1 if ABI emulation is enabled in the current task.
+    uint8_t abi_emu;
     struct gdt gdt;
     struct idt idt;
     struct tss tss;

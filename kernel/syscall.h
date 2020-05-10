@@ -2,6 +2,7 @@
 #define __SYSCALL_H__
 
 #include <types.h>
+#include <message.h>
 
 /// A pointer given by the user. Don't reference it directly; access it through
 /// safe functions such as memcpy_from_user and memcpy_to_user!
@@ -11,6 +12,7 @@ void memcpy_from_user(void *dst, userptr_t src, size_t len);
 void memcpy_to_user(userptr_t dst, const void *src, size_t len);
 uintmax_t handle_syscall(uintmax_t syscall, uintmax_t arg1, uintmax_t arg2,
                          uintmax_t arg3, uintmax_t arg4, uintmax_t arg5);
+void abi_emu_hook(struct abi_emu_frame *frame, enum abi_hook_type type);
 
 // Implemented in arch.
 struct task;

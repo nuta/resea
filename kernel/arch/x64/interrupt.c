@@ -141,6 +141,16 @@ uintmax_t x64_handle_syscall(uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,
     return ret;
 }
 
+void x64_abi_emu_hook(struct abi_emu_frame *frame) {
+    lock();
+    abi_emu_hook(frame, ABI_HOOK_SYSCALL);
+    unlock();
+}
+
+void x64_abi_emu_hook_initial(struct abi_emu_frame *frame) {
+    abi_emu_hook(frame, ABI_HOOK_INITIAL);
+}
+
 void interrupt_init(void) {
     ioapic_init();
 }

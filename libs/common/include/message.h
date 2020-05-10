@@ -24,6 +24,11 @@ typedef enum {
     COLOR_NORMAL = 15,
 } color_t;
 
+enum abi_hook_type {
+    ABI_HOOK_INITIAL = 1,
+    ABI_HOOK_SYSCALL = 2,
+};
+
 //
 //  Keyboard Device Driver
 //
@@ -79,12 +84,24 @@ struct message {
             pageattrs_t attrs;
         } page_fault_reply;
 
-        #define LOOKUP_MSG ID(5)
+        #define ABI_HOOK_MSG ID(5)
+        struct {
+            task_t task;
+            enum abi_hook_type type;
+            struct abi_emu_frame frame;
+        } abi_hook;
+
+        #define ABI_HOOK_REPLY_MSG ID(6)
+        struct {
+            struct abi_emu_frame frame;
+        } abi_hook_reply;
+
+        #define LOOKUP_MSG ID(8)
         struct {
             char name[32];
         } lookup;
 
-        #define LOOKUP_REPLY_MSG ID(6)
+        #define LOOKUP_REPLY_MSG ID(9)
         struct {
             task_t task;
         } lookup_reply;

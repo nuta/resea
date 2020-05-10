@@ -101,12 +101,13 @@ typedef int error_t;
 #define KLOGCTL_UNLISTEN 4
 
 typedef uint64_t caps_t;
-#define CAP_ALL  0xffffffffffffffffULL
+#define CAP_ALL  (0xffffffffffffffffULL & ~(CAP_ABI_EMU))
 #define CAP_TASK (1ULL << 0)
 #define CAP_IO   (1ULL << 1)
 #define CAP_KLOG (1ULL << 2)
-#define CAP_IPC_WITH(tid)  (1ULL << (3 + (tid) - 1))
-STATIC_ASSERT(3 + TASKS_MAX < sizeof(caps_t) * 8);
+#define CAP_ABI_EMU (1ULL << 3)
+#define CAP_IPC_WITH(tid)  (1ULL << (4 + (tid) - 1))
+STATIC_ASSERT(4 + TASKS_MAX < sizeof(caps_t) * 8);
 
 typedef uint64_t notifications_t;
 #define NOTIFY_TIMER    (1ULL << 0)

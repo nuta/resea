@@ -3,6 +3,8 @@
 
 #define INTERRUPT_HANDLER_SIZE 16
 #define GS_RSP0                0
+#define GS_RSP3                8
+#define GS_ABI_EMU             16
 #define USER_RFLAGS_MASK       0xffffffffffffcfff
 
 #ifndef __ASSEMBLER__
@@ -20,6 +22,8 @@ extern char usercopy1[];
 extern char usercopy2[];
 
 STATIC_ASSERT(offsetof(struct arch_cpuvar, rsp0) == GS_RSP0);
+STATIC_ASSERT(offsetof(struct arch_cpuvar, rsp3) == GS_RSP3);
+STATIC_ASSERT(offsetof(struct arch_cpuvar, abi_emu) == GS_ABI_EMU);
 #endif  // ifndef __ASSEMBLER__
 
 #endif

@@ -81,6 +81,8 @@ void arch_task_switch(struct task *prev, struct task *next) {
     asm_wrfsbase(next->arch.fsbase);
     // Switch the page table.
     asm_write_cr3(next->vm.pml4);
+    // Enable ABI emulation if needed.
+    ARCH_CPUVAR->abi_emu = CAPABLE(next, CAP_ABI_EMU) ? 1 : 0;
     // Update the kernel stack for syscall and interrupt/exception handlers.
     ARCH_CPUVAR->rsp0 = next->arch.syscall_stack;
     ARCH_CPUVAR->tss.rsp0 = next->arch.interrupt_stack;

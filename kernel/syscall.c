@@ -139,7 +139,7 @@ static task_t sys_taskctl(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
         // Create a task.
         char namebuf[TASK_NAME_LEN];
         strncpy_from_user(namebuf, name, sizeof(namebuf));
-        return task_create(task, namebuf, ip, pager_task, CURRENT->caps & caps);
+        return task_create(task, namebuf, ip, pager_task, (CURRENT->caps | CAP_ABI_EMU) & caps);
     } else {
         // Destroy the task.
         return task_destroy(task);
@@ -233,4 +233,28 @@ uintmax_t handle_syscall(uintmax_t syscall, uintmax_t arg1, uintmax_t arg2,
 
     stack_check();
     return ret;
+}
+
+void abi_emu_hook(struct abi_emu_frame *frame, enum abi_hook_type type) {
+    struct message m;
+    m.type = ABI_HOOK_MSG;
+    m.abi_hook.type = type;
+    m.abi_hook.task = CURRENT->tid;
+    memcpy(&m.abi_hook.frame, frame, sizeof(m.abi_hook.frame));
+
+    error_t err = ipc(CURRENT->pager, CURRENT->pager->tid, &m,
+                      IPC_CALL | IPC_KERNEL);
+    if (IS_ERROR(err)) {
+        WARN("%s: aborted kernel ipc", CURRENT->name);
+        task_exit(EXP_ABORTED_KERNEL_IPC);
+    }
+
+    // Check if the reply is valid.
+    if (m.type != ABI_HOOK_REPLY_MSG) {
+        WARN("%s: invalid abi hook reply (type=%d)",
+             CURRENT->name, m.type);
+        task_exit(EXP_INVALID_PAGE_FAULT_REPLY /* FIXME: */);
+    }
+
+    memcpy(frame, &m.abi_hook_reply.frame, sizeof(*frame));
 }
