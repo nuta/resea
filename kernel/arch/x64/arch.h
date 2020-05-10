@@ -23,6 +23,8 @@ struct arch_task {
     void *interrupt_stack_bottom;
     void *syscall_stack_bottom;
     void *xsave;
+    uint64_t gsbase;
+    uint64_t fsbase;
 } PACKED;
 
 static inline void *from_paddr(paddr_t addr) {
@@ -337,8 +339,28 @@ static inline void asm_invlpg(uint64_t vaddr) {
     __asm__ __volatile__("invlpg (%0)" :: "b"(vaddr) : "memory");
 }
 
+static inline void asm_swapgs(void) {
+    __asm__ __volatile__("swapgs");
+}
+
+static inline uint64_t asm_rdgsbase(void) {
+    uint64_t value;
+    __asm__ __volatile__("rdgsbase %0" : "=r"(value));
+    return value;
+}
+
+static inline uint64_t asm_rdfsbase(void) {
+    uint64_t value;
+    __asm__ __volatile__("rdfsbase %0" : "=r"(value));
+    return value;
+}
+
 static inline void asm_wrgsbase(uint64_t gsbase) {
     __asm__ __volatile__("wrgsbase %0" :: "r"(gsbase));
+}
+
+static inline void asm_wrfsbase(uint64_t fsbase) {
+    __asm__ __volatile__("wrfsbase %0" :: "r"(fsbase));
 }
 
 static inline void asm_xsave(void *xsave) {

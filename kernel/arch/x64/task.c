@@ -29,6 +29,8 @@ error_t arch_task_create(struct task *task, vaddr_t ip) {
     task->arch.interrupt_stack_bottom = interrupt_stack_bottom;
     task->arch.syscall_stack_bottom = syscall_stack_bottom;
     task->arch.xsave = xsave;
+    task->arch.gsbase = 0;
+    task->arch.fsbase = 0;
 
     // Set up a temporary kernel stack frame.
     uint64_t *rsp = (uint64_t *) task->arch.interrupt_stack;
@@ -69,6 +71,14 @@ static void update_tss_iomap(struct task *task) {
 void arch_task_switch(struct task *prev, struct task *next) {
     // Disable interrupts in case they're not yet disabled.
     asm_cli();
+    // Update user GS base.
+    asm_swapgs();
+    prev->arch.gsbase = asm_rdgsbase();
+    asm_wrgsbase(next->arch.gsbase);
+    asm_swapgs();
+    // Update user FS base.
+    prev->arch.fsbase = asm_rdfsbase();
+    asm_wrfsbase(next->arch.fsbase);
     // Switch the page table.
     asm_write_cr3(next->vm.pml4);
     // Update the kernel stack for syscall and interrupt/exception handlers.
