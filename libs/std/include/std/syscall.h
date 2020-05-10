@@ -8,7 +8,7 @@
 struct message;
 error_t ipc(task_t dst, task_t src, struct message *m, unsigned flags);
 error_t ipcctl(const void *bulk_ptr, size_t bulk_len, msec_t timeout);
-task_t taskctl(task_t tid, const char *name, vaddr_t ip, task_t page, caps_t caps);
+task_t taskctl(task_t tid, const char *name, vaddr_t ip, task_t pager, caps_t caps);
 error_t irqctl(unsigned irq, bool enable);
 int klogctl(int op, char *buf, size_t buf_len);
 
