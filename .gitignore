@@ -10,3 +10,4 @@
 *.pcap
 *.log
 *.tmp
+*.pyc
