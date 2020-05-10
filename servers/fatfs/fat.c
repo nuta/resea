@@ -223,8 +223,8 @@ error_t fat_open(struct fat *fs, struct fat_file *file, const char *path) {
     return OK;
 }
 
-error_t fat_read(struct fat *fs, struct fat_file *file, offset_t off, void *buf,
-                 size_t len) {
+int fat_read(struct fat *fs, struct fat_file *file, offset_t off, void *buf,
+             size_t len) {
     if (off + len < file->size && off + len < off) {
         return ERR_TOO_LARGE;
     }
@@ -234,30 +234,39 @@ error_t fat_read(struct fat *fs, struct fat_file *file, offset_t off, void *buf,
     size_t nth_cluster = off / (fs->sectors_per_cluster * SECTOR_SIZE);
     while (nth_cluster > 0) {
         current = get_next_cluster(fs, current);
+        if (is_end_of_cluster(fs, current)) {
+            return 0;
+        }
+
         ASSERT(is_valid_cluster(fs, current));
         nth_cluster--;
     }
 
     offset_t off_in_cluster = off % (fs->sectors_per_cluster * SECTOR_SIZE);
     uint8_t *p = buf;
+    size_t remaining = len;
     while (true) {
         offset_t sector_offset = off_in_cluster / SECTOR_SIZE;
         for (offset_t i = sector_offset; i < fs->sectors_per_cluster; i++) {
             // Use a temporary buffer to support unaligned read operations.
             uint8_t buf[SECTOR_SIZE];
             fs->blk_read(cluster2lba(fs, current) + i, buf, 1);
-            memcpy(p, &buf[off_in_cluster], MIN(len, SECTOR_SIZE));
+            memcpy(p, &buf[off_in_cluster], MIN(remaining, SECTOR_SIZE));
 
-            if (len <= SECTOR_SIZE) {
+            if (remaining <= SECTOR_SIZE) {
                 return OK;
             }
 
             p += SECTOR_SIZE;
-            len -= SECTOR_SIZE;
+            remaining -= SECTOR_SIZE;
         }
 
         off_in_cluster = 0;
         current = get_next_cluster(fs, current);
+        if (is_end_of_cluster(fs, current)) {
+            return len - remaining;
+        }
+
         ASSERT(is_valid_cluster(fs, current));
     }
 }

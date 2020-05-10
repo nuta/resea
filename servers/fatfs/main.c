@@ -42,16 +42,11 @@ void main(void) {
     DBG("Files ---------------------------------------------");
     struct fat_dir dir;
     struct fat_dirent *e;
-    char tmp[11];
+    char tmp[12];
     ASSERT_OK(fat_opendir(&fs, &dir, "/"));
     while ((e = fat_readdir(&fs, &dir)) != NULL) {
         strncpy(tmp, (const char *) e->name, sizeof(tmp));
         DBG("/%s", tmp);
-    }
-    ASSERT_OK(fat_opendir(&fs, &dir, "/apps"));
-    while ((e = fat_readdir(&fs, &dir)) != NULL) {
-        strncpy(tmp, (const char *) e->name, sizeof(tmp));
-        DBG("/APPS/%s", tmp);
     }
     DBG("---------------------------------------------------");
 
@@ -92,16 +87,16 @@ void main(void) {
 
                 size_t max_len = MIN(8192, m.fs_read.len);
                 void *buf = malloc(max_len);
-                error_t err =
+                int len_or_err =
                     fat_read(&fs, file, m.fs_read.offset, buf, m.fs_read.len);
-                if (IS_ERROR(err)) {
-                    ipc_reply_err(m.src, err);
+                if (IS_ERROR(len_or_err)) {
+                    ipc_reply_err(m.src, len_or_err);
                     break;
                 }
 
                 m.type = FS_READ_REPLY_MSG;
                 m.fs_read_reply.data = buf;
-                m.fs_read_reply.len = m.fs_read.len;
+                m.fs_read_reply.len = len_or_err;
                 ipc_reply(m.src, &m);
                 free(buf);
                 break;

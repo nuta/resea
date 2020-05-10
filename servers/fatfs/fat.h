@@ -99,8 +99,8 @@ error_t fat_probe(struct fat *fs,
                   void (*blk_read)(offset_t sector, void *buf, size_t num_sectors),
                   void (*blk_write)(offset_t sector, const void *buf, size_t num_sectors));
 error_t fat_open(struct fat *fs, struct fat_file *file, const char *path);
-error_t fat_read(struct fat *fs, struct fat_file *file, offset_t off, void *buf,
-                 size_t len);
+int fat_read(struct fat *fs, struct fat_file *file, offset_t off, void *buf,
+             size_t len);
 error_t fat_opendir(struct fat *fs, struct fat_dir *dir, const char *path);
 void fat_closedir(struct fat *fs, struct fat_dir *dir);
 struct fat_dirent *fat_readdir(struct fat *fs, struct fat_dir *dir);
