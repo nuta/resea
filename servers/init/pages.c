@@ -1,4 +1,4 @@
-#include <std/printf.h>
+#include <resea/printf.h>
 #include "pages.h"
 
 static struct page pages[PAGES_MAX];

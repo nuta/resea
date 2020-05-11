@@ -1,4 +1,4 @@
-#include <std/rand.h>
+#include <resea/rand.h>
 
 void rand_bytes(uint8_t *buf, size_t len) {
 #ifdef __x86_64__

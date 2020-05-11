@@ -1,9 +1,9 @@
 #include <message.h>
-#include <std/malloc.h>
-#include <std/printf.h>
-#include <std/map.h>
-#include <std/syscall.h>
-#include <std/lookup.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <resea/map.h>
+#include <resea/syscall.h>
+#include <resea/lookup.h>
 #include <cstring.h>
 #include <vprintf.h>
 #include "webapi.h"

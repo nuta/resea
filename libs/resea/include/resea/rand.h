@@ -1,5 +1,5 @@
-#ifndef __STD_RAND_H__
-#define __STD_RAND_H__
+#ifndef __RESEA_RAND_H__
+#define __RESEA_RAND_H__
 
 #include <types.h>
 

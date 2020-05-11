@@ -1,5 +1,5 @@
-#ifndef __IO_H__
-#define __IO_H__
+#ifndef __RESEA_IO_H__
+#define __RESEA_IO_H__
 
 #include <arch/io.h>
 #include <types.h>

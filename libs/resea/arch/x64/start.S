@@ -18,7 +18,7 @@ start:
     mov rbp, 0
 
     // Initialize the user library.
-    call std_init
+    call resea_init
 
     // Call main().
     call main

@@ -28,9 +28,9 @@ ifeq ($(wildcard .config.mk),)
 $(error .config.mk does not exist (run 'make menuconfig' first))
 endif
 
-USER_LIBS := std
-
 kernel_image := $(BUILD_DIR)/resea.elf
+libs := resea
+
 include kernel/arch/$(ARCH)/arch.mk
 include libs/common/lib.mk
 endif
@@ -74,7 +74,7 @@ kernel_objs := \
 	$(addprefix $(BUILD_DIR)/kernel/kernel/, $(kernel_objs)) \
 	$(addprefix $(BUILD_DIR)/kernel/libs/common/, $(libcommon_objs))
 lib_objs := \
-	$(foreach lib, $(USER_LIBS), $(BUILD_DIR)/user/libs/$(lib).o) \
+	$(foreach lib, $(libs), $(BUILD_DIR)/user/libs/$(lib).o) \
 	$(addprefix $(BUILD_DIR)/user/libs/common/, $(libcommon_objs))
 
 #
@@ -144,13 +144,13 @@ $(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/initfs.bin
 $(BUILD_DIR)/user/%.o: %.c Makefile
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -Ilibs/std -Ilibs/std/arch/$(ARCH) \
+	$(CC) $(CFLAGS) -Ilibs/resea -Ilibs/resea/arch/$(ARCH) \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 $(BUILD_DIR)/user/%.o: %.S Makefile
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -Ilibs/std -Ilibs/std/arch/$(ARCH) \
+	$(CC) $(CFLAGS) -Ilibs/resea -Ilibs/resea/arch/$(ARCH) \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 define lib-build-rule
@@ -165,7 +165,7 @@ $(BUILD_DIR)/user/libs/$(1).o: $(objs) Makefile
 
 -include $(BUILD_DIR)/user/libs/$(1)/*.deps
 endef
-$(foreach lib, $(USER_LIBS), $(eval $(call lib-build-rule,$(lib))))
+$(foreach lib, $(libs), $(eval $(call lib-build-rule,$(lib))))
 
 define server-build-rule
 $(eval include servers/$(1)/build.mk)
@@ -182,9 +182,9 @@ $(BUILD_DIR)/user/servers/$(1)/__program_name.o:
 		$(BUILD_DIR)/user/servers/$(1)/__program_name.c
 
 $(BUILD_DIR)/user/$(1).debug.elf: $(objs) tools/nm2symbols.py \
-		tools/embed-symbols.py libs/std/arch/$(ARCH)/user.ld Makefile
+		tools/embed-symbols.py libs/resea/arch/$(ARCH)/user.ld Makefile
 	$(PROGRESS) "LD" $(BUILD_DIR)/user/$(1).debug.elf
-	$(LD) $(LDFLAGS) --script=libs/std/arch/$(ARCH)/user.ld \
+	$(LD) $(LDFLAGS) --script=libs/resea/arch/$(ARCH)/user.ld \
 		-o $(BUILD_DIR)/user/$(1).elf.tmp $(objs)
 	$(NM) $(BUILD_DIR)/user/$(1).elf.tmp | ./tools/nm2symbols.py > \
 		$(BUILD_DIR)/user/$(1).symbols

@@ -1,8 +1,8 @@
 #include "fat.h"
-#include <std/printf.h>
-#include <std/malloc.h>
+#include <resea/printf.h>
+#include <resea/malloc.h>
 #include <cstring.h>
-#include <std/ctype.h>
+#include <resea/ctype.h>
 
 error_t fat_probe(struct fat *fs,
                   void (*blk_read)(size_t offset, void *buf, size_t len),

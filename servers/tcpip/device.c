@@ -1,4 +1,4 @@
-#include <std/printf.h>
+#include <resea/printf.h>
 #include <cstring.h>
 #include "device.h"
 #include "dhcp.h"

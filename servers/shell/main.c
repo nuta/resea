@@ -1,8 +1,8 @@
 #include <message.h>
-#include <std/lookup.h>
-#include <std/malloc.h>
-#include <std/printf.h>
-#include <std/syscall.h>
+#include <resea/lookup.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
 #include <cstring.h>
 
 static task_t appmgr_server;

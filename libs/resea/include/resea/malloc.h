@@ -1,5 +1,5 @@
-#ifndef __MALLOC_H__
-#define __MALLOC_H__
+#ifndef __RESEA_MALLOC_H__
+#define __RESEA_MALLOC_H__
 
 #include <types.h>
 

@@ -1,5 +1,5 @@
-#include <std/string.h>
-#include <std/malloc.h>
+#include <resea/string.h>
+#include <resea/malloc.h>
 #include <cstring.h>
 
 static void expand(string_t str, size_t len) {

@@ -1,5 +1,5 @@
-#include <std/io.h>
-#include <std/printf.h>
+#include <resea/io.h>
+#include <resea/printf.h>
 #include "pci.h"
 
 static uint32_t read32(uint8_t bus, uint8_t slot, uint16_t offset) {

@@ -1,5 +1,5 @@
-#include <std/printf.h>
-#include <std/syscall.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
 #include <vprintf.h>
 
 static char printbuf[PRINT_BUF_SIZE];

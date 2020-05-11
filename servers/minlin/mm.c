@@ -1,5 +1,5 @@
-#include <std/io.h>
-#include <std/malloc.h>
+#include <resea/io.h>
+#include <resea/malloc.h>
 #include <cstring.h>
 #include "elf.h"
 #include "fs.h"

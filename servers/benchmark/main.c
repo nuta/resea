@@ -1,6 +1,6 @@
 #include <message.h>
-#include <std/printf.h>
-#include <std/syscall.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
 #define NUM_ITERS 128
 
 #ifdef __x86_64__

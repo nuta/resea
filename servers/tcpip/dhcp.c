@@ -1,6 +1,6 @@
 #include <list.h>
-#include <std/malloc.h>
-#include <std/printf.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
 #include "dhcp.h"
 #include "endian.h"
 #include "udp.h"

@@ -1,4 +1,4 @@
-#include <std/malloc.h>
+#include <resea/malloc.h>
 #include <cstring.h>
 #include "proc.h"
 #include "waitqueue.h"

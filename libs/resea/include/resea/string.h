@@ -1,5 +1,5 @@
-#ifndef __STD_STRING_H__
-#define __STD_STRING_H__
+#ifndef __RESEA_STRING_H__
+#define __RESEA_STRING_H__
 
 #include <types.h>
 

@@ -1,5 +1,5 @@
 #include <message.h>
-#include <std/syscall.h>
+#include <resea/syscall.h>
 #include <cstring.h>
 
 task_t ipc_lookup(const char *name) {

@@ -1,5 +1,5 @@
-#ifndef __LOOKUP_H__
-#define __LOOKUP_H__
+#ifndef __RESEA_LOOKUP_H__
+#define __RESEA_LOOKUP_H__
 
 #include <types.h>
 

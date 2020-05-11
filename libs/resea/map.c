@@ -1,5 +1,5 @@
-#include <std/map.h>
-#include <std/malloc.h>
+#include <resea/map.h>
+#include <resea/malloc.h>
 
 static void insert(list_t *buckets, size_t num_buckets, string_t key,
                    void *value) {

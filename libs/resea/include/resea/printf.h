@@ -1,5 +1,5 @@
-#ifndef __PRINTF_H__
-#define __PRINTF_H__
+#ifndef __RESEA_PRINTF_H__
+#define __RESEA_PRINTF_H__
 
 #include <print_macros.h>
 #include <types.h>

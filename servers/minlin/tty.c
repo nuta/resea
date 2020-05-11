@@ -1,7 +1,7 @@
 #include <message.h>
-#include <std/syscall.h>
-#include <std/lookup.h>
-#include <std/printf.h>
+#include <resea/syscall.h>
+#include <resea/lookup.h>
+#include <resea/printf.h>
 #include "fs.h"
 #include "tty.h"
 

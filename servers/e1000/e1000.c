@@ -1,8 +1,8 @@
 #include <message.h>
-#include <std/io.h>
-#include <std/malloc.h>
-#include <std/printf.h>
-#include <std/syscall.h>
+#include <resea/io.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
 #include <cstring.h>
 #include "e1000.h"
 #include "pci.h"

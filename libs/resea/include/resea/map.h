@@ -1,9 +1,9 @@
-#ifndef __STD_MAP_H__
-#define __STD_MAP_H__
+#ifndef __RESEA_MAP_H__
+#define __RESEA_MAP_H__
 
 #include <types.h>
 #include <list.h>
-#include <std/string.h>
+#include <resea/string.h>
 #include <message.h>
 
 /// An element in a map.

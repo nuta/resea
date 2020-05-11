@@ -1,5 +1,5 @@
-#include <std/malloc.h>
-#include <std/syscall.h>
+#include <resea/malloc.h>
+#include <resea/syscall.h>
 #include <cstring.h>
 #include <list.h>
 #include "abi.h"

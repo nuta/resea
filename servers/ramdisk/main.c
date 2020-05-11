@@ -1,6 +1,6 @@
-#include <std/printf.h>
-#include <std/syscall.h>
-#include <std/malloc.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
+#include <resea/malloc.h>
 #include <message.h>
 #include <cstring.h>
 

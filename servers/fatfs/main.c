@@ -1,10 +1,10 @@
-#include <std/printf.h>
-#include <std/syscall.h>
-#include <std/lookup.h>
-#include <std/malloc.h>
-#include <std/map.h>
-#include <std/string.h>
-#include <std/rand.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
+#include <resea/lookup.h>
+#include <resea/malloc.h>
+#include <resea/map.h>
+#include <resea/string.h>
+#include <resea/rand.h>
 #include <message.h>
 #include <cstring.h>
 #include "fat.h"

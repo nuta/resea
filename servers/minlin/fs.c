@@ -3,9 +3,9 @@
 #include "abi.h"
 #include <cstring.h>
 #include <message.h>
-#include <std/malloc.h>
-#include <std/lookup.h>
-#include <std/syscall.h>
+#include <resea/malloc.h>
+#include <resea/lookup.h>
+#include <resea/syscall.h>
 
 static task_t fs_server;
 

@@ -1,5 +1,5 @@
-#include <std/syscall.h>
-#include <std/malloc.h>
+#include <resea/syscall.h>
+#include <resea/malloc.h>
 #include <cstring.h>
 #include "elf.h"
 #include "fs.h"

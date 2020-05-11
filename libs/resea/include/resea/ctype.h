@@ -1,5 +1,5 @@
-#ifndef __STD_CTYPE_H__
-#define __STD_CTYPE_H__
+#ifndef __RESEA_CTYPE_H__
+#define __RESEA_CTYPE_H__
 
 #include <types.h>
 

@@ -1,8 +1,8 @@
 #include <message.h>
-#include <std/io.h>
-#include <std/lookup.h>
-#include <std/printf.h>
-#include <std/syscall.h>
+#include <resea/io.h>
+#include <resea/lookup.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
 
 void *io_alloc_pages(size_t num_pages, paddr_t map_to, paddr_t *paddr) {
     task_t init = 1;

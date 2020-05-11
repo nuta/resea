@@ -1,7 +1,7 @@
 #include <message.h>
-#include <std/malloc.h>
-#include <std/printf.h>
-#include <std/syscall.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
 
 /// The internal buffer to receive bulk payloads.
 static void *bulk_ptr = NULL;
