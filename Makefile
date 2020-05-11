@@ -1,3 +1,5 @@
+VERSION := v0.1.0
+
 # Enable verbose output if $(V) is set.
 ifeq ($(V),)
 .SILENT:
@@ -26,10 +28,7 @@ ifeq ($(wildcard .config.mk),)
 $(error .config.mk does not exist (run 'make menuconfig' first))
 endif
 
-VERSION     ?= v0.1.0
-INIT        ?= init
-APPS        ?= hello benchmark
-USER_LIBS   := std
+USER_LIBS := std
 
 kernel_image := $(BUILD_DIR)/resea.elf
 include kernel/arch/$(ARCH)/arch.mk
