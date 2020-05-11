@@ -4,8 +4,8 @@ ENTRY(start);
 SECTIONS {
     . = 0x01000000;
 
-    .initfs : ALIGN(8) {
-        *(.initfs);
+    .bootfs : ALIGN(8) {
+        *(.bootfs);
     }
 
     .text : ALIGN(8) {

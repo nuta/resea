@@ -5,10 +5,10 @@
 #include <resea/syscall.h>
 #include <cstring.h>
 #include "elf.h"
-#include "initfs.h"
+#include "bootfs.h"
 #include "pages.h"
 
-extern struct initfs_header __initfs;
+extern struct bootfs_header __bootfs;
 extern char __zeroed_pages[];
 extern char __free_vaddr[];
 extern char __free_vaddr_end[];
@@ -28,7 +28,7 @@ struct task {
     bool in_use;
     task_t tid;
     char name[32];
-    struct initfs_file *file;
+    struct bootfs_file *file;
     void *file_header;
     struct elf64_ehdr *ehdr;
     struct elf64_phdr *phdrs;
@@ -49,13 +49,13 @@ static struct task *get_task_by_tid(task_t tid) {
     return task;
 }
 
-static void read_file(struct initfs_file *file, offset_t off, void *buf, size_t len) {
+static void read_file(struct bootfs_file *file, offset_t off, void *buf, size_t len) {
     void *p =
-        (void *) (((uintptr_t) &__initfs) + file->offset + off);
+        (void *) (((uintptr_t) &__bootfs) + file->offset + off);
     memcpy(buf, p, len);
 }
 
-static task_t launch_server(struct initfs_file *file) {
+static task_t launch_server(struct bootfs_file *file) {
     TRACE("launching %s...", file->name);
 
     // Look for an unused task ID.
@@ -206,12 +206,12 @@ void main(void) {
 
     // Mark init as in use.
     tasks[0].in_use = true;
-    strncpy(tasks[0].name, "init", sizeof(tasks[0].name));
+    strncpy(tasks[0].name, "bootstrap", sizeof(tasks[0].name));
 
-    // Launch servers in initfs.
-    struct initfs_file *files =
-        (struct initfs_file *) (((uintptr_t) &__initfs) + __initfs.files_off);
-    for (uint32_t i = 0; i < __initfs.num_files; i++) {
+    // Launch servers in bootfs.
+    struct bootfs_file *files =
+        (struct bootfs_file *) (((uintptr_t) &__bootfs) + __bootfs.files_off);
+    for (uint32_t i = 0; i < __bootfs.num_files; i++) {
         launch_server(&files[i]);
     }
 

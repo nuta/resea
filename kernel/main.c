@@ -15,7 +15,7 @@ void kmain(void) {
     // Create the first userland task (init).
     struct task *task = task_lookup(INIT_TASK_TID);
     ASSERT(task);
-    task_create(task, "init", INITFS_ADDR, 0, CAP_ALL);
+    task_create(task, "bootstrap", BOOTFS_ADDR, 0, CAP_ALL);
 
     mpmain();
 }

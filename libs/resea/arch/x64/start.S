@@ -33,16 +33,16 @@ halt:
     jmp halt
 
 //
-//  The initfs header (for init.bin).
+//  The bootfs header (for init.bin).
 //
-.section .initfs, "ax"
-.global __initfs
-__initfs:
+.section .bootfs, "ax"
+.global __bootfs
+__bootfs:
     // The startup code (16 bytes). Kernel starts init shere.
     jmp start
     .align 16
 
-    // Fields to be filled by tools/mkinitfs.py.
+    // Fields to be filled by tools/mkbootfs.py.
     .long 0      // version
     .long 0      // offset of the first file
     .long 0      // number of files

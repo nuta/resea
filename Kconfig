@@ -33,8 +33,9 @@ config GRUB_PREFIX
 endmenu
 
 menu "Servers"
-    config INIT
-        string "The init server"
-        default "init"
+    config BOOTSTRAP
+        string "The bootstrap server"
+        default "bootstrap"
+
     source "servers/*/Kconfig"
 endmenu

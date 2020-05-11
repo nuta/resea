@@ -69,7 +69,7 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 
 kernel_objs += main.o task.o ipc.o syscall.o memory.o printk.o kdebug.o
 
-initfs_files := $(foreach name, $(SERVERS), $(BUILD_DIR)/user/$(name).elf)
+bootfs_files := $(foreach name, $(SERVERS), $(BUILD_DIR)/user/$(name).elf)
 kernel_objs := \
 	$(addprefix $(BUILD_DIR)/kernel/kernel/, $(kernel_objs)) \
 	$(addprefix $(BUILD_DIR)/kernel/libs/common/, $(libcommon_objs))
@@ -114,14 +114,14 @@ $(kernel_image): $(kernel_objs) $(BUILD_DIR)/kernel/__program_name.o \
 	./tools/embed-symbols.py $(@:.elf=.symbols) $@.tmp
 	cp $@.tmp $@
 
-$(BUILD_DIR)/initfs.bin: $(initfs_files) $(BUILD_DIR)/$(INIT).bin tools/mkinitfs.py
-	$(PROGRESS) "MKINITFS" $@
-	$(PYTHON3) tools/mkinitfs.py -o $@ --init $(BUILD_DIR)/$(INIT).bin \
-		$(initfs_files)
+$(BUILD_DIR)/bootfs.bin: $(bootfs_files) $(BUILD_DIR)/$(BOOTSTRAP).bin tools/mkbootfs.py
+	$(PROGRESS) "MKBOOTFS" $@
+	$(PYTHON3) tools/mkbootfs.py -o $@ --bootstrap $(BUILD_DIR)/$(BOOTSTRAP).bin \
+		$(bootfs_files)
 
-$(BUILD_DIR)/$(INIT).bin: $(BUILD_DIR)/user/$(INIT).elf
+$(BUILD_DIR)/$(BOOTSTRAP).bin: $(BUILD_DIR)/user/$(BOOTSTRAP).elf
 	$(PROGRESS) "OBJCOPY" $@
-	$(OBJCOPY) -j.initfs -j.text -j.data -j.rodata -j.bss -Obinary $< $@
+	$(OBJCOPY) -j.bootfs -j.text -j.data -j.rodata -j.bss -Obinary $< $@
 
 $(BUILD_DIR)/kernel/__program_name.o:
 	mkdir -p $(@D)
@@ -134,11 +134,11 @@ $(BUILD_DIR)/kernel/%.o: %.c Makefile
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/initfs.bin
+$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/bootfs.bin
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) \
-		-DKERNEL -DINITFS_BIN='"$(PWD)/$(BUILD_DIR)/initfs.bin"' \
+		-DKERNEL -DBOOTFS_BIN='"$(PWD)/$(BUILD_DIR)/bootfs.bin"' \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 $(BUILD_DIR)/user/%.o: %.c Makefile
@@ -200,7 +200,7 @@ $(BUILD_DIR)/user/$(1).elf: $(BUILD_DIR)/user/$(1).debug.elf
 
 -include $(BUILD_DIR)/user/$(1)/servers/*.deps
 endef
-$(foreach server, $(INIT) $(SERVERS), $(eval $(call server-build-rule,$(server))))
+$(foreach server, $(BOOTSTRAP) $(SERVERS), $(eval $(call server-build-rule,$(server))))
 $(foreach app, $(APPS), $(eval $(call server-build-rule,$(app))))
 
 .config.mk:

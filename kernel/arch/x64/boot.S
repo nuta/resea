@@ -230,6 +230,6 @@ halt:
 
 .rodata
 .align 4096
-.global __initfs
-__initfs:
-    .incbin INITFS_BIN
+.global __bootfs
+__bootfs:
+    .incbin BOOTFS_BIN
