@@ -122,27 +122,6 @@ struct message {
             paddr_t paddr;
         } alloc_pages_reply;
 
-        #define EXEC_MSG ID(13)
-        struct {
-            char name[16];
-            task_t server;
-            handle_t handle;
-        } exec;
-
-        #define EXEC_REPLY_MSG ID(14)
-        struct {
-            task_t task;
-        } exec_reply;
-
-        #define JOIN_MSG ID(15)
-        struct {
-            task_t task;
-        } join;
-
-        #define JOIN_REPLY_MSG ID(16)
-        struct {
-        } join_reply;
-
         #define FS_OPEN_MSG (ID(50) | BULK(fs_open.path, fs_open.len))
         struct {
             char *path;
