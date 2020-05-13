@@ -9,7 +9,7 @@
 static uint16_t queue[QUEUE_SIZE];
 static int queue_head = 0;
 static int queue_tail = 0;
-static task_t shell_server;
+static task_t listener = 0;
 
 // Modifier keys. True if the key is being pressed.
 static bool shift_left = false;
@@ -86,7 +86,10 @@ static void handle_irq(void) {
 
                 queue[queue_head] = keycode;
                 queue_head = (queue_head + 1) % QUEUE_SIZE;
-                ipc_notify(shell_server, NOTIFY_NEW_DATA);
+
+                if (listener) {
+                    ipc_notify(listener, NOTIFY_NEW_DATA);
+                }
             }
         }
     }
@@ -95,9 +98,6 @@ static void handle_irq(void) {
 void main(void) {
     error_t err;
     TRACE("starting...");
-
-    shell_server = ipc_lookup("minlin");
-    ASSERT_OK(shell_server);
 
     err = irq_acquire(KEYBOARD_IRQ);
     ASSERT_OK(err);
@@ -115,14 +115,19 @@ void main(void) {
                     handle_irq();
                 }
                 break;
-            case KBD_GET_KEYCODE_MSG:
+            case KBD_LISTEN_MSG:
+                listener = m.src;
+                m.type = KBD_LISTEN_REPLY_MSG;
+                ipc_reply(m.src, &m);
+                break;
+            case KBD_READ_MSG:
                 if (queue_head == queue_tail) {
                     ipc_reply_err(m.src, ERR_EMPTY);
                     break;
                 }
 
-                m.type = KBD_KEYCODE_MSG;
-                m.key_pressed.keycode = queue[queue_tail];
+                m.type = KBD_READ_REPLY_MSG;
+                m.kbd_read_reply.keycode = queue[queue_tail];
                 queue_tail = (queue_tail + 1) % QUEUE_SIZE;
                 ipc_reply(m.src, &m);
                 break;

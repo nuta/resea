@@ -260,12 +260,22 @@ struct message {
             size_t len;
         } blk_read_reply;
 
-        // FIXME:
-        #define KBD_GET_KEYCODE_MSG ID(110)
-        #define KBD_KEYCODE_MSG ID(110)
+        #define KBD_LISTEN_MSG ID(110)
+        struct {
+        } kbd_listen;
+
+        #define KBD_LISTEN_REPLY_MSG ID(111)
+        struct {
+        } kbd_listen_reply;
+
+        #define KBD_READ_MSG ID(112)
+        struct {
+        } kbd_read;
+
+        #define KBD_READ_REPLY_MSG ID(113)
         struct {
             uint16_t keycode;
-        } key_pressed;
+        } kbd_read_reply;
 
         #define TEXTSCREEN_DRAW_CHAR_MSG ID(150)
         struct {

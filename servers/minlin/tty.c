@@ -45,16 +45,16 @@ static void putc(char ch) {
 
 void on_new_data(void) {
     struct message m;
-    m.type = KBD_GET_KEYCODE_MSG;
+    m.type = KBD_READ_MSG;
     error_t err = ipc_call(kbd_server, &m);
     if (err == ERR_EMPTY) {
         return;
     }
 
     ASSERT_OK(err);
-    ASSERT(m.type == KBD_KEYCODE_MSG);
+    ASSERT(m.type == KBD_READ_REPLY_MSG);
 
-    char ch = m.key_pressed.keycode;
+    char ch = m.kbd_read_reply.keycode;
     queue[wp++ % QUEUE_LEN] = ch;
     putc(ch);
     waitqueue_wake_all(&tty_inode->read_wq);
@@ -100,6 +100,9 @@ static int acquire(struct file *file) {
     struct message m;
     m.type = TEXTSCREEN_CLEAR_MSG;
     ipc_send(display_server, &m);
+
+    m.type = KBD_LISTEN_MSG;
+    ipc_call(kbd_server, &m);
 
     inited = true;
     return 0;

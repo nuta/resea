@@ -5,8 +5,6 @@
 #include <resea/syscall.h>
 #include <cstring.h>
 
-static task_t appmgr_server;
-static task_t fs_server;
 static task_t display_server;
 static task_t kbd_server;
 
@@ -150,6 +148,12 @@ static void clear_command(UNUSED int argc, UNUSED char **argv) {
     cursor_y = 0;
 }
 
+static void help_command(UNUSED int argc, UNUSED char **argv) {
+    logputstr("help   -  Print this message.\n");
+    logputstr("echo   -  Print strings.\n");
+    logputstr("clear  -  Clear the screen.\n");
+}
+
 struct command {
     const char *name;
     void (*run)(int argc, char **argv);
@@ -158,6 +162,7 @@ struct command {
 static struct command commands[] = {
     { .name = "echo", .run = echo_command },
     { .name = "clear", .run = clear_command },
+    { .name = "help", .run = help_command },
     { .name = NULL, .run = NULL },
 };
 
@@ -195,40 +200,6 @@ int parse(char *cmdline, char **argv, int argv_max) {
     return argc;
 }
 
-static error_t run_app(const char *name) {
-    char path[128];
-    strncpy(path, "/apps/", sizeof(path));
-    strncpy(&path[6], name, sizeof(path) - 6);
-
-    // Open the executable file.
-    struct message m;
-    m.type = FS_OPEN_MSG;
-    m.fs_open.path = path;
-    m.fs_open.len = strlen(path) + 1;
-    error_t err = ipc_call(fs_server, &m);
-    if (IS_ERROR(err)) {
-        return err;
-    }
-    ASSERT(m.type == FS_OPEN_REPLY_MSG);
-
-    // Spawn a task.
-    m.type = EXEC_MSG;
-    m.exec.handle = m.fs_open_reply.handle;
-    m.exec.server = fs_server;
-    strncpy(m.exec.name, name, sizeof(m.exec.name));
-    err = ipc_call(appmgr_server, &m);
-    if (err != OK) {
-        return err;
-    }
-
-    // Wait until the task exits.
-    task_t task = m.exec_reply.task;
-    m.type = JOIN_MSG;
-    m.join.task = task;
-    err = ipc_call(appmgr_server, &m);
-    return err;
-}
-
 void run(const char *cmd_name, int argc, char **argv) {
     for (int i = 0; commands[i].name != NULL; i++) {
         if (!strcmp(commands[i].name, cmd_name)) {
@@ -237,12 +208,7 @@ void run(const char *cmd_name, int argc, char **argv) {
         }
     }
 
-    error_t err = run_app(cmd_name);
-    if (err == OK) {
-        return;
-    }
-
-    WARN("failed invoke command: %s", cmd_name);
+    WARN("unknown command: %s", cmd_name);
 }
 
 static char cmdline[CMDLINE_MAX];
@@ -293,15 +259,15 @@ static void input(char ch) {
 
 static void pull_input(void) {
     struct message m;
-    m.type = KBD_GET_KEYCODE_MSG;
+    m.type = KBD_READ_MSG;
     error_t err = ipc_call(kbd_server, &m);
     if (err == ERR_EMPTY) {
         return;
     }
 
     ASSERT_OK(err);
-    ASSERT(m.type == KBD_KEYCODE_MSG);
-    input(m.key_pressed.keycode);
+    ASSERT(m.type == KBD_READ_REPLY_MSG);
+    input(m.kbd_read_reply.keycode);
 }
 
 static void get_screen_size(void) {
@@ -319,17 +285,15 @@ static void get_screen_size(void) {
 void main(void) {
     TRACE("starting...");
 
-    appmgr_server = ipc_lookup("appmgr");
-    ASSERT_OK(appmgr_server);
-
-    fs_server = ipc_lookup("fatfs");
-    ASSERT_OK(fs_server);
-
     display_server = ipc_lookup("display");
     ASSERT_OK(display_server);
 
     kbd_server = ipc_lookup("ps2kbd");
     ASSERT_OK(kbd_server);
+
+    struct message m;
+    m.type = KBD_LISTEN_MSG;
+    ipc_call(kbd_server, &m);
 
     get_screen_size();
     clear_screen();
