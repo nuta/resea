@@ -5,6 +5,7 @@
 #include <resea/syscall.h>
 #include <cstring.h>
 
+static task_t bootstrap_server = 1;
 static task_t display_server;
 static task_t kbd_server;
 
@@ -200,6 +201,13 @@ int parse(char *cmdline, char **argv, int argv_max) {
     return argc;
 }
 
+static error_t launch_task(const char *task_name) {
+    struct message m;
+    m.type = LAUNCH_TASK_MSG;
+    strncpy(m.launch_task.name, task_name, sizeof(m.launch_task.name));
+    return ipc_call(bootstrap_server, &m);
+}
+
 void run(const char *cmd_name, int argc, char **argv) {
     for (int i = 0; commands[i].name != NULL; i++) {
         if (!strcmp(commands[i].name, cmd_name)) {
@@ -208,7 +216,16 @@ void run(const char *cmd_name, int argc, char **argv) {
         }
     }
 
-    WARN("unknown command: %s", cmd_name);
+    error_t err = launch_task(cmd_name);
+    switch (err) {
+        case OK:
+            break;
+        case ERR_NOT_FOUND:
+            WARN("unknown command or task: %s", cmd_name);
+            break;
+        default:
+            WARN("failed launch a task '%s': %s", cmd_name, err2str(err));
+    }
 }
 
 static char cmdline[CMDLINE_MAX];
