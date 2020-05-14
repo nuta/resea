@@ -282,7 +282,7 @@ void main(void) {
                 }
 
                 if (!task) {
-                    WARN("error!");
+                    WARN("Failed to locate the task named '%s'", m.lookup.name);
                     ipc_send_err(m.src, ERR_NOT_FOUND);
                     break;
                 }
