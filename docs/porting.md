@@ -7,7 +7,7 @@ Porting to a new CPU architecture (*arch* in short) is threefold:
 3. Define arch-specific part in the `resea` library.
 
 ## Implementing `common` library
-The common library (`libs/common`) is responsible for providing libraries and types (`typedef`) for both kernel and userspace prgorams. You'll need to implement
+The common library (`libs/common`) is responsible for providing libraries and types (`typedef`) for both kernel and userspace programs. You'll need to implement
 the following files.
 
 - `libs/common/arch/<arch-name>/arch.mk`
