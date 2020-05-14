@@ -1,2 +1,10 @@
-config TCPIP_SERVER
+menuconfig TCPIP_SERVER
     bool "TCP/IP protocol stack"
+
+if TCPIP_SERVER
+
+config AUTOSTART_TCPIP
+    bool "Start automatically on boot"
+    default y
+
+endif

@@ -1,2 +1,10 @@
-config E1000_SERVER
-    bool "E1000 network card driver"
+menuconfig E1000_SERVER
+    bool "e1000 network card driver"
+
+if E1000_SERVER
+
+config AUTOSTART_E1000
+    bool "Start automatically on boot"
+    default y
+
+endif

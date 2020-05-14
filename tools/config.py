@@ -10,7 +10,7 @@ import sys
 from glob import glob
 from pathlib import Path
 
-def defconfig(config_file):
+def setdefaults():
     # Search for toolchains.
     llvm_prefix = ""
     grub_prefix = ""
@@ -27,6 +27,7 @@ def defconfig(config_file):
     os.environ["DEFAULT_LLVM_PREFIX"] = llvm_prefix
     os.environ["DEFAULT_GRUB_PREFIX"] = grub_prefix
 
+def defconfig(config_file):
     if os.path.exists(config_file):
         os.remove(config_file)
     kconf = kconfiglib.Kconfig("Kconfig")
@@ -97,6 +98,7 @@ def main():
     parser.add_argument("--config-file", default=".config")
     args = parser.parse_args()
 
+    setdefaults()
     if args.menuconfig:
         sys.argv = sys.argv[:1]
         menuconfig._main()

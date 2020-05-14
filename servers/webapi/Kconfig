@@ -1,2 +1,10 @@
-config WEBAPI_SERVER
+menuconfig WEBAPI_SERVER
     bool "Web API server"
+
+if WEBAPI_SERVER
+
+config AUTOSTART_WEBAPI
+    bool "Start automatically on boot"
+    default n
+
+endif

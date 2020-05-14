@@ -1,2 +1,10 @@
-config BENCHMARK_SERVER
-    bool "Microbenchmark"
+menuconfig BENCHMARK_SERVER
+    bool "Run Micro-benchmarks"
+
+if BENCHMARK_SERVER
+
+config AUTOSTART_BENCHMARK
+    bool "Start automatically on boot"
+    default n
+
+endif

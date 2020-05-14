@@ -1,2 +1,10 @@
-config MINLIN_SERVER
+menuconfig MINLIN_SERVER
     bool "Linux ABI compatibility layer (experimental)"
+
+if MINLIN_SERVER
+
+config AUTOSTART_MINLIN
+    bool "Start automatically on boot"
+    default y
+
+endif
