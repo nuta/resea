@@ -25,7 +25,7 @@ Let's say that you're desiging a TCP/IP server and underlying device drivers:
        send a message to emit packets
 ```
 
-It looks an intuitive approarch, however, what if the device
+It looks an intuitive approach, however, what if the device
 driver tries sending a network packet when the TCP/IP server is trying to
 send a message to the driver? It would cause a deadlock because IPC operations
 are blocking.
