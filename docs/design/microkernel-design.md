@@ -17,13 +17,12 @@ Improving IPC performance has been a key research topic: see
 
 ## Microkernel-based Design in Resea
 Resea's microkernel (Resea Kernel) aims to be *pure*: the kernel does not
-implement features that can be done in userspace. As of this writing, it provides
-only 5 system calls.
+implement features that can be done in userspace.
 
 In Resea, like other microkernel-based operating systems, traditional kernel
-features such as file system, TCP/IP, and device drivers, are implemented as
-standalone userland programs (*servers*).
+features such as file system, TCP/IP, and device drivers are implemented as
+standalone userland programs (called *servers*).
 
 Similar to the *"Everything is a file"* philosophy in Unix, Resea has a
 philosophy: *"Everything is a message passing"*. Reading a file, receiving a
-key event, and all other operations and events are represented as messages.
+keyboard event, and all other operations and events are represented as messages.
