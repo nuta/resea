@@ -37,6 +37,8 @@ struct task {
 };
 
 static struct task tasks[TASKS_MAX];
+static struct bootfs_file *files;
+static unsigned num_files;
 
 /// Look for the task in the our task table.
 static struct task *get_task_by_tid(task_t tid) {
@@ -55,7 +57,7 @@ static void read_file(struct bootfs_file *file, offset_t off, void *buf, size_t 
     memcpy(buf, p, len);
 }
 
-static task_t launch_server(struct bootfs_file *file) {
+static task_t launch_task(struct bootfs_file *file) {
     TRACE("launching %s...", file->name);
 
     // Look for an unused task ID.
@@ -197,6 +199,9 @@ static error_t alloc_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
 
 void main(void) {
     TRACE("starting...");
+    num_files = __bootfs.num_files;
+    files =
+        (struct bootfs_file *) (((uintptr_t) &__bootfs) + __bootfs.files_off);
     pages_init();
 
     for (int i = 0; i < TASKS_MAX; i++) {
@@ -209,10 +214,9 @@ void main(void) {
     strncpy(tasks[0].name, "bootstrap", sizeof(tasks[0].name));
 
     // Launch servers in bootfs.
-    struct bootfs_file *files =
-        (struct bootfs_file *) (((uintptr_t) &__bootfs) + __bootfs.files_off);
-    for (uint32_t i = 0; i < __bootfs.num_files; i++) {
-        launch_server(&files[i]);
+    for (uint32_t i = 0; i < num_files; i++) {
+        struct bootfs_file *file = &files[i];
+        launch_task(file);
     }
 
     // The mainloop: receive and handle messages.
@@ -309,6 +313,27 @@ void main(void) {
                 m.alloc_pages_reply.vaddr = vaddr;
                 m.alloc_pages_reply.paddr = paddr;
                 ipc_send(m.src, &m);
+                break;
+            }
+            case LAUNCH_TASK_MSG: {
+                // Look for the program in the apps directory.
+                struct bootfs_file *file = NULL;
+                for (uint32_t i = 0; i < num_files; i++) {
+                    file = &files[i];
+                    if (!strcmp(file->name, m.launch_task.name)) {
+                        file = &files[i];
+                        break;
+                    }
+                }
+
+                if (!file) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                launch_task(file);
+                m.type = LAUNCH_TASK_REPLY_MSG;
+                ipc_reply(m.src, &m);
                 break;
             }
             default:

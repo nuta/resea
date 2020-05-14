@@ -122,6 +122,15 @@ struct message {
             paddr_t paddr;
         } alloc_pages_reply;
 
+        #define LAUNCH_TASK_MSG ID(13)
+        struct {
+            char name[32];
+        } launch_task;
+
+        #define LAUNCH_TASK_REPLY_MSG ID(14)
+        struct {
+        } launch_task_reply;
+
         #define FS_OPEN_MSG (ID(50) | BULK(fs_open.path, fs_open.len))
         struct {
             char *path;
