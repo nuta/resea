@@ -238,7 +238,13 @@ void main(void) {
                 ASSERT(task);
                 ASSERT(m.exception.task == task->tid);
 
-                WARN("%s: exception occurred, killing the task...", task->name);
+                if (m.exception.exception == EXP_GRACE_EXIT) {
+                    INFO("%s: terminated its execution", task->name);
+                } else {
+                    WARN("%s: exception occurred, killing the task...",
+                         task->name);
+                }
+
                 kill(task);
                 break;
             }
