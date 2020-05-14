@@ -1,4 +1,12 @@
-config HELLO_SERVER
-    bool "Hello"
+menuconfig HELLO_SERVER
+    bool "Hello World!"
     help
         Prints "Hello World!" and terminates.
+
+if HELLO_SERVER
+
+config AUTOSTART_HELLO
+    bool "Start automatically on boot"
+    default n
+
+endif

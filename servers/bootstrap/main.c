@@ -4,6 +4,7 @@
 #include <resea/printf.h>
 #include <resea/syscall.h>
 #include <cstring.h>
+#include <config.h>
 #include "elf.h"
 #include "bootfs.h"
 #include "pages.h"
@@ -216,7 +217,27 @@ void main(void) {
     // Launch servers in bootfs.
     for (uint32_t i = 0; i < num_files; i++) {
         struct bootfs_file *file = &files[i];
-        launch_task(file);
+
+        // Autostart server names (separated by whitespace).
+        char *startups = CONFIG_AUTOSTARTS;
+
+        // Execute the file if it is listed in the autostarts.
+        while (*startups != '\0') {
+            size_t len = strlen(file->name);
+            if (!strncmp(file->name, startups, len)
+                && (startups[len] == '\0' || startups[len] == ' ')) {
+                launch_task(file);
+                break;
+            }
+
+            while (*startups != '\0' && *startups != ' ') {
+                startups++;
+            }
+
+            if (*startups == ' ') {
+                startups++;
+            }
+        }
     }
 
     // The mainloop: receive and handle messages.

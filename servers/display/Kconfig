@@ -1,2 +1,11 @@
-config DISPLAY_SERVER
+menuconfig DISPLAY_SERVER
     bool "Text-based display driver"
+    depends on ARCH_X64
+
+if DISPLAY_SERVER
+
+config AUTOSTART_DISPLAY
+    bool "Start automatically on boot"
+    default y
+
+endif

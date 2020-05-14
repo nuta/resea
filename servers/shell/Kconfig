@@ -1,2 +1,10 @@
-config SHELL_SERVER
+menuconfig SHELL_SERVER
     bool "Shell"
+
+if SHELL_SERVER
+
+config AUTOSTART_SHELL
+    bool "Start automatically on boot"
+    default y
+
+endif

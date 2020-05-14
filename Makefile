@@ -55,6 +55,7 @@ CFLAGS += -Werror=pointer-integer-compare
 CFLAGS += -Werror=tautological-constant-out-of-range-compare
 CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
+CFLAGS += -I$(BUILD_DIR)/include
 CFLAGS += -DVERSION='"$(VERSION)"'
 
 ifeq ($(BUILD),release)
@@ -128,7 +129,7 @@ $(BUILD_DIR)/kernel/__program_name.o:
 	echo "const char *__program_name(void) { return \"kernel\"; }" > $(@:.o=.c)
 	$(CC) $(CFLAGS) -DKERNEL -c -o $@ $(@:.o=.c)
 
-$(BUILD_DIR)/kernel/%.o: %.c Makefile
+$(BUILD_DIR)/kernel/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
@@ -141,13 +142,13 @@ $(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/bootfs.bin
 		-DKERNEL -DBOOTFS_BIN='"$(PWD)/$(BUILD_DIR)/bootfs.bin"' \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/user/%.o: %.c Makefile
+$(BUILD_DIR)/user/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ilibs/resea -Ilibs/resea/arch/$(ARCH) \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/user/%.o: %.S Makefile
+$(BUILD_DIR)/user/%.o: %.S Makefile $(BUILD_DIR)/include/config.h
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ilibs/resea -Ilibs/resea/arch/$(ARCH) \
@@ -203,9 +204,14 @@ endef
 $(foreach server, $(BOOTSTRAP) $(SERVERS), $(eval $(call server-build-rule,$(server))))
 $(foreach app, $(APPS), $(eval $(call server-build-rule,$(app))))
 
-.config.mk:
+.config.mk: .config tools/config.py
 	$(PROGRESS) "CONFIG" $@
 	./tools/config.py --default
+
+$(BUILD_DIR)/include/config.h: .config tools/config.py
+	$(PROGRESS) "GEN" $@
+	mkdir -p $(@D)
+	./tools/config.py --generate $@
 
 # JSON compilation database.
 # https://clang.llvm.org/docs/JSONCompilationDatabase.html
