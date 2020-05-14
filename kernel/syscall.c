@@ -40,7 +40,53 @@ static void strncpy_from_user(char *dst, userptr_t src, size_t max_len) {
     arch_strncpy_from_user(dst, src, max_len);
 }
 
-static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len, msec_t timeout) {
+
+/// Initializes and starts a task.
+static error_t sys_spawn(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
+                         caps_t caps) {
+    if (!CAPABLE(CURRENT, CAP_TASK)) {
+        return ERR_NOT_PERMITTED;
+    }
+
+    struct task *task = task_lookup(tid);
+    if (!task || task == CURRENT) {
+        return ERR_INVALID_ARG;
+    }
+
+    struct task *pager_task = task_lookup(pager);
+    if (!pager_task) {
+        return ERR_INVALID_ARG;
+    }
+
+    // Create a task.
+    char namebuf[TASK_NAME_LEN];
+    strncpy_from_user(namebuf, name, sizeof(namebuf));
+    caps &= CURRENT->caps | CAP_ABI_EMU;
+    return task_create(task, namebuf, ip, pager_task, caps);
+}
+
+/// Kills a task.
+static error_t sys_kill(task_t tid) {
+    if (!tid) {
+        task_exit(EXP_GRACE_EXIT);
+        UNREACHABLE();
+    }
+
+    if (!CAPABLE(CURRENT, CAP_TASK)) {
+        return ERR_NOT_PERMITTED;
+    }
+
+    struct task *task = task_lookup(tid);
+    if (!task || task == CURRENT) {
+        return ERR_INVALID_ARG;
+    }
+
+    return task_destroy(task);
+}
+
+/// Sets task attributes.
+static task_t sys_setattrs(userptr_t bulk_ptr, size_t bulk_len,
+                           msec_t timeout) {
     if (bulk_ptr) {
         CURRENT->bulk_ptr = bulk_ptr;
         CURRENT->bulk_len = bulk_len;
@@ -65,9 +111,10 @@ static error_t sys_ipcctl(userptr_t bulk_ptr, size_t bulk_len, msec_t timeout) {
         CURRENT->timeout = timeout;
     }
 
-    return OK;
+    return CURRENT->tid;
 }
 
+/// Send/receive IPC messages and notifications.
 static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
     if (flags & IPC_KERNEL) {
         return ERR_INVALID_ARG;
@@ -93,144 +140,109 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
     return ipc(dst_task, src, (struct message *) m, flags);
 }
 
-/// The taskctl system call does all task-related operations. The operation is
-/// determined as below:
-///
-///        | task_create | task_destroy | task_exit | task_self | caps_drop
-///  ------+-------------+--------------+-----------+-----------+-----------
-///  tid   |     > 0     |      > 0     |    0      |    ---    |     ---
-///  pager |     > 0     |       0      |    0      |    -1     |     -1
-///
-static task_t sys_taskctl(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
-                         caps_t caps) {
-    // Since task_exit(), task_self(), and caps_drop() are unprivileged, we
-    // don't need to check the capabilities here.
-    if (!tid && !pager) {
-        task_exit(EXP_GRACE_EXIT);
-    }
-
-    if (pager < 0) {
-        // Do caps_drop() and task_self() at once.
-        CURRENT->caps &= ~caps;
-        return CURRENT->tid;
-    }
-
-    // Check the capability before handling privileged operations.
-    if (!CAPABLE(CURRENT, CAP_TASK)) {
-        return ERR_NOT_PERMITTED;
-    }
-
-    // Look for the target task.
-    struct task *task = task_lookup(tid);
-    if (!task || task == CURRENT) {
-        return ERR_INVALID_ARG;
-    }
-
-    if (pager) {
-        struct task *pager_task = task_lookup(pager);
-        if (!pager_task) {
-            return ERR_INVALID_ARG;
-        }
-
-        // Create a task.
-        char namebuf[TASK_NAME_LEN];
-        strncpy_from_user(namebuf, name, sizeof(namebuf));
-        return task_create(task, namebuf, ip, pager_task, (CURRENT->caps | CAP_ABI_EMU) & caps);
-    } else {
-        // Destroy the task.
-        return task_destroy(task);
-    }
-}
-
-static error_t sys_irqctl(unsigned irq, bool enable) {
+/// Registers a interrupt listener task.
+static error_t sys_listenirq(unsigned irq, task_t listener) {
     if (!CAPABLE(CURRENT, CAP_IO)) {
         return ERR_NOT_PERMITTED;
     }
 
-    if (enable) {
-        return task_listen_irq(CURRENT, irq);
+    if (listener) {
+        struct task *task = task_lookup(listener);
+        if (!task) {
+            return ERR_INVALID_ARG;
+        }
+
+        return task_listen_irq(task, irq);
     } else {
-        return task_unlisten_irq(CURRENT, irq);
+        return task_unlisten_irq(irq);
     }
 }
 
-static int sys_klogctl(int op, userptr_t buf, size_t buf_len) {
+/// Writes log messages into the kernel log buffer.
+static int sys_writelog(userptr_t buf, size_t buf_len) {
     if (!CAPABLE(CURRENT, CAP_KLOG)) {
         return ERR_NOT_PERMITTED;
     }
 
-    switch (op) {
-        case KLOGCTL_READ: {
-            char kbuf[256];
-            int remaining = buf_len;
-            while (remaining > 0) {
-                int max_len = MIN(remaining, (int) sizeof(kbuf));
-                int read_len = klog_read(kbuf, max_len);
-                if (!read_len) {
-                    break;
-                }
-
-                memcpy_to_user(buf, kbuf, read_len);
-                buf += read_len;
-                remaining -= read_len;
-            }
-
-            return buf_len - remaining;
+    char kbuf[256];
+    int remaining = buf_len;
+    while (remaining > 0) {
+        int copy_len = MIN(remaining, (int) sizeof(kbuf));
+        memcpy_from_user(kbuf, buf, copy_len);
+        for (int i = 0; i < copy_len; i++) {
+            printk("%c", kbuf[i]);
         }
-        case KLOGCTL_WRITE: {
-            char kbuf[256];
-            int remaining = buf_len;
-            while (remaining > 0) {
-                int copy_len = MIN(remaining, (int) sizeof(kbuf));
-                memcpy_from_user(kbuf, buf, copy_len);
-                for (int i = 0; i < copy_len; i++) {
-                    printk("%c", kbuf[i]);
-                }
-                remaining -= copy_len;
-            }
-            return OK;
-        }
-        case KLOGCTL_LISTEN:
-            klog_listen(CURRENT);
-            return OK;
-        case KLOGCTL_UNLISTEN:
-            klog_unlisten(CURRENT);
-            return OK;
+        remaining -= copy_len;
     }
 
     return OK;
 }
 
+/// Read log messages from the kernel log buffer.
+static error_t sys_readlog(userptr_t buf, size_t buf_len, bool listen) {
+    if (!CAPABLE(CURRENT, CAP_KLOG)) {
+        return ERR_NOT_PERMITTED;
+    }
+
+    char kbuf[256];
+    int remaining = buf_len;
+    while (remaining > 0) {
+        int max_len = MIN(remaining, (int) sizeof(kbuf));
+        int read_len = klog_read(kbuf, max_len);
+        if (!read_len) {
+            break;
+        }
+
+        memcpy_to_user(buf, kbuf, read_len);
+        buf += read_len;
+        remaining -= read_len;
+    }
+
+    if (listen) {
+        klog_listen(CURRENT);
+    } else {
+        klog_unlisten();
+    }
+
+    return buf_len - remaining;
+}
+
 /// The system call handler.
-uintmax_t handle_syscall(uintmax_t syscall, uintmax_t arg1, uintmax_t arg2,
-                         uintmax_t arg3, uintmax_t arg4, uintmax_t arg5) {
+long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
     stack_check();
 
-    uintmax_t ret;
-    switch (syscall) {
-        case SYSCALL_IPC:
-            ret = (uintmax_t) sys_ipc(arg1, arg2, arg3, arg4);
+    long ret;
+    switch (n) {
+        case SYS_SPAWN:
+            ret = sys_spawn(a1, a2, a3, a4, a5);
             break;
-        case SYSCALL_IPCCTL:
-            ret = (uintmax_t) sys_ipcctl(arg1, arg2, arg3);
+        case SYS_KILL:
+            ret = sys_kill(a1);
             break;
-        case SYSCALL_TASKCTL:
-            ret = (uintmax_t) sys_taskctl(arg1, arg2, arg3, arg4, arg5);
+        case SYS_SETATTRS:
+            ret = sys_setattrs(a1, a2, a3);
             break;
-        case SYSCALL_IRQCTL:
-            ret = (uintmax_t) sys_irqctl(arg1, arg2);
+        case SYS_IPC:
+            ret = sys_ipc(a1, a2, a3, a4);
             break;
-        case SYSCALL_KLOGCTL:
-            ret = (uintmax_t) sys_klogctl(arg1, arg2, arg3);
+        case SYS_LISTENIRQ:
+            ret = sys_listenirq(a1, a2);
+            break;
+        case SYS_WRITELOG:
+            ret = sys_writelog(a1, a2);
+            break;
+        case SYS_READLOG:
+            ret = sys_readlog(a1, a2, a3);
             break;
         default:
-            return ERR_INVALID_ARG;
+            ret = ERR_INVALID_ARG;
     }
 
     stack_check();
     return ret;
 }
 
+/// The system call handler for ABI emulation.
 void abi_emu_hook(struct abi_emu_frame *frame, enum abi_hook_type type) {
     struct message m;
     m.type = ABI_HOOK_MSG;

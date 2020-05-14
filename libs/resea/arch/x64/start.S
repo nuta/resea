@@ -38,7 +38,7 @@ halt:
 .section .bootfs, "ax"
 .global __bootfs
 __bootfs:
-    // The startup code (16 bytes). Kernel starts init shere.
+    // The startup code (16 bytes). Kernel starts the first userspace program here.
     jmp start
     .align 16
 

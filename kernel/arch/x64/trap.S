@@ -34,12 +34,18 @@ syscall_entry:
     test byte ptr gs:[GS_ABI_EMU], 1
     jnz abi_emu_entry
 
-    // Save SYSRET context and callee-saved registers onto the kernel stack.
+    // Save SYSRET context and registers onto the kernel stack.
     push gs:[GS_RSP3] // User RSP.
     push r11 // User RFLAGS.
     push rcx // User RIP.
     push rbp
     push rbx
+    push rdx
+    push rdi
+    push rsi
+    push r8
+    push r9
+    push r10
     push r12
     push r13
     push r14
@@ -48,31 +54,22 @@ syscall_entry:
     mov rcx, r10 // arg3
     call x64_handle_syscall
 
-return_to_user:
-    // Restore callee-saved registers.
+    // Restore registers.
     pop r15
     pop r14
     pop r13
     pop r12
+    pop r10
+    pop r9
+    pop r8
+    pop rsi
+    pop rdi
+    pop rdx
     pop rbx
     pop rbp
     pop rcx
     pop r11
     pop rsp
-
-    // Sanitize registers to prevent information leak. Note that some scratch
-    // registers should not be zeroed:
-    //
-    //   EAX: The return value.
-    //   RCX: User RIP.
-    //   R11: User RFLAGS.
-    //
-    xor rdx, rdx
-    xor rdi, rdi
-    xor rsi, rsi
-    xor r8, r8
-    xor r9, r9
-    xor r10, r10
 
     // Ensure that interrupts are disabled since SWAPGS and SYSRETQ are not a
     // atomic operation. If an interrupt occurred between SWAPGS and SYSRETQ

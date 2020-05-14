@@ -189,18 +189,14 @@ error_t task_listen_irq(struct task *task, unsigned irq) {
     return OK;
 }
 
-error_t task_unlisten_irq(struct task *task, unsigned irq) {
+error_t task_unlisten_irq(unsigned irq) {
     if (irq >= IRQ_MAX) {
         return ERR_INVALID_ARG;
     }
 
-    if (irq_owners[irq] != task) {
-        return ERR_NOT_PERMITTED;
-    }
-
     arch_disable_irq(irq);
     irq_owners[irq] = NULL;
-    TRACE("disabled IRQ: task=%s, vector=%d", task->name, irq);
+    TRACE("disabled IRQ: vector=%d", irq);
     return OK;
 }
 

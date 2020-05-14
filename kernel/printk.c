@@ -42,10 +42,8 @@ void klog_listen(struct task *task) {
     listener = task;
 }
 
-void klog_unlisten(struct task *task) {
-    if (task == listener) {
-        listener = NULL;
-    }
+void klog_unlisten(void) {
+    listener = NULL;
 }
 
 static void printchar(UNUSED struct vprintf_context *ctx, char ch) {

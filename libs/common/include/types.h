@@ -75,11 +75,13 @@ typedef int error_t;
 #define ERR_EMPTY          (-12)
 #define ERR_END            (-13)
 
-#define SYSCALL_IPC     1
-#define SYSCALL_IPCCTL  2
-#define SYSCALL_TASKCTL 3
-#define SYSCALL_IRQCTL  4
-#define SYSCALL_KLOGCTL 5
+#define SYS_SPAWN      1
+#define SYS_KILL       2
+#define SYS_SETATTRS   3
+#define SYS_IPC        4
+#define SYS_LISTENIRQ  5
+#define SYS_WRITELOG   6
+#define SYS_READLOG    7
 
 // IPC options.
 #define IPC_ANY     0 /* So-called "open receive". */

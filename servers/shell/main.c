@@ -115,7 +115,7 @@ void logputc(char ch) {
 static void pull_kernel_log(void) {
     while (true) {
         char buf[512];
-        size_t read_len = klog_read(buf, sizeof(buf));
+        size_t read_len = klog_read(buf, sizeof(buf), true);
         if (!read_len) {
             break;
         }
@@ -297,7 +297,6 @@ void main(void) {
 
     get_screen_size();
     clear_screen();
-    ASSERT_OK(klog_listen());
     pull_kernel_log();
 
     // The mainloop: receive and handle messages.

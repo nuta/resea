@@ -3,17 +3,17 @@
 
 #include <types.h>
 
-static inline uint64_t syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2,
-                               uint64_t arg3, uint64_t arg4, uint64_t arg5) {
-    uint64_t ret;
+static inline long syscall(int n, long a1, long a2, long a3, long a4, long a5) {
+    long ret;
+	register long r8 __asm__("r8") = a4;
+	register long r9 __asm__("r9") = a5;
+	register long r10 __asm__("r10") = a3;
+
     __asm__ __volatile__(
-        "movq %[arg3], %%r10   \n"
-        "movq %[arg4], %%r8    \n"
-        "movq %[arg5], %%r9    \n"
-        "syscall               \n"
-        : "=a"(ret), "+D"(syscall), "+S"(arg1), "+d"(arg2), [arg3] "+r"(arg3),
-          [arg4] "+r"(arg4), [arg5] "+r"(arg5)::"memory", "%r8", "%r9", "%r10",
-          "%r11");
+        "syscall"
+        : "=a"(ret)
+        : "D"(n), "S"(a1), "d"(a2), "r"(r10), "r"(r8), "r"(r9)
+        : "rcx", "r11", "memory");
 
     return ret;
 }

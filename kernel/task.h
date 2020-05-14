@@ -99,7 +99,7 @@ void task_notify(struct task *task, notifications_t notifications);
 struct task *task_lookup(task_t tid);
 void task_switch(void);
 error_t task_listen_irq(struct task *task, unsigned irq);
-error_t task_unlisten_irq(struct task *task, unsigned irq);
+error_t task_unlisten_irq(unsigned irq);
 void handle_irq(unsigned irq);
 void task_dump(void);
 void task_init(void);
