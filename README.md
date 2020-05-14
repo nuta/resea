@@ -1,6 +1,7 @@
 Resea
 =====
 [![Build Status](https://travis-ci.com/nuta/resea.svg?branch=master)](https://travis-ci.com/nuta/resea)
+[![Gitter chat](https://badges.gitter.im/resea/community.png)](https://gitter.im/resea/community)
 
 ![screenshot](https://gist.githubusercontent.com/nuta/18bb9fb757bcb547f2432c4fc5197dcf/raw/6faa6cd38b2ad23cfdbfdabff5107f99aead12f9/demo.gif)
 
@@ -16,6 +17,7 @@ Features
 - TCP/IP server.
 - Text-based user interface.
 - Device drivers for PS/2 keyboard, e1000 network card, etc.
+- Linux ABI emulation (experimental).
 
 Road Map in 2020
 ----------------
