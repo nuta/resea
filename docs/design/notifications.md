@@ -11,7 +11,7 @@ Note that **notification IPC is just a bitfield update** (just like *signals*
 in UNIX): it's impossible to determine how many times a same notification has
 been notified.
 
-## Why we need notificaitons?
+## Why we need notifications?
 Let's say that you're desiging a TCP/IP server and underlying device drivers:
 
 ```
