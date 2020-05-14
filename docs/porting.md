@@ -16,7 +16,7 @@ the following files.
   - Arch-specific `#define`s and `typedef`s. It likely to be changed.
 
 ## Porting the kernel
-For portability, the kernel separetes the arch-specific layer
+For portability, the kernel separates the arch-specific layer
 (*Hardware Abstraction Layer*) into `kernel/arch`.
 
 That said, its interface is not yet stable and undocumented.
