@@ -39,7 +39,7 @@ The `resea` library is the standard library for userspace Resea applications.
 You'll need to implement:
 
 - The `syscall()` function.
-- The entry point of the program: initilize stack pointer, call `resea_init()`,
+- The entry point of the program: initialize stack pointer, call `resea_init()`,
   call `main()`, and then exit the program in case `main()` returns.
 - Bootfs support. The kernel starts the first userspace program embedded in
   the kernel executable as raw binary, not a ELF file. You'll need to handle the
