@@ -26,7 +26,7 @@ communicates with the pager task to handle them:
 - **ABI Emulation Hook:** If ABI emulation is enabled for the task, the kernel
   asks the pager to handle system calls, etc.
 
-This mechanism is introduced for achiveing [the separation of mechanism and policy](https://en.wikipedia.org/wiki/Separation_of_mechanism_and_policy)
+This mechanism is introduced for achieving [the separation of mechanism and policy](https://en.wikipedia.org/wiki/Separation_of_mechanism_and_policy)
 and it suprisingly improves the flexibility of the operating system.
 
 [^1]: [John Ousterhout. Why Threads Are A Bad Idea (for most purposes) [PDF]](https://web.stanford.edu/~ouster/cgi-bin/papers/threads.pdf)
