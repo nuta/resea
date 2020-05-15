@@ -93,7 +93,9 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 .PHONY: defconfig
-defconfig: .config.mk
+defconfig:
+	$(PROGRESS) "CONFIG"
+	./tools/config.py --default
 
 .PHONY: menuconfig
 menuconfig:
@@ -203,10 +205,6 @@ $(BUILD_DIR)/user/$(1).elf: $(BUILD_DIR)/user/$(1).debug.elf
 endef
 $(foreach server, $(BOOTSTRAP) $(SERVERS), $(eval $(call server-build-rule,$(server))))
 $(foreach app, $(APPS), $(eval $(call server-build-rule,$(app))))
-
-.config.mk: .config tools/config.py
-	$(PROGRESS) "CONFIG" $@
-	./tools/config.py --default
 
 $(BUILD_DIR)/include/config.h: .config tools/config.py
 	$(PROGRESS) "GEN" $@
