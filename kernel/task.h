@@ -1,13 +1,14 @@
 #ifndef __TASK_H__
 #define __TASK_H__
 
+#include <config.h>
 #include <arch.h>
 #include <message.h>
 #include <types.h>
 #include "memory.h"
 
-#define TASK_TIME_SLICE ((10 * TICK_HZ) / 1000) /* 10 milliseconds */
-#define TASK_NAME_LEN   16
+/// The context switching time slice (# of ticks).
+#define TASK_TIME_SLICE ((TASK_TIME_SLICE_MS * TICK_HZ) / 1000)
 
 //
 // Task states.
