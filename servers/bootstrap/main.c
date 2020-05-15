@@ -340,8 +340,7 @@ void main(void) {
                 // Look for the program in the apps directory.
                 struct bootfs_file *file = NULL;
                 for (uint32_t i = 0; i < num_files; i++) {
-                    file = &files[i];
-                    if (!strcmp(file->name, m.launch_task.name)) {
+                    if (!strcmp(files[i].name, m.launch_task.name)) {
                         file = &files[i];
                         break;
                     }
