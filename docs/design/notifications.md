@@ -11,7 +11,7 @@ Note that **notification IPC is just a bitfield update** (just like *signals*
 in UNIX): it's impossible to determine how many times a same notification has
 been notified.
 
-## Why we need notificaitons?
+## Why we need notifications?
 Let's say that you're desiging a TCP/IP server and underlying device drivers:
 
 ```
@@ -25,7 +25,7 @@ Let's say that you're desiging a TCP/IP server and underlying device drivers:
        send a message to emit packets
 ```
 
-It looks an intuitive approarch, however, what if the device
+It looks an intuitive approach, however, what if the device
 driver tries sending a network packet when the TCP/IP server is trying to
 send a message to the driver? It would cause a deadlock because IPC operations
 are blocking.
@@ -38,7 +38,7 @@ How can we avoid deadlocks in Resea? This is where notifications comes into play
 
 ## Notify & Pull Pattern
 Instead of sending message each other, when TCP/IP wants to send some data to
-the dirver, it *notifies* the driver asynchronously that there's pending data.
+the driver, it *notifies* the driver asynchronously that there's pending data.
 When the device driver receives the notification, it pulls the pending data
 via message passing:
 
@@ -51,5 +51,5 @@ via message passing:
      .                                .
      ..................................
          1. notify that new data is
-          available asynchornously
+          available asynchronously
 ```
