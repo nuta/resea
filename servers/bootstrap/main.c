@@ -219,7 +219,7 @@ void main(void) {
         struct bootfs_file *file = &files[i];
 
         // Autostart server names (separated by whitespace).
-        char *startups = CONFIG_AUTOSTARTS;
+        char *startups = AUTOSTARTS;
 
         // Execute the file if it is listed in the autostarts.
         while (*startups != '\0') {
