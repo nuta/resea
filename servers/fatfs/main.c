@@ -88,7 +88,7 @@ void main(void) {
                 size_t max_len = MIN(8192, m.fs_read.len);
                 void *buf = malloc(max_len);
                 int len_or_err =
-                    fat_read(&fs, file, m.fs_read.offset, buf, m.fs_read.len);
+                    fat_read(&fs, file, m.fs_read.offset, buf, max_len);
                 if (IS_ERROR(len_or_err)) {
                     ipc_reply_err(m.src, len_or_err);
                     break;
