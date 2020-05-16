@@ -251,14 +251,15 @@ int fat_read(struct fat *fs, struct fat_file *file, offset_t off, void *buf,
             // Use a temporary buffer to support unaligned read operations.
             uint8_t buf[SECTOR_SIZE];
             fs->blk_read(cluster2lba(fs, current) + i, buf, 1);
-            memcpy(p, &buf[off_in_cluster], MIN(remaining, SECTOR_SIZE));
+            size_t copy_len = MIN(file->size, MIN(remaining, SECTOR_SIZE));
+            memcpy(p, &buf[off_in_cluster], copy_len);
 
             if (remaining <= SECTOR_SIZE) {
-                return OK;
+                return copy_len;
             }
 
-            p += SECTOR_SIZE;
-            remaining -= SECTOR_SIZE;
+            p += copy_len;
+            remaining -= copy_len;
         }
 
         off_in_cluster = 0;
