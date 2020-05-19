@@ -1,5 +1,6 @@
 menuconfig MINLIN_SERVER
     bool "Linux ABI compatibility layer (experimental)"
+    select ABI_EMU
 
 if MINLIN_SERVER
 
