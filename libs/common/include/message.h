@@ -2,6 +2,7 @@
 #define __MESSAGE_H__
 
 #include <types.h>
+#include <config.h>
 
 typedef struct {
     uint8_t id[16];
@@ -84,6 +85,7 @@ struct message {
             pageattrs_t attrs;
         } page_fault_reply;
 
+#ifdef ABI_EMU
         #define ABI_HOOK_MSG ID(5)
         struct {
             task_t task;
@@ -95,6 +97,7 @@ struct message {
         struct {
             struct abi_emu_frame frame;
         } abi_hook_reply;
+#endif
 
         #define LOOKUP_MSG ID(8)
         struct {
