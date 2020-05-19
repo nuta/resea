@@ -54,7 +54,8 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     }
 
     // Initialize fields.
-    TRACE("new task #%d: %s", task->tid, name);
+    TRACE("new task #%d: %s (pager=%s)",
+          task->tid, name, pager ? pager->name : "");
     task->state = TASK_CREATED;
     task->caps = caps;
     task->notifications = 0;
@@ -126,6 +127,10 @@ error_t task_destroy(struct task *task) {
 /// Exits the current task. `exp` is the reason why the task is being exited.
 NORETURN void task_exit(enum exception_type exp) {
     ASSERT(CURRENT != IDLE_TASK);
+
+    if (!CURRENT->pager) {
+        PANIC("the initial task tried to exit");
+    }
 
     // Tell its pager that this task has exited.
     struct message m;
