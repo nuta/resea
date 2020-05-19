@@ -27,42 +27,6 @@ static void print_uint(struct vprintf_context *ctx, uintmax_t n, int base,
     puts(ctx, &tmp[i + 1]);
 }
 
-static void print_ptr(struct vprintf_context *ctx, const char **fmt,
-                      va_list vargs) {
-    char ch = *(*fmt)++;
-    switch (ch) {
-        // An IP address.
-        case 'I': {
-            char ch2 = *(*fmt)++;
-            switch (ch2) {
-                // IPV4 address.
-                case '4': {
-                    uint32_t v4addr = va_arg(vargs, uint32_t);
-                    print_uint(ctx, (v4addr >> 24) & 0xff, 10, ' ', 0);
-                    ctx->printchar(ctx, '.');
-                    print_uint(ctx, (v4addr >> 16) & 0xff, 10, ' ', 0);
-                    ctx->printchar(ctx, '.');
-                    print_uint(ctx, (v4addr >> 8) & 0xff, 10, ' ', 0);
-                    ctx->printchar(ctx, '.');
-                    print_uint(ctx, v4addr & 0xff, 10, ' ', 0);
-                    break;
-                }
-                default:
-                    // Invalid format specifier.
-                    puts(ctx, "%pI");
-                    ctx->printchar(ctx, ch2);
-                    break;
-            }
-            break;
-        }
-        // A pointer value (%p) and a following character.
-        default:
-            print_uint(ctx, (uintmax_t) va_arg(vargs, void *), 16, '0',
-                       sizeof(vaddr_t) * 2);
-            ctx->printchar(ctx, ch);
-    }
-}
-
 ///  The vprintf implementation.
 ///
 ///  %c  - An ASCII character.
@@ -124,9 +88,44 @@ void vprintf(struct vprintf_context *ctx, const char *fmt, va_list vargs) {
                     }
                     print_uint(ctx, n, 10, pad, width);
                     break;
-                case 'p':
-                    print_ptr(ctx, &fmt, vargs);
+                case 'p': {
+                    char ch = *fmt++;
+                    switch (ch) {
+                        // An IP address.
+                        case 'I': {
+                            char ch2 = *fmt++;
+                            switch (ch2) {
+                                // IPV4 address.
+                                case '4': {
+                                    uint32_t v4addr = va_arg(vargs, uint32_t);
+                                    print_uint(ctx, (v4addr >> 24) & 0xff, 10,
+                                               ' ', 0);
+                                    ctx->printchar(ctx, '.');
+                                    print_uint(ctx, (v4addr >> 16) & 0xff, 10,
+                                               ' ', 0);
+                                    ctx->printchar(ctx, '.');
+                                    print_uint(ctx, (v4addr >> 8) & 0xff, 10,
+                                               ' ', 0);
+                                    ctx->printchar(ctx, '.');
+                                    print_uint(ctx, v4addr & 0xff, 10, ' ', 0);
+                                    break;
+                                }
+                                default:
+                                    // Invalid format specifier.
+                                    puts(ctx, "%pI");
+                                    ctx->printchar(ctx, ch2);
+                                    break;
+                            }
+                            break;
+                        }
+                        // A pointer value (%p) and a following character.
+                        default:
+                            print_uint(ctx, (uintmax_t) va_arg(vargs, void *),
+                                       16, '0', sizeof(vaddr_t) * 2);
+                            fmt --;
+                    }
                     break;
+                }
                 case 'x':
                     alt = true;
                     // Fallthrough.

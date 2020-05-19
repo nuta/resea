@@ -26,9 +26,10 @@ typedef char bool;
 #define false 0
 #define NULL ((void *) 0)
 
+typedef __builtin_va_list va_list;
+
 #define offsetof(type, field)    __builtin_offsetof(type, field)
 #define is_constant(expr)        __builtin_constant_p(expr)
-#define va_list                  __builtin_va_list
 #define va_start(ap, param)      __builtin_va_start(ap, param)
 #define va_end(ap)               __builtin_va_end(ap)
 #define va_arg(ap, type)         __builtin_va_arg(ap, type)
