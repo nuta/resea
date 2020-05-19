@@ -15,7 +15,7 @@ struct free_list {
 
 #define FREE_LIST_MAGIC1   0xdeaddead
 #define FREE_LIST_MAGIC2   0xbadbadba
-#define STACK_CANARY_VALUE 0xdeadca71deadca71ULL
+#define STACK_CANARY_VALUE 0xdeadca71
 
 void *kmalloc(size_t size);
 void kfree(void *ptr);
