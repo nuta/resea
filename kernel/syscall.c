@@ -2,7 +2,6 @@
 #include <list.h>
 #include <cstring.h>
 #include <types.h>
-#include "interrupt.h"
 #include "ipc.h"
 #include "kdebug.h"
 #include "memory.h"
