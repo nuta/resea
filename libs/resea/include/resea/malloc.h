@@ -1,6 +1,7 @@
 #ifndef __RESEA_MALLOC_H__
 #define __RESEA_MALLOC_H__
 
+#include <config.h>
 #include <types.h>
 
 #define MALLOC_FREE        0x0a110ced0a110cedULL /* hexspeak of "alloced" */
@@ -24,9 +25,11 @@ struct malloc_chunk {
     // uint8_t overflow_redzone[MALLOC_REDZONE_LEN];
 };
 
+#ifdef ARCH_X64
 /// Ensure that it's aligned to 16 bytes for performance (SSE instructions
 /// requires 128-bit-aligned memory address).
 STATIC_ASSERT(sizeof(struct malloc_chunk) == 48);
+#endif
 
 void *malloc(size_t size);
 void *realloc(void *ptr, size_t size);
