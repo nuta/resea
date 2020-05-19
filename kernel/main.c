@@ -98,14 +98,5 @@ void mpmain(void) {
 
     // Do the very first context switch on this CPU.
     INFO("Booted CPU #%d", mp_self());
-    task_switch();
-
-    // We're now in the current CPU's idle task.
-    while (true) {
-        // Halt the CPU until an interrupt arrives...
-        arch_idle();
-        // Handled an interrupt. Try switching into a task resumed by an
-        // interrupt message.
-        task_switch();
-    }
+    arch_idle();
 }

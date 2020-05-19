@@ -170,8 +170,10 @@ void mpinit(void) {
 }
 
 void arch_idle(void) {
-    unlock();
-    asm_stihlt();
-    asm_cli();
-    lock();
+    while (true) {
+        unlock();
+        asm_stihlt();
+        asm_cli();
+        lock();
+    }
 }
