@@ -189,6 +189,7 @@ $(BUILD_DIR)/user/$(1).debug.elf: $(objs) tools/nm2symbols.py \
 		tools/embed-symbols.py libs/resea/arch/$(ARCH)/user.ld Makefile
 	$(PROGRESS) "LD" $(BUILD_DIR)/user/$(1).debug.elf
 	$(LD) $(LDFLAGS) --script=libs/resea/arch/$(ARCH)/user.ld \
+		-Map $(BUILD_DIR)/user/$(1).map \
 		-o $(BUILD_DIR)/user/$(1).elf.tmp $(objs)
 	$(NM) $(BUILD_DIR)/user/$(1).elf.tmp | ./tools/nm2symbols.py > \
 		$(BUILD_DIR)/user/$(1).symbols
