@@ -53,6 +53,7 @@ CFLAGS += -Werror=switch
 CFLAGS += -Werror=return-type
 CFLAGS += -Werror=pointer-integer-compare
 CFLAGS += -Werror=tautological-constant-out-of-range-compare
+CFLAGS += -Wno-unused-parameter
 CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
 CFLAGS += -I$(BUILD_DIR)/include
