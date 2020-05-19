@@ -101,7 +101,7 @@ struct message {
 
         #define LOOKUP_MSG ID(8)
         struct {
-            char name[32];
+            char name[TASK_NAME_LEN];
         } lookup;
 
         #define LOOKUP_REPLY_MSG ID(9)
@@ -127,7 +127,7 @@ struct message {
 
         #define LAUNCH_TASK_MSG ID(13)
         struct {
-            char name[32];
+            char name[TASK_NAME_LEN];
         } launch_task;
 
         #define LAUNCH_TASK_REPLY_MSG ID(14)
