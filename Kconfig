@@ -37,6 +37,7 @@ config NOMMU
     default n
 
 source "kernel/Kconfig"
+source "libs/resea/Kconfig"
 
 menu "Servers"
     config BOOTSTRAP

@@ -1,0 +1,8 @@
+menu "Userland"
+
+config BULK_BUFFER_LEN
+    int "The length of a bulk buffer."
+    range 0 16384
+    default 4096
+
+endmenu

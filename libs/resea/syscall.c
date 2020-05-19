@@ -5,7 +5,7 @@
 
 /// The internal buffer to receive bulk payloads.
 static void *bulk_ptr = NULL;
-static const size_t bulk_len = 8192;
+static const size_t bulk_len = BULK_BUFFER_LEN;
 
 error_t task_create(task_t tid, const char *name, vaddr_t ip, task_t pager,
                     caps_t caps) {
