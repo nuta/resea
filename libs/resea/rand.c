@@ -20,6 +20,6 @@ void rand_bytes(uint8_t *buf, size_t len) {
     }
 
 #else
-#error "TODO: unsupported CPU"
+    // TODO:
 #endif
 }
