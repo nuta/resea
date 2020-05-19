@@ -51,7 +51,11 @@ typedef uint16_t keycode_t;
 #define BULK(bulk_ptr, bulk_len)                               \
     (MSG_BULK(_NTH_MEMBER(bulk_ptr), _NTH_MEMBER(bulk_len)))
 
+#ifdef __LP64__
 #define MESSAGE_SIZE 256
+#else
+#define MESSAGE_SIZE 32
+#endif
 
 /// Message.
 struct message {
