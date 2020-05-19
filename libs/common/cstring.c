@@ -88,3 +88,15 @@ WEAK void memcpy(void *dst, const void *src, size_t len) {
         *d++ = *s++;
     }
 }
+
+WEAK void memmove(void *dst, const void *src, size_t len) {
+    if ((uintptr_t) dst <= (uintptr_t) src) {
+        memcpy(dst, src, len);
+    } else {
+        uint8_t *d = dst + len;
+        const uint8_t *s = src + len;
+        while (len-- > 0) {
+            *--d = *--s;
+        }
+    }
+}
