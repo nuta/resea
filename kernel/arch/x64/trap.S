@@ -268,6 +268,7 @@ userland_entry:
     call stack_set_canary
     mov rsp, rbx
 
+#ifdef ABI_EMU
     test byte ptr gs:[GS_ABI_EMU], 1
     jz 1f
 
@@ -311,6 +312,8 @@ userland_entry:
 
     jmp 2f
 1:
+#endif
+
     call unlock
 
     // Sanitize registers to prevent information leak.

@@ -143,6 +143,8 @@ uintmax_t x64_handle_syscall(uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,
     return ret;
 }
 
+#ifdef ABI_EMU
+
 void x64_abi_emu_hook(struct abi_emu_frame *frame) {
     lock();
     abi_emu_hook(frame, ABI_HOOK_SYSCALL);
@@ -152,6 +154,8 @@ void x64_abi_emu_hook(struct abi_emu_frame *frame) {
 void x64_abi_emu_hook_initial(struct abi_emu_frame *frame) {
     abi_emu_hook(frame, ABI_HOOK_INITIAL);
 }
+
+#endif
 
 void interrupt_init(void) {
     ioapic_init();
