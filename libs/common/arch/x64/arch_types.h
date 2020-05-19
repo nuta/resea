@@ -1,6 +1,8 @@
 #ifndef __ARCH_TYPES_H__
 #define __ARCH_TYPES_H__
 
+#include <config.h>
+
 typedef uint64_t pageattrs_t;
 typedef uint64_t size_t;
 typedef int64_t intmax_t;
