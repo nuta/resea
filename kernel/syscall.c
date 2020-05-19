@@ -57,6 +57,11 @@ static error_t sys_spawn(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
         return ERR_INVALID_ARG;
     }
 
+    if (pager_task->state == TASK_UNUSED || pager_task->state == TASK_EXITED) {
+        // TODO: Move this check into task_lookup().
+        return ERR_UNAVAILABLE;
+    }
+
     // Create a task.
     char namebuf[TASK_NAME_LEN];
     strncpy_from_user(namebuf, name, sizeof(namebuf));
