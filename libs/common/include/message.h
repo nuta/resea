@@ -111,6 +111,7 @@ struct message {
 
         #define NOP_MSG ID(10)
         struct {
+            int value;
         } nop;
 
         #define ALLOC_PAGES_MSG ID(11)
