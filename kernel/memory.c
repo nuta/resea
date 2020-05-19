@@ -9,7 +9,7 @@
 
 extern char __kernel_heap[];
 extern char __kernel_heap_end[];
-extern char __bootfs[];
+extern char __bootelf[];
 extern char __temp_page[];
 
 static list_t heap;
@@ -95,10 +95,7 @@ static paddr_t user_pager(vaddr_t addr, vaddr_t ip, pagefault_t fault,
 static paddr_t init_task_pager(vaddr_t vaddr, pageattrs_t *attrs) {
     vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
     paddr_t paddr;
-    if (BOOTFS_ADDR <= vaddr && vaddr < BOOTFS_END) {
-        // Initfs contents.
-        paddr = into_paddr(__bootfs + (vaddr - BOOTFS_ADDR));
-    } else if (STRAIGHT_MAP_ADDR <= vaddr && vaddr < STRAIGHT_MAP_END) {
+    if (STRAIGHT_MAP_ADDR <= vaddr && vaddr < STRAIGHT_MAP_END) {
         // Straight-mapping: virtual addresses are equal to physical.
         paddr = vaddr;
     } else {

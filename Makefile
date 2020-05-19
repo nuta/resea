@@ -58,6 +58,8 @@ CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
 CFLAGS += -I$(BUILD_DIR)/include
 CFLAGS += -DVERSION='"$(VERSION)"'
+CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/user/$(BOOTSTRAP).elf"'
+CFLAGS += -DBOOTFS_PATH='"$(BUILD_DIR)/bootfs.bin"'
 
 ifeq ($(BUILD),release)
 CFLAGS += -O2 -flto
@@ -118,14 +120,9 @@ $(kernel_image): $(kernel_objs) $(BUILD_DIR)/kernel/__program_name.o \
 	./tools/embed-symbols.py $(@:.elf=.symbols) $@.tmp
 	cp $@.tmp $@
 
-$(BUILD_DIR)/bootfs.bin: $(bootfs_files) $(BUILD_DIR)/$(BOOTSTRAP).bin tools/mkbootfs.py
+$(BUILD_DIR)/bootfs.bin: $(bootfs_files) tools/mkbootfs.py
 	$(PROGRESS) "MKBOOTFS" $@
-	$(PYTHON3) tools/mkbootfs.py -o $@ --bootstrap $(BUILD_DIR)/$(BOOTSTRAP).bin \
-		$(bootfs_files)
-
-$(BUILD_DIR)/$(BOOTSTRAP).bin: $(BUILD_DIR)/user/$(BOOTSTRAP).elf
-	$(PROGRESS) "OBJCOPY" $@
-	$(OBJCOPY) -j.bootfs -j.text -j.data -j.rodata -j.bss -Obinary $< $@
+	$(PYTHON3) tools/mkbootfs.py -o $@ $(bootfs_files)
 
 $(BUILD_DIR)/kernel/__program_name.o:
 	mkdir -p $(@D)
@@ -138,7 +135,7 @@ $(BUILD_DIR)/kernel/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/bootfs.bin
+$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/user/$(BOOTSTRAP).elf
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) \
@@ -156,6 +153,9 @@ $(BUILD_DIR)/user/%.o: %.S Makefile $(BUILD_DIR)/include/config.h
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ilibs/resea -Ilibs/resea/arch/$(ARCH) \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+
+# FIXME:
+$(BUILD_DIR)/user/servers/$(BOOTSTRAP)/bootfs.o: $(BUILD_DIR)/bootfs.bin
 
 define lib-build-rule
 CFLAGS += -Ilibs/$(1)/include

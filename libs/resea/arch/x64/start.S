@@ -31,19 +31,3 @@ start:
 halt:
     int 3
     jmp halt
-
-//
-//  The bootfs header (for init.bin).
-//
-.section .bootfs, "ax"
-.global __bootfs
-__bootfs:
-    // The startup code (16 bytes). Kernel starts the first userspace program here.
-    jmp start
-    .align 16
-
-    // Fields to be filled by tools/mkbootfs.py.
-    .long 0      // version
-    .long 0      // offset of the first file
-    .long 0      // number of files
-    .long 0      // reserved

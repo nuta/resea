@@ -14,16 +14,13 @@ def align_up(value, align):
     return (value + align - 1) & ~(align - 1)
 
 def main():
-    parser = argparse.ArgumentParser(description="Generates a bootfs bootfs.")
+    parser = argparse.ArgumentParser(description="Builds a bootfs.")
     parser.add_argument("-o", dest="output", help="The output file.")
-    parser.add_argument("--bootstrap", dest="bootstrap", help="The bootstrap binary.")
     parser.add_argument("files", nargs="*", help="Files.")
     args = parser.parse_args()
 
     # Write the boot binary and the file system header.
-    boot_bin = open(args.bootstrap, "rb").read()
-    header = struct.pack("IIII", VERSION, len(boot_bin), len(args.files), 0)
-    bootfs = boot_bin[:JUMP_CODE_SIZE] + header + boot_bin[JUMP_CODE_SIZE+len(header):]
+    bootfs = struct.pack("IIII", VERSION, 16, len(args.files), 0)
 
     # Append files.
     file_contents = bytes()

@@ -9,7 +9,7 @@
 #include "bootfs.h"
 #include "pages.h"
 
-extern struct bootfs_header __bootfs;
+extern char __bootfs[];
 extern char __zeroed_pages[];
 extern char __free_vaddr[];
 extern char __free_vaddr_end[];
@@ -54,7 +54,7 @@ static struct task *get_task_by_tid(task_t tid) {
 
 static void read_file(struct bootfs_file *file, offset_t off, void *buf, size_t len) {
     void *p =
-        (void *) (((uintptr_t) &__bootfs) + file->offset + off);
+        (void *) (((uintptr_t) __bootfs) + file->offset + off);
     memcpy(buf, p, len);
 }
 
@@ -200,9 +200,10 @@ static error_t alloc_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
 
 void main(void) {
     TRACE("starting...");
-    num_files = __bootfs.num_files;
+    struct bootfs_header *header = (struct bootfs_header *) __bootfs;
+    num_files = header->num_files;
     files =
-        (struct bootfs_file *) (((uintptr_t) &__bootfs) + __bootfs.files_off);
+        (struct bootfs_file *) (((uintptr_t) &__bootfs) + header->files_off);
     pages_init();
 
     for (int i = 0; i < TASKS_MAX; i++) {

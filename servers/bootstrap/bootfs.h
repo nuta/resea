@@ -4,7 +4,6 @@
 #include <types.h>
 
 struct bootfs_header {
-    uint8_t startup_code[16];
     uint32_t version;
     uint32_t files_off;
     uint32_t num_files;
