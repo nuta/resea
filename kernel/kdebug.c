@@ -28,7 +28,7 @@ static void run(const char *cmdline) {
 }
 
 void kdebug_handle_interrupt(void) {
-    static char cmdline[128];
+    static char cmdline[64];
     static unsigned long cursor = 0;
     int ch;
     while ((ch = kdebug_readchar()) > 0) {
