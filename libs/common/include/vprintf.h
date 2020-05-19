@@ -1,12 +1,12 @@
 #ifndef __VPRINTF_H__
 #define __VPRINTF_H__
 
+#include <config.h>
 #include <types.h>
 
-#define SYMBOL_TABLE_EMPTY 0xb04d5953b04d5953
-#define SYMBOL_TABLE_MAGIC 0x4c4d59534c4d5953
+#define SYMBOL_TABLE_EMPTY 0xb04d5953
+#define SYMBOL_TABLE_MAGIC 0x4c4d5953
 #define BACKTRACE_MAX      16
-#define SYMBOLS_MAX        256
 
 struct symbol {
     uint64_t addr;
@@ -14,10 +14,10 @@ struct symbol {
 } PACKED;
 
 struct symbol_table {
-    uint64_t magic;
+    uint32_t magic;
     uint32_t num_symbols;
-    uint32_t padding;
-    struct symbol symbols[SYMBOLS_MAX];
+    uint64_t padding;
+    struct symbol symbols[NUM_SYMBOLS];
 } PACKED;
 
 struct stack_frame {

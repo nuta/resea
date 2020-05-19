@@ -189,17 +189,15 @@ int snprintf(char *buf, size_t size, const char *fmt, ...) {
 
 /// The symbol table. embed-symbols.py fills the symbol table and set `magic` to
 /// SYMBOL_TABLE_MAGIC.
-struct symbol_table symbol_table = {
+const struct symbol_table symbol_table = {
     .magic = SYMBOL_TABLE_EMPTY,
-    .num_symbols = SYMBOLS_MAX,
+    .num_symbols = NUM_SYMBOLS,
 };
 
 /// Resolves a symbol name and the offset from the beginning of symbol.
 /// This function returns NULL if the symbol does not
 /// exist in the symbol table.
-static struct symbol *find_symbol(vaddr_t vaddr) {
-    ASSERT(symbol_table.magic == SYMBOL_TABLE_MAGIC);
-
+static const struct symbol *find_symbol(vaddr_t vaddr) {
     // Do a binary search.
     int32_t l = -1;
     int32_t r = symbol_table.num_symbols;
@@ -224,8 +222,8 @@ void backtrace(void) {
             break;
         }
 
-        struct symbol *symbol = find_symbol(frame->return_addr);
-        char *name;
+        const struct symbol *symbol = find_symbol(frame->return_addr);
+        const char *name;
         size_t offset;
         if (symbol) {
             name = symbol->name;

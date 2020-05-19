@@ -3,8 +3,8 @@ import argparse
 import sys
 import struct
 
-SYMBOL_TABLE_EMPTY = bytes([0x53, 0x59, 0x4d, 0xb0, 0x53, 0x59, 0x4d, 0xb0])
-SYMBOL_TABLE_MAGIC = bytes([0x53, 0x59, 0x4d, 0x4c, 0x53, 0x59, 0x4d, 0x4c])
+SYMBOL_TABLE_EMPTY = bytes([0x53, 0x59, 0x4d, 0xb0])
+SYMBOL_TABLE_MAGIC = bytes([0x53, 0x59, 0x4d, 0x4c])
 
 def main():
     parser = argparse.ArgumentParser()
@@ -18,11 +18,12 @@ def main():
     if offset < 0:
         sys.exit("failed to locate the symbol table")
     if image.find(SYMBOL_TABLE_EMPTY, offset + 1) >= 0:
+        print(hex(offset), hex(image.find(SYMBOL_TABLE_EMPTY, offset + 1)))
         sys.exit("found multiple empty symbol tables (perhaps because " +
             "SYMBOL_TABLE_EMPTY is not sufficiently long to be unique?)")
 
-    # Extract the SYMBOLS_MAX value.
-    _, num_symbols_max = struct.unpack("<QI", image[offset:offset+12])
+    # Extract the NUM_SYMBOLS value.
+    _, num_symbols = struct.unpack("<II", image[offset:offset+8])
 
     # Parse the nm output and extract symbol names and theier addresses.
     symbols = {}
@@ -33,12 +34,16 @@ def main():
         symbols[addr] = name
 
     symbols = sorted(symbols.items(), key=lambda s: s[0])
+    if len(symbols) > num_symbols:
+        sys.exit(
+            f"too many symbols: max={num_symbols}, actual={len(symbols)} " \
+            + "(hint: increase NUM_SYMBOLS config)")
 
     # Build a symbol table.
     symbol_table = struct.pack("<8sII", SYMBOL_TABLE_MAGIC, len(symbols), 0)
     for addr, name in symbols:
         symbol_table += struct.pack("<Q56s", addr, bytes(name[:55], "ascii"))
-    for _ in range(len(symbols), num_symbols_max):
+    for _ in range(len(symbols), num_symbols):
         symbol_table += struct.pack("<Q56s", 0, b"")
 
     # Embed the symbol table.
