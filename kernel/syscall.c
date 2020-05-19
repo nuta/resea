@@ -234,6 +234,8 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
         case SYS_READLOG:
             ret = sys_readlog(a1, a2, a3);
             break;
+        case SYS_NOP:
+            ret = 0;
         default:
             ret = ERR_INVALID_ARG;
     }

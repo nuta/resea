@@ -121,3 +121,7 @@ error_t irq_acquire(unsigned irq) {
 error_t irq_release(unsigned irq) {
     return irq_listen(irq, 0);
 }
+
+void nop_syscall(void) {
+    syscall(SYS_NOP, 0, 0, 0, 0, 0);
+}

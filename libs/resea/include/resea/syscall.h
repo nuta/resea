@@ -26,5 +26,6 @@ error_t irq_acquire(unsigned irq);
 error_t irq_release(unsigned irq);
 error_t klog_write(const char *buf, size_t len);
 int klog_read(char *buf, size_t len, bool listen);
+void nop_syscall(void);
 
 #endif
