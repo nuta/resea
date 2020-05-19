@@ -213,37 +213,36 @@ error_t task_unlisten_irq(unsigned irq) {
     return OK;
 }
 
-void handle_irq(unsigned irq) {
-    if (irq == TIMER_IRQ) {
-        // Handles timer interrupts. The timer fires this IRQ every 1/TICK_HZ
-        // seconds.
-
+/// Handles timer interrupts. The timer fires this IRQ every 1/TICK_HZ
+/// seconds.
+void handle_timer_irq(void) {
+    if (mp_is_bsp()) {
         // Handle task timeouts.
-        if (mp_is_bsp()) {
-            for (int i = 0; i < TASKS_MAX; i++) {
-                struct task *task = &tasks[i];
-                if (task->state == TASK_UNUSED || !task->timeout) {
-                    continue;
-                }
+        for (int i = 0; i < NUM_TASKS; i++) {
+            struct task *task = &tasks[i];
+            if (task->state == TASK_UNUSED || !task->timeout) {
+                continue;
+            }
 
-                task->timeout--;
-                if (!task->timeout) {
-                    notify(task, NOTIFY_TIMER);
-                }
+            task->timeout--;
+            if (!task->timeout) {
+                notify(task, NOTIFY_TIMER);
             }
         }
+    }
 
-        // Switch task if the current task has spend its time slice.
-        DEBUG_ASSERT(CURRENT->quantum > 0);
-        CURRENT->quantum--;
-        if (!CURRENT->quantum) {
-            task_switch();
-        }
-    } else {
-        struct task *owner = irq_owners[irq];
-        if (owner) {
-            notify(owner, NOTIFY_IRQ);
-        }
+    // Switch task if the current task has spend its time slice.
+    DEBUG_ASSERT(CURRENT == IDLE_TASK || CURRENT->quantum > 0);
+    CURRENT->quantum--;
+    if (!CURRENT->quantum || CURRENT == IDLE_TASK) {
+        task_switch();
+    }
+}
+
+void handle_irq(unsigned irq) {
+    struct task *owner = irq_owners[irq];
+    if (owner) {
+        notify(owner, NOTIFY_IRQ);
     }
 }
 
