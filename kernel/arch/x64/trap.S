@@ -1,3 +1,4 @@
+#include <config.h>
 #include <trap.h>
 .intel_syntax noprefix
 
@@ -31,8 +32,10 @@ syscall_entry:
     mov gs:[GS_RSP3], rsp
     mov rsp, gs:[GS_RSP0]
 
+#ifdef ABI_EMU
     test byte ptr gs:[GS_ABI_EMU], 1
     jnz abi_emu_entry
+#endif
 
     // Save SYSRET context and registers onto the kernel stack.
     push gs:[GS_RSP3] // User RSP.
@@ -79,6 +82,7 @@ syscall_entry:
     swapgs
     sysretq
 
+#ifdef ABI_EMU
 abi_emu_entry:
     push gs:[GS_RSP3] // User RSP.
     push r15
@@ -140,6 +144,7 @@ abi_emu_entry:
     cli
     swapgs
     sysretq
+#endif
 
 //
 //  Interrupt/exception handlers

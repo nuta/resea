@@ -1,0 +1,30 @@
+menu "Kernel"
+    config NUM_TASKS
+        int "The (maximum) number of tasks"
+        range 1 512
+        default 64
+
+    config TASK_NAME_LEN
+        int "The maximum length of a task name"
+        range 4 64
+        default 16
+
+    config TASK_TIME_SLICE_MS
+        int "The context switching time slice in milliseconds."
+        range 5 200
+        default 10
+
+    config KLOG_BUF_SIZE
+        int "The size of kernel log buffer."
+        range 1 8192
+        default 1024
+
+    config NUM_SYMBOLS
+        int "The (maximum) number of symbols."
+        range 0 1024
+        default 256
+
+    config ABI_EMU
+        bool "Enable ABI emulation"
+        default n
+endmenu

@@ -11,7 +11,10 @@ typedef vaddr_t userptr_t;
 void memcpy_from_user(void *dst, userptr_t src, size_t len);
 void memcpy_to_user(userptr_t dst, const void *src, size_t len);
 long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5);
+
+#ifdef ABI_EMU
 void abi_emu_hook(struct abi_emu_frame *frame, enum abi_hook_type type);
+#endif
 
 // Implemented in arch.
 struct task;

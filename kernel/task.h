@@ -9,6 +9,7 @@
 
 /// The context switching time slice (# of ticks).
 #define TASK_TIME_SLICE ((TASK_TIME_SLICE_MS * TICK_HZ) / 1000)
+STATIC_ASSERT(TASK_TIME_SLICE > 0);
 
 //
 // Task states.

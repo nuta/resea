@@ -1,6 +1,7 @@
 #include "task.h"
 #include <arch.h>
 #include <list.h>
+#include <config.h>
 #include <cstring.h>
 #include "ipc.h"
 #include "kdebug.h"
@@ -10,7 +11,7 @@
 #include "syscall.h"
 
 /// All tasks.
-static struct task tasks[TASKS_MAX];
+static struct task tasks[NUM_TASKS];
 /// A queue of runnable tasks excluding currently running tasks.
 static list_t runqueue;
 /// IRQ owners.
@@ -19,7 +20,7 @@ static struct task *irq_owners[IRQ_MAX];
 /// Returns the task struct for the task ID. It returns NULL if the ID is
 /// invalid.
 struct task *task_lookup(task_t tid) {
-    if (tid <= 0 || tid > TASKS_MAX) {
+    if (tid <= 0 || tid > NUM_TASKS) {
         return NULL;
     }
 
@@ -32,6 +33,13 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     if (task->state != TASK_UNUSED) {
         return ERR_ALREADY_EXISTS;
     }
+
+#ifndef ABI_EMU
+    if ((caps & CAP_ABI_EMU) != 0) {
+        WARN("ABI emulation is not enabled");
+        return ERR_UNAVAILABLE;
+    }
+#endif
 
     // Initialize the page table.
     error_t err;
@@ -94,7 +102,7 @@ error_t task_destroy(struct task *task) {
         list_remove(&sender->sender_next);
     }
 
-    for (task_t tid = 1; tid <= TASKS_MAX; tid++) {
+    for (task_t tid = 1; tid <= NUM_TASKS; tid++) {
         struct task *task2 = task_lookup(tid);
         DEBUG_ASSERT(task2);
 
@@ -241,7 +249,7 @@ void task_dump(void) {
         [TASK_RECEIVING] = "receiveing", [TASK_SENDING] = "sending",
     };
 
-    for (unsigned i = 0; i < TASKS_MAX; i++) {
+    for (unsigned i = 0; i < NUM_TASKS; i++) {
         struct task *task = &tasks[i];
         if (task->state == TASK_UNUSED) {
             continue;
@@ -261,7 +269,7 @@ void task_dump(void) {
 /// Initializes the task subsystem.
 void task_init(void) {
     list_init(&runqueue);
-    for (int i = 0; i < TASKS_MAX; i++) {
+    for (int i = 0; i < NUM_TASKS; i++) {
         tasks[i].state = TASK_UNUSED;
         tasks[i].tid = i + 1;
     }

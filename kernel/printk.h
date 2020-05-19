@@ -3,8 +3,7 @@
 
 #include <print_macros.h>
 #include <types.h>
-
-#define KLOG_BUF_SIZE 4096
+#include <config.h>
 
 /// The kernel log (ring) buffer.
 struct klog {

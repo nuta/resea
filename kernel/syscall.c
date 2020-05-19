@@ -120,7 +120,7 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
         return ERR_INVALID_ARG;
     }
 
-    if (src < 0 || src > TASKS_MAX) {
+    if (src < 0 || src > NUM_TASKS) {
         return ERR_INVALID_ARG;
     }
 
@@ -244,6 +244,7 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
     return ret;
 }
 
+#ifdef ABI_EMU
 /// The system call handler for ABI emulation.
 void abi_emu_hook(struct abi_emu_frame *frame, enum abi_hook_type type) {
     struct message m;
@@ -268,3 +269,4 @@ void abi_emu_hook(struct abi_emu_frame *frame, enum abi_hook_type type) {
 
     memcpy(frame, &m.abi_hook_reply.frame, sizeof(*frame));
 }
+#endif

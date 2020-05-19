@@ -32,16 +32,11 @@ config GRUB_PREFIX
     default "$(DEFAULT_GRUB_PREFIX)"
 endmenu
 
-menu "Kernel"
-    config TASK_NAME_LEN
-        int "The maximum length of a task name"
-        range 4 64
-        default 16
-    config TASK_TIME_SLICE_MS
-        int "The context switching time slice in milliseconds."
-        range 5 200
-        default 10
-endmenu
+config NOMMU
+    bool "Disable virtual memory"
+    default n
+
+source "kernel/Kconfig"
 
 menu "Servers"
     config BOOTSTRAP
