@@ -54,9 +54,14 @@ def parse_config(config):
             value = m.groups()[1]
             dic[key] = value
 
+        m = re.match(r"^CONFIG_ARCH_([^=]+)=y$", line)
+        if m:
+            arch_name = m.groups()[0].lower()
+            dic["ARCH"] = f"\"{arch_name}\""
+
+    assert(dic["ARCH"])
+
     # XXX:
-    if "CONFIG_ARCH_X64=y" in config:
-        dic["ARCH"] = '"x64"'
     if "CONFIG_BUILD_RELEASE=y" in config:
         dic["BUILD"] = '"release"'
     else:
