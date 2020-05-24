@@ -240,6 +240,7 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             break;
         case SYS_NOP:
             ret = 0;
+            break;
         default:
             ret = ERR_INVALID_ARG;
     }

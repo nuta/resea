@@ -107,13 +107,13 @@ void *realloc(void *ptr, size_t size) {
     if (chunk->capacity <= size) {
         // There's enough room. Keep using the current chunk.
         return ptr;
-    } else {
-        // There's not enough room. Allocate a new space and copy old data.
-        void *new_ptr = malloc(size);
-        memcpy(new_ptr, ptr, chunk->size);
-        free(ptr);
-        return new_ptr;
     }
+
+    // There's not enough room. Allocate a new space and copy old data.
+    void *new_ptr = malloc(size);
+    memcpy(new_ptr, ptr, chunk->size);
+    free(ptr);
+    return new_ptr;
 }
 
 void free(void *ptr) {

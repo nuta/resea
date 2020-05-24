@@ -199,7 +199,7 @@ int fs_open(struct file **file, const char *path, int flags, mode_t mode) {
         return -ENOENT;
     }
 
-    *file = malloc(sizeof(*file));
+    *file = malloc(sizeof(**file));
     (*file)->pos = 0;
     (*file)->inode = NULL; // To be filled by the driver.
 
