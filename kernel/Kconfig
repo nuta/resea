@@ -19,11 +19,6 @@ menu "Kernel"
         range 1 8192
         default 1024
 
-    config NUM_SYMBOLS
-        int "The (maximum) number of symbols."
-        range 0 1024
-        default 256
-
     config ABI_EMU
         bool "Enable ABI emulation"
         default n

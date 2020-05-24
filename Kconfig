@@ -32,10 +32,6 @@ config GRUB_PREFIX
     default "$(DEFAULT_GRUB_PREFIX)"
 endmenu
 
-config NOMMU
-    bool "Disable virtual memory"
-    default n
-
 source "kernel/Kconfig"
 source "libs/resea/Kconfig"
 
@@ -46,3 +42,12 @@ menu "Servers"
 
     source "servers/*/Kconfig"
 endmenu
+
+config NUM_SYMBOLS
+    int "The (maximum) number of symbols."
+    range 0 2048
+    default 512
+
+config NOMMU
+    bool "Disable virtual memory"
+    default n
