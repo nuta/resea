@@ -134,7 +134,7 @@ void main(void) {
                         case TCPIP_RECEIVED_MSG: {
                             DBG("new data");
                             struct client *c =
-                                map_get_handle(clients, &m.tcpip_received.handle);
+                                map_get(clients, (void *) m.tcpip_received.handle);
                             ASSERT(c);
 
                             m.type = TCPIP_READ_MSG;
@@ -160,11 +160,11 @@ void main(void) {
                             client->request = NULL;
                             client->request_len = 0;
                             client->done = false;
-                            map_set_handle(clients, &new_handle, client);
+                            map_set(clients, (void *) new_handle, client);
                             break;
                         }
                         case TCPIP_CLOSED_MSG: {
-                            map_remove_handle(clients, &m.tcpip_closed.handle);
+                            map_remove(clients, (void *) m.tcpip_closed.handle);
                             break;
                         }
                     }

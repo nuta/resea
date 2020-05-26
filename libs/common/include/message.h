@@ -4,10 +4,6 @@
 #include <types.h>
 #include <config.h>
 
-typedef struct {
-    uint8_t id[16];
-} handle_t;
-
 //
 //  Console Device Driver
 //

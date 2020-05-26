@@ -4,7 +4,7 @@
 #include <resea/malloc.h>
 #include <resea/map.h>
 #include <resea/string.h>
-#include <resea/rand.h>
+#include <resea/handle.h>
 #include <message.h>
 #include <cstring.h>
 #include "fat.h"
@@ -68,9 +68,9 @@ void main(void) {
                     break;
                 }
 
-                handle_t handle;
-                rand_bytes((uint8_t *) &handle, sizeof(handle));
-                map_set_handle(clients, &handle, file);
+                handle_t handle = handle_alloc();
+                ASSERT_OK(handle);
+                handle_set(handle, file);
 
                 m.type = FS_OPEN_REPLY_MSG;
                 m.fs_open_reply.handle = handle;
@@ -78,8 +78,7 @@ void main(void) {
                 break;
             }
             case FS_READ_MSG: {
-                struct fat_file *file =
-                    map_get_handle(clients, &m.fs_read.handle);
+                struct fat_file *file = handle_get(m.fs_read.handle);
                 if (!file) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;

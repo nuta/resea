@@ -2,9 +2,8 @@
 #include <resea/syscall.h>
 #include <resea/lookup.h>
 #include <resea/malloc.h>
-#include <resea/map.h>
 #include <resea/string.h>
-#include <resea/rand.h>
+#include <resea/handle.h>
 #include <message.h>
 #include <cstring.h>
 #include <list.h>
@@ -12,7 +11,6 @@
 extern char __tarball[];
 extern char __tarball_end[];
 static list_t files;
-static map_t clients;
 
 #define TAR_TYPE_NORMAL   '0'
 #define TAR_TYPE_SYMLINK  '2'
@@ -115,7 +113,6 @@ static int read(struct file *file, offset_t off, void *buf, size_t len) {
 
 void main(void) {
     TRACE("starting...");
-    clients = map_new();
     list_init(&files);
     load_all_files();
 
@@ -133,10 +130,8 @@ void main(void) {
                     break;
                 }
 
-                handle_t handle;
-                rand_bytes((uint8_t *) &handle, sizeof(handle));
-                map_set_handle(clients, &handle, file);
-
+                handle_t handle = handle_alloc();
+                handle_set(handle, file);
                 m.type = FS_OPEN_REPLY_MSG;
                 m.fs_open_reply.handle = handle;
                 ipc_reply(m.src, &m);
@@ -155,7 +150,7 @@ void main(void) {
                 break;
             }
             case FS_READ_MSG: {
-                struct file *file = map_get_handle(clients, &m.fs_read.handle);
+                struct file *file = handle_get(m.fs_read.handle);
                 if (!file) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;
