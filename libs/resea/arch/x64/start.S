@@ -3,14 +3,6 @@
 
 .global start
 start:
-    // Clear .bss section
-    mov al, 0x00
-    lea rdi, [rip + __bss]
-    lea rcx, [rip + __bss_end]
-    sub rcx, rdi
-    cld
-    rep stosb
-
     // Set the stack pointer.
     lea rsp, [rip + __stack_end]
 
