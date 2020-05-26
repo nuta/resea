@@ -4,6 +4,9 @@ choice
     prompt "Target CPU architecture"
 config ARCH_X64
     bool "x86_64"
+config ARCH_ARM
+    bool "ARM (micro:bit)"
+    select NOMMU
 endchoice
 
 menu "Build options"

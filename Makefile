@@ -64,7 +64,12 @@ CFLAGS += -DBOOTFS_PATH='"$(BUILD_DIR)/bootfs.bin"'
 ifeq ($(BUILD),release)
 CFLAGS += -O2 -flto
 else
+# FIXME:
+ifeq ($(ARCH),arm)
+CFLAGS += -O2 -DDEBUG
+else
 CFLAGS += -O1 -DDEBUG -fsanitize=undefined
+endif
 endif
 
 # Disable builtin implicit rules and variables.

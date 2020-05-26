@@ -11,13 +11,15 @@
 ### macOS
 ```
 $ brew install llvm python3 qemu bochs i386-elf-grub xorriso mtools
+$ brew cask install gcc-arm-embedded
 $ pip3 install -r tools/requirements.txt
 ```
 
 ### Ubuntu 20.04
 ```
 $ apt install llvm-8 lld-8 clang-8 qemu bochs grub2 xorriso mtools \
-    python3 python3-dev python3-pip python3-setuptools
+    python3 python3-dev python3-pip python3-setuptools \
+    gcc-arm-none-eabi
 $ pip3 install --user -r tools/requirements.txt
 ```
 
