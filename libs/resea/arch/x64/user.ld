@@ -8,6 +8,10 @@ PHDRS {
 }
 
 SECTIONS {
+    /* XXX: For simplicity of the implementation, kernel's ELF loader assumes
+            the address and the length of program headers are aligned to 4096
+            (PAGE_SIZE). */
+
     . = 0x01000000;
 
     .text : ALIGN(0x1000) {
@@ -15,20 +19,20 @@ SECTIONS {
         *(.text);
         *(.text.*);
         __text_end = .;
-        . = ALIGN(4096);
+        . = ALIGN(4096); // See the XXX comment above.
     } :text
 
     .rodata : ALIGN(0x1000) {
         *(.rodata);
         *(.rodata.*);
-        . = ALIGN(4096);
+        . = ALIGN(4096); // See the XXX comment above.
     } :text
 
     . = 0x03000000;
     .data : ALIGN(0x1000) {
         *(.data);
         *(.data.*);
-        . = ALIGN(4096);
+        . = ALIGN(4096); // See the XXX comment above.
     } :data
 
     __zeroed_pages = .;
@@ -38,7 +42,7 @@ SECTIONS {
         *(.bss);
         *(.bss.*);
         __bss_end = .;
-        . = ALIGN(4096);
+        . = ALIGN(4096); // See the XXX comment above.
     } :bss
 
     . = ALIGN(16);
