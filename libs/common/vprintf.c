@@ -137,9 +137,11 @@ void vprintf(struct vprintf_context *ctx, const char *fmt, va_list vargs) {
                 case 'c':
                     ctx->printchar(ctx, va_arg(vargs, int));
                     break;
-                case 's':
-                    puts(ctx, va_arg(vargs, char *));
+                case 's': {
+                    char *s = va_arg(vargs, char *);
+                    puts(ctx, s ? s : "(null)");
                     break;
+                }
                 case '%':
                     ctx->printchar(ctx, '%');
                     break;
