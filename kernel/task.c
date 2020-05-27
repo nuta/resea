@@ -11,7 +11,7 @@
 #include "syscall.h"
 
 /// All tasks.
-static struct task tasks[NUM_TASKS];
+static struct task tasks[CONFIG_NUM_TASKS];
 /// A queue of runnable tasks excluding currently running tasks.
 static list_t runqueue;
 /// IRQ owners.
@@ -20,7 +20,7 @@ static struct task *irq_owners[IRQ_MAX];
 /// Returns the task struct for the task ID. It returns NULL if the ID is
 /// invalid.
 struct task *task_lookup(task_t tid) {
-    if (tid <= 0 || tid > NUM_TASKS) {
+    if (tid <= 0 || tid > CONFIG_NUM_TASKS) {
         return NULL;
     }
 
@@ -103,7 +103,7 @@ error_t task_destroy(struct task *task) {
         list_remove(&sender->sender_next);
     }
 
-    for (task_t tid = 1; tid <= NUM_TASKS; tid++) {
+    for (task_t tid = 1; tid <= CONFIG_NUM_TASKS; tid++) {
         struct task *task2 = task_lookup(tid);
         DEBUG_ASSERT(task2);
 
@@ -218,7 +218,7 @@ error_t task_unlisten_irq(unsigned irq) {
 void handle_timer_irq(void) {
     if (mp_is_bsp()) {
         // Handle task timeouts.
-        for (int i = 0; i < NUM_TASKS; i++) {
+        for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
             struct task *task = &tasks[i];
             if (task->state == TASK_UNUSED || !task->timeout) {
                 continue;
@@ -253,7 +253,7 @@ void task_dump(void) {
         [TASK_RECEIVING] = "receiveing", [TASK_SENDING] = "sending",
     };
 
-    for (unsigned i = 0; i < NUM_TASKS; i++) {
+    for (unsigned i = 0; i < CONFIG_NUM_TASKS; i++) {
         struct task *task = &tasks[i];
         if (task->state == TASK_UNUSED) {
             continue;
@@ -273,7 +273,7 @@ void task_dump(void) {
 /// Initializes the task subsystem.
 void task_init(void) {
     list_init(&runqueue);
-    for (int i = 0; i < NUM_TASKS; i++) {
+    for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
         tasks[i].state = TASK_UNUSED;
         tasks[i].tid = i + 1;
     }

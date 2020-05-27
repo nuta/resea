@@ -8,7 +8,7 @@
 #include "memory.h"
 
 /// The context switching time slice (# of ticks).
-#define TASK_TIME_SLICE ((TASK_TIME_SLICE_MS * TICK_HZ) / 1000)
+#define TASK_TIME_SLICE ((CONFIG_TASK_TIME_SLICE_MS * TICK_HZ) / 1000)
 STATIC_ASSERT(TASK_TIME_SLICE > 0);
 
 //
@@ -48,7 +48,7 @@ struct task {
     /// The state.
     int state;
     /// The name of task terminated by NUL.
-    char name[TASK_NAME_LEN];
+    char name[CONFIG_TASK_NAME_LEN];
     /// Capabilities (allowed operations).
     caps_t caps;
     /// The page table.

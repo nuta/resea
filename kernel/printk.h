@@ -7,7 +7,7 @@
 
 /// The kernel log (ring) buffer.
 struct klog {
-    char buf[KLOG_BUF_SIZE];
+    char buf[CONFIG_KLOG_BUF_SIZE];
     size_t head;
     size_t tail;
 };

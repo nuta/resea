@@ -4,7 +4,6 @@
 #include <resea/printf.h>
 #include <resea/syscall.h>
 #include <cstring.h>
-#include <config.h>
 #include "elf.h"
 #include "bootfs.h"
 #include "pages.h"
@@ -37,13 +36,13 @@ struct task {
     list_t page_areas;
 };
 
-static struct task tasks[NUM_TASKS];
+static struct task tasks[CONFIG_NUM_TASKS];
 static struct bootfs_file *files;
 static unsigned num_files;
 
 /// Look for the task in the our task table.
 static struct task *get_task_by_tid(task_t tid) {
-    if (tid <= 0 || tid > NUM_TASKS) {
+    if (tid <= 0 || tid > CONFIG_NUM_TASKS) {
         PANIC("invalid tid %d", tid);
     }
 
@@ -63,7 +62,7 @@ static task_t launch_task(struct bootfs_file *file) {
 
     // Look for an unused task ID.
     struct task *task = NULL;
-    for (int i = 0; i < NUM_TASKS; i++) {
+    for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
         if (!tasks[i].in_use) {
             task = &tasks[i];
             break;
@@ -206,7 +205,7 @@ void main(void) {
         (struct bootfs_file *) (((uintptr_t) &__bootfs) + header->files_off);
     pages_init();
 
-    for (int i = 0; i < NUM_TASKS; i++) {
+    for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
         tasks[i].in_use = false;
         tasks[i].tid = i + 1;
     }
@@ -306,7 +305,7 @@ void main(void) {
             }
             case LOOKUP_MSG: {
                 struct task *task = NULL;
-                for (int i = 0; i < NUM_TASKS; i++) {
+                for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
                     if (tasks[i].in_use && !strcmp(tasks[i].name, m.lookup.name)) {
                         task = &tasks[i];
                         break;

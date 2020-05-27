@@ -17,7 +17,7 @@ struct symbol_table {
     uint32_t magic;
     uint32_t num_symbols;
     uint64_t padding;
-    struct symbol symbols[NUM_SYMBOLS];
+    struct symbol symbols[CONFIG_NUM_SYMBOLS];
 } PACKED;
 
 struct stack_frame {

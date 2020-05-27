@@ -1,15 +1,25 @@
-VERSION := v0.1.0
-
-# Enable verbose output if $(V) is set.
-ifeq ($(V),)
-.SILENT:
+# Default values for build system.
+export V ?=
+export VERSION ?= v0.1.0
+export ARCH ?= x64
+export BUILD_DIR ?= build
+ifeq ($(shell uname), Darwin)
+LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
+GRUB_PREFIX ?= /usr/local/opt/i386-elf-grub/bin/i386-elf-
 endif
 
 # The default build target.
 .PHONY: default
 default: build
 
--include .config.mk
+# Disable builtin implicit rules and variables.
+MAKEFLAGS += --no-builtin-rules --no-builtin-variables
+.SUFFIXES:
+
+# Enable verbose output if $(V) is set.
+ifeq ($(V),)
+.SILENT:
+endif
 
 # Determine if we need to load ".config".
 non_config_targets := defconfig menuconfig
@@ -24,15 +34,37 @@ endif
 
 # Include other makefiles.
 ifeq ($(load_config), y)
-ifeq ($(wildcard .config.mk),)
-$(error .config.mk does not exist (run 'make menuconfig' first))
+ifeq ($(wildcard .config),)
+$(error .config does not exist (run 'make menuconfig' first))
 endif
 
+include .config
+
+bootstrap := $(patsubst "%",%,$(CONFIG_BOOTSTRAP))
 kernel_image := $(BUILD_DIR)/resea.elf
 libs := resea
 
+all_servers = $(notdir $(wildcard servers/*))
+servers = \
+	$(sort $(foreach server, $(all_servers), \
+		$(if $(value $(shell echo CONFIG_$(server)_SERVER | \
+			tr  '[:lower:]' '[:upper:]')), $(server),)))
+autostarts = \
+	$(sort $(foreach server, $(all_servers), \
+		$(if $(value $(shell echo CONFIG_AUTOSTART_$(server) | \
+			tr  '[:lower:]' '[:upper:]')), $(server),)))
+
+kernel_objs += main.o task.o ipc.o syscall.o memory.o printk.o kdebug.o
 include kernel/arch/$(ARCH)/arch.mk
 include libs/common/lib.mk
+
+bootfs_files := $(foreach name, $(servers), $(BUILD_DIR)/user/$(name).elf)
+kernel_objs := \
+	$(addprefix $(BUILD_DIR)/kernel/kernel/, $(kernel_objs)) \
+	$(addprefix $(BUILD_DIR)/kernel/libs/common/, $(libcommon_objs))
+lib_objs := \
+	$(foreach lib, $(libs), $(BUILD_DIR)/user/libs/$(lib).o) \
+	$(addprefix $(BUILD_DIR)/user/libs/common/, $(libcommon_objs))
 endif
 
 CC         := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
@@ -58,33 +90,19 @@ CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
 CFLAGS += -I$(BUILD_DIR)/include
 CFLAGS += -DVERSION='"$(VERSION)"'
-CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/user/$(BOOTSTRAP).elf"'
+CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/user/$(bootstrap).elf"'
 CFLAGS += -DBOOTFS_PATH='"$(BUILD_DIR)/bootfs.bin"'
+CFLAGS += -DAUTOSTARTS='"$(autostarts)"'
 
-ifeq ($(BUILD),release)
-CFLAGS += -O2 -flto
-else
+
 # FIXME:
 ifeq ($(ARCH),arm)
 CFLAGS += -O2 -DDEBUG
+else ifdef CONFIG_BUILD_RELEASE
+CFLAGS += -O2 -flto
 else
 CFLAGS += -O1 -DDEBUG -fsanitize=undefined
 endif
-endif
-
-# Disable builtin implicit rules and variables.
-MAKEFLAGS += --no-builtin-rules --no-builtin-variables
-.SUFFIXES:
-
-kernel_objs += main.o task.o ipc.o syscall.o memory.o printk.o kdebug.o
-
-bootfs_files := $(foreach name, $(SERVERS), $(BUILD_DIR)/user/$(name).elf)
-kernel_objs := \
-	$(addprefix $(BUILD_DIR)/kernel/kernel/, $(kernel_objs)) \
-	$(addprefix $(BUILD_DIR)/kernel/libs/common/, $(libcommon_objs))
-lib_objs := \
-	$(foreach lib, $(libs), $(BUILD_DIR)/user/libs/$(lib).o) \
-	$(addprefix $(BUILD_DIR)/user/libs/common/, $(libcommon_objs))
 
 #
 #  Build Commands
@@ -103,7 +121,7 @@ clean:
 .PHONY: defconfig
 defconfig:
 	$(PROGRESS) "CONFIG"
-	./tools/config.py --default
+	./tools/config.py --defconfig
 
 .PHONY: menuconfig
 menuconfig:
@@ -140,7 +158,7 @@ $(BUILD_DIR)/kernel/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/user/$(BOOTSTRAP).elf
+$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/user/$(bootstrap).elf
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) \
@@ -159,8 +177,24 @@ $(BUILD_DIR)/user/%.o: %.S Makefile $(BUILD_DIR)/include/config.h
 	$(CC) $(CFLAGS) -Ilibs/resea -Ilibs/resea/arch/$(ARCH) \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
+$(BUILD_DIR)/include/config.h: .config tools/config.py
+	$(PROGRESS) "GEN" $@
+	mkdir -p $(@D)
+	./tools/config.py --genconfig $@
+
+# JSON compilation database.
+# https://clang.llvm.org/docs/JSONCompilationDatabase.html
+$(BUILD_DIR)/compile_commands.json: $(kernel_objs)
+	$(PROGRESS) "GEN" $(BUILD_DIR)/compile_commands.json
+	$(PYTHON3) tools/merge-compile-commands.py \
+		-o $(BUILD_DIR)/compile_commands.json \
+		$(shell find $(BUILD_DIR)/kernel -type f -name "*.json") \
+		$(shell find $(BUILD_DIR)/user -type f -name "*.json")
+
+-include $(shell find $(BUILD_DIR) -name "*.deps" 2>/dev/null)
+
 # FIXME:
-$(BUILD_DIR)/user/servers/$(BOOTSTRAP)/bootfs.o: $(BUILD_DIR)/bootfs.bin
+$(BUILD_DIR)/user/servers/$(bootstrap)/bootfs.o: $(BUILD_DIR)/bootfs.bin
 
 define lib-build-rule
 CFLAGS += -Ilibs/$(1)/include
@@ -210,21 +244,6 @@ $(BUILD_DIR)/user/$(1).elf: $(BUILD_DIR)/user/$(1).debug.elf
 
 -include $(BUILD_DIR)/user/$(1)/servers/*.deps
 endef
-$(foreach server, $(BOOTSTRAP) $(SERVERS), $(eval $(call server-build-rule,$(server))))
+$(foreach server, $(bootstrap) $(servers), $(eval $(call server-build-rule,$(server))))
 $(foreach app, $(APPS), $(eval $(call server-build-rule,$(app))))
 
-$(BUILD_DIR)/include/config.h: .config tools/config.py
-	$(PROGRESS) "GEN" $@
-	mkdir -p $(@D)
-	./tools/config.py --generate $@
-
-# JSON compilation database.
-# https://clang.llvm.org/docs/JSONCompilationDatabase.html
-$(BUILD_DIR)/compile_commands.json: $(kernel_objs)
-	$(PROGRESS) "GEN" $(BUILD_DIR)/compile_commands.json
-	$(PYTHON3) tools/merge-compile-commands.py \
-		-o $(BUILD_DIR)/compile_commands.json \
-		$(shell find $(BUILD_DIR)/kernel -type f -name "*.json") \
-		$(shell find $(BUILD_DIR)/user -type f -name "*.json")
-
--include $(shell find $(BUILD_DIR) -name "*.deps" 2>/dev/null)

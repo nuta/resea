@@ -21,7 +21,7 @@ typedef uint64_t pagefault_t;
 #define PF_WRITE   (1 << 1)
 #define PF_USER    (1 << 2)
 
-#ifdef ABI_EMU
+#ifdef CONFIG_ABI_EMU
 struct abi_emu_frame {
     uint64_t fsbase;
     uint64_t gsbase;

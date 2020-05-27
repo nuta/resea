@@ -10,7 +10,7 @@ static struct task *listener = NULL;
 size_t klog_read(char *buf, size_t buf_len) {
     size_t remaining = buf_len;
     if (klog.tail > klog.head) {
-        int copy_len = MIN(remaining, KLOG_BUF_SIZE - klog.tail);
+        int copy_len = MIN(remaining, CONFIG_KLOG_BUF_SIZE - klog.tail);
         memcpy(buf, &klog.buf[klog.tail], copy_len);
         buf += copy_len;
         remaining -= copy_len;
@@ -20,17 +20,17 @@ size_t klog_read(char *buf, size_t buf_len) {
     int copy_len = MIN(remaining, klog.head - klog.tail);
     memcpy(buf, &klog.buf[klog.tail], copy_len);
     remaining -= copy_len;
-    klog.tail = (klog.tail + copy_len) % KLOG_BUF_SIZE;
+    klog.tail = (klog.tail + copy_len) % CONFIG_KLOG_BUF_SIZE;
     return buf_len - remaining;
 }
 
 /// Writes a character into the kernel log buffer.
 void klog_write(char ch) {
     klog.buf[klog.head] = ch;
-    klog.head = (klog.head + 1) % KLOG_BUF_SIZE;
+    klog.head = (klog.head + 1) % CONFIG_KLOG_BUF_SIZE;
     if (klog.head == klog.tail) {
         // The buffer is full. Discard a character by moving the tail.
-        klog.tail = (klog.tail + 1) % KLOG_BUF_SIZE;
+        klog.tail = (klog.tail + 1) % CONFIG_KLOG_BUF_SIZE;
     }
 
     if (ch == '\n' && listener) {

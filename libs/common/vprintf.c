@@ -193,7 +193,7 @@ int snprintf(char *buf, size_t size, const char *fmt, ...) {
 /// SYMBOL_TABLE_MAGIC.
 const struct symbol_table symbol_table = {
     .magic = SYMBOL_TABLE_EMPTY,
-    .num_symbols = NUM_SYMBOLS,
+    .num_symbols = CONFIG_NUM_SYMBOLS,
 };
 
 /// Resolves a symbol name and the offset from the beginning of symbol.

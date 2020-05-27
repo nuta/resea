@@ -85,7 +85,7 @@ struct message {
             pageattrs_t attrs;
         } page_fault_reply;
 
-#ifdef ABI_EMU
+#ifdef CONFIG_ABI_EMU
         #define ABI_HOOK_MSG ID(5)
         struct {
             task_t task;
@@ -101,7 +101,7 @@ struct message {
 
         #define LOOKUP_MSG ID(8)
         struct {
-            char name[TASK_NAME_LEN];
+            char name[CONFIG_TASK_NAME_LEN];
         } lookup;
 
         #define LOOKUP_REPLY_MSG ID(9)
@@ -128,7 +128,7 @@ struct message {
 
         #define LAUNCH_TASK_MSG ID(13)
         struct {
-            char name[TASK_NAME_LEN];
+            char name[CONFIG_TASK_NAME_LEN];
         } launch_task;
 
         #define LAUNCH_TASK_REPLY_MSG ID(14)

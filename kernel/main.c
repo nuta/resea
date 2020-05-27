@@ -43,7 +43,7 @@ static void map_boot_elf(struct vm *vm) {
         ASSERT(IS_ALIGNED(file_size, PAGE_SIZE));
         ASSERT(IS_ALIGNED(mem_size, PAGE_SIZE));
 
-#ifdef NOMMU
+#ifdef CONFIG_NOMMU
         vaddr_t copy_from = (vaddr_t) (bootelf_base + file_off);
         if (file_size > 0 && vaddr != copy_from) {
             memmove((void *) vaddr, (void *) copy_from, file_size);
