@@ -216,6 +216,7 @@ void main(void) {
     strncpy(tasks[0].name, "bootstrap", sizeof(tasks[0].name));
 
     // Launch servers in bootfs.
+    int num_launched = 0;
     for (uint32_t i = 0; i < num_files; i++) {
         struct bootfs_file *file = &files[i];
 
@@ -228,6 +229,7 @@ void main(void) {
             if (!strncmp(file->name, startups, len)
                 && (startups[len] == '\0' || startups[len] == ' ')) {
                 launch_task(file);
+                num_launched++;
                 break;
             }
 
@@ -239,6 +241,10 @@ void main(void) {
                 startups++;
             }
         }
+    }
+
+    if (!num_launched) {
+        WARN("no servers to launch");
     }
 
     // The mainloop: receive and handle messages.
