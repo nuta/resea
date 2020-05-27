@@ -46,7 +46,6 @@ static void map_boot_elf(struct vm *vm) {
 #ifdef NOMMU
         vaddr_t copy_from = (vaddr_t) (bootelf_base + file_off);
         if (file_size > 0 && vaddr != copy_from) {
-            DBG("memmove: %p -> %p (%d)", copy_from, vaddr, file_size);
             memmove((void *) vaddr, (void *) copy_from, file_size);
         }
 #else
