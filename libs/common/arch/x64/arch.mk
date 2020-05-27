@@ -1,12 +1,7 @@
 libcommon_objs += arch/x64/memcpy.o
 
-# GRUB_PREFIX = <empty by default>
 QEMU  ?= qemu-system-x86_64
 BOCHS ?= bochs
-
-ifeq ($(shell uname),Darwin)
-GRUB_PREFIX ?= i386-elf-
-endif
 
 CFLAGS += --target=x86_64 -mcmodel=large -fno-omit-frame-pointer
 CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
