@@ -55,7 +55,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
 
     // Initialize fields.
     TRACE("new task #%d: %s (pager=%s)",
-          task->tid, name, pager ? pager->name : "");
+          task->tid, name, pager ? pager->name : NULL);
     task->state = TASK_CREATED;
     task->caps = caps;
     task->notifications = 0;
