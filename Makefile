@@ -1,7 +1,6 @@
 # Default values for build system.
-export V ?=
-export VERSION ?= v0.1.0
-export ARCH ?= x64
+export V         ?=
+export VERSION   ?= v0.1.0
 export BUILD_DIR ?= build
 ifeq ($(shell uname), Darwin)
 LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
@@ -40,32 +39,50 @@ endif
 
 include .config
 
-bootstrap := $(patsubst "%",%,$(CONFIG_BOOTSTRAP))
+export ARCH  := $(patsubst "%",%,$(CONFIG_ARCH))
+bootstrap    := $(patsubst "%",%,$(CONFIG_BOOTSTRAP))
 kernel_image := $(BUILD_DIR)/resea.elf
-libs := resea
-
-all_servers = $(notdir $(wildcard servers/*))
-servers = \
+bootfs_bin   := $(BUILD_DIR)/bootfs.bin
+builtin_libs := common resea
+all_servers  := $(notdir $(wildcard servers/*))
+all_libs     := $(notdir $(wildcard libs/*))
+servers      := \
 	$(sort $(foreach server, $(all_servers), \
 		$(if $(value $(shell echo CONFIG_$(server)_SERVER | \
 			tr  '[:lower:]' '[:upper:]')), $(server),)))
-autostarts = \
+autostarts   := \
 	$(sort $(foreach server, $(all_servers), \
-		$(if $(value $(shell echo CONFIG_AUTOSTART_$(server) | \
-			tr  '[:lower:]' '[:upper:]')), $(server),)))
+		$(if $(filter-out m, $(value $(shell echo CONFIG_$(server)_SERVER | \
+			tr  '[:lower:]' '[:upper:]'))), $(server),)))
+bootfs_files := $(foreach name, $(servers), $(BUILD_DIR)/$(name).elf)
 
-kernel_objs += main.o task.o ipc.o syscall.o memory.o printk.o kdebug.o
-include kernel/arch/$(ARCH)/arch.mk
-include libs/common/lib.mk
+# Visits the soruce directory recursively and fills $(cflags), $(objs) and $(libs).
+# $(1): The target source dir.
+# $(2): The build dir.
+define visit-subdir
+$(eval obj-y :=)
+$(eval lib-y :=)
+$(eval build_dir := $(2)/$(1))
+$(eval subdir-y :=)
+$(eval cflags-y :=)
+$(eval global-cflags-y :=)
+$(eval include $(1)/build.mk)
+$(eval build_mks += $(1)/build.mk)
+$(eval objs += $(addprefix $(2)/$(1)/, $(obj-y)))
+$(eval libs += $(lib-y))
+$(eval cflags += $(cflags-y))
+$(eval CFLAGS += $(global-cflags-y))
+$(eval $(foreach subdir, $(subdir-y), \
+	$(eval $(call visit-subdir,$(1)/$(subdir),$(2)))))
+endef
 
-bootfs_files := $(foreach name, $(servers), $(BUILD_DIR)/user/$(name).elf)
-kernel_objs := \
-	$(addprefix $(BUILD_DIR)/kernel/kernel/, $(kernel_objs)) \
-	$(addprefix $(BUILD_DIR)/kernel/libs/common/, $(libcommon_objs))
-lib_objs := \
-	$(foreach lib, $(libs), $(BUILD_DIR)/user/libs/$(lib).o) \
-	$(addprefix $(BUILD_DIR)/user/libs/common/, $(libcommon_objs))
-endif
+# Enumerate kernel object files.
+objs :=
+$(eval $(call visit-subdir,kernel,$(BUILD_DIR)/kernel))
+$(eval $(call visit-subdir,libs/common,$(BUILD_DIR)/kernel))
+kernel_objs := $(objs)
+
+endif # ifeq ($(load_config), y)
 
 CC         := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
 LD         := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
@@ -90,18 +107,14 @@ CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
 CFLAGS += -I$(BUILD_DIR)/include
 CFLAGS += -DVERSION='"$(VERSION)"'
-CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/user/$(bootstrap).elf"'
-CFLAGS += -DBOOTFS_PATH='"$(BUILD_DIR)/bootfs.bin"'
+CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/$(bootstrap).elf"'
+CFLAGS += -DBOOTFS_PATH='"$(bootfs_bin)"'
 CFLAGS += -DAUTOSTARTS='"$(autostarts)"'
 
-
-# FIXME:
-ifeq ($(ARCH),arm)
-CFLAGS += -O2 -DDEBUG
-else ifdef CONFIG_BUILD_RELEASE
+ifdef CONFIG_BUILD_RELEASE
 CFLAGS += -O2 -flto
 else
-CFLAGS += -O1 -DDEBUG -fsanitize=undefined
+CFLAGS += -O1 -fsanitize=undefined
 endif
 
 #
@@ -130,27 +143,22 @@ menuconfig:
 #
 #  Build Rules
 #
-$(kernel_image): $(kernel_objs) $(BUILD_DIR)/kernel/__program_name.o \
+$(kernel_image): $(kernel_objs) $(BUILD_DIR)/kernel/__name__.o \
 		kernel/arch/$(ARCH)/kernel.ld \
 		tools/nm2symbols.py tools/embed-symbols.py Makefile
 	$(PROGRESS) "LD" $@
 	$(LD) $(LDFLAGS) --script=kernel/arch/$(ARCH)/kernel.ld \
 		-Map $(@:.elf=.map) -o $@.tmp \
-		$(kernel_objs) $(BUILD_DIR)/kernel/__program_name.o
+		$(kernel_objs) $(BUILD_DIR)/kernel/__name__.o
 	$(PROGRESS) "GEN" $(@:.elf=.symbols)
 	$(NM) $@.tmp | ./tools/nm2symbols.py > $(@:.elf=.symbols)
 	$(PROGRESS) "SYMBOLS" $@
 	./tools/embed-symbols.py $(@:.elf=.symbols) $@.tmp
 	cp $@.tmp $@
 
-$(BUILD_DIR)/bootfs.bin: $(bootfs_files) tools/mkbootfs.py
+$(bootfs_bin): $(bootfs_files) tools/mkbootfs.py
 	$(PROGRESS) "MKBOOTFS" $@
 	$(PYTHON3) tools/mkbootfs.py -o $@ $(bootfs_files)
-
-$(BUILD_DIR)/kernel/__program_name.o:
-	mkdir -p $(@D)
-	echo "const char *__program_name(void) { return \"kernel\"; }" > $(@:.o=.c)
-	$(CC) $(CFLAGS) -DKERNEL -c -o $@ $(@:.o=.c)
 
 $(BUILD_DIR)/kernel/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
 	$(PROGRESS) "CC" $<
@@ -158,24 +166,38 @@ $(BUILD_DIR)/kernel/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/user/$(bootstrap).elf
+$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/$(bootstrap).elf
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) \
-		-DKERNEL -DBOOTFS_BIN='"$(PWD)/$(BUILD_DIR)/bootfs.bin"' \
+	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/user/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
-	$(PROGRESS) "CC" $<
+$(BUILD_DIR)/kernel/__name__.c:
+	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -Ilibs/resea -Ilibs/resea/arch/$(ARCH) \
-		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	echo "const char *__program_name(void) { return \"kernel\"; }" > $(@)
 
-$(BUILD_DIR)/user/%.o: %.S Makefile $(BUILD_DIR)/include/config.h
+$(BUILD_DIR)/kernel/__name__.o: $(BUILD_DIR)/kernel/__name__.c
+	$(PROGRESS) "CC" $<
+	$(CC) $(CFLAGS) -DKERNEL -c -o $@ $(@:.o=.c)
+
+#
+#  Userland build rules
+#
+$(BUILD_DIR)/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -Ilibs/resea -Ilibs/resea/arch/$(ARCH) \
-		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+
+$(BUILD_DIR)/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
+	$(PROGRESS) "CC" $<
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+
+$(BUILD_DIR)/%.o: %.S Makefile $(BUILD_DIR)/include/config.h
+	$(PROGRESS) "CC" $<
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 $(BUILD_DIR)/include/config.h: .config tools/config.py
 	$(PROGRESS) "GEN" $@
@@ -188,62 +210,78 @@ $(BUILD_DIR)/compile_commands.json: $(kernel_objs)
 	$(PROGRESS) "GEN" $(BUILD_DIR)/compile_commands.json
 	$(PYTHON3) tools/merge-compile-commands.py \
 		-o $(BUILD_DIR)/compile_commands.json \
-		$(shell find $(BUILD_DIR)/kernel -type f -name "*.json") \
-		$(shell find $(BUILD_DIR)/user -type f -name "*.json")
+		$(shell find $(BUILD_DIR) -type f -name "*.json")
+
+#
+#  Libs build rules
+#
+define lib-build-rule
+$(eval dir := libs/$(1))
+$(eval outfile := $(BUILD_DIR)/libs/$(1).lib.o)
+$(eval name :=)
+$(eval objs :=)
+$(eval cflags :=)
+$(eval build_mks :=)
+$(eval $(call visit-subdir,libs/$(1),$(BUILD_DIR)))
+$(eval $(outfile): objs := $(objs))
+$(eval $(outfile): $(objs) $(build_mks))
+$(eval $(objs): CFLAGS += $(cflags))
+endef
+$(foreach lib, $(all_libs), \
+	$(eval $(call lib-build-rule,$(lib))))
+
+$(BUILD_DIR)/libs/%.lib.o:
+	$(PROGRESS) "LD" $(@)
+	$(LD) -r -o $(@) $(objs)
+
+#
+#  Server build rules
+#
+define server-build-rule
+$(eval dir := servers/$(1))
+$(eval name :=)
+$(eval objs :=)
+$(eval libs := $(builtin_libs))
+$(eval cflags :=)
+$(eval build_mks :=)
+$(eval objs += $(BUILD_DIR)/servers/$(1)/__name__.o)
+$(eval objs += $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(lib).lib.o))
+$(eval $(call visit-subdir,$(dir),$(BUILD_DIR)))
+$(eval $(BUILD_DIR)/servers/$(1)/__name__.c: name := $(name))
+$(eval $(BUILD_DIR)/$(1).elf: name := $(name))
+$(eval $(BUILD_DIR)/$(1).debug.elf: name := $(name))
+$(eval $(BUILD_DIR)/$(1).debug.elf: objs := $(objs))
+$(eval $(BUILD_DIR)/$(1).debug.elf: $(objs) $(build_mks))
+$(eval $(objs): CFLAGS += $(cflags))
+$(foreach lib, $(all_libs),
+	$(eval $(objs): CFLAGS += -Ilibs/$(lib)/include))
+endef
+$(foreach server, $(bootstrap) $(servers), \
+	$(eval $(call server-build-rule,$(server))))
+
+%/__name__.c:
+	$(PROGRESS) "GEN" $@
+	mkdir -p $(@D)
+	echo "const char *__program_name(void) { return \"$(name)\"; }" > $(@)
+
+%/__name__.o: %/__name__.c $(BUILD_DIR)/include/config.h
+	$(PROGRESS) "CC" $@
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $(@) $<
+
+$(BUILD_DIR)/%.debug.elf: tools/nm2symbols.py \
+		tools/embed-symbols.py libs/resea/arch/$(ARCH)/user.ld Makefile
+	$(PROGRESS) "LD" $(@)
+	$(LD) $(LDFLAGS) --script=libs/resea/arch/$(ARCH)/user.ld \
+		-Map $(BUILD_DIR)/$(1).map -o $(@).tmp $(objs)
+	$(NM) $(@).tmp | ./tools/nm2symbols.py > $(BUILD_DIR)/$(name).symbols
+	$(PROGRESS) "SYMBOLS" $(BUILD_DIR)/$(name).debug.elf
+	./tools/embed-symbols.py $(BUILD_DIR)/$(name).symbols $(@).tmp
+	mv $(@).tmp $@
+
+$(BUILD_DIR)/%.elf: $(BUILD_DIR)/%.debug.elf
+	$(PROGRESS) "STRIP" $@
+	$(OBJCOPY) --strip-all-gnu --strip-debug $< $@
+	./tools/embed-server-name.py --name=$(name) $(@)
 
 -include $(shell find $(BUILD_DIR) -name "*.deps" 2>/dev/null)
-
-# FIXME:
-$(BUILD_DIR)/user/servers/$(bootstrap)/bootfs.o: $(BUILD_DIR)/bootfs.bin
-
-define lib-build-rule
-CFLAGS += -Ilibs/$(1)/include
-$(eval include libs/$(1)/lib.mk)
-$(eval objs := $(addprefix $(BUILD_DIR)/user/libs/$(1)/, $(objs)))
-$(eval $(BUILD_DIR)/user/libs/$(1).o: objs := $(objs))
-
-$(BUILD_DIR)/user/libs/$(1).o: $(objs) Makefile
-	$(PROGRESS) "LD" $(BUILD_DIR)/user/libs/$(1).o
-	$(LD) -r -o $(BUILD_DIR)/user/libs/$(1).o $(objs)
-
--include $(BUILD_DIR)/user/libs/$(1)/*.deps
-endef
-$(foreach lib, $(libs), $(eval $(call lib-build-rule,$(lib))))
-
-define server-build-rule
-$(eval include servers/$(1)/build.mk)
-$(eval objs := $(addprefix $(BUILD_DIR)/user/servers/$(1)/, $(objs)) $(lib_objs) \
-	$(BUILD_DIR)/user/servers/$(1)/__program_name.o)
-$(eval $(BUILD_DIR)/user/$(1).debug.elf: objs := $(objs))
-
-$(BUILD_DIR)/user/servers/$(1)/__program_name.o:
-	mkdir -p $(BUILD_DIR)/user/servers/$(1)
-	echo "const char *__program_name(void) { return \"$(1)\"; }" > \
-		$(BUILD_DIR)/user/servers/$(1)/__program_name.c
-	$(CC) $(CFLAGS) -c \
-		-o $(BUILD_DIR)/user/servers/$(1)/__program_name.o \
-		$(BUILD_DIR)/user/servers/$(1)/__program_name.c
-
-$(BUILD_DIR)/user/$(1).debug.elf: $(objs) tools/nm2symbols.py \
-		tools/embed-symbols.py libs/resea/arch/$(ARCH)/user.ld Makefile
-	$(PROGRESS) "LD" $(BUILD_DIR)/user/$(1).debug.elf
-	$(LD) $(LDFLAGS) --script=libs/resea/arch/$(ARCH)/user.ld \
-		-Map $(BUILD_DIR)/user/$(1).map \
-		-o $(BUILD_DIR)/user/$(1).elf.tmp $(objs)
-	$(NM) $(BUILD_DIR)/user/$(1).elf.tmp | ./tools/nm2symbols.py > \
-		$(BUILD_DIR)/user/$(1).symbols
-	$(PROGRESS) "SYMBOLS" $(BUILD_DIR)/user/$(1).debug.elf
-	./tools/embed-symbols.py $(BUILD_DIR)/user/$(1).symbols \
-		$(BUILD_DIR)/user/$(1).elf.tmp
-	mv $(BUILD_DIR)/user/$(1).elf.tmp $(BUILD_DIR)/user/$(1).debug.elf
-
-$(BUILD_DIR)/user/$(1).elf: $(BUILD_DIR)/user/$(1).debug.elf
-	$(PROGRESS) "STRIP" $(BUILD_DIR)/user/$(1).elf
-	$(OBJCOPY) --strip-all-gnu --strip-debug \
-		$(BUILD_DIR)/user/$(1).debug.elf $(BUILD_DIR)/user/$(1).elf
-
--include $(BUILD_DIR)/user/$(1)/servers/*.deps
-endef
-$(foreach server, $(bootstrap) $(servers), $(eval $(call server-build-rule,$(server))))
-$(foreach app, $(APPS), $(eval $(call server-build-rule,$(app))))
-

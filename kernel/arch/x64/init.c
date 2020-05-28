@@ -83,34 +83,9 @@ static void syscall_init(void) {
     asm_wrmsr(MSR_EFER, asm_rdmsr(MSR_EFER) | EFER_SCE);
 }
 
-static uint64_t counts_per_tick = 0;
 static void calibrate_apic_timer(void) {
-    if (!counts_per_tick) {
-        // Use PIT to determine the frequency of APIC timer.
-        uint16_t count = PIT_HZ / TICK_HZ;
-        // Disable ch #2 and the speaker output (PIT #2 is connected to the
-        // speaker).
-        asm_out8(KBC_PORT_B, 0x00);
-        // Select ch #2.
-        asm_out8(PIT_CMD, 0xb2 /* ch #2, oneshot */);
-        asm_out8(PIT_CH2, count & 0xff);
-        asm_out8(PIT_CH2, count >> 8);
-        // Reset ch #2 to start counting.
-        asm_out8(KBC_PORT_B, 0x01);
-
-        // Reset the counter in APIC timer.
-        uint64_t init_count = 0xffffffff;
-        write_apic(APIC_REG_TIMER_INITCNT, init_count);
-
-        // Wait for the PIT (it should take at least 1/TICK_HZ seconds).
-        while ((asm_in8(KBC_PORT_B) & KBC_B_OUT2_STATUS) == 0) {}
-
-        // Calibrate the APIC timer interval to invoke the timer interrupt every
-        // 1/TICK_HZ seconds.
-        counts_per_tick = init_count - read_apic(APIC_REG_TIMER_CURRENT);
-    }
-
-    write_apic(APIC_REG_TIMER_INITCNT, counts_per_tick);
+    // TODO: Calibrate the timer automatically.
+    write_apic(APIC_REG_TIMER_INITCNT, CONFIG_LAPIC_TIMER_1MS_COUNT);
 }
 
 static void apic_timer_init(void) {

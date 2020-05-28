@@ -1,5 +1,21 @@
+#include <config.h>
 #include <resea/printf.h>
+#include <resea/syscall.h>
+#include <message.h>
 
 void main(void) {
-    printf("Hello, World!\n");
+    INFO("Hello, World!");
+
+#ifdef CONFIG_PRINT_PERIODICALLY
+    timer_set(1000 /* in milliseconds */);
+    unsigned i = 1;
+    while (true) {
+        struct message m;
+        ipc_recv(IPC_ANY, &m);
+        if (m.type == NOTIFICATIONS_MSG) {
+            TRACE("Hello, World! (i=%d)", i++);
+            timer_set(1000);
+        }
+    }
+#endif
 }

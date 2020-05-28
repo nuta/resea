@@ -1,12 +1,6 @@
-menuconfig HELLO_SERVER
-    bool "Hello World!"
-    help
-        Prints "Hello World!" and terminates.
+menu "Hello World"
+	depends on HELLO_SERVER
 
-if HELLO_SERVER
-
-config AUTOSTART_HELLO
-    bool "Start automatically on boot"
-    default n
-
-endif
+    config PRINT_PERIODICALLY
+        bool "Print a message every second"
+endmenu

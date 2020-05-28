@@ -1,1 +1,2 @@
-objs := main.o
+name := ps2kbd
+obj-y := main.o

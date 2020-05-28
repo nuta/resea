@@ -1,5 +1,5 @@
 name := ramdisk
-objs := main.o disk.o
+obj-y := main.o disk.o
 
 $(BUILD_DIR)/user/servers/ramdisk/disk.o: $(BUILD_DIR)/ramdisk.img
 	$(PROGRESS) "GEN" $@

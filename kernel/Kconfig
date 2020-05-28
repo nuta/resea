@@ -1,4 +1,10 @@
 menu "Kernel"
+    source "kernel/arch/*/Kconfig"
+
+    config NOMMU
+        bool "Disable virtual memory"
+        default n
+
     config NUM_TASKS
         int "The (maximum) number of tasks"
         range 1 512

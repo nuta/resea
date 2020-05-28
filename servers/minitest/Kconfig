@@ -1,5 +1,0 @@
-menuconfig MINITEST_SERVER
-    bool "A minimal test for kernel features"
-
-if MINITEST_SERVER
-endif

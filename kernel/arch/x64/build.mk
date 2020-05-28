@@ -1,4 +1,4 @@
-libcommon_objs += arch/x64/memcpy.o
+obj-y += task.o vm.o serial.o boot.o init.o interrupt.o trap.o mp.o
 
 QEMU  ?= qemu-system-x86_64
 BOCHS ?= bochs

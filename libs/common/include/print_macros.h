@@ -140,7 +140,7 @@ const char *__program_name(void);
     } while (0)
 
 
-#if !defined(DEBUG)
+#if !defined(CONFIG_BUILD_DEBUG)
 #    undef DEBUG_ASSERT
 #    define DEBUG_ASSERT(expr)
 #    undef TRACE

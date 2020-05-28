@@ -1,29 +1,28 @@
-mainmenu "Resea Build Configuration ($(ARCH))"
+mainmenu "Resea Build Configuration"
+
+choice
+    prompt "Target CPU architecture"
+    config ARCH_X64
+        bool "x86_64"
+    config ARCH_ARM
+        bool "micro:bit (ARM)"
+endchoice
 
 choice
     prompt "Build mode"
-config BUILD_DEBUG
-    bool "Debug"
-config BUILD_RELEASE
-    bool "Release"
+    config BUILD_DEBUG
+        bool "Debug"
+    config BUILD_RELEASE
+        bool "Release"
 endchoice
+
+menu "Common Setup (kernel and userland)"
+    config NUM_SYMBOLS
+        int "The (maximum) number of symbols"
+        range 0 2048
+        default 512
+endmenu
 
 source "kernel/Kconfig"
 source "libs/resea/Kconfig"
-
-menu "Servers"
-    config BOOTSTRAP
-        string "The bootstrap server"
-        default "bootstrap"
-
-    source "servers/*/Kconfig"
-endmenu
-
-config NUM_SYMBOLS
-    int "The (maximum) number of symbols."
-    range 0 2048
-    default 512
-
-config NOMMU
-    bool "Disable virtual memory"
-    default n
+source "servers/Kconfig"

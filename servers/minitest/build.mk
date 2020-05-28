@@ -1,2 +1,2 @@
-name := hello
-objs := main.o
+name := minitest
+obj-y := main.o

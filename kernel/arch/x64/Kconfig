@@ -1,0 +1,14 @@
+menu "x64 Options"
+	depends on ARCH_X64
+
+    config ARCH
+        string
+    	default "x64"
+
+    config LAPIC_TIMER_1MS_COUNT
+        int "The local APIC timer reset count for TICK_HZ"
+        default 10000
+        help
+            Currently, the Local APIC timer calibration is broken.
+            You need to manually calibrate the value for TICK_HZ.
+endmenu

@@ -1,3 +1,5 @@
+obj-y += boot.o init.o vm.o mp.o task.o switch.o peripherals.o interrupt.o
+
 QEMU  ?= qemu-system-arm
 
 CFLAGS += --target=armv6m-none-eabi -mcpu=cortex-m0

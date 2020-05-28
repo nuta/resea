@@ -1,2 +1,2 @@
-name := hello
-objs := main.o
+name := benchmark
+obj-y := main.o

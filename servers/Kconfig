@@ -1,0 +1,54 @@
+config MODULES
+    def_bool y
+	option modules
+	default y
+
+menu "Servers"
+    choice
+        prompt "Initial task"
+        config BOOTSTRAP_BOOTSTRAP
+            bool "Bootstrap"
+            select BOOTSTAP_SERVER
+        config BOOTSTRAP_MINITEST
+            bool "Minitest (kernel test for NOMMU systems)"
+    endchoice
+
+    menu "Enabled servers"
+        comment "<*>: autostarted / <M>: manually started from shell"
+
+        config SHELL_SERVER
+            tristate "Shell"
+        config TCPIP_SERVER
+            tristate "TCP/IP server"
+        config WEBAPI_SERVER
+            tristate "Web API server"
+        config MINLIN_SERVER
+            tristate "Linux ABI Emulation Layer"
+            select ABI_EMU
+
+        config HELLO_SERVER
+            tristate "Hello World"
+        config BENCHMARK_SERVER
+            tristate "Benchmark"
+
+        menu "Filesystem Drivers"
+            config TARFS_SERVER
+                tristate "Tarball (ephemeral) file system driver"
+            config FATFS_SERVER
+                tristate "FAT file system driver"
+        endmenu
+
+        menu "Device Drivers"
+            config DISPLAY_SERVER
+                tristate "Text-based display driver (x64)"
+            config PS2KBD_SERVER
+                tristate "PS2 keyboard driver (x64)"
+            config RAMDISK_SERVER
+                tristate "RAM disk driver"
+            config e1000_SERVER
+                tristate "e1000 NIC driver"
+        endmenu
+    endmenu
+
+    source "servers/*/Kconfig"
+endmenu

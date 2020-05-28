@@ -1,2 +1,2 @@
 name := fatfs
-objs := main.o fat.o
+obj-y := main.o fat.o

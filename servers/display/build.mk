@@ -1,2 +1,2 @@
 name := display
-objs := main.o
+obj-y := main.o

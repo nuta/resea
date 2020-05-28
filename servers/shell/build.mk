@@ -1,2 +1,2 @@
 name := shell
-objs := main.o
+obj-y := main.o
