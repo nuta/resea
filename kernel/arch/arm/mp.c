@@ -3,7 +3,9 @@
 struct cpuvar cpuvar;
 
 void halt(void) {
-    __asm__ __volatile__("wfi");
+    while (true) {
+        __asm__ __volatile__("wfi");
+    }
 }
 
 void panic_lock(void) {
