@@ -19,7 +19,6 @@ addons:
     packages:
       - llvm
       - python
-      - mtools
   apt:
     packages:
       - llvm-9
@@ -29,10 +28,8 @@ addons:
       - python3-dev
       - python3-pip
       - python3-setuptools
-      - mtools
 
 install:
-  - "if [[ \"$TRAVIS_OS_NAME\" == osx ]]; then brew link --overwrite python; fi"
   - pip3 install --user -r tools/requirements.txt
 
 script:
