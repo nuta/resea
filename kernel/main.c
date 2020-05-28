@@ -78,10 +78,16 @@ void kmain(void) {
     task_init();
     mp_start();
 
+    // Copy the task name embedded by embed-server-name.py. The maximum length
+    // of an embedded name is 9 and it's NOT null-terminated.
+    char name[CONFIG_TASK_NAME_LEN];
+    elf_ehdr_t *ehdr = (elf_ehdr_t *) __bootelf;
+    strncpy(name, (const char *) &ehdr->e_ident[7], MIN(sizeof(name), 10));
+
     // Create the first userland task.
     struct task *task = task_lookup(INIT_TASK_TID);
     ASSERT(task);
-    task_create(task, "bootstrap", get_boot_elf_entry(), NULL, CAP_ALL);
+    task_create(task, name, get_boot_elf_entry(), NULL, CAP_ALL);
     map_boot_elf(&task->vm);
 
     mpmain();
