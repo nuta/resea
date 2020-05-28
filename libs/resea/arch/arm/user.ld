@@ -31,15 +31,14 @@ SECTIONS {
 
     .bss :{
         __bss = .;
-        *(.bss);
+        *(.bss*);
         __bss_end = .;
 
         . = ALIGN(4);
         __heap = .;
         . += 4096;
-        __heap_end = .;
-
         . = ALIGN(4096); // See the XXX comment above.
+        __heap_end = .;
     } > ram :bss
 
     /DISCARD/ :{
