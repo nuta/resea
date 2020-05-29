@@ -1,8 +1,7 @@
-#include <message.h>
-#include <resea/lookup.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <resea/syscall.h>
+#include <resea/klog.h>
 #include <cstring.h>
 
 static task_t bootstrap_server = 1;

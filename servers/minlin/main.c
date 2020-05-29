@@ -1,9 +1,8 @@
 #include <list.h>
-#include <message.h>
+#include <resea/ipc.h>
 #include <cstring.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <resea/syscall.h>
 #include "elf.h"
 #include "fs.h"
 #include "mm.h"

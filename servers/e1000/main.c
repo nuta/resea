@@ -1,8 +1,7 @@
-#include <message.h>
-#include <resea/lookup.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <resea/syscall.h>
+#include <resea/io.h>
 #include <cstring.h>
 #include "e1000.h"
 #include "pci.h"

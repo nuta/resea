@@ -1,4 +1,3 @@
-#include <resea/syscall.h>
 #include <resea/malloc.h>
 #include <cstring.h>
 #include "elf.h"

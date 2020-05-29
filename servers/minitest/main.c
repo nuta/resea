@@ -1,5 +1,4 @@
-#include <message.h>
-#include <resea/syscall.h>
+#include <resea/ipc.h>
 #include <resea/printf.h>
 
 #define TASK_A_TID 1

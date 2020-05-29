@@ -4,28 +4,35 @@
 #include <arch/syscall.h>
 #include <types.h>
 
-// System calls.
-struct message;
+static inline error_t sys_spawn(task_t tid, const char *name, vaddr_t ip,
+                                task_t pager, caps_t caps) {
+    return syscall(SYS_SPAWN, tid, (uintptr_t) name, ip, pager, caps);
+}
 
-// Wrapper functions.
-error_t task_create(task_t tid, const char *name, vaddr_t ip, task_t pager,
-                   caps_t caps);
-error_t task_destroy(task_t task);
-void task_exit(void);
-task_t task_self(void);
-error_t ipc_send(task_t dst, struct message *m);
-error_t ipc_send_noblock(task_t dst, struct message *m);
-void ipc_reply(task_t dst, struct message *m);
-void ipc_reply_err(task_t dst, error_t error);
-error_t ipc_notify(task_t dst, notifications_t notifications);
-error_t ipc_recv(task_t src, struct message *m);
-error_t ipc_call(task_t dst, struct message *m);
-error_t ipc_send_err(task_t dst, error_t error);
-error_t timer_set(msec_t timeout);
-error_t irq_acquire(unsigned irq);
-error_t irq_release(unsigned irq);
-error_t klog_write(const char *buf, size_t len);
-int klog_read(char *buf, size_t len, bool listen);
+static inline error_t sys_kill(task_t task) {
+    return syscall(SYS_KILL, task, 0, 0, 0, 0);
+}
+
+static inline task_t sys_setattrs(const void *bulk_ptr, size_t bulk_len,
+                                  msec_t timeout) {
+    return syscall(SYS_SETATTRS, (uint64_t) bulk_ptr, bulk_len, timeout,
+                   0, 0);
+}
+
+struct message;
+static inline error_t sys_ipc(task_t dst, task_t src, struct message *m,
+                              unsigned flags) {
+    return syscall(SYS_IPC, dst, src, (uintptr_t) m, flags, 0);
+}
+
+static inline error_t sys_writelog(const char *buf, size_t len) {
+    return syscall(SYS_WRITELOG, (uintptr_t) buf, len, 0, 0, 0);
+}
+
+static inline int sys_readlog(char *buf, size_t len, bool listen) {
+    return syscall(SYS_READLOG, (uintptr_t) buf, len, listen, 0, 0);
+}
+
 void nop_syscall(void);
 
 #endif

@@ -1,5 +1,6 @@
 #include <resea/malloc.h>
-#include <resea/syscall.h>
+#include <resea/ipc.h>
+#include <resea/task.h>
 #include <cstring.h>
 #include <list.h>
 #include "abi.h"

@@ -1,8 +1,20 @@
-#include <message.h>
 #include <resea/io.h>
-#include <resea/lookup.h>
+#include <resea/ipc.h>
+#include <resea/task.h>
 #include <resea/printf.h>
 #include <resea/syscall.h>
+
+static error_t irq_listen(unsigned irq, task_t listener) {
+    return syscall(SYS_LISTENIRQ, irq, listener, 0, 0, 0);
+}
+
+error_t irq_acquire(unsigned irq) {
+    return irq_listen(irq, task_self());
+}
+
+error_t irq_release(unsigned irq) {
+    return irq_listen(irq, 0);
+}
 
 void *io_alloc_pages(size_t num_pages, paddr_t map_to, paddr_t *paddr) {
     task_t init = 1;

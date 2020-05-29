@@ -45,7 +45,7 @@ menu "Servers"
                 tristate "PS2 keyboard driver (x64)"
             config RAMDISK_SERVER
                 tristate "RAM disk driver"
-            config e1000_SERVER
+            config E1000_SERVER
                 tristate "e1000 NIC driver"
         endmenu
     endmenu

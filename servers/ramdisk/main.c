@@ -1,7 +1,6 @@
 #include <resea/printf.h>
-#include <resea/syscall.h>
 #include <resea/malloc.h>
-#include <message.h>
+#include <resea/ipc.h>
 #include <cstring.h>
 
 #define SECTOR_SIZE 512

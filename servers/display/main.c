@@ -1,7 +1,6 @@
-#include <message.h>
+#include <resea/ipc.h>
 #include <resea/io.h>
 #include <resea/printf.h>
-#include <resea/syscall.h>
 #include <cstring.h>
 
 #define BLANK_CHAR    0x0f20 /* whitespace */

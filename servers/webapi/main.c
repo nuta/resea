@@ -1,9 +1,7 @@
-#include <message.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/map.h>
-#include <resea/syscall.h>
-#include <resea/lookup.h>
 #include <cstring.h>
 #include <vprintf.h>
 #include "webapi.h"

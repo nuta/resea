@@ -2,7 +2,7 @@
 #define __FS_H__
 
 #include <types.h>
-#include <message.h>
+#include <resea/ipc.h>
 #include "abi.h"
 #include "waitqueue.h"
 

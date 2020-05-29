@@ -2,7 +2,7 @@
 #define __PROC_H__
 
 #include <list.h>
-#include <message.h>
+#include <resea/ipc.h>
 #include "abi.h"
 #include "mm.h"
 

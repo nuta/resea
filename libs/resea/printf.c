@@ -1,4 +1,5 @@
 #include <resea/printf.h>
+#include <resea/klog.h>
 #include <resea/syscall.h>
 #include <vprintf.h>
 

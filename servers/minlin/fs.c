@@ -2,10 +2,8 @@
 #include "proc.h"
 #include "abi.h"
 #include <cstring.h>
-#include <message.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
-#include <resea/lookup.h>
-#include <resea/syscall.h>
 
 static task_t fs_server;
 

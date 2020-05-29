@@ -1,7 +1,6 @@
 #include <config.h>
 #include <resea/printf.h>
-#include <resea/syscall.h>
-#include <message.h>
+#include <resea/ipc.h>
 
 void main(void) {
     INFO("Hello, World!");

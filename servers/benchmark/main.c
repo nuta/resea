@@ -1,6 +1,5 @@
-#include <message.h>
+#include <resea/ipc.h>
 #include <resea/printf.h>
-#include <resea/syscall.h>
 #define NUM_ITERS 128
 
 #ifdef __x86_64__

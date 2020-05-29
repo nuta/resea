@@ -1,6 +1,4 @@
-#include <message.h>
-#include <resea/syscall.h>
-#include <resea/lookup.h>
+#include <resea/ipc.h>
 #include <resea/printf.h>
 #include "fs.h"
 #include "tty.h"

@@ -1,11 +1,8 @@
 #include <resea/printf.h>
-#include <resea/syscall.h>
-#include <resea/lookup.h>
 #include <resea/malloc.h>
 #include <resea/map.h>
-#include <resea/string.h>
 #include <resea/handle.h>
-#include <message.h>
+#include <resea/ipc.h>
 #include <cstring.h>
 #include "fat.h"
 

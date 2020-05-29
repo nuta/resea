@@ -1,8 +1,6 @@
-#include <message.h>
+#include <resea/ipc.h>
 #include <resea/io.h>
-#include <resea/lookup.h>
 #include <resea/printf.h>
-#include <resea/syscall.h>
 #include "ps2kbd.h"
 
 #define QUEUE_SIZE 64

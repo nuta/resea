@@ -1,9 +1,9 @@
 #include <list.h>
-#include <message.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/map.h>
-#include <resea/syscall.h>
+#include <resea/timer.h>
 #include <resea/handle.h>
 #include "device.h"
 #include "dhcp.h"
