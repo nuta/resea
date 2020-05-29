@@ -83,7 +83,6 @@ typedef int error_t;
 #define SYS_LISTENIRQ  5
 #define SYS_WRITELOG   6
 #define SYS_READLOG    7
-#define SYS_NOP        31
 
 // IPC options.
 #define IPC_ANY     0 /* So-called "open receive". */

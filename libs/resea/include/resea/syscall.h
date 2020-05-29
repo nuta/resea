@@ -33,6 +33,4 @@ static inline int sys_readlog(char *buf, size_t len, bool listen) {
     return syscall(SYS_READLOG, (uintptr_t) buf, len, listen, 0, 0);
 }
 
-void nop_syscall(void);
-
 #endif
