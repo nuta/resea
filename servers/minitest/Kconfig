@@ -1,0 +1,7 @@
+menu "Minitest"
+	depends on BOOTSTRAP_MINITEST
+
+    config BOOTSTRAP
+        string
+        default "minitest"
+endmenu

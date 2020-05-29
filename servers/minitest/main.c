@@ -1,4 +1,6 @@
 #include <resea/ipc.h>
+#include <resea/timer.h>
+#include <resea/task.h>
 #include <resea/printf.h>
 
 #define TASK_A_TID 1
