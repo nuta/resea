@@ -45,7 +45,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
         return ERR_ALREADY_EXISTS;
     }
 
-#ifndef ABI_EMU
+#ifndef CONFIG_ABI_EMU
     if ((caps & CAP_ABI_EMU) != 0) {
         WARN("ABI emulation is not enabled");
         return ERR_UNAVAILABLE;
