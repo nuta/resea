@@ -47,7 +47,7 @@ static error_t sys_spawn(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
         return ERR_NOT_PERMITTED;
     }
 
-    struct task *task = task_lookup(tid);
+    struct task *task = task_lookup_unchecked(tid);
     if (!task || task == CURRENT) {
         return ERR_INVALID_ARG;
     }
@@ -55,11 +55,6 @@ static error_t sys_spawn(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
     struct task *pager_task = task_lookup(pager);
     if (!pager_task) {
         return ERR_INVALID_ARG;
-    }
-
-    if (pager_task->state == TASK_UNUSED || pager_task->state == TASK_EXITED) {
-        // TODO: Move this check into task_lookup().
-        return ERR_UNAVAILABLE;
     }
 
     // Create a task.

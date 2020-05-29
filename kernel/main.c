@@ -85,7 +85,7 @@ void kmain(void) {
     strncpy(name, (const char *) &ehdr->e_ident[7], MIN(sizeof(name), 10));
 
     // Create the first userland task.
-    struct task *task = task_lookup(INIT_TASK_TID);
+    struct task *task = task_lookup_unchecked(INIT_TASK_TID);
     ASSERT(task);
     task_create(task, name, get_boot_elf_entry(), NULL, CAP_ALL);
     map_boot_elf(&task->vm);

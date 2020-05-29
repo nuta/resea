@@ -19,12 +19,23 @@ static struct task *irq_owners[IRQ_MAX];
 
 /// Returns the task struct for the task ID. It returns NULL if the ID is
 /// invalid.
-struct task *task_lookup(task_t tid) {
+struct task *task_lookup_unchecked(task_t tid) {
     if (tid <= 0 || tid > CONFIG_NUM_TASKS) {
         return NULL;
     }
 
     return &tasks[tid - 1];
+}
+
+/// Returns the task struct for the task ID. It returns NULL if the ID is
+/// invalid or the task is not in use (TASK_UNUSED).
+struct task *task_lookup(task_t tid) {
+    struct task *task = task_lookup_unchecked(tid);
+    if (!task || task->state == TASK_UNUSED) {
+        return NULL;
+    }
+
+    return task;
 }
 
 /// Initializes a task struct.
@@ -103,8 +114,9 @@ error_t task_destroy(struct task *task) {
         list_remove(&sender->sender_next);
     }
 
+    // FIXME:
     for (task_t tid = 1; tid <= CONFIG_NUM_TASKS; tid++) {
-        struct task *task2 = task_lookup(tid);
+        struct task *task2 = task_lookup_unchecked(tid);
         DEBUG_ASSERT(task2);
 
         // Ensure that this task is not a pager task.

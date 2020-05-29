@@ -99,6 +99,7 @@ NORETURN void task_exit(enum exception_type exp);
 void task_set_state(struct task *task, int state);
 void task_notify(struct task *task, notifications_t notifications);
 struct task *task_lookup(task_t tid);
+struct task *task_lookup_unchecked(task_t tid);
 void task_switch(void);
 error_t task_listen_irq(struct task *task, unsigned irq);
 error_t task_unlisten_irq(unsigned irq);
