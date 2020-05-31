@@ -1,0 +1,2 @@
+include "kernel/interface.idl";
+include "servers/interface.idl";

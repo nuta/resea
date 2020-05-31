@@ -93,12 +93,9 @@ typedef int error_t;
 #define IPC_NOTIFY  (1 << 3)
 #define IPC_KERNEL  (1 << 4) /* Internally used by kernel. */
 
-// Message Type (m->type).
-#define MSG_BULK(offset, len) (((offset) << 16) | ((len) << 19))
-// Returns `offset / sizeof(uintptr_t)` in the message of bulk pointer/length
-// fields.
-#define MSG_BULK_PTR(msg_type) (((msg_type) >> 16) & 0x7)
-#define MSG_BULK_LEN(msg_type) (((msg_type) >> 19) & 0x7)
+// Flags in the message type (m->type).
+#define MSG_STR  (1 << 30)
+#define MSG_BULK (1 << 29)
 
 // klogctl operations.
 #define KLOGCTL_READ     1

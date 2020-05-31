@@ -8,11 +8,19 @@
 static void *bulk_ptr = NULL;
 static const size_t bulk_len = CONFIG_BULK_BUFFER_LEN;
 
+static void pre_send(struct message *m) {
+    if (m->type & MSG_STR) {
+        m->bulk_len = strlen(m->bulk_ptr) + 1;
+    }
+}
+
 error_t ipc_send(task_t dst, struct message *m) {
+    pre_send(m);
     return sys_ipc(dst, 0, m, IPC_SEND);
 }
 
 error_t ipc_send_noblock(task_t dst, struct message *m) {
+    pre_send(m);
     return sys_ipc(dst, 0, m, IPC_SEND | IPC_NOBLOCK);
 }
 
@@ -44,7 +52,7 @@ error_t ipc_recv(task_t src, struct message *m) {
 
     error_t err = sys_ipc(0, src, m, IPC_RECV);
 
-    if (MSG_BULK_PTR(m->type)) {
+    if (m->type & MSG_BULK) {
         bulk_ptr = NULL;
     }
 
@@ -59,9 +67,10 @@ error_t ipc_call(task_t dst, struct message *m) {
         ASSERT_OK(sys_setattrs(bulk_ptr, bulk_len, 0));
     }
 
+    pre_send(m);
     error_t err = sys_ipc(dst, dst, m, IPC_CALL);
 
-    if (MSG_BULK_PTR(m->type)) {
+    if (m->type & MSG_BULK) {
         bulk_ptr = NULL;
     }
 
@@ -73,7 +82,7 @@ error_t ipc_call(task_t dst, struct message *m) {
 task_t ipc_lookup(const char *name) {
     struct message m;
     m.type = LOOKUP_MSG;
-    strncpy(m.lookup.name, name, sizeof(m.lookup.name));
+    m.lookup.name = name;
 
     error_t err = ipc_call(INIT_TASK_TID, &m);
     if (IS_ERROR(err)) {

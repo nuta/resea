@@ -43,7 +43,7 @@ static void write_response(struct client *client, const char *status,
     m.type = TCPIP_WRITE_MSG;
     m.tcpip_write.handle = client->handle;
     m.tcpip_write.data = buf;
-    m.tcpip_write.len = strlen(buf);
+    m.tcpip_write.data_len = strlen(buf);
     ASSERT_OK(ipc_call(tcpip_server, &m));
     free(buf);
 }
@@ -139,8 +139,8 @@ void main(void) {
                             m.tcpip_read.handle = c->handle;
                             m.tcpip_read.len = 4096;
                             ASSERT_OK(ipc_call(tcpip_server, &m));
-                            uint8_t *buf = m.tcpip_read_reply.data;
-                            size_t len = m.tcpip_read_reply.len;
+                            uint8_t *buf = (uint8_t *) m.tcpip_read_reply.data;
+                            size_t len = m.tcpip_read_reply.data_len;
                             if (buf) {
                                 process(c, buf, len);
                                 free(buf);

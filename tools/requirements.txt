@@ -1,1 +1,3 @@
 kconfiglib
+lark-parser
+jinja2

@@ -59,7 +59,7 @@ void main(void) {
     struct message m;
     m.type = TCPIP_REGISTER_DEVICE_MSG;
     memcpy(m.tcpip_register_device.macaddr, mac, 6);
-    err = ipc_send(tcpip_tid, &m);
+    err = ipc_call(tcpip_tid, &m);
     ASSERT_OK(err);
 
     // The mainloop: receive and handle messages.

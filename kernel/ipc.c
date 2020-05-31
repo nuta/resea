@@ -56,11 +56,9 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
         }
 
         // Copy the bulk payload.
-        unsigned ptr_offset = MSG_BULK_PTR(dst->m.type) * sizeof(uintptr_t);
-        unsigned len_offset = MSG_BULK_LEN(dst->m.type) * sizeof(uintptr_t);
-        if (!IS_ERROR(dst->m.type) && ptr_offset) {
-            size_t len = *((size_t *) ((uintptr_t) &dst->m + len_offset));
-            userptr_t src_buf = *((userptr_t *) ((uintptr_t) &dst->m + ptr_offset));
+        if (!IS_ERROR(dst->m.type) && (dst->m.type & MSG_BULK)) {
+            size_t len = dst->m.bulk_len;
+            userptr_t src_buf = (userptr_t) dst->m.bulk_ptr;
             userptr_t dst_buf = dst->bulk_ptr;
             if (!dst_buf) {
                 resume_sender_task(dst);
@@ -68,6 +66,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
             }
 
             if (len > dst->bulk_len) {
+                INFO("len = %x", len);
                 resume_sender_task(dst);
                 return ERR_TOO_LARGE;
             }
@@ -86,7 +85,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
                 src_buf += copy_len;
             }
 
-            *((userptr_t *) ((uintptr_t) &dst->m + ptr_offset)) = dst->bulk_ptr;
+            dst->m.bulk_ptr = (void *) dst->bulk_ptr;
         }
 
         dst->m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;

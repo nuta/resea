@@ -54,7 +54,8 @@ autostarts   := \
 	$(sort $(foreach server, $(all_servers), \
 		$(if $(filter-out m, $(value $(shell echo CONFIG_$(server)_SERVER | \
 			tr  '[:lower:]' '[:upper:]'))), $(server),)))
-bootfs_files := $(foreach name, $(servers), $(BUILD_DIR)/$(name).elf)
+bootfs_files  := $(foreach name, $(servers), $(BUILD_DIR)/$(name).elf)
+autogen_files := $(BUILD_DIR)/include/config.h $(BUILD_DIR)/include/message_fields.h
 
 # Visits the soruce directory recursively and fills $(cflags), $(objs) and $(libs).
 # $(1): The target source dir.
@@ -160,19 +161,19 @@ $(bootfs_bin): $(bootfs_files) tools/mkbootfs.py
 	$(PROGRESS) "MKBOOTFS" $@
 	$(PYTHON3) tools/mkbootfs.py -o $@ $(bootfs_files)
 
-$(BUILD_DIR)/kernel/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
+$(BUILD_DIR)/kernel/%.o: %.c Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/$(bootstrap).elf
+$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/$(bootstrap).elf $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/kernel/__name__.c:
+$(BUILD_DIR)/kernel/__name__.c: $(autogen_files)
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
 	echo "const char *__program_name(void) { return \"kernel\"; }" > $(@)
@@ -184,25 +185,33 @@ $(BUILD_DIR)/kernel/__name__.o: $(BUILD_DIR)/kernel/__name__.c
 #
 #  Userland build rules
 #
-$(BUILD_DIR)/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
+$(BUILD_DIR)/%.o: %.c Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/%.o: %.c Makefile $(BUILD_DIR)/include/config.h
+$(BUILD_DIR)/%.o: %.c Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/%.o: %.S Makefile $(BUILD_DIR)/include/config.h
+$(BUILD_DIR)/%.o: %.S Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
+#
+#  Auto-generated files.
+#
 $(BUILD_DIR)/include/config.h: .config tools/config.py
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
 	./tools/config.py --genconfig $@
+
+$(BUILD_DIR)/include/message_fields.h: tools/genidl.py $(wildcard *.idl */*.idl */*/*.idl)
+	$(PROGRESS) "GEN" $@
+	mkdir -p $(@D)
+	./tools/genidl.py --idl interface.idl -o $@
 
 # JSON compilation database.
 # https://clang.llvm.org/docs/JSONCompilationDatabase.html
@@ -264,7 +273,7 @@ $(foreach server, $(bootstrap) $(servers), \
 	mkdir -p $(@D)
 	echo "const char *__program_name(void) { return \"$(name)\"; }" > $(@)
 
-%/__name__.o: %/__name__.c $(BUILD_DIR)/include/config.h
+%/__name__.o: %/__name__.c $(autogen_files)
 	$(PROGRESS) "CC" $@
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $(@) $<

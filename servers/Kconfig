@@ -8,7 +8,6 @@ menu "Servers"
         prompt "Initial task"
         config BOOTSTRAP_BOOTSTRAP
             bool "Bootstrap"
-            select BOOTSTAP_SERVER
         config BOOTSTRAP_MINITEST
             bool "Minitest (kernel test for NOMMU systems)"
     endchoice

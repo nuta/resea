@@ -1,0 +1,12 @@
+namespace tcpip {
+    rpc register_device(macaddr: u8[6]) -> ();
+    rpc listen(port: u16, backlog: int) -> (handle: handle);
+    rpc close(handle: handle) -> ();
+    rpc write(handle: handle, data: bytes) -> ();
+    rpc read(handle: handle, len: size) -> (data: bytes);
+    rpc accept(handle: handle) -> (new_handle: handle);
+    oneway pull();
+    oneway closed(handle: handle);
+    oneway received(handle: handle);
+    oneway new_client(handle: handle);
+}

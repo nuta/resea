@@ -1,0 +1,19 @@
+include "servers/*/interface.idl";
+
+rpc nop(value: int) -> (value: int);
+rpc lookup(name: str) -> (task: task);
+rpc launch_task(name: str) -> (task: task);
+rpc alloc_pages(num_pages: size, paddr: paddr) -> (vaddr: vaddr, paddr: paddr);
+
+namespace textscreen {
+    oneway draw_char(ch: char, fg_color: color, bg_color: color, x: uint, y: uint);
+    oneway move_cursor(x: uint, y: uint);
+    oneway clear();
+    oneway scroll();
+    rpc get_size() -> (width: uint, height: uint);
+}
+
+namespace kbd {
+    rpc listen() -> ();
+    rpc read() -> (keycode: u16);
+}

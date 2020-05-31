@@ -240,7 +240,7 @@ void main(void) {
                 m.type = TCPIP_READ_REPLY_MSG;
                 uint8_t *buf = malloc(max_len);
                 m.tcpip_read_reply.data = buf;
-                m.tcpip_read_reply.len = tcp_read(c->sock, buf, max_len);
+                m.tcpip_read_reply.data_len = tcp_read(c->sock, buf, max_len);
                 ipc_reply(m.src, &m);
                 free(buf);
                 break;
@@ -252,13 +252,15 @@ void main(void) {
                     break;
                 }
 
-                tcp_write(c->sock, m.tcpip_write.data, m.tcpip_write.len);
+                tcp_write(c->sock, m.tcpip_write.data, m.tcpip_write.data_len);
                 ipc_send_err(m.src, OK);
-                free(m.tcpip_write.data);
+                free((void *) m.tcpip_write.data);
                 break;
             }
             case TCPIP_REGISTER_DEVICE_MSG:
                 register_device(m.src, &m.tcpip_register_device.macaddr);
+                m.type = TCPIP_REGISTER_DEVICE_REPLY_MSG;
+                ipc_reply(m.src, &m);
                 break;
             case TCPIP_PULL_MSG: {
                 struct pending *pending =

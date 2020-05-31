@@ -250,12 +250,14 @@ void main(void) {
     INFO("ready");
     while (true) {
         struct message m;
+        // TODO: bzero(m)
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
         switch (m.type) {
             case NOP_MSG:
-                m.type = NOP_MSG;
+                m.type = NOP_REPLY_MSG;
+                m.nop_reply.value = m.nop.value;
                 ipc_send(m.src, &m);
                 break;
             case EXCEPTION_MSG: {
@@ -304,23 +306,26 @@ void main(void) {
                 break;
             }
             case LOOKUP_MSG: {
+                char *name = (char *) m.lookup.name;
                 struct task *task = NULL;
                 for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
-                    if (tasks[i].in_use && !strcmp(tasks[i].name, m.lookup.name)) {
+                    if (tasks[i].in_use && !strcmp(tasks[i].name, name)) {
                         task = &tasks[i];
                         break;
                     }
                 }
 
                 if (!task) {
-                    WARN("Failed to locate the task named '%s'", m.lookup.name);
-                    ipc_send_err(m.src, ERR_NOT_FOUND);
+                    WARN("Failed to locate the task named '%s'", name);
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    free(name);
                     break;
                 }
 
                 m.type = LOOKUP_REPLY_MSG;
                 m.lookup_reply.task = task->tid;
-                ipc_send(m.src, &m);
+                ipc_reply(m.src, &m);
+                free(name);
                 break;
             }
             case ALLOC_PAGES_MSG: {
@@ -344,9 +349,10 @@ void main(void) {
             }
             case LAUNCH_TASK_MSG: {
                 // Look for the program in the apps directory.
+                char *name = (char *) m.launch_task.name;
                 struct bootfs_file *file = NULL;
                 for (uint32_t i = 0; i < num_files; i++) {
-                    if (!strcmp(files[i].name, m.launch_task.name)) {
+                    if (!strcmp(files[i].name, name)) {
                         file = &files[i];
                         break;
                     }
@@ -354,12 +360,14 @@ void main(void) {
 
                 if (!file) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    free(name);
                     break;
                 }
 
                 launch_task(file);
                 m.type = LAUNCH_TASK_REPLY_MSG;
                 ipc_reply(m.src, &m);
+                free(name);
                 break;
             }
             default:

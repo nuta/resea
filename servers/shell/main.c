@@ -203,7 +203,7 @@ int parse(char *cmdline, char **argv, int argv_max) {
 static error_t launch_task(const char *task_name) {
     struct message m;
     m.type = LAUNCH_TASK_MSG;
-    strncpy(m.launch_task.name, task_name, sizeof(m.launch_task.name));
+    m.launch_task.name = task_name;
     return ipc_call(bootstrap_server, &m);
 }
 
