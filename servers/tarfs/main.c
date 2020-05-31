@@ -1,6 +1,5 @@
 #include <resea/printf.h>
 #include <resea/malloc.h>
-#include <resea/string.h>
 #include <resea/handle.h>
 #include <resea/ipc.h>
 #include <cstring.h>
@@ -159,7 +158,7 @@ void main(void) {
                 int read_len = read(file, m.fs_read.offset, buf, m.fs_read.len);
                 m.type = FS_READ_REPLY_MSG;
                 m.fs_read_reply.data = buf;
-                m.fs_read_reply.len = read_len;
+                m.fs_read_reply.data_len = read_len;
                 ipc_reply(m.src, &m);
                 free(buf);
                 break;
