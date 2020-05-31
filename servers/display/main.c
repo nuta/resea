@@ -41,7 +41,7 @@ static void scroll(void) {
     }
 }
 
-static void draw_char(unsigned y, unsigned x, char ch, color_t fg, color_t bg) {
+static void draw_char(unsigned y, unsigned x, char ch, enum textscreen_color fg, enum textscreen_color bg) {
     if (y >= SCREEN_HEIGHT || x >= SCREEN_WIDTH) {
         return;
     }

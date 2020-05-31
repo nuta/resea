@@ -274,7 +274,7 @@ userland_entry:
 
     sub rsp, 18 * 8
     mov rdi, rsp
-    mov rsi, 1 // ABI_HOOK_INITIAL
+    mov rsi, 1 // ABI_HOOK_TYPE_INITIAL
     call x64_abi_emu_hook_initial
     call unlock
 

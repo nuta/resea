@@ -147,12 +147,12 @@ uintmax_t x64_handle_syscall(uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,
 
 void x64_abi_emu_hook(trap_frame_t *frame) {
     lock();
-    abi_emu_hook(frame, ABI_HOOK_SYSCALL);
+    abi_emu_hook(frame, ABI_HOOK_TYPE_SYSCALL);
     unlock();
 }
 
 void x64_abi_emu_hook_initial(trap_frame_t *frame) {
-    abi_emu_hook(frame, ABI_HOOK_INITIAL);
+    abi_emu_hook(frame, ABI_HOOK_TYPE_INITIAL);
 }
 
 #endif

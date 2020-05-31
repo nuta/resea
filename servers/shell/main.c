@@ -10,7 +10,7 @@ static task_t kbd_server;
 
 static int cursor_x = 0;
 static int cursor_y = 0;
-static color_t text_color = COLOR_NORMAL;
+static enum textscreen_color text_color = TEXTSCREEN_COLOR_NORMAL;
 static int width;
 static int height;
 static bool in_esc = false;
@@ -41,7 +41,7 @@ static void clear_screen(void) {
     ipc_send(display_server, &m);
 }
 
-static void draw_char(int x, int y, char ch, color_t fg_color, color_t bg_color) {
+static void draw_char(int x, int y, char ch, enum textscreen_color fg_color, enum textscreen_color bg_color) {
     struct message m;
     m.type = TEXTSCREEN_DRAW_CHAR_MSG;
     m.textscreen_draw_char.ch = ch;
@@ -78,19 +78,19 @@ void logputc(char ch) {
             in_esc = false;
             switch (color_code) {
                 case 32:
-                    text_color = COLOR_GREEN;
+                    text_color = TEXTSCREEN_COLOR_GREEN;
                     break;
                 case 33:
-                    text_color = COLOR_YELLOW;
+                    text_color = TEXTSCREEN_COLOR_YELLOW;
                     break;
                 case 91:
-                    text_color = COLOR_RED;
+                    text_color = TEXTSCREEN_COLOR_RED;
                     break;
                 case 96:
-                    text_color = COLOR_CYAN;
+                    text_color = TEXTSCREEN_COLOR_CYAN;
                     break;
                 default:
-                    text_color = COLOR_NORMAL;
+                    text_color = TEXTSCREEN_COLOR_NORMAL;
             }
         }
 
@@ -102,7 +102,7 @@ void logputc(char ch) {
     }
 
     if (ch != '\n') {
-        draw_char(cursor_x, cursor_y, ch, text_color, COLOR_BLACK);
+        draw_char(cursor_x, cursor_y, ch, text_color, TEXTSCREEN_COLOR_BLACK);
         cursor_x++;
         if (cursor_x == width) {
             newline();
@@ -242,7 +242,7 @@ static void input(char ch) {
         case '\b':
             if (cursor > 0) {
                 cursor_x--;
-                draw_char(cursor_x, cursor_y, ' ', COLOR_NORMAL, COLOR_BLACK);
+                draw_char(cursor_x, cursor_y, ' ', TEXTSCREEN_COLOR_NORMAL, TEXTSCREEN_COLOR_BLACK);
                 update_cursor();
                 cursor--;
                 cmdline[cursor] = '\0';

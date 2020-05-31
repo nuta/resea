@@ -78,7 +78,7 @@ static void handle_irq(void) {
                 }
 
                 uint16_t keycode =
-                    (alt ? KEY_MOD_ALT : 0) | (ctrl ? KEY_MOD_CTRL : 0) | ascii;
+                    (alt ? KBD_KEY_MOD_ALT : 0) | (ctrl ? KBD_KEY_MOD_CTRL : 0) | ascii;
                 // TRACE("key event: scancode=%02x, keycode=%04x", scancode,
                 //       keycode);
 

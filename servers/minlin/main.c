@@ -47,7 +47,7 @@ void main(void) {
                 ASSERT(proc);
 
                 switch (m.abi_hook.type) {
-                    case ABI_HOOK_INITIAL: {
+                    case ABI_HOOK_TYPE_INITIAL: {
                         struct message m;
                         m.type = ABI_HOOK_REPLY_MSG;
 
@@ -67,7 +67,7 @@ void main(void) {
                         ipc_reply(proc->task, &m);
                         break;
                     }
-                    case ABI_HOOK_SYSCALL:
+                    case ABI_HOOK_TYPE_SYSCALL:
                         handle_syscall(proc, &m.abi_hook.frame);
                         break;
                     default:
