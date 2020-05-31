@@ -260,6 +260,13 @@ void main(void) {
                 m.nop_reply.value = m.nop.value;
                 ipc_send(m.src, &m);
                 break;
+            case NOP_WITH_BULK_MSG:
+                free((void *) m.nop_with_bulk_reply.data);
+                m.type = NOP_WITH_BULK_REPLY_MSG;
+                m.nop_with_bulk_reply.data = m.nop_with_bulk.data;
+                m.nop_with_bulk_reply.data_len = m.nop_with_bulk.data_len;
+                ipc_send(m.src, &m);
+                break;
             case EXCEPTION_MSG: {
                 if (m.src != KERNEL_TASK_TID) {
                     WARN("forged exception message from #%d, ignoring...",

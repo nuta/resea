@@ -1,6 +1,7 @@
 include "servers/*/interface.idl";
 
 rpc nop(value: int) -> (value: int);
+rpc nop_with_bulk(data: bytes) -> (data: bytes);
 rpc lookup(name: str) -> (task: task);
 rpc launch_task(name: str) -> (task: task);
 rpc alloc_pages(num_pages: size, paddr: paddr) -> (vaddr: vaddr, paddr: paddr);

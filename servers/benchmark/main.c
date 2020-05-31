@@ -1,4 +1,5 @@
 #include <resea/ipc.h>
+#include <resea/malloc.h>
 #include <resea/printf.h>
 #define NUM_ITERS 128
 
@@ -26,18 +27,40 @@ static void print_stats(const char *name, cycles_t *iters, size_t num_iters) {
 }
 
 void main(void) {
+    cycles_t iters[NUM_ITERS];
     INFO("starting IPC benchmark...");
 
     //
     //  IPC round-trip benchmark
     //
-    cycles_t iters[NUM_ITERS];
     for (int i = 0; i < NUM_ITERS; i++) {
         struct message m = { .type = NOP_MSG };
         cycles_t start = cycle_counter();
         ipc_call(INIT_TASK_TID, &m);
         iters[i] = cycle_counter() - start;
     }
-
     print_stats("IPC round-trip", iters, NUM_ITERS);
+
+    //
+    //  IPC round-trip benchmark (with bulk payload)
+    //
+    for (int i = 0; i < NUM_ITERS; i++) {
+        // Since we don't access the data (bulk_payload) to be sent, the kernel
+        // internally handles the page fault on the first message passing. Thus
+        // it should take signficantly long on the first time.
+        static char bulk_payload[PAGE_SIZE] = {};
+
+        struct message m;
+        m.type = NOP_WITH_BULK_MSG;
+        m.nop_with_bulk.data = bulk_payload;
+        m.nop_with_bulk.data_len = PAGE_SIZE;
+
+        cycles_t start = cycle_counter();
+        ipc_call(INIT_TASK_TID, &m);
+        iters[i] = cycle_counter() - start;
+        ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
+        free((void *) m.nop_with_bulk_reply.data);
+    }
+    print_stats("IPC round-trip (with bulk)", iters, NUM_ITERS);
+
 }
