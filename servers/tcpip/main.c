@@ -52,7 +52,7 @@ static void transmit(device_t device, mbuf_t pkt) {
     packet->dst = driver->tid;
     packet->m.type = NET_TX_MSG;
     packet->m.net_tx.payload = payload;
-    packet->m.net_tx.len = len;
+    packet->m.net_tx.payload_len = len;
     list_push_back(&driver->tx_queue, &packet->next);
 
     OOPS_OK(ipc_notify(driver->tid, NOTIFY_NEW_DATA));
@@ -279,7 +279,7 @@ void main(void) {
                     break;
                 }
 
-                ethernet_receive(driver->device, m.net_rx.payload, m.net_rx.len);
+                ethernet_receive(driver->device, m.net_rx.payload, m.net_rx.payload_len);
                 dhcp_receive();
                 break;
             }
@@ -296,7 +296,7 @@ void main(void) {
                 }
 
                 ipc_reply(m.src, &pkt->m);
-                free(pkt->m.net_tx.payload);
+                free((void *) pkt->m.net_tx.payload);
                 free(pkt);
                 break;
             }

@@ -27,7 +27,7 @@ void main(void) {
 
                 m.type = BLK_READ_REPLY_MSG;
                 m.blk_read_reply.data = &__image[offset];
-                m.blk_read_reply.len = len;
+                m.blk_read_reply.data_len = len;
                 ipc_reply(m.src, &m);
                 break;
             }

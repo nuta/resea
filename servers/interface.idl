@@ -5,6 +5,13 @@ rpc lookup(name: str) -> (task: task);
 rpc launch_task(name: str) -> (task: task);
 rpc alloc_pages(num_pages: size, paddr: paddr) -> (vaddr: vaddr, paddr: paddr);
 
+namespace fs {
+    rpc open(path: str) -> (handle: handle);
+    rpc close(handle: handle) -> ();
+    rpc read(handle: handle, offset: offset, len: size) -> (data: bytes);
+    rpc stat(path: str) -> (size: size);
+}
+
 namespace textscreen {
     oneway draw_char(ch: char, fg_color: color, bg_color: color, x: uint, y: uint);
     oneway move_cursor(x: uint, y: uint);
@@ -16,4 +23,14 @@ namespace textscreen {
 namespace kbd {
     rpc listen() -> ();
     rpc read() -> (keycode: u16);
+}
+
+namespace blk {
+    rpc read(sector: offset, num_sectors: size) -> (data: bytes);
+}
+
+namespace net {
+    oneway rx(payload: bytes);
+    oneway tx(payload: bytes);
+    oneway get_tx(); // FIXME:
 }

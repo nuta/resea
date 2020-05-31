@@ -17,7 +17,7 @@ void blk_read(size_t sector, void *buf, size_t num_sectors) {
     error_t err = ipc_call(ramdisk_server, &m);
     ASSERT(IS_OK(err));
     ASSERT(m.type == BLK_READ_REPLY_MSG);
-    memcpy(buf, m.blk_read_reply.data, m.blk_read_reply.len);
+    memcpy(buf, m.blk_read_reply.data, m.blk_read_reply.data_len);
 }
 
 void blk_write(size_t offset, const void *buf, size_t len) {
@@ -92,7 +92,7 @@ void main(void) {
 
                 m.type = FS_READ_REPLY_MSG;
                 m.fs_read_reply.data = buf;
-                m.fs_read_reply.len = len_or_err;
+                m.fs_read_reply.data_len = len_or_err;
                 ipc_reply(m.src, &m);
                 free(buf);
                 break;
