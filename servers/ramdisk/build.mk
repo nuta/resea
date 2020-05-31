@@ -1,7 +1,7 @@
 name := ramdisk
 obj-y := main.o disk.o
 
-$(BUILD_DIR)/user/servers/ramdisk/disk.o: $(BUILD_DIR)/ramdisk.img
+$(BUILD_DIR)/servers/ramdisk/disk.o: $(BUILD_DIR)/ramdisk.img
 	$(PROGRESS) "GEN" $@
 	echo ".data; .align 4096; .global __image, __image_end; __image: .incbin \"$<\"; __image_end:" > $(@:.o=.S)
 	$(CC) $(CFLAGS) -o $@ -c $(@:.o=.S)
