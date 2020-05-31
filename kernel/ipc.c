@@ -66,7 +66,6 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
             }
 
             if (len > dst->bulk_len) {
-                INFO("len = %x", len);
                 resume_sender_task(dst);
                 return ERR_TOO_LARGE;
             }
