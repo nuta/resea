@@ -13,7 +13,7 @@ void memcpy_to_user(userptr_t dst, const void *src, size_t len);
 long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5);
 
 #ifdef CONFIG_ABI_EMU
-void abi_emu_hook(struct abi_emu_frame *frame, enum abi_hook_type type);
+void abi_emu_hook(trap_frame_t *frame, enum abi_hook_type type);
 #endif
 
 // Implemented in arch.

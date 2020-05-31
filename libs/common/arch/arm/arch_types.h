@@ -19,4 +19,7 @@ typedef uint32_t pagefault_t;
 #define PF_WRITE   (1 << 1)
 #define PF_USER    (1 << 2)
 
+typedef struct {
+} trap_frame_t;
+
 #endif

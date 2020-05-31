@@ -2,3 +2,4 @@ oneway notifications(data: notifications);
 oneway exception(task: task, exception: exception_type);
 rpc page_fault(task: task, vaddr: vaddr, ip: vaddr, fault: pagefault)
         -> (paddr: paddr, attrs: pageattrs);
+rpc abi_hook(task: task, type: int, frame: trap_frame) -> (frame: trap_frame);

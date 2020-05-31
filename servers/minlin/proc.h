@@ -89,7 +89,7 @@ struct proc {
     struct elf64_phdr *phdrs;
 
     struct syscall_context syscall;
-    struct abi_emu_frame frame;
+    trap_frame_t frame;
 
     uint64_t fsbase;
     uint64_t gsbase;

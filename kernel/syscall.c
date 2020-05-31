@@ -243,7 +243,7 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
 
 #ifdef CONFIG_ABI_EMU
 /// The system call handler for ABI emulation.
-void abi_emu_hook(struct abi_emu_frame *frame, enum abi_hook_type type) {
+void abi_emu_hook(trap_frame_t *frame, enum abi_hook_type type) {
     struct message m;
     m.type = ABI_HOOK_MSG;
     m.abi_hook.type = type;

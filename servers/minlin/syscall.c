@@ -555,7 +555,7 @@ void try_syscall(struct proc *proc) {
     }
 }
 
-void handle_syscall(struct proc *proc, struct abi_emu_frame *args) {
+void handle_syscall(struct proc *proc, trap_frame_t *args) {
     memcpy(&proc->frame, args, sizeof(proc->frame));
     dispatch(proc, args->rax, args->rdi, args->rsi, args->rdx,
              args->r10, args->r8, args->r9);

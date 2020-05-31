@@ -49,23 +49,6 @@ struct message {
         };
 
         IDL_MESSAGE_FIELDS /* defined in message_fields.h */
-
-        //
-        //  TODO: Migrate into *.idl files.
-        //
-#ifdef CONFIG_ABI_EMU
-        #define ABI_HOOK_MSG ID(5)
-        struct {
-            task_t task;
-            enum abi_hook_type type;
-            struct abi_emu_frame frame;
-        } abi_hook;
-
-        #define ABI_HOOK_REPLY_MSG ID(6)
-        struct {
-            struct abi_emu_frame frame;
-        } abi_hook_reply;
-#endif
    };
 };
 

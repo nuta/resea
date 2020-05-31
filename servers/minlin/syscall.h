@@ -4,7 +4,7 @@
 #include <types.h>
 
 struct proc;
-void handle_syscall(struct proc *proc, struct abi_emu_frame *args);
+void handle_syscall(struct proc *proc, trap_frame_t *args);
 void try_syscall(struct proc *proc);
 
 #endif

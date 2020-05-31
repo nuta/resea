@@ -51,7 +51,7 @@ void main(void) {
                         struct message m;
                         m.type = ABI_HOOK_REPLY_MSG;
 
-                        struct abi_emu_frame *ret = &m.abi_hook_reply.frame;
+                        trap_frame_t *ret = &m.abi_hook_reply.frame;
                         if (proc->state == PROC_FORKED) {
                             memcpy(ret, &proc->frame, sizeof(*ret));
                             ret->rax = 0;
