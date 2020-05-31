@@ -37,5 +37,6 @@ int vsnprintf(char *buf, size_t size, const char *fmt, va_list vargs);
 int snprintf(char *buf, size_t size, const char *fmt, ...);
 void backtrace(void);
 const char *err2str(error_t err);
+const char *msgtype2str(int type);
 
 #endif

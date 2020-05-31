@@ -1,6 +1,10 @@
 menu "Kernel"
     source "kernel/arch/*/Kconfig"
 
+    config TRACE_IPC
+        bool "Trace message passing"
+        default n
+
     config NOMMU
         bool "Disable virtual memory"
         default n

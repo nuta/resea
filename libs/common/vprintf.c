@@ -1,3 +1,4 @@
+#include <message_fields.h>
 #include "vprintf.h"
 #include "print_macros.h"
 
@@ -262,4 +263,17 @@ const char *err2str(error_t err) {
     }
 
     return error_names[-err];
+}
+
+const char *msgtype2str(int type) {
+    if (type < 0) {
+        return err2str(type);
+    }
+
+    int id = MSG_ID(type);
+    if (id == 0 || id > IDL_MSGID_MAX) {
+        return "(invalid)";
+    }
+
+    return IDL_MSGID2STR[id];
 }

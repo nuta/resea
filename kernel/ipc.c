@@ -56,7 +56,8 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
         }
 
         // Copy the bulk payload.
-        if (!IS_ERROR(dst->m.type) && (dst->m.type & MSG_BULK)) {
+        bool contains_bulk = !IS_ERROR(dst->m.type) && (dst->m.type & MSG_BULK);
+        if (contains_bulk) {
             size_t len = dst->m.bulk_len;
             userptr_t src_buf = (userptr_t) dst->m.bulk_ptr;
             userptr_t dst_buf = dst->bulk_ptr;
@@ -89,6 +90,17 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
 
         dst->m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
         task_set_state(dst, TASK_RUNNABLE);
+
+#ifdef CONFIG_TRACE_IPC
+        if (contains_bulk) {
+            TRACE("IPC: %s: %s -> %s (%d bytes in bulk%s)",
+                   msgtype2str(dst->m.type), CURRENT->name, dst->name,
+                  dst->m.bulk_len, (dst->m.type & MSG_STR) ? ", string" : "");
+        } else {
+            TRACE("IPC: %s: %s -> %s",
+                  msgtype2str(dst->m.type), CURRENT->name, dst->name);
+        }
+#endif
     }
 
     // Receive a message.

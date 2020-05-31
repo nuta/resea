@@ -266,6 +266,7 @@ def c_generator(args, idl):
     renderer.filters["const_def"] = const_def
     renderer.filters["type_def"] = type_def
     renderer.filters["msg_type"] = msg_type
+    renderer.filters["msg_str"] = lambda m: f"{m['namespace']}.".lstrip(".") + m['name']
     template = renderer.from_string ("""\
 #ifndef __GENIDL_MESSAGE_H__
 #define __GENIDL_MESSAGE_H__
@@ -363,11 +364,23 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
 {%- endif %}
 {%- endfor %}
 
+#define IDL_MSGID_MAX {{ msgid_max }}
+#define IDL_MSGID2STR \\
+    (const char *[]){{ "{" }} \\
+    {% for m in msgs %} \\
+        [{{ m.args_id }}] = "{{ m | msg_str }}", \\
+        {%- if not m.oneway %}
+        [{{ m.rets_id }}] = "{{ m | msg_str }}_reply", \\
+        {%- endif %}
+    {% endfor %} \\
+    {{ "}" }}
+
 #endif
 
 """)
 
-    text = template.render(**idl)
+    msgid_max = next_msg_id - 1
+    text = template.render(msgid_max=msgid_max,**idl)
 
     with open(args.out, "w") as f:
         f.write(text)
