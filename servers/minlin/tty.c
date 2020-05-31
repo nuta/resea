@@ -35,8 +35,8 @@ static void putc(char ch) {
     m.textscreen_draw_char.ch = ch;
     m.textscreen_draw_char.x = x++;
     m.textscreen_draw_char.y = y;
-    m.textscreen_draw_char.fg_color = COLOR_NORMAL;
-    m.textscreen_draw_char.bg_color = COLOR_BLACK;
+    m.textscreen_draw_char.fg_color = TEXTSCREEN_COLOR_NORMAL;
+    m.textscreen_draw_char.bg_color = TEXTSCREEN_COLOR_BLACK;
     ipc_send(display_server, &m);
     update_cursor();
 }

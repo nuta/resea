@@ -65,7 +65,6 @@ static errno_t driver_open(struct file *file, const char *path, int flags,
     struct message m;
     m.type = FS_OPEN_MSG;
     m.fs_open.path = (char *) path;
-    m.fs_open.len = strlen(path) + 1;
     error_t err = ipc_call(fs_server, &m);
     if (IS_ERROR(err)) {
         return -EDOM; // FIXME: Convert error_t to errno_t.
@@ -90,17 +89,16 @@ static ssize_t driver_read(struct file *file, uint8_t *buf, size_t len) {
     }
 
     ASSERT(m.type == FS_READ_REPLY_MSG);
-    memcpy(buf, m.fs_read_reply.data, m.fs_read_reply.len);
-    free(m.fs_read_reply.data);
-    file->pos += m.fs_read_reply.len;
-    return m.fs_read_reply.len;
+    memcpy(buf, m.fs_read_reply.data, m.fs_read_reply.data_len);
+    free((void *) m.fs_read_reply.data);
+    file->pos += m.fs_read_reply.data_len;
+    return m.fs_read_reply.data_len;
 }
 
 int driver_stat(const char *path, struct stat *stat) {
     struct message m;
     m.type = FS_STAT_MSG;
     m.fs_stat.path = (char *) path;
-    m.fs_stat.len = strlen(path) + 1;
     error_t err = ipc_call(fs_server, &m);
     if (IS_ERROR(err)) {
         return -ENOENT; // FIXME: Convert error_t to errno_t.
