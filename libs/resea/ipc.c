@@ -56,6 +56,8 @@ error_t ipc_recv(task_t src, struct message *m) {
         bulk_ptr = NULL;
     }
 
+    // TODO: Handle non-terminated MSG_STR.
+
     // Handle the case when m.type is negative: a message represents an error
     // (sent by `ipc_send_err()`).
     return (IS_OK(err) && m->type < 0) ? m->type : err;
