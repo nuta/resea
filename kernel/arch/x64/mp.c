@@ -131,7 +131,7 @@ static int lock_owner = NO_LOCK_OWNER;
 
 void lock(void) {
     if (mp_self() == lock_owner) {
-        PANIC("recusive lock (#%d)", mp_self());
+        PANIC("recursive lock (#%d)", mp_self());
     }
 
     while (!__sync_bool_compare_and_swap(&big_lock, UNLOCKED, LOCKED)) {
