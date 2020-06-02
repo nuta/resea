@@ -68,6 +68,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     TRACE("new task #%d: %s (pager=%s)",
           task->tid, name, pager ? pager->name : NULL);
     task->state = TASK_CREATED;
+    task->prefetching = false;
     task->caps = caps;
     task->notifications = 0;
     task->pager = pager;

@@ -48,7 +48,7 @@ void main(void) {
         // Since we don't access the data (bulk_payload) to be sent, the kernel
         // internally handles the page fault on the first message passing. Thus
         // it should take signficantly long on the first time.
-        static char bulk_payload[PAGE_SIZE] = {};
+        static char bulk_payload[PAGE_SIZE] = "This is a bulk payload!";
 
         struct message m;
         m.type = NOP_WITH_BULK_MSG;

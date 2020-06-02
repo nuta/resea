@@ -19,11 +19,46 @@ static void resume_sender_task(struct task *task) {
     }
 }
 
+static void prefetch_pages(userptr_t base, size_t len) {
+    if (!len) {
+        return;
+    }
+
+    userptr_t ptr = base;
+    do {
+        char tmp;
+        CURRENT->prefetching = true;
+        memcpy_from_user(&tmp, ptr, sizeof(tmp));
+        CURRENT->prefetching = false;
+        ptr += PAGE_SIZE;
+    } while (ptr < ALIGN_UP(base + len, PAGE_SIZE));
+}
+
 /// Sends and receives a message. Note that `m` is a user pointer if
 /// IPC_KERNEL is not set!
 error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
+    // TODO: Needs refactoring.
+    // TODO: IPC fastpath
+
+    if (flags & IPC_RECV && CURRENT->bulk_ptr && !CURRENT->prefetching) {
+        prefetch_pages(CURRENT->bulk_ptr, CURRENT->bulk_len);
+    }
+
     // Send a message.
     if (flags & IPC_SEND) {
+        // Copy the message into the receiver's buffer.
+        struct message tmp_m;
+        if (flags & IPC_KERNEL) {
+            memcpy(&tmp_m, m, sizeof(struct message));
+        } else {
+            memcpy_from_user(&tmp_m, (userptr_t) m, sizeof(struct message));
+        }
+
+        bool contains_bulk = !IS_ERROR(tmp_m.type) && (tmp_m.type & MSG_BULK);
+        if (contains_bulk) {
+            prefetch_pages((userptr_t) tmp_m.bulk_ptr, tmp_m.bulk_len);
+        }
+
         // Wait until the destination (receiver) task gets ready for receiving.
         while (true) {
             if (dst->state == TASK_RECEIVING
@@ -48,18 +83,10 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
             }
         }
 
-        // Copy the message into the receiver's buffer.
-        if (flags & IPC_KERNEL) {
-            memcpy(&dst->m, m, sizeof(struct message));
-        } else {
-            memcpy_from_user(&dst->m, (userptr_t) m, sizeof(struct message));
-        }
-
         // Copy the bulk payload.
-        bool contains_bulk = !IS_ERROR(dst->m.type) && (dst->m.type & MSG_BULK);
         if (contains_bulk) {
-            size_t len = dst->m.bulk_len;
-            userptr_t src_buf = (userptr_t) dst->m.bulk_ptr;
+            size_t len = tmp_m.bulk_len;
+            userptr_t src_buf = (userptr_t) tmp_m.bulk_ptr;
             userptr_t dst_buf = dst->bulk_ptr;
             if (!dst_buf) {
                 resume_sender_task(dst);
@@ -85,22 +112,24 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
                 src_buf += copy_len;
             }
 
-            dst->m.bulk_ptr = (void *) dst->bulk_ptr;
+            tmp_m.bulk_ptr = (void *) dst->bulk_ptr;
         }
 
-        dst->m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
-        task_set_state(dst, TASK_RUNNABLE);
+        tmp_m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
+        memcpy(&dst->m, &tmp_m, sizeof(dst->m));
 
 #ifdef CONFIG_TRACE_IPC
         if (contains_bulk) {
             TRACE("IPC: %s: %s -> %s (%d bytes in bulk%s)",
-                   msgtype2str(dst->m.type), CURRENT->name, dst->name,
-                  dst->m.bulk_len, (dst->m.type & MSG_STR) ? ", string" : "");
+                  msgtype2str(tmp_m.type), CURRENT->name, dst->name,
+                  tmp_m.bulk_len, (tmp_m.type & MSG_STR) ? ", string" : "");
         } else {
             TRACE("IPC: %s: %s -> %s",
-                  msgtype2str(dst->m.type), CURRENT->name, dst->name);
+                  msgtype2str(tmp_m.type), CURRENT->name, dst->name);
         }
 #endif
+
+        task_set_state(dst, TASK_RUNNABLE);
     }
 
     // Receive a message.
