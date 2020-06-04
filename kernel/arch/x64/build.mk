@@ -22,18 +22,18 @@ run: $(kernel_image)
 
 .PHONY: test
 test: $(kernel_image)
-	./tools/run-and-check.py $(RUNCHECKFLAGS) "[test] Passed all tests" -- $(MAKE) run
+	./tools/run-and-check.py $(RUNCHECKFLAGS) "Passed all tests" -- $(MAKE) run
 
 # FIXME: Fix "make[1]: warning: -jN forced in submake: disabling jobserver mode."
 .PHONY: autotest
 autotest:
-	$(MAKE) test RUNCHECKFLAGS=--always-exit-with-zero
+	$(MAKE) test RUNCHECKFLAGS="--quiet --always-exit-with-zero"
 	echo '==> Watching changes...'
 	watchmedo shell-command \
 		--patterns="*.c;*.h;*.S;*.mk;*.idl;*.ld;*.py;Kconfig;Makefile" \
 		--recursive \
 		--ignore-directories \
-		--command="echo '==> Rebuilding'; $(MAKE) -j4 test RUNCHECKFLAGS=--always-exit-with-zero && echo '==> OK!'"
+		--command="echo '==> Rebuilding'; $(MAKE) -j4 test RUNCHECKFLAGS='--quiet --always-exit-with-zero' && echo '==> OK!'"
 		.
 
 .PHONY: bochs

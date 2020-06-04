@@ -34,4 +34,6 @@ install:
 
 script:
   - make defconfig
+  - sed -ie "s/# CONFIG_TEST_SERVER is not set.*/CONFIG_TEST_SERVER=y/" .config
   - make build -j2
+  - make test
