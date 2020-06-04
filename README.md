@@ -12,7 +12,7 @@ to extend the functionality.
 
 Features
 --------
-- A *pure* microkernel with x86_64 (SMP) support.
+- A *pure* microkernel with x86_64 (SMP) and experimental ARMv6-M (micro:bit) support.
 - FAT file system server.
 - TCP/IP server.
 - Text-based user interface.
@@ -21,6 +21,8 @@ Features
 
 Road Map in 2020
 ----------------
+- Stabilize APIs.
+- Improve stability and performance.
 - Documentation
 - RISC-V support
 - [Rust](https://www.rust-lang.org/) in userland
