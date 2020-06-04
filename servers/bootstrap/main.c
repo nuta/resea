@@ -257,7 +257,7 @@ void main(void) {
         switch (m.type) {
             case NOP_MSG:
                 m.type = NOP_REPLY_MSG;
-                m.nop_reply.value = m.nop.value;
+                m.nop_reply.value = m.nop.value * 7;
                 ipc_send(m.src, &m);
                 break;
             case NOP_WITH_BULK_MSG:

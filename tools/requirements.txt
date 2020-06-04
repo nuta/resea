@@ -1,3 +1,9 @@
 kconfiglib
 lark-parser
 jinja2
+colorama
+watchdog
+
+# watchmedo internal dependencies
+PyYAML
+argh

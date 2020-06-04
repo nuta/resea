@@ -25,10 +25,14 @@ menu "Servers"
             tristate "Linux ABI Emulation Layer"
             select ABI_EMU
 
-        config HELLO_SERVER
-            tristate "Hello World"
-        config BENCHMARK_SERVER
-            tristate "Benchmark"
+        menu "Applications"
+            config HELLO_SERVER
+                tristate "Hello World"
+            config BENCHMARK_SERVER
+                tristate "Benchmark"
+            config TEST_SERVER
+                tristate "Kernel/Userland integrated tests"
+        endmenu
 
         menu "Filesystem Drivers"
             config TARFS_SERVER

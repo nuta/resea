@@ -125,7 +125,7 @@ endif
 build: $(kernel_image) $(BUILD_DIR)/compile_commands.json
 
 .PHONY: lint
-lint:$(BUILD_DIR)/compile_commands.json
+lint: $(BUILD_DIR)/compile_commands.json
 	find kernel servers libs -name "*.c" | xargs $(CLANG_TIDY) -p $(BUILD_DIR)
 
 .PHONY: clean
