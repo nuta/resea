@@ -14,7 +14,7 @@ def main():
     parser.add_argument("argv", nargs="+", help="The command.")
     args = parser.parse_args()
 
-    p = subprocess.run(args.argv, timeout=args.timeout, text=True,
+    p = subprocess.run(args.argv, timeout=args.timeout, universal_newlines=True,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout = p.stdout.replace("\n\n", "\n") \
         .replace("\x1b\x63", "") \
