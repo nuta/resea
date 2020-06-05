@@ -83,12 +83,14 @@ void main(void) {
                 task_t task = m.page_fault.task;
                 struct proc *proc = proc_lookup_by_task(task);
                 ASSERT(proc);
-                paddr_t paddr = handle_page_fault(proc, m.page_fault.vaddr,
+                vaddr_t vaddr = handle_page_fault(proc, m.page_fault.vaddr,
                                                   m.page_fault.fault);
-                if (paddr) {
+                if (vaddr) {
                     m.type = PAGE_FAULT_REPLY_MSG;
-                    m.page_fault_reply.paddr = paddr;
+                    m.page_fault_reply.vaddr = vaddr;
                     m.page_fault_reply.attrs = PAGE_WRITABLE;
+                    volatile int x = *((volatile char *) vaddr); // FIXME: Handle page faults in kernel
+                    ASSERT(x != 0xaaffaa);
                     ipc_reply(task, &m);
                 }
                 break;

@@ -81,10 +81,11 @@ static paddr_t user_pager(vaddr_t addr, vaddr_t ip, pagefault_t fault,
     // Check that paddr is not in kernel area.
     // TODO: Replace with vm_resolve(m.page_fault_reply.vaddr) in case the pager
     // is malicious.
-    paddr_t paddr = m.page_fault_reply.paddr;
-    if (is_kernel_paddr(paddr)) {
-        WARN("%s: pager returned a kernel page (vaddr=%p, paddr=%p, pager=%s)",
-             CURRENT->name, addr, paddr, CURRENT->pager->name);
+    paddr_t paddr =
+        vm_resolve(&CURRENT->pager->vm, m.page_fault_reply.vaddr);
+    if (!paddr) {
+        WARN("%s: pager returned a unmapped page (pager=%s, pager_vaddr=%p)",
+             CURRENT->name, CURRENT->pager->name, m.page_fault_reply.vaddr);
         task_exit(EXP_INVALID_MSG_FROM_PAGER);
     }
 
@@ -94,17 +95,13 @@ static paddr_t user_pager(vaddr_t addr, vaddr_t ip, pagefault_t fault,
 
 /// Handles page faults in the initial task.
 static paddr_t init_task_pager(vaddr_t vaddr, pageattrs_t *attrs) {
-    vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
-    paddr_t paddr;
-    if (STRAIGHT_MAP_ADDR <= vaddr && vaddr < STRAIGHT_MAP_END) {
-        // Straight-mapping: virtual addresses are equal to physical.
-        paddr = vaddr;
-    } else {
+    if (is_kernel_paddr(vaddr)) {
         PANIC("init_task tried to access invalid memory address %p", vaddr);
     }
 
+    // Straight-mapping: virtual addresses are equal to physical.
     *attrs = PAGE_USER | PAGE_WRITABLE;
-    return paddr;
+    return ALIGN_DOWN(vaddr, PAGE_SIZE);
 }
 
 /// The page fault handler. It calls a pager and updates the page table.

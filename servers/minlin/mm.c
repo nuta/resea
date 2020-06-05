@@ -118,7 +118,7 @@ size_t strncpy_from_user(struct proc *proc, char *dst, vaddr_t src,
     return read_len;
 }
 
-paddr_t handle_page_fault(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
+vaddr_t handle_page_fault(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
     vaddr_t aligned_vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
 
     if (fault & PF_PRESENT) {
@@ -132,7 +132,7 @@ paddr_t handle_page_fault(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
     // Look for the associated mchunk.
     struct mchunk *mchunk = mm_resolve(&proc->mm, vaddr);
     if (mchunk) {
-        return mchunk->paddr + (aligned_vaddr - mchunk->vaddr);
+        return (vaddr_t) mchunk->buf + (aligned_vaddr - mchunk->vaddr);
     }
 
     // Allocate heap.
@@ -143,8 +143,7 @@ paddr_t handle_page_fault(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
         }
 
         memset(new_mchunk->buf, 0, new_mchunk->len);
-        DBG("allocated heap at %p %p", new_mchunk->vaddr, new_mchunk);
-        return new_mchunk->paddr + (aligned_vaddr - new_mchunk->vaddr);
+        return (vaddr_t) new_mchunk->buf + (aligned_vaddr - new_mchunk->vaddr);
     }
 
     // Look for the associated program header.
@@ -203,5 +202,5 @@ paddr_t handle_page_fault(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
     fs_read_pos(proc->exec, &new_mchunk->buf[offset_in_page],
                 offset_in_file, copy_len);
 
-    return new_mchunk->paddr;
+    return (vaddr_t) new_mchunk->buf;
 }

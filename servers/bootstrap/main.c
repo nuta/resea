@@ -245,8 +245,10 @@ static error_t handle_message(struct message *m, task_t *reply_to) {
                 pager(task, m->page_fault.vaddr, m->page_fault.fault);
             if (paddr) {
                 m->type = PAGE_FAULT_REPLY_MSG;
-                m->page_fault_reply.paddr = paddr;
+                m->page_fault_reply.vaddr = paddr;
                 m->page_fault_reply.attrs = PAGE_WRITABLE;
+                volatile int x = *((volatile char *) paddr); // FIXME: Handle page faults in kernel
+                ASSERT(x != 0xaaffaa);
                 *reply_to = task->tid;
                 return OK;
             } else {
