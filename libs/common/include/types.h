@@ -122,6 +122,7 @@ typedef uint64_t notifications_t;
 #define NOTIFY_ABORTED  (1ULL << 2)
 #define NOTIFY_NEW_DATA (1ULL << 3)
 
+// TODO: Migrate into error_t
 enum exception_type {
     EXP_GRACE_EXIT,
     EXP_NO_KERNEL_MEMORY,
