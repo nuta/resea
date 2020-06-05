@@ -94,7 +94,8 @@ typedef int error_t;
 #define IPC_CALL    (IPC_SEND | IPC_RECV)
 #define IPC_NOBLOCK (1 << 2)
 #define IPC_NOTIFY  (1 << 3)
-#define IPC_KERNEL  (1 << 4) /* Internally used by kernel. */
+#define IPC_BULK    (1 << 4)
+#define IPC_KERNEL  (1 << 5) /* Internally used by kernel. */
 
 // Flags in the message type (m->type).
 #define MSG_STR  (1 << 30)
