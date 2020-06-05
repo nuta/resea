@@ -29,9 +29,7 @@ static void prefetch_pages(userptr_t base, size_t len) {
     userptr_t ptr = base;
     do {
         char tmp;
-        CURRENT->prefetching = true;
         memcpy_from_user(&tmp, ptr, sizeof(tmp));
-        CURRENT->prefetching = false;
         ptr += PAGE_SIZE;
     } while (ptr < ALIGN_UP(base + len, PAGE_SIZE));
 }
@@ -42,7 +40,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
     // TODO: Needs refactoring.
     // TODO: IPC fastpath
 
-    if (flags & IPC_RECV && CURRENT->bulk_ptr && !CURRENT->prefetching) {
+    if ((flags & IPC_RECV) && !(flags & IPC_KERNEL) && CURRENT->bulk_ptr) {
         prefetch_pages(CURRENT->bulk_ptr, CURRENT->bulk_len);
     }
 

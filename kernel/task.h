@@ -35,7 +35,6 @@ STATIC_ASSERT(TASK_TIME_SLICE > 0);
 
 /// The task struct (so-called Task Control Block).
 struct task {
-    bool prefetching;
     /// The arch-specific fields.
     struct arch_task arch;
     /// The task ID. Starts with 1.
