@@ -58,7 +58,7 @@ static void map_boot_elf(struct vm *vm) {
         }
 
         // Map remaining pages (.bss section) with zeroes.
-        mem_size -= file_size;
+        mem_size -= phdrs[i].p_filesz;
         while (mem_size > 0) {
             void *page = kmalloc(PAGE_SIZE);
             memset(page, 0, PAGE_SIZE);
