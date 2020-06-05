@@ -67,11 +67,11 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     // Initialize fields.
     TRACE("new task #%d: %s (pager=%s)",
           task->tid, name, pager ? pager->name : NULL);
-    task->state = TASK_CREATED;
-    task->prefetching = false;
+    task->state = TASK_BLOCKED;
     task->caps = caps;
     task->notifications = 0;
     task->pager = pager;
+    task->src = IPC_DENY;
     task->bulk_ptr = 0;
     task->timeout = 0;
     task->quantum = 0;
@@ -82,7 +82,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
 
     // Append the newly created task into the runqueue.
     if (task != IDLE_TASK) {
-        task_set_state(task, TASK_RUNNABLE);
+        task_resume(task);
     }
 
     return OK;
@@ -153,20 +153,24 @@ NORETURN void task_exit(enum exception_type exp) {
     ipc(CURRENT->pager, 0, &m, IPC_SEND | IPC_KERNEL);
 
     // Wait until the pager task destroys this task...
-    CURRENT->state = TASK_EXITED;
+    CURRENT->state = TASK_BLOCKED;
+    CURRENT->src = IPC_DENY;
     task_switch();
     UNREACHABLE();
 }
 
-/// Updates a task's state.
-void task_set_state(struct task *task, int state) {
-    DEBUG_ASSERT(task->state != state);
+/// Suspends a task. Don't forget to update `task->src` as well!
+void task_block(struct task *task) {
+    DEBUG_ASSERT(task->state == TASK_RUNNABLE);
+    task->state = TASK_BLOCKED;
+}
 
-    task->state = state;
-    if (state == TASK_RUNNABLE) {
-        list_push_back(&runqueue, &task->runqueue_next);
-        mp_reschedule();
-    }
+/// Resumes a task.
+void task_resume(struct task *task) {
+    DEBUG_ASSERT(task->state == TASK_BLOCKED);
+    task->state = TASK_RUNNABLE;
+    list_push_back(&runqueue, &task->runqueue_next);
+    mp_reschedule();
 }
 
 /// Picks the next task to run.
@@ -261,9 +265,9 @@ void handle_irq(unsigned irq) {
 
 void task_dump(void) {
     const char *states[] = {
-        [TASK_UNUSED] = "unused",        [TASK_CREATED] = "created",
-        [TASK_EXITED] = "exited",        [TASK_RUNNABLE] = "runnable",
-        [TASK_RECEIVING] = "receiveing", [TASK_SENDING] = "sending",
+        [TASK_UNUSED] = "unused",
+        [TASK_RUNNABLE] = "runnable",
+        [TASK_BLOCKED] = "blocked",
     };
 
     for (unsigned i = 0; i < CONFIG_NUM_TASKS; i++) {

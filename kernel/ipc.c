@@ -11,8 +11,10 @@ extern uint8_t __temp_page[];
 static void resume_sender_task(struct task *task) {
     LIST_FOR_EACH (sender, &task->senders, struct task, sender_next) {
         if (task->src == IPC_ANY || task->src == sender->tid) {
-            DEBUG_ASSERT(sender->state == TASK_SENDING);
-            task_set_state(sender, TASK_RUNNABLE);
+            DEBUG_ASSERT(sender->state == TASK_BLOCKED);
+            DEBUG_ASSERT(sender->src == IPC_DENY);
+
+            task_resume(sender);
             list_remove(&sender->sender_next);
             break;
         }
@@ -61,7 +63,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
 
         // Wait until the destination (receiver) task gets ready for receiving.
         while (true) {
-            if (dst->state == TASK_RECEIVING
+            if (dst->state == TASK_BLOCKED
                 && (dst->src == IPC_ANY || dst->src == CURRENT->tid)) {
                 break;
             }
@@ -72,7 +74,8 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
 
             // The receiver task is not ready. Sleep until it resumes the
             // current task.
-            task_set_state(CURRENT, TASK_SENDING);
+            CURRENT->src = IPC_DENY;
+            task_block(CURRENT);
             list_push_back(&dst->senders, &CURRENT->sender_next);
             task_switch();
 
@@ -117,6 +120,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
 
         tmp_m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
         memcpy(&dst->m, &tmp_m, sizeof(dst->m));
+        task_resume(dst);
 
 #ifdef CONFIG_TRACE_IPC
         if (contains_bulk) {
@@ -128,8 +132,6 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
                   msgtype2str(tmp_m.type), CURRENT->name, dst->name);
         }
 #endif
-
-        task_set_state(dst, TASK_RUNNABLE);
     }
 
     // Receive a message.
@@ -149,7 +151,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
         resume_sender_task(CURRENT);
 
         // Sleep until a sender task resumes this task...
-        task_set_state(CURRENT, TASK_RECEIVING);
+        task_block(CURRENT);
         task_switch();
 
         // Received a message. Copy it into the receiver buffer.
@@ -165,13 +167,13 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
 
 // Notifies notifications to the task.
 void notify(struct task *dst, notifications_t notifications) {
-    if (dst->state == TASK_RECEIVING && dst->src == IPC_ANY) {
+    if (dst->state == TASK_BLOCKED && dst->src == IPC_ANY) {
         // Send a NOTIFICATIONS_MSG message immediately.
         dst->m.type = NOTIFICATIONS_MSG;
         dst->m.src = KERNEL_TASK_TID;
         dst->m.notifications.data = dst->notifications | notifications;
         dst->notifications = 0;
-        task_set_state(dst, TASK_RUNNABLE);
+        task_resume(dst);
     } else {
         // The task is not ready for receiving a event message: update the
         // pending notifications instead.

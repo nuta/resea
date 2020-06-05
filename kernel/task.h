@@ -17,16 +17,10 @@ STATIC_ASSERT(TASK_TIME_SLICE > 0);
 
 /// The task struct is not being used.
 #define TASK_UNUSED 0
-/// The task is being created.
-#define TASK_CREATED 1
 /// The task is running or is queued in the runqueue.
-#define TASK_RUNNABLE 2
-/// The task is waiting for a receiver task in IPC.
-#define TASK_SENDING 3
-/// The task is waiting for a sender task in IPC.
-#define TASK_RECEIVING 4
-/// The task has exited. Waiting for the pager to destructs it.
-#define TASK_EXITED 5
+#define TASK_RUNNABLE 1
+/// The task is waiting for a receiver/sender task in IPC.
+#define TASK_BLOCKED 2
 
 /// Determines if the current task has the given capability.
 #define CAPABLE(task, cap) ((task)->caps & (cap))
@@ -97,7 +91,8 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
                     struct task *pager, caps_t caps);
 error_t task_destroy(struct task *task);
 NORETURN void task_exit(enum exception_type exp);
-void task_set_state(struct task *task, int state);
+void task_block(struct task *task);
+void task_resume(struct task *task);
 void task_notify(struct task *task, notifications_t notifications);
 struct task *task_lookup(task_t tid);
 struct task *task_lookup_unchecked(task_t tid);

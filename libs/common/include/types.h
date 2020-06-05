@@ -84,8 +84,11 @@ typedef int error_t;
 #define SYS_WRITELOG   6
 #define SYS_READLOG    7
 
+// IPC source task IDs.
+#define IPC_ANY     0  /* So-called "open receive". */
+#define IPC_DENY    -1 /* Blocked in the IPC send phase. Internally used by kernel. */
+
 // IPC options.
-#define IPC_ANY     0 /* So-called "open receive". */
 #define IPC_SEND    (1 << 0)
 #define IPC_RECV    (1 << 1)
 #define IPC_CALL    (IPC_SEND | IPC_RECV)
