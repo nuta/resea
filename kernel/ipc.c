@@ -161,7 +161,11 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
         if (flags & IPC_KERNEL) {
             memcpy(m, &CURRENT->m, sizeof(struct message));
         } else {
-            memcpy_to_user((userptr_t) m, &CURRENT->m, sizeof(struct message));
+            // Copy into `tmp_m` since memcpy_to_user may cause a page fault and
+            // CURRENT->m will be overwritten by page fault mesages.
+            struct message tmp_m;
+            memcpy(&tmp_m, &CURRENT->m, sizeof(struct message));
+            memcpy_to_user((userptr_t) m, &tmp_m, sizeof(struct message));
         }
     }
 
