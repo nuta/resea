@@ -42,6 +42,28 @@ void main(void) {
     print_stats("IPC round-trip", iters, NUM_ITERS);
 
     //
+    //  IPC round-trip benchmark (with small bulk payload)
+    //
+    for (int i = 0; i < NUM_ITERS; i++) {
+        // Since we don't access the data (bulk_payload) to be sent, the kernel
+        // internally handles the page fault on the first message passing. Thus
+        // it should take signficantly long on the first time.
+        static char bulk_payload[1] = "A";
+
+        struct message m;
+        m.type = NOP_WITH_BULK_MSG;
+        m.nop_with_bulk.data = bulk_payload;
+        m.nop_with_bulk.data_len = PAGE_SIZE;
+
+        cycles_t start = cycle_counter();
+        ipc_call(INIT_TASK_TID, &m);
+        iters[i] = cycle_counter() - start;
+        ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
+        free((void *) m.nop_with_bulk_reply.data);
+    }
+    print_stats("IPC round-trip (with 1-byte bulk)", iters, NUM_ITERS);
+
+    //
     //  IPC round-trip benchmark (with bulk payload)
     //
     for (int i = 0; i < NUM_ITERS; i++) {
@@ -61,6 +83,6 @@ void main(void) {
         ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
         free((void *) m.nop_with_bulk_reply.data);
     }
-    print_stats("IPC round-trip (with bulk)", iters, NUM_ITERS);
+    print_stats("IPC round-trip (with PAGE_SIZE-sized bulk)", iters, NUM_ITERS);
 
 }
