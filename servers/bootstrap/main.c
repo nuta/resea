@@ -197,6 +197,127 @@ static error_t alloc_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
     return OK;
 }
 
+static error_t handle_message(struct message *m, task_t *reply_to) {
+    switch (m->type) {
+        case NOP_MSG:
+            m->type = NOP_REPLY_MSG;
+            m->nop_reply.value = m->nop.value * 7;
+            return OK;
+        case NOP_WITH_BULK_MSG:
+            free((void *) m->nop_with_bulk.data);
+            m->type = NOP_WITH_BULK_REPLY_MSG;
+            m->nop_with_bulk_reply.data = "reply!";
+            m->nop_with_bulk_reply.data_len = 7;
+            return OK;
+        case EXCEPTION_MSG: {
+            if (m->src != KERNEL_TASK_TID) {
+                WARN("forged exception message from #%d, ignoring...",
+                     m->src);
+                return DONT_REPLY;
+            }
+
+            struct task *task = get_task_by_tid(m->exception.task);
+            ASSERT(task);
+            ASSERT(m->exception.task == task->tid);
+
+            if (m->exception.exception == EXP_GRACE_EXIT) {
+                INFO("%s: terminated its execution", task->name);
+            } else {
+                WARN("%s: exception occurred, killing the task...",
+                     task->name);
+            }
+
+            kill(task);
+            return DONT_REPLY;
+        }
+        case PAGE_FAULT_MSG: {
+            if (m->src != KERNEL_TASK_TID) {
+                WARN("forged page fault message from #%d, ignoring...",
+                     m->src);
+                return DONT_REPLY;
+            }
+
+            struct task *task = get_task_by_tid(m->page_fault.task);
+            ASSERT(task);
+            ASSERT(m->page_fault.task == task->tid);
+
+            paddr_t paddr =
+                pager(task, m->page_fault.vaddr, m->page_fault.fault);
+            if (paddr) {
+                m->type = PAGE_FAULT_REPLY_MSG;
+                m->page_fault_reply.paddr = paddr;
+                m->page_fault_reply.attrs = PAGE_WRITABLE;
+                *reply_to = task->tid;
+                return OK;
+            } else {
+                kill(task);
+                return DONT_REPLY;
+            }
+        }
+        case LOOKUP_MSG: {
+            char *name = (char *) m->lookup.name;
+            struct task *task = NULL;
+            for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
+                if (tasks[i].in_use && !strcmp(tasks[i].name, name)) {
+                    task = &tasks[i];
+                    break;
+                }
+            }
+
+            if (!task) {
+                WARN("Failed to locate the task named '%s'", name);
+                free(name);
+                return ERR_NOT_FOUND;
+            }
+
+            m->type = LOOKUP_REPLY_MSG;
+            m->lookup_reply.task = task->tid;
+            free(name);
+            return OK;
+        }
+        case ALLOC_PAGES_MSG: {
+            struct task *task = get_task_by_tid(m->src);
+            ASSERT(task);
+
+            vaddr_t vaddr;
+            paddr_t paddr = m->alloc_pages.paddr;
+            error_t err =
+                alloc_pages(task, &vaddr, &paddr, m->alloc_pages.num_pages);
+            if (err != OK) {
+                return err;
+            }
+
+            m->type = ALLOC_PAGES_REPLY_MSG;
+            m->alloc_pages_reply.vaddr = vaddr;
+            m->alloc_pages_reply.paddr = paddr;
+            return OK;
+        }
+        case LAUNCH_TASK_MSG: {
+            // Look for the program in the apps directory.
+            char *name = (char *) m->launch_task.name;
+            struct bootfs_file *file = NULL;
+            for (uint32_t i = 0; i < num_files; i++) {
+                if (!strcmp(files[i].name, name)) {
+                    file = &files[i];
+                    break;
+                }
+            }
+
+            if (!file) {
+                free(name);
+                return ERR_NOT_FOUND;
+            }
+
+            launch_task(file);
+            m->type = LAUNCH_TASK_REPLY_MSG;
+            return OK;
+        }
+        default:
+            WARN("unknown message type (type=%d)", m->type);
+            return ERR_NOT_ACCEPTABLE;
+    }
+}
+
 void main(void) {
     TRACE("starting...");
     struct bootfs_header *header = (struct bootfs_header *) __bootfs;
@@ -248,137 +369,19 @@ void main(void) {
 
     // The mainloop: receive and handle messages.
     INFO("ready");
+    task_t reply_to = -1;
     while (true) {
         struct message m;
         // TODO: bzero(m)
-        error_t err = ipc_recv(IPC_ANY, &m);
+        error_t err = ipc_replyrecv(reply_to, &m);
         ASSERT_OK(err);
 
-        switch (m.type) {
-            case NOP_MSG:
-                m.type = NOP_REPLY_MSG;
-                m.nop_reply.value = m.nop.value * 7;
-                ipc_send(m.src, &m);
-                break;
-            case NOP_WITH_BULK_MSG:
-                free((void *) m.nop_with_bulk.data);
-                m.type = NOP_WITH_BULK_REPLY_MSG;
-                m.nop_with_bulk_reply.data = "reply!";
-                m.nop_with_bulk_reply.data_len = 7;
-                ipc_send(m.src, &m);
-                break;
-            case EXCEPTION_MSG: {
-                if (m.src != KERNEL_TASK_TID) {
-                    WARN("forged exception message from #%d, ignoring...",
-                         m.src);
-                    break;
-                }
-
-                struct task *task = get_task_by_tid(m.exception.task);
-                ASSERT(task);
-                ASSERT(m.exception.task == task->tid);
-
-                if (m.exception.exception == EXP_GRACE_EXIT) {
-                    INFO("%s: terminated its execution", task->name);
-                } else {
-                    WARN("%s: exception occurred, killing the task...",
-                         task->name);
-                }
-
-                kill(task);
-                break;
-            }
-            case PAGE_FAULT_MSG: {
-                if (m.src != KERNEL_TASK_TID) {
-                    WARN("forged page fault message from #%d, ignoring...",
-                         m.src);
-                    break;
-                }
-
-                struct task *task = get_task_by_tid(m.page_fault.task);
-                ASSERT(task);
-                ASSERT(m.page_fault.task == task->tid);
-
-                paddr_t paddr =
-                    pager(task, m.page_fault.vaddr, m.page_fault.fault);
-                if (paddr) {
-                    m.type = PAGE_FAULT_REPLY_MSG;
-                    m.page_fault_reply.paddr = paddr;
-                    m.page_fault_reply.attrs = PAGE_WRITABLE;
-                    error_t err = ipc_send_noblock(task->tid, &m);
-                    ASSERT_OK(err);
-                } else {
-                    kill(task);
-                }
-                break;
-            }
-            case LOOKUP_MSG: {
-                char *name = (char *) m.lookup.name;
-                struct task *task = NULL;
-                for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
-                    if (tasks[i].in_use && !strcmp(tasks[i].name, name)) {
-                        task = &tasks[i];
-                        break;
-                    }
-                }
-
-                if (!task) {
-                    WARN("Failed to locate the task named '%s'", name);
-                    ipc_reply_err(m.src, ERR_NOT_FOUND);
-                    free(name);
-                    break;
-                }
-
-                m.type = LOOKUP_REPLY_MSG;
-                m.lookup_reply.task = task->tid;
-                ipc_reply(m.src, &m);
-                free(name);
-                break;
-            }
-            case ALLOC_PAGES_MSG: {
-                struct task *task = get_task_by_tid(m.src);
-                ASSERT(task);
-
-                vaddr_t vaddr;
-                paddr_t paddr = m.alloc_pages.paddr;
-                error_t err =
-                    alloc_pages(task, &vaddr, &paddr, m.alloc_pages.num_pages);
-                if (err != OK) {
-                    ipc_send_err(m.src, err);
-                    break;
-                }
-
-                m.type = ALLOC_PAGES_REPLY_MSG;
-                m.alloc_pages_reply.vaddr = vaddr;
-                m.alloc_pages_reply.paddr = paddr;
-                ipc_send(m.src, &m);
-                break;
-            }
-            case LAUNCH_TASK_MSG: {
-                // Look for the program in the apps directory.
-                char *name = (char *) m.launch_task.name;
-                struct bootfs_file *file = NULL;
-                for (uint32_t i = 0; i < num_files; i++) {
-                    if (!strcmp(files[i].name, name)) {
-                        file = &files[i];
-                        break;
-                    }
-                }
-
-                if (!file) {
-                    ipc_reply_err(m.src, ERR_NOT_FOUND);
-                    free(name);
-                    break;
-                }
-
-                launch_task(file);
-                m.type = LAUNCH_TASK_REPLY_MSG;
-                ipc_reply(m.src, &m);
-                free(name);
-                break;
-            }
-            default:
-                WARN("unknown message type (type=%d)", m.type);
+        reply_to = m.src;
+        err = handle_message(&m, &reply_to);
+        switch (err) {
+            case OK: break;
+            case DONT_REPLY: reply_to = -1; break;
+            default: m.type = err;
         }
     }
 }
