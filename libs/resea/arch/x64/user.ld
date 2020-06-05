@@ -35,6 +35,7 @@ SECTIONS {
         . = ALIGN(4096); // See the XXX comment above.
     } :data
 
+    . = 0x04000000;
     __zeroed_pages = .;
 
     .bss : ALIGN(0x1000) {
