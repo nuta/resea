@@ -8,12 +8,14 @@ void ipc_test(void) {
     int err;
 
     // A IPC call.
-    m.type = NOP_MSG;
-    m.nop.value = 123;
-    err = ipc_call(INIT_TASK_TID, &m);
-    TEST_ASSERT(err == OK);
-    TEST_ASSERT(m.type == NOP_REPLY_MSG);
-    TEST_ASSERT(m.nop.value == 123 * 7);
+    for (int i = 0; i < 10; i++) {
+        m.type = NOP_MSG;
+        m.nop.value = i;
+        err = ipc_call(INIT_TASK_TID, &m);
+        TEST_ASSERT(err == OK);
+        TEST_ASSERT(m.type == NOP_REPLY_MSG);
+        TEST_ASSERT(m.nop.value == i * 7);
+    }
 
     // A bulk IPC call.
     m.type = NOP_WITH_BULK_MSG;
