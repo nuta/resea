@@ -61,6 +61,7 @@ static void map_boot_elf(struct vm *vm) {
         mem_size -= phdrs[i].p_filesz;
         while (mem_size > 0) {
             void *page = kmalloc(PAGE_SIZE);
+            ASSERT(page);
             memset(page, 0, PAGE_SIZE);
             vm_link(vm, vaddr, into_paddr(page), PAGE_USER | PAGE_WRITABLE);
             vaddr += PAGE_SIZE;

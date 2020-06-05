@@ -22,12 +22,12 @@ static void add_free_list(void *addr, size_t num_pages) {
     list_push_back(&heap, &free->next);
 }
 
-/// Allocates a memory space in the kernel heap. The address is always aligned
-/// to PAGE_SIZE.
+/// Allocates a memory space in the kernel heap. Returns NULL if it runs out of
+/// memory. The address is always aligned to PAGE_SIZE.
 void *kmalloc(size_t size) {
     if (list_is_empty(&heap)) {
-        // FIXME: return an error
-        PANIC("Run out of kernel memory.");
+        TRACE("run out of kernel memory");
+        return NULL;
     }
 
     struct free_list *free =
