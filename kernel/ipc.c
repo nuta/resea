@@ -36,9 +36,9 @@ static void prefetch_pages(userptr_t base, size_t len) {
 
 /// Sends and receives a message. Note that `m` is a user pointer if
 /// IPC_KERNEL is not set!
-error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
+static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
+                            unsigned flags) {
     // TODO: Needs refactoring.
-    // TODO: IPC fastpath
 
     if ((flags & IPC_RECV) && !(flags & IPC_KERNEL) && CURRENT->bulk_ptr) {
         prefetch_pages(CURRENT->bulk_ptr, CURRENT->bulk_len);
@@ -89,6 +89,11 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
             size_t len = tmp_m.bulk_len;
             userptr_t src_buf = (userptr_t) tmp_m.bulk_ptr;
             userptr_t dst_buf = dst->bulk_ptr;
+            if ((tmp_m.type & MSG_BULK) == 0) {
+                resume_sender_task(dst);
+                return ERR_INVALID_ARG;
+            }
+
             if (!dst_buf) {
                 resume_sender_task(dst);
                 return ERR_NOT_ACCEPTABLE;
@@ -161,6 +166,56 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
     }
 
     return OK;
+}
+
+/// The IPC fastpath: an IPC implementation optimized for the common case.
+///
+/// Note that `m` is a user pointer if IPC_KERNEL is not set!
+error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
+#ifdef CONFIG_IPC_FASTPATH
+    int fastpath =
+        (flags & ~IPC_NOBLOCK) == IPC_CALL
+        && dst
+        && dst->state == TASK_BLOCKED
+        && (dst->src == IPC_ANY || dst->src == CURRENT->tid)
+        && CURRENT->notifications == 0;
+
+    if (!fastpath) {
+        return ipc_slowpath(dst, src, m, flags);
+    }
+
+    // THe send phase: copy the message and resume the receiver task. Note
+    // that this user copy may cause a page fault.
+    memcpy_from_user(&dst->m, (userptr_t) m, sizeof(struct message));
+    DEBUG_ASSERT((dst->m.type & MSG_BULK) == 0); // FIXME:
+
+#ifdef CONFIG_TRACE_IPC
+    TRACE("IPC: %s: %s -> %s (fastpath)",
+          msgtype2str(dst->m.type), CURRENT->name, dst->name);
+#endif
+
+    // We just ignore invalid flags. To eliminate branches for performance,
+    // we don't return an error code.
+    dst->m.type = MSG_ID(dst->m.type);
+    dst->m.src = CURRENT->tid;
+
+    task_resume(dst);
+
+    // The receive phase: wait for a message, copy it into the user's
+    // buffer, and return to the user.
+    CURRENT->src = src;
+    resume_sender_task(CURRENT);
+    task_block(CURRENT);
+
+    task_switch();
+
+    // This user copy should not cause a page fault since we've filled the
+    // page in the user copy above.
+    memcpy_to_user((userptr_t) m, &CURRENT->m, sizeof(struct message));
+    return OK;
+#else
+    return ipc_slowpath(dst, src, m, flags);
+#endif // CONFIG_IPC_FASTPATH
 }
 
 // Notifies notifications to the task.

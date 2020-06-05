@@ -5,6 +5,10 @@ menu "Kernel"
         bool "Trace message passing"
         default n
 
+    config IPC_FASTPATH
+        bool "Enable IPC fastpath"
+        default y
+
     config NOMMU
         bool "Disable virtual memory"
         default n
