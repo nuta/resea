@@ -89,21 +89,6 @@ static task_t sys_setattrs(userptr_t bulk_ptr, size_t bulk_len,
     if (bulk_ptr) {
         CURRENT->bulk_ptr = bulk_ptr;
         CURRENT->bulk_len = bulk_len;
-
-        // Resolve page faults in advance. Handling them in the sender context
-        // would be pretty tricky...
-        size_t remaining = bulk_len;
-        size_t offset = 0;
-        while (remaining > 0) {
-            userptr_t addr = ALIGN_DOWN(bulk_ptr + offset, PAGE_SIZE);
-            // TODO: Use copy_from_user or copy_to_user instead.
-            if (!vm_resolve(&CURRENT->vm, addr)) {
-                handle_page_fault(addr, 0, PF_USER | PF_WRITE);
-            }
-
-            remaining -= MIN(remaining, PAGE_SIZE);
-            offset += PAGE_SIZE;
-        }
     }
 
     if (timeout) {
