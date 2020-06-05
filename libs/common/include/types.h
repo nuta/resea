@@ -85,6 +85,10 @@ typedef int error_t;
 #define SYS_WRITELOG   6
 #define SYS_READLOG    7
 
+// Task flags.
+#define TASK_IO      (1 << 0)
+#define TASK_ABI_EMU (1 << 1)
+
 // IPC source task IDs.
 #define IPC_ANY     0  /* So-called "open receive". */
 #define IPC_DENY    -1 /* Blocked in the IPC send phase. Internally used by kernel. */
@@ -108,13 +112,6 @@ typedef int error_t;
 #define KLOGCTL_WRITE    2
 #define KLOGCTL_LISTEN   3
 #define KLOGCTL_UNLISTEN 4
-
-typedef uint32_t caps_t;
-#define CAP_ALL     (0xffffffff & ~(CAP_ABI_EMU))
-#define CAP_TASK    (1ULL << 0)
-#define CAP_IO      (1ULL << 1)
-#define CAP_KLOG    (1ULL << 2)
-#define CAP_ABI_EMU (1ULL << 3)
 
 typedef uint64_t notifications_t;
 #define NOTIFY_TIMER    (1ULL << 0)

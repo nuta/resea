@@ -40,13 +40,13 @@ struct task *task_lookup(task_t tid) {
 
 /// Initializes a task struct.
 error_t task_create(struct task *task, const char *name, vaddr_t ip,
-                    struct task *pager, caps_t caps) {
+                    struct task *pager, unsigned flags) {
     if (task->state != TASK_UNUSED) {
         return ERR_ALREADY_EXISTS;
     }
 
 #ifndef CONFIG_ABI_EMU
-    if ((caps & CAP_ABI_EMU) != 0) {
+    if ((flags & TASK_ABI_EMU) != 0) {
         WARN("ABI emulation is not enabled");
         return ERR_UNAVAILABLE;
     }
@@ -68,7 +68,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     TRACE("new task #%d: %s (pager=%s)",
           task->tid, name, pager ? pager->name : NULL);
     task->state = TASK_BLOCKED;
-    task->caps = caps;
+    task->flags = flags;
     task->notifications = 0;
     task->pager = pager;
     task->src = IPC_DENY;

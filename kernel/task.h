@@ -22,9 +22,6 @@ STATIC_ASSERT(TASK_TIME_SLICE > 0);
 /// The task is waiting for a receiver/sender task in IPC.
 #define TASK_BLOCKED 2
 
-/// Determines if the current task has the given capability.
-#define CAPABLE(task, cap) ((task)->caps & (cap))
-
 // struct arch_cpuvar *
 #define ARCH_CPUVAR (&get_cpuvar()->arch)
 
@@ -43,8 +40,8 @@ struct task {
     int state;
     /// The name of task terminated by NUL.
     char name[CONFIG_TASK_NAME_LEN];
-    /// Capabilities (allowed operations).
-    caps_t caps;
+    /// Flags.
+    unsigned flags;
     /// The page table.
     struct vm vm;
     /// The pager task. When a page fault or an exception (e.g. divide by zero)
@@ -87,7 +84,7 @@ struct cpuvar {
 };
 
 error_t task_create(struct task *task, const char *name, vaddr_t ip,
-                    struct task *pager, caps_t caps);
+                    struct task *pager, unsigned flags);
 error_t task_destroy(struct task *task);
 NORETURN void task_exit(enum exception_type exp);
 void task_block(struct task *task);

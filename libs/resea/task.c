@@ -1,8 +1,8 @@
 #include <resea/syscall.h>
 
 error_t task_create(task_t tid, const char *name, vaddr_t ip, task_t pager,
-                    caps_t caps) {
-    return sys_spawn(tid, name, ip, pager, caps);
+                    unsigned flags) {
+    return sys_spawn(tid, name, ip, pager, flags);
 }
 
 error_t task_destroy(task_t task) {

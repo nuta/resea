@@ -42,11 +42,7 @@ static void strncpy_from_user(char *dst, userptr_t src, size_t max_len) {
 
 /// Initializes and starts a task.
 static error_t sys_spawn(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
-                         caps_t caps) {
-    if (!CAPABLE(CURRENT, CAP_TASK)) {
-        return ERR_NOT_PERMITTED;
-    }
-
+                         unsigned flags) {
     struct task *task = task_lookup_unchecked(tid);
     if (!task || task == CURRENT) {
         return ERR_INVALID_ARG;
@@ -60,8 +56,7 @@ static error_t sys_spawn(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
     // Create a task.
     char namebuf[CONFIG_TASK_NAME_LEN];
     strncpy_from_user(namebuf, name, sizeof(namebuf));
-    caps &= CURRENT->caps | CAP_ABI_EMU;
-    return task_create(task, namebuf, ip, pager_task, caps);
+    return task_create(task, namebuf, ip, pager_task, flags);
 }
 
 /// Kills a task.
@@ -69,10 +64,6 @@ static error_t sys_kill(task_t tid) {
     if (!tid) {
         task_exit(EXP_GRACE_EXIT);
         UNREACHABLE();
-    }
-
-    if (!CAPABLE(CURRENT, CAP_TASK)) {
-        return ERR_NOT_PERMITTED;
     }
 
     struct task *task = task_lookup(tid);
@@ -126,10 +117,6 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
 
 /// Registers a interrupt listener task.
 static error_t sys_listenirq(unsigned irq, task_t listener) {
-    if (!CAPABLE(CURRENT, CAP_IO)) {
-        return ERR_NOT_PERMITTED;
-    }
-
     if (listener) {
         struct task *task = task_lookup(listener);
         if (!task) {
@@ -144,10 +131,6 @@ static error_t sys_listenirq(unsigned irq, task_t listener) {
 
 /// Writes log messages into the kernel log buffer.
 static int sys_writelog(userptr_t buf, size_t buf_len) {
-    if (!CAPABLE(CURRENT, CAP_KLOG)) {
-        return ERR_NOT_PERMITTED;
-    }
-
     char kbuf[256];
     int remaining = buf_len;
     while (remaining > 0) {
@@ -164,10 +147,6 @@ static int sys_writelog(userptr_t buf, size_t buf_len) {
 
 /// Read log messages from the kernel log buffer.
 static error_t sys_readlog(userptr_t buf, size_t buf_len, bool listen) {
-    if (!CAPABLE(CURRENT, CAP_KLOG)) {
-        return ERR_NOT_PERMITTED;
-    }
-
     char kbuf[256];
     int remaining = buf_len;
     while (remaining > 0) {

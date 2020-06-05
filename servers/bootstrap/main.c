@@ -85,7 +85,7 @@ static task_t launch_task(struct bootfs_file *file) {
 
     // Create a new task for the server.
     error_t err =
-        task_create(task->tid, file->name, ehdr->e_entry, task_self(), CAP_ALL);
+        task_create(task->tid, file->name, ehdr->e_entry, task_self(), TASK_IO);
     ASSERT_OK(err);
 
     task->in_use = true;

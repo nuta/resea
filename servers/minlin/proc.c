@@ -138,8 +138,7 @@ errno_t proc_execve(struct proc *proc, const char *path, char *argv[],
     task_destroy(proc->task);
     free_task(proc->task);
     proc->task = alloc_task();
-    error_t e = task_create(proc->task, proc->name, 0, task_self(),
-                            CAP_ALL | CAP_ABI_EMU);
+    error_t e = task_create(proc->task, proc->name, 0, task_self(), TASK_ABI_EMU);
     if (e != OK) {
         return -EAGAIN;
     }
@@ -223,7 +222,7 @@ pid_t proc_fork(struct proc *parent) {
     }
 
     error_t err = task_create(child->task, child->name, 0, task_self(),
-                              CAP_ALL | CAP_ABI_EMU);
+                              TASK_ABI_EMU);
     if (err != OK) {
         return -EAGAIN;
     }

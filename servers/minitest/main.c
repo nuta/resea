@@ -30,7 +30,7 @@ static void task_b(void) {
 
 void main(void) {
     INFO("starting task A...");
-    task_create(TASK_B_TID, "task_b", (vaddr_t) task_b, task_self(), CAP_ALL);
+    task_create(TASK_B_TID, "task_b", (vaddr_t) task_b, task_self(), 0);
     timer_set(1000);
     while (true) {
         struct message m;

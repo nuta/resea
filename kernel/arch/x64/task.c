@@ -65,7 +65,7 @@ void arch_task_destroy(struct task *task) {
 
 static void update_tss_iomap(struct task *task) {
     struct tss *tss = &ARCH_CPUVAR->tss;
-    memset(tss->iomap, CAPABLE(task, CAP_IO) ? 0x00 : 0xff, TSS_IOMAP_SIZE);
+    memset(tss->iomap, (task->flags & TASK_IO) ? 0x00 : 0xff, TSS_IOMAP_SIZE);
 }
 
 void arch_task_switch(struct task *prev, struct task *next) {
@@ -82,7 +82,7 @@ void arch_task_switch(struct task *prev, struct task *next) {
     // Switch the page table.
     asm_write_cr3(next->vm.pml4);
     // Enable ABI emulation if needed.
-    ARCH_CPUVAR->abi_emu = CAPABLE(next, CAP_ABI_EMU) ? 1 : 0;
+    ARCH_CPUVAR->abi_emu = (next->flags & TASK_ABI_EMU) ? 1 : 0;
     // Update the kernel stack for syscall and interrupt/exception handlers.
     ARCH_CPUVAR->rsp0 = next->arch.syscall_stack;
     ARCH_CPUVAR->tss.rsp0 = next->arch.interrupt_stack;

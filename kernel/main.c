@@ -88,7 +88,7 @@ void kmain(void) {
     // Create the first userland task.
     struct task *task = task_lookup_unchecked(INIT_TASK_TID);
     ASSERT(task);
-    task_create(task, name, get_boot_elf_entry(), NULL, CAP_ALL);
+    task_create(task, name, get_boot_elf_entry(), NULL, 0);
     map_boot_elf(&task->vm);
 
     mpmain();
@@ -99,7 +99,7 @@ void mpmain(void) {
 
     // Initialize the idle task for this CPU.
     IDLE_TASK->tid = 0;
-    task_create(IDLE_TASK, "(idle)", 0, 0, CAP_ALL);
+    task_create(IDLE_TASK, "(idle)", 0, 0, 0);
     CURRENT = IDLE_TASK;
 
     // Do the very first context switch on this CPU.

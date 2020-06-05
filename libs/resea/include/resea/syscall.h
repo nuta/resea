@@ -5,8 +5,8 @@
 #include <types.h>
 
 static inline error_t sys_spawn(task_t tid, const char *name, vaddr_t ip,
-                                task_t pager, caps_t caps) {
-    return syscall(SYS_SPAWN, tid, (uintptr_t) name, ip, pager, caps);
+                                task_t pager, unsigned flags) {
+    return syscall(SYS_SPAWN, tid, (uintptr_t) name, ip, pager, flags);
 }
 
 static inline error_t sys_kill(task_t task) {
