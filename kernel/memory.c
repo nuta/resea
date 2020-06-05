@@ -78,9 +78,7 @@ static paddr_t user_pager(vaddr_t addr, vaddr_t ip, pagefault_t fault,
         task_exit(EXP_INVALID_MSG_FROM_PAGER);
     }
 
-    // Check that paddr is not in kernel area.
-    // TODO: Replace with vm_resolve(m.page_fault_reply.vaddr) in case the pager
-    // is malicious.
+    // Resolve the given vaddr to the paddr.
     paddr_t paddr =
         vm_resolve(&CURRENT->pager->vm, m.page_fault_reply.vaddr);
     if (!paddr) {
