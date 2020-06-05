@@ -246,7 +246,7 @@ void abi_emu_hook(trap_frame_t *frame, enum abi_hook_type type) {
     if (m.type != ABI_HOOK_REPLY_MSG) {
         WARN("%s: invalid abi hook reply (type=%d)",
              CURRENT->name, m.type);
-        task_exit(EXP_INVALID_PAGE_FAULT_REPLY /* FIXME: */);
+        task_exit(EXP_INVALID_MSG_FROM_PAGER);
     }
 
     memcpy(frame, &m.abi_hook_reply.frame, sizeof(*frame));

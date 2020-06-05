@@ -75,7 +75,7 @@ static paddr_t user_pager(vaddr_t addr, vaddr_t ip, pagefault_t fault,
     if (m.type != PAGE_FAULT_REPLY_MSG) {
         WARN("%s: invalid page fault reply (type=%d, vaddr=%p, pager=%s)",
              CURRENT->name, m.type, addr, CURRENT->pager->name);
-        task_exit(EXP_INVALID_PAGE_FAULT_REPLY);
+        task_exit(EXP_INVALID_MSG_FROM_PAGER);
     }
 
     // Check that paddr is not in kernel area.
@@ -85,7 +85,7 @@ static paddr_t user_pager(vaddr_t addr, vaddr_t ip, pagefault_t fault,
     if (is_kernel_paddr(paddr)) {
         WARN("%s: pager returned a kernel page (vaddr=%p, paddr=%p, pager=%s)",
              CURRENT->name, addr, paddr, CURRENT->pager->name);
-        task_exit(EXP_INVALID_PAGE_FAULT_REPLY);
+        task_exit(EXP_INVALID_MSG_FROM_PAGER);
     }
 
     *attrs = PAGE_USER | m.page_fault_reply.attrs;
