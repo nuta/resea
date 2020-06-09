@@ -104,5 +104,6 @@ void mpmain(void) {
 
     // Do the very first context switch on this CPU.
     INFO("Booted CPU #%d", mp_self());
+    task_switch();
     arch_idle();
 }
