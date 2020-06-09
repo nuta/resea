@@ -10,11 +10,9 @@
 
 extern char __bootfs[];
 extern char __zeroed_pages[];
+extern char __zeroed_pages_end[];
 extern char __free_vaddr[];
 extern char __free_vaddr_end[];
-
-/// The maximum size of bss + stack + heap.
-#define ZEROED_PAGES_SIZE (64 * 1024 * 1024)
 
 struct page_area {
     list_elem_t next;
@@ -119,7 +117,7 @@ static paddr_t pager(struct task *task, vaddr_t vaddr, pagefault_t fault) {
 
     // Zeroed pages.
     vaddr_t zeroed_pages_start = (vaddr_t) __zeroed_pages;
-    vaddr_t zeroed_pages_end = zeroed_pages_start + ZEROED_PAGES_SIZE;
+    vaddr_t zeroed_pages_end = (vaddr_t) __zeroed_pages_end;
     if (zeroed_pages_start <= vaddr && vaddr < zeroed_pages_end) {
         // The accessed page is zeroed one (.bss section, stack, or heap).
         paddr_t paddr = pages_alloc(1);

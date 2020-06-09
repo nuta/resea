@@ -55,6 +55,7 @@ SECTIONS {
     __heap = .;
     . = 0x05000000;
     __heap_end = .;
+    __zeroed_pages_end = .;
 
     __free_vaddr = .;
     . = 0x0a000000;
