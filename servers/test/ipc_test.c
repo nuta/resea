@@ -28,10 +28,10 @@ void ipc_test(void) {
     TEST_ASSERT(!memcmp(m.nop_with_bulk_reply.data, "reply!\0", 7));
 
     // A bulk IPC call.
-    char page[PAGE_SIZE * 4] = {'a', 'b', 'c'};
+    static char page[PAGE_SIZE * 4] = {'a', 'b', 'c'};
     m.type = NOP_WITH_BULK_MSG;
     m.nop_with_bulk.data = page;
-    m.nop_with_bulk.data_len = PAGE_SIZE * 4;
+    m.nop_with_bulk.data_len = sizeof(page);
     err = ipc_call(INIT_TASK_TID, &m);
     TEST_ASSERT(err == OK);
     TEST_ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
