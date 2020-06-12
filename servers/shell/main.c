@@ -2,7 +2,7 @@
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/klog.h>
-#include <cstring.h>
+#include <string.h>
 
 static task_t bootstrap_server = 1;
 static task_t display_server;

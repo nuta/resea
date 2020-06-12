@@ -1,5 +1,5 @@
 #include <resea/malloc.h>
-#include <cstring.h>
+#include <string.h>
 #include "proc.h"
 #include "waitqueue.h"
 

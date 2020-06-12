@@ -2,7 +2,7 @@
 #include <arch.h>
 #include <list.h>
 #include <config.h>
-#include <cstring.h>
+#include <string.h>
 #include "ipc.h"
 #include "kdebug.h"
 #include "memory.h"

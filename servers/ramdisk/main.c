@@ -1,7 +1,7 @@
 #include <resea/printf.h>
 #include <resea/malloc.h>
 #include <resea/ipc.h>
-#include <cstring.h>
+#include <string.h>
 
 #define SECTOR_SIZE 512
 #define BUF_SIZE 8192

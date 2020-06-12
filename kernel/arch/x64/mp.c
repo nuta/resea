@@ -1,7 +1,7 @@
 #include "mp.h"
 #include <arch.h>
 #include <printk.h>
-#include <cstring.h>
+#include <string.h>
 #include <task.h>
 
 // Note: these symbols points to **physical** addresses.

@@ -1,5 +1,5 @@
 #include <resea/printf.h>
-#include <cstring.h>
+#include <string.h>
 #include "device.h"
 #include "dhcp.h"
 #include "ipv4.h"

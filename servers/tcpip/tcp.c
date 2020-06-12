@@ -1,6 +1,6 @@
 #include <list.h>
 #include <resea/printf.h>
-#include <cstring.h>
+#include <string.h>
 #include "checksum.h"
 #include "device.h"
 #include "endian.h"

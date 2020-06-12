@@ -1,7 +1,7 @@
 #include <arch.h>
 #include <memory.h>
 #include <printk.h>
-#include <cstring.h>
+#include <string.h>
 #include "vm.h"
 
 extern char __temp_page[];

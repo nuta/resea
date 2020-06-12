@@ -1,5 +1,5 @@
 #include <syscall.h>
-#include <cstring.h>
+#include <string.h>
 #include <main.h>
 #include <task.h>
 #include <memory.h>

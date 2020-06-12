@@ -1,5 +1,5 @@
 #include <resea/printf.h>
-#include <cstring.h>
+#include <string.h>
 #include "test.h"
 
 void libcommon_test(void) {

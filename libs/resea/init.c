@@ -1,6 +1,6 @@
 #include <resea/malloc.h>
 #include <resea/handle.h>
-#include <cstring.h>
+#include <string.h>
 
 extern char __bss[];
 extern char __bss_end[];

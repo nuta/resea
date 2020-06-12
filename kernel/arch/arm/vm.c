@@ -1,6 +1,6 @@
 #include <memory.h>
 #include <syscall.h>
-#include <cstring.h>
+#include <string.h>
 
 int __temp_page; // unused as we don't use virtual memory
 

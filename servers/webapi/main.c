@@ -2,7 +2,7 @@
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/map.h>
-#include <cstring.h>
+#include <string.h>
 #include <vprintf.h>
 #include "webapi.h"
 

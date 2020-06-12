@@ -1,7 +1,7 @@
 #include <list.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <cstring.h>
+#include <string.h>
 #include "device.h"
 #include "endian.h"
 #include "ipv4.h"

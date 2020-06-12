@@ -1,7 +1,7 @@
 #include "fs.h"
 #include "proc.h"
 #include "abi.h"
-#include <cstring.h>
+#include <string.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 

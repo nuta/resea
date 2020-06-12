@@ -1,7 +1,7 @@
 #include <resea/ipc.h>
 #include <resea/io.h>
 #include <resea/printf.h>
-#include <cstring.h>
+#include <string.h>
 
 #define BLANK_CHAR    0x0f20 /* whitespace */
 #define SCREEN_HEIGHT 25

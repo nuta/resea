@@ -1,5 +1,5 @@
 #include <resea/malloc.h>
-#include <cstring.h>
+#include <string.h>
 #include "mbuf.h"
 
 mbuf_t mbuf_alloc(void) {

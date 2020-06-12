@@ -1,6 +1,6 @@
 #include <memory.h>
 #include <syscall.h>
-#include <cstring.h>
+#include <string.h>
 #include "vm.h"
 
 extern char __temp_page[];

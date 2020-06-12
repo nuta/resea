@@ -2,7 +2,7 @@
 #include <resea/syscall.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <cstring.h>
+#include <string.h>
 
 /// The internal buffer to receive bulk payloads.
 static void *bulk_ptr = NULL;

@@ -3,7 +3,7 @@
 #include <resea/map.h>
 #include <resea/handle.h>
 #include <resea/ipc.h>
-#include <cstring.h>
+#include <string.h>
 #include "fat.h"
 
 static task_t ramdisk_server;

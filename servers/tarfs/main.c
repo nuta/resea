@@ -2,7 +2,7 @@
 #include <resea/malloc.h>
 #include <resea/handle.h>
 #include <resea/ipc.h>
-#include <cstring.h>
+#include <string.h>
 #include <list.h>
 
 extern char __tarball[];

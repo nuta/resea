@@ -3,7 +3,7 @@
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/task.h>
-#include <cstring.h>
+#include <string.h>
 #include "elf.h"
 #include "bootfs.h"
 #include "pages.h"

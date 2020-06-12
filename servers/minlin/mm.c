@@ -1,6 +1,6 @@
 #include <resea/io.h>
 #include <resea/malloc.h>
-#include <cstring.h>
+#include <string.h>
 #include "elf.h"
 #include "fs.h"
 #include "mm.h"

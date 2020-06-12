@@ -2,7 +2,7 @@
 #include <resea/io.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <cstring.h>
+#include <string.h>
 #include "e1000.h"
 #include "pci.h"
 

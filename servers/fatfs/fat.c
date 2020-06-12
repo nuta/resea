@@ -1,7 +1,7 @@
 #include "fat.h"
 #include <resea/printf.h>
 #include <resea/malloc.h>
-#include <cstring.h>
+#include <string.h>
 #include <resea/ctype.h>
 
 error_t fat_probe(struct fat *fs,

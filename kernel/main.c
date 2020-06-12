@@ -1,6 +1,6 @@
 #include <elf.h>
 #include <config.h>
-#include <cstring.h>
+#include <string.h>
 #include "main.h"
 #include "kdebug.h"
 #include "memory.h"

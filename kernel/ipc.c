@@ -1,5 +1,5 @@
 #include <list.h>
-#include <cstring.h>
+#include <string.h>
 #include <types.h>
 #include "ipc.h"
 #include "printk.h"

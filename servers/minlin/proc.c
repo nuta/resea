@@ -1,7 +1,7 @@
 #include <resea/malloc.h>
 #include <resea/ipc.h>
 #include <resea/task.h>
-#include <cstring.h>
+#include <string.h>
 #include <list.h>
 #include "abi.h"
 #include "proc.h"

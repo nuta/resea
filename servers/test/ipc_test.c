@@ -1,6 +1,6 @@
 #include <resea/printf.h>
 #include <resea/ipc.h>
-#include <cstring.h>
+#include <string.h>
 #include "test.h"
 
 void ipc_test(void) {
