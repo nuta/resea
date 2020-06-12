@@ -1,6 +1,7 @@
 #include <config.h>
 #include <resea/printf.h>
 #include <resea/ipc.h>
+#include <resea/timer.h>
 
 void main(void) {
     INFO("Hello, World!");
