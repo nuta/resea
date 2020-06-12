@@ -8,8 +8,9 @@ menu "Servers"
         prompt "Initial task"
         config BOOTSTRAP_BOOTSTRAP
             bool "Bootstrap"
-        config BOOTSTRAP_MINITEST
-            bool "Minitest (kernel test for NOMMU systems)"
+        config BOOTSTRAP_NOMMU_TEST
+            bool "Kernel test for a NOMMU CPU"
+            depends on NOMMU
     endchoice
 
     menu "Enabled servers"

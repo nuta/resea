@@ -2,6 +2,7 @@
 #include <resea/timer.h>
 #include <resea/task.h>
 #include <resea/printf.h>
+#include <resea/syscall.h>
 
 #define TASK_A_TID 1
 #define TASK_B_TID 2
@@ -16,7 +17,7 @@ static void task_b(void) {
     ASSERT(m.nop.value == 456);
 
     timer_set(1000);
-    while (true) {
+    for (int i = 0; i < 3; i++) {
         struct message m;
         ipc_recv(IPC_ANY, &m);
         switch (m.type) {
@@ -26,6 +27,9 @@ static void task_b(void) {
                 break;
         }
     }
+
+    INFO("Passed all tests!");
+    sys_kdebug("q");
 }
 
 void main(void) {

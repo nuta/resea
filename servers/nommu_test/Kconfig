@@ -1,0 +1,7 @@
+menu "NOMMU test"
+	depends on BOOTSTRAP_NOMMU_TEST
+
+    config BOOTSTRAP
+        string
+        default "nommu_test"
+endmenu
