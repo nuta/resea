@@ -5,7 +5,8 @@
 static void quit(void) {
 #ifdef CONFIG_ARCH_X64
     // QEMU
-    io_out16(0x604, 0x2000);
+    __asm__ __volatile__("outw %0, %1" ::
+        "a"((uint16_t) 0x2000), "Nd"((uint16_t) 0x604));
 #endif
 #ifdef CONFIG_ARCH_ARM64
     // ARM Semihosting
