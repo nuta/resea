@@ -1,15 +1,13 @@
 #include <config.h>
 #include <resea/printf.h>
 #include <resea/io.h>
+#include <resea/syscall.h>
 #include "test.h"
 
 int failed = 0;
 
 static void exit_emulator(void) {
-#ifdef CONFIG_ARCH_X64
-    // QEMU
-    io_out16(0x604, 0x2000);
-#endif
+    sys_kdebug("q");
 }
 
 void main(void) {
