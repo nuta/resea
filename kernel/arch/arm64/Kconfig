@@ -5,4 +5,8 @@ menu "ARM64 Options"
         string
         default "arm64"
 
+    config TRACE_EXCEPTION
+        bool "Trace exceptions (including system calls)"
+        default n
+
 endmenu

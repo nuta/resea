@@ -1,4 +1,5 @@
 #include <types.h>
+#include <config.h>
 #include <task.h>
 #include <memory.h>
 #include <syscall.h>
@@ -29,19 +30,25 @@ void arm64_handle_exception(void) {
             break;
         // Instruction Abort in userspace (page fault).
         case 0x20:
+#ifdef CONFIG_TRACE_EXCEPTION
             TRACE("Instruction Abort: task=%s, far=%p, elr=%p",
                   CURRENT->name, far, elr);
+#endif
             handle_page_fault(far, elr, PF_USER | PF_WRITE /* FIXME: */);
             break;
         // Data abort in userspace (page fault).
         case 0x24:
+#ifdef CONFIG_TRACE_EXCEPTION
             TRACE("Data Abort: task=%s, far=%p, elr=%p",
                   CURRENT->name, far, elr);
+#endif
             handle_page_fault(far, elr, PF_USER | PF_WRITE /* FIXME: */);
             break;
         // Data abort in kernel.
         case 0x25:
+#ifdef CONFIG_TRACE_EXCEPTION
              TRACE("Data Abort (kernel): far=%p, elr=%p", far, elr);
+#endif
             if (elr != (vaddr_t) arm64_usercopy1
                 && elr != (vaddr_t) arm64_usercopy2
                 && elr != (vaddr_t) arm64_usercopy3) {
