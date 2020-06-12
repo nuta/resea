@@ -18,6 +18,10 @@ jobs:
             ARCH: arm
           - os: ubuntu-20.04
             ARCH: arm64
+          - os: ubuntu-20.04
+            ARCH: x64_release
+          - os: ubuntu-20.04
+            ARCH: arm64_release
           - os: macos-latest
             ARCH: x64
     steps:
