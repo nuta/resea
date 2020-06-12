@@ -145,6 +145,7 @@ void mpinit(void) {
 }
 
 void arch_idle(void) {
+    task_switch();
     while (true) {
         unlock();
         asm_stihlt();

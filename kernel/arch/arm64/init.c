@@ -7,6 +7,8 @@
 extern uint8_t exception_vector;
 
 void arch_idle(void) {
+    task_switch();
+
     // Enable IRQ.
     __asm__ __volatile__("msr daifclr, #2");
 
