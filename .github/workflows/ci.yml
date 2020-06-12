@@ -15,6 +15,8 @@ jobs:
           - os: ubuntu-20.04
             ARCH: x64
           - os: ubuntu-20.04
+            ARCH: arm
+          - os: ubuntu-20.04
             ARCH: arm64
           - os: macos-latest
             ARCH: x64
@@ -29,7 +31,7 @@ jobs:
       - name: Install apt packages
         if: matrix.os == 'ubuntu-20.04'
         run: >
-          sudo apt-get install -y llvm clang lld qemu-system
+          sudo apt-get install -y llvm clang lld qemu-system gcc-arm-none-eabi
 
       - name: Install Homebrew packages
         if: matrix.os == 'macos-latest'
