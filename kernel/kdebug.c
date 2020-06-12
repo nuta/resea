@@ -3,9 +3,20 @@
 #include "task.h"
 
 static void quit(void) {
-#ifdef __x86_64__
-    // Quit the QEMU (-device isa-debug-exit).
-    __asm__ __volatile__("outw %%ax, %%dx" ::"a"(0x2000), "Nd"(0x604));
+#ifdef CONFIG_ARCH_X64
+    // QEMU
+    io_out16(0x604, 0x2000);
+#endif
+#ifdef CONFIG_ARCH_ARM64
+    // ARM Semihosting
+    uint64_t params[] = {
+        0x20026, // application exit
+        0,       // exit code
+    };
+
+    register uint64_t x0 __asm__("x0") = 0x20;    // exit
+    register uint64_t x1 __asm__("x1") = (uint64_t) params;    // exit
+    __asm__ __volatile__("hlt #0xf000" :: "r"(x0), "r"(x1));
 #endif
 
     PANIC("halted by the kdebug");
