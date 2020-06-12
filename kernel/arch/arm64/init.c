@@ -1,5 +1,6 @@
 #include <types.h>
 #include <main.h>
+#include <task.h>
 #include <printk.h>
 #include "asm.h"
 #include "peripherals.h"
