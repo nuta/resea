@@ -20,10 +20,6 @@ run: $(kernel_image)
 	./tools/make-bootable-on-qemu.py $(BUILD_DIR)/resea.qemu.elf
 	$(QEMU) $(QEMUFLAGS) -kernel $(BUILD_DIR)/resea.qemu.elf
 
-.PHONY: test
-test: $(kernel_image)
-	./tools/run-and-check.py $(RUNCHECKFLAGS) "Passed all tests" -- $(MAKE) run
-
 # FIXME: Fix "make[1]: warning: -jN forced in submake: disabling jobserver mode."
 .PHONY: autotest
 autotest:

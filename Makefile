@@ -128,6 +128,10 @@ build: $(kernel_image) $(BUILD_DIR)/compile_commands.json
 lint: $(BUILD_DIR)/compile_commands.json
 	find kernel servers libs -name "*.c" | xargs $(CLANG_TIDY) -p $(BUILD_DIR)
 
+.PHONY: test
+test: $(kernel_image)
+	./tools/run-and-check.py $(RUNCHECKFLAGS) "Passed all tests" -- $(MAKE) run
+
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)
