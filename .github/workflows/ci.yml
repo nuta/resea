@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            ARCH: x64
+          - os: ubuntu-20.04
+            ARCH: arm64
+          - os: macos-latest
+            ARCH: x64
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install apt packages
+        if: matrix.os == 'ubuntu-20.04'
+        run: >
+          sudo apt-get install -y llvm clang lld qemu-system
+
+      - name: Install Homebrew packages
+        if: matrix.os == 'macos-latest'
+        run: >
+          brew install llvm qemu
+
+      - name: Install pip packages
+        run: pip3 install --user -r tools/requirements.txt
+
+      - name: Build
+        run: |
+          cp ci/${{ matrix.ARCH }}.config .config
+          make -j2 build
+
+      - name: Test
+        run: make -j2 test
