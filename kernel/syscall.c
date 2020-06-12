@@ -170,6 +170,12 @@ static error_t sys_readlog(userptr_t buf, size_t buf_len, bool listen) {
     return buf_len - remaining;
 }
 
+static error_t sys_kdebug(userptr_t cmdline) {
+    char input[128];
+    strncpy_from_user(input, cmdline, sizeof(input));
+    return kdebug_run(input);
+}
+
 /// The system call handler.
 long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
     stack_check();
@@ -196,6 +202,9 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             break;
         case SYS_READLOG:
             ret = sys_readlog(a1, a2, a3);
+            break;
+        case SYS_KDEBUG:
+            ret = sys_kdebug(a1);
             break;
         default:
             ret = ERR_INVALID_ARG;

@@ -1,7 +1,10 @@
 #ifndef __KDEBUG_H__
 #define __KDEBUG_H__
 
+#include <types.h>
+
 void kdebug_handle_interrupt(void);
+error_t kdebug_run(const char *cmdline);
 void stack_check(void);
 void stack_set_canary(void);
 

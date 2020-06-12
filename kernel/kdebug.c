@@ -1,5 +1,5 @@
-#include "kdebug.h"
 #include <string.h>
+#include "kdebug.h"
 #include "task.h"
 
 static void quit(void) {
@@ -11,7 +11,7 @@ static void quit(void) {
     PANIC("halted by the kdebug");
 }
 
-static void run(const char *cmdline) {
+error_t kdebug_run(const char *cmdline) {
     if (strcmp(cmdline, "help") == 0) {
         DPRINTK("Kernel debugger commands:\n");
         DPRINTK("\n");
@@ -24,7 +24,10 @@ static void run(const char *cmdline) {
         quit();
     } else {
         WARN("Invalid debugger command: '%s'.", cmdline);
+        return ERR_NOT_FOUND;
     }
+
+    return OK;
 }
 
 void kdebug_handle_interrupt(void) {
@@ -36,7 +39,7 @@ void kdebug_handle_interrupt(void) {
             printk("\n");
             cmdline[cursor] = '\0';
             if (cursor > 0) {
-                run(cmdline);
+                kdebug_run(cmdline);
                 cursor = 0;
             }
             DPRINTK("kdebug> ");
