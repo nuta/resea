@@ -7,7 +7,7 @@ CFLAGS += --target=aarch64-none-eabi -mcpu=cortex-a53 -mcmodel=large
 CFLAGS += -mgeneral-regs-only
 LDFLAGS +=
 
-QEMUFLAGS += -M raspi3 -serial mon:stdio -semihosting
+QEMUFLAGS += -M raspi3 -serial mon:stdio -semihosting -d guest_errors,unimp
 QEMUFLAGS += $(if $(GUI),,-nographic)
 QEMUFLAGS += $(if $(GDB),-S -s,)
 
