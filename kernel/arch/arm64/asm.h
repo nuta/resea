@@ -1,6 +1,8 @@
 #ifndef __ARM64_ASM_H__
 #define __ARM64_ASM_H__
 
+#include <types.h>
+
 #define ARM64_MSR(reg, value) \
     __asm__ __volatile__("msr " #reg ", %0" :: "r"(value))
 

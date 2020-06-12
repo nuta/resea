@@ -4,13 +4,19 @@
 #include <syscall.h>
 #include <printk.h>
 #include "asm.h"
+#include "peripherals.h"
 
 // Defined in usercopy.S.
 extern char arm64_usercopy1[];
 extern char arm64_usercopy2[];
 extern char arm64_usercopy3[];
 
-void arm64_handle_interrupt(int n, long a1, long a2, long a3, long a4, long a5) {
+void arm64_handle_interrupt(void) {
+    arm64_timer_reload();
+    handle_timer_irq();
+}
+
+void arm64_handle_exception(void) {
     uint64_t esr = ARM64_MRS(esr_el1);
     uint64_t elr = ARM64_MRS(elr_el1);
     uint64_t far = ARM64_MRS(far_el1);
@@ -35,7 +41,7 @@ void arm64_handle_interrupt(int n, long a1, long a2, long a3, long a4, long a5) 
             break;
         // Data abort in kernel.
         case 0x25:
-            TRACE("Data Abort (kernel): far=%p, elr=%p", far, elr);
+             TRACE("Data Abort (kernel): far=%p, elr=%p", far, elr);
             if (elr != (vaddr_t) arm64_usercopy1
                 && elr != (vaddr_t) arm64_usercopy2
                 && elr != (vaddr_t) arm64_usercopy3) {
@@ -45,18 +51,8 @@ void arm64_handle_interrupt(int n, long a1, long a2, long a3, long a4, long a5) 
 
             handle_page_fault(far, elr, PF_USER | PF_WRITE /* FIXME: */);
             break;
-// case:
-//    handle_irq(irq);
         default:
             PANIC("unknown exception: ec=%d (0x%x), elr=%p, far=%p",
                   ec, ec, elr, far);
     }
-}
-
-void arch_enable_irq(unsigned irq){
-    // TODO:
-}
-
-void arch_disable_irq(unsigned irq) {
-    // TODO:
 }

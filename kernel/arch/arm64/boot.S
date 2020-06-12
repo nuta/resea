@@ -31,6 +31,17 @@ ap_boot:
 
 bsp_boot:
     // Construct the kernel paging table (i.e. TTBR1).
+    //
+    //   offsets         |    Table
+    //  -------------------------------
+    //   0x0000-0x1000   |   Level-0
+    //   0x1000-0x2000   |   Level-1
+    //   0x2000-0x3000   |   Level-2 (0x3000_0000-0x4000_0000)
+    //   0x3000-0x4000   |   Level-2 (0x4000_0000-0x5000_0000)
+    //
+    //   Note: Don't forget to update __kernl_page_table as well to increase the
+    //         size of the page table!
+    //
     adrp x4, __kernel_page_table
 
     // Level-0 table
@@ -43,6 +54,12 @@ bsp_boot:
     // Level-1 table
     add  x0, x4, #0x1000
     add  x1, x4, #0x2000     // L2 table address base. Table descriptor.
+    ldr  x5, =0x00000403     // Table descriptor.
+    orr  x1, x1, x5
+    str  x1, [x0]
+
+    add  x0, x0, #8
+    add  x1, x4, #0x3000     // L2 table address base. Table descriptor.
     ldr  x5, =0x00000403     // Table descriptor.
     orr  x1, x1, x5
     str  x1, [x0]
@@ -67,6 +84,16 @@ bsp_boot:
     add  x1, x1, #0x200000
     sub  x2, x2, 1
     cbnz x2, 2b
+
+    // Level-2 table: 0x4000_0000-0x5000_0000 (1GiB)
+    add  x0, x4, #0x3000
+    ldr  x1, =0x40000401 // Block descriptor.
+    ldr  x2, =512
+3:
+    str  x1, [x0], 0x8
+    add  x1, x1, #0x200000
+    sub  x2, x2, 1
+    cbnz x2, 3b
 
     // Configure paging.
     ldr  x0, =0x00000044 // 0: Device-nGnRnE memory
@@ -103,7 +130,7 @@ mmu_enabled:
     br   x0
 
 halt:
-    wfe
+    wfi
     b  halt
 
 .rodata

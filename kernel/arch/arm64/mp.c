@@ -1,4 +1,5 @@
 #include <task.h>
+#include "asm.h"
 
 struct cpuvar cpuvar;
 

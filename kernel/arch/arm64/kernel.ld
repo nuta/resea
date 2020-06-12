@@ -50,7 +50,7 @@ SECTIONS {
     /* Kernel paging table. */
     . = ALIGN(4096);
     __kernel_page_table = .;
-    . += 0x3000;
+    . += 0x4000;
 
     /* CPU variables and boot stacks (paddr_t). */
     . = ALIGN(4096);

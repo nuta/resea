@@ -4,14 +4,44 @@
 .balign 2048
 .global exception_vector
 exception_vector:
-.set i, 0
-.rept 16
+    b exception_common
     .balign 128
     b interrupt_common
-.set i, i + 1
-.endr
+    .balign 128
+    b interrupt_common
+    .balign 128
+    b exception_common
+    .balign 128
 
-interrupt_common:
+    b exception_common
+    .balign 128
+    b interrupt_common
+    .balign 128
+    b interrupt_common
+    .balign 128
+    b exception_common
+    .balign 128
+
+    b exception_common
+    .balign 128
+    b interrupt_common
+    .balign 128
+    b interrupt_common
+    .balign 128
+    b exception_common
+    .balign 128
+
+    b exception_common
+    .balign 128
+    b interrupt_common
+    .balign 128
+    b interrupt_common
+    .balign 128
+    b exception_common
+    .balign 128
+
+/// Saves the exception context *except* X0 onto the stack.
+.macro save_context
     stp  x1,  x2,  [sp, #-16]!
     stp  x3,  x4,  [sp, #-16]!
     stp  x5,  x6,  [sp, #-16]!
@@ -36,23 +66,10 @@ interrupt_common:
     mrs  x11, sp_el0
     stp  x9,  x10, [sp, #-16]!
     stp  x11, x12, [sp, #-16]!
+.endm
 
-    // Determine if the exception is a system call.
-    mrs  x9, esr_el1
-    lsr  x9, x9, #26
-    cmp  x9, 0x15
-    bne  1f
-
-    // SVC handling. We don't preserve x0 as it contains the return value.
-    bl   handle_syscall
-    b    2f
-1:
-    // Exceptions except SVC.
-    stp  x0, xzr, [sp, #-16]!
-    bl   arm64_handle_interrupt
-    ldp  x0, xzr, [sp], #16
-2:
-    // Restore the exception context.
+/// Restores the exception context *except* X0.
+.macro restore_context
     ldp  x11, x12, [sp], #16
     ldp  x9,  x10, [sp], #16
     msr  spsr_el1, x9
@@ -75,3 +92,34 @@ interrupt_common:
     ldp  x3,  x4,  [sp], #16
     ldp  x1,  x2,  [sp], #16
     eret
+.endm
+
+interrupt_common:
+    save_context
+
+    // Exceptions except SVC.
+    stp  x0, xzr, [sp, #-16]!
+    bl   arm64_handle_interrupt
+    ldp  x0, xzr, [sp], #16
+
+    restore_context
+
+exception_common:
+    save_context
+
+    // Determine if the exception is a system call.
+    mrs  x9, esr_el1
+    lsr  x9, x9, #26
+    cmp  x9, 0x15
+    bne  1f
+
+    // SVC handling. We don't preserve x0 as it contains the return value.
+    bl   handle_syscall
+    b    2f
+1:
+    // Exceptions except SVC.
+    stp  x0, xzr, [sp, #-16]!
+    bl   arm64_handle_exception
+    ldp  x0, xzr, [sp], #16
+2:
+    restore_context
