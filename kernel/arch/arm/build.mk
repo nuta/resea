@@ -5,7 +5,7 @@ QEMU  ?= qemu-system-arm
 CFLAGS += --target=armv6m-none-eabi -mcpu=cortex-m0
 LDFLAGS += $(shell arm-none-eabi-gcc -mcpu=cortex-m0 -print-libgcc-file-name)
 
-QEMUFLAGS += -M microbit -serial mon:stdio -d guest_errors,unimp
+QEMUFLAGS += -M microbit -serial mon:stdio -semihosting -d guest_errors,unimp
 QEMUFLAGS += $(if $(GUI),,-nographic)
 QEMUFLAGS += $(if $(GDB),-S -s,)
 

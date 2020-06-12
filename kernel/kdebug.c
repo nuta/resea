@@ -15,9 +15,20 @@ static void quit(void) {
         0,       // exit code
     };
 
-    register uint64_t x0 __asm__("x0") = 0x20;    // exit
-    register uint64_t x1 __asm__("x1") = (uint64_t) params;    // exit
+    register uint64_t x0 __asm__("x0") = 0x20; // exit
+    register uint64_t x1 __asm__("x1") = (uint64_t) params;
     __asm__ __volatile__("hlt #0xf000" :: "r"(x0), "r"(x1));
+#endif
+#ifdef CONFIG_ARCH_ARM
+    // ARM Semihosting
+    uint32_t params[] = {
+        0x20026, // application exit
+        0,       // exit code
+    };
+
+    register uint32_t r0 __asm__("r0") = 0x20;    // exit
+    register uint32_t r1 __asm__("r1") = (uint32_t) params;
+    __asm__ __volatile__("bkpt 0xab" :: "r"(r0), "r"(r1));
 #endif
 
     PANIC("halted by the kdebug");
