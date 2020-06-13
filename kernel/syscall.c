@@ -78,6 +78,10 @@ static error_t sys_kill(task_t tid) {
 static task_t sys_setattrs(userptr_t bulk_ptr, size_t bulk_len,
                            msec_t timeout) {
     if (bulk_ptr) {
+        if (bulk_len < CONFIG_BULK_BUFFER_LEN) {
+            return ERR_TOO_SMALL;
+        }
+
         CURRENT->bulk_ptr = bulk_ptr;
         CURRENT->bulk_len = bulk_len;
     }

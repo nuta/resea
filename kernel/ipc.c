@@ -98,31 +98,39 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
 
         // Copy the bulk payload.
         if (flags & IPC_BULK) {
+            tmp_m.type |= MSG_BULK;
+            tmp_m.bulk_ptr = (void *) dst->bulk_ptr;
+
             size_t len = tmp_m.bulk_len;
             userptr_t src_buf = (userptr_t) tmp_m.bulk_ptr;
             userptr_t dst_buf = dst->bulk_ptr;
-            DEBUG_ASSERT(len <= dst->bulk_len /* must be checked by dst */);
+            DEBUG_ASSERT(len <= dst->bulk_len /* it's checked by dst */);
 
             size_t remaining = len;
+            vaddr_t temp_vaddr = (vaddr_t) __temp_page;
             while (remaining > 0) {
-                size_t copy_len = MIN(MIN(remaining, PAGE_SIZE - (src_buf % PAGE_SIZE)),
-                                        PAGE_SIZE - (dst_buf % PAGE_SIZE));
-                paddr_t paddr = vm_resolve(&dst->vm, ALIGN_DOWN(dst_buf, PAGE_SIZE));
-                DEBUG_ASSERT(paddr);
+                offset_t offset = dst_buf % PAGE_SIZE;
+                size_t copy_len = MIN(remaining, PAGE_SIZE - offset);
 
-                vm_link(&CURRENT->vm, (vaddr_t) __temp_page, paddr, PAGE_WRITABLE);
-                memcpy_from_user(&__temp_page[dst_buf % PAGE_SIZE], src_buf, copy_len);
+                // Temporarily map the page containing the receiver's buffer
+                vaddr_t dst_page = ALIGN_DOWN(dst_buf, PAGE_SIZE);
+                paddr_t paddr = vm_resolve(&dst->vm, dst_page);
+                DEBUG_ASSERT(paddr);
+                vm_link(&CURRENT->vm, temp_vaddr, paddr, PAGE_WRITABLE);
+
+                // Copy the bulk payload into the receiver's buffer.
+                memcpy_from_user(&__temp_page[offset], src_buf, copy_len);
                 remaining -= copy_len;
                 dst_buf += copy_len;
                 src_buf += copy_len;
             }
-
-            tmp_m.type |= MSG_BULK;
-            tmp_m.bulk_ptr = (void *) dst->bulk_ptr;
         }
 
+        // Copy the message.
         tmp_m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
         memcpy(&dst->m, &tmp_m, sizeof(dst->m));
+
+        // Resume the receiver task.
         task_resume(dst);
 
 #ifdef CONFIG_TRACE_IPC
