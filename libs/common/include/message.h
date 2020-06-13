@@ -24,7 +24,10 @@ struct message {
 
         // The common header of message fields.
         struct {
+            /// The bulk pointer to be sent. Used if IPC_BULK and MSG_BULK are
+            /// set.
             void *bulk_ptr;
+            /// The size of bulk payload in bytes.
             size_t bulk_len;
         };
 
