@@ -55,7 +55,7 @@ autostarts   := \
 		$(if $(filter-out m, $(value $(shell echo CONFIG_$(server)_SERVER | \
 			tr  '[:lower:]' '[:upper:]'))), $(server),)))
 bootfs_files  := $(foreach name, $(servers), $(BUILD_DIR)/$(name).elf)
-autogen_files := $(BUILD_DIR)/include/config.h $(BUILD_DIR)/include/message_fields.h
+autogen_files := $(BUILD_DIR)/include/config.h $(BUILD_DIR)/include/idl.h
 
 # Visits the soruce directory recursively and fills $(cflags), $(objs) and $(libs).
 # $(1): The target source dir.
@@ -212,7 +212,7 @@ $(BUILD_DIR)/include/config.h: .config tools/config.py
 	mkdir -p $(@D)
 	./tools/config.py --genconfig $@
 
-$(BUILD_DIR)/include/message_fields.h: tools/genidl.py $(wildcard *.idl */*.idl */*/*.idl)
+$(BUILD_DIR)/include/idl.h: tools/genidl.py $(wildcard *.idl */*.idl */*/*.idl)
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
 	./tools/genidl.py --idl interface.idl -o $@
