@@ -126,7 +126,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
         task_resume(dst);
 
 #ifdef CONFIG_TRACE_IPC
-        if (contains_bulk) {
+        if (flags & IPC_BULK) {
             TRACE("IPC: %s: %s -> %s (%d bytes in bulk%s)",
                   msgtype2str(tmp_m.type), CURRENT->name, dst->name,
                   tmp_m.bulk_len, (tmp_m.type & MSG_STR) ? ", string" : "");
