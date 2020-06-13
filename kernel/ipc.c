@@ -85,10 +85,6 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
             list_push_back(&dst->senders, &CURRENT->sender_next);
             task_switch();
 
-            // Sanity check.
-            DEBUG_ASSERT((CURRENT->notifications & NOTIFY_ABORTED)
-                || (dst->src == IPC_ANY || dst->src == CURRENT->tid));
-
             if (CURRENT->notifications & NOTIFY_ABORTED) {
                 // The receiver task has exited. Abort the system call.
                 CURRENT->notifications &= ~NOTIFY_ABORTED;
