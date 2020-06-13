@@ -255,6 +255,7 @@ static const char *error_names[] = {
     [-ERR_UNAVAILABLE] = "Unavailable",
     [-ERR_EMPTY] = "Empty",
     [-ERR_NOT_ACCEPTABLE] = "Not Acceptable",
+    [-ERR_IN_USE] = "In Use",
 };
 
 const char *err2str(error_t err) {

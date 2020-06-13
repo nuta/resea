@@ -75,7 +75,8 @@ typedef int error_t;
 #define ERR_NOT_ACCEPTABLE (-11)
 #define ERR_EMPTY          (-12)
 #define DONT_REPLY         (-13)
-#define ERR_END            (-14)
+#define ERR_IN_USE         (-14)
+#define ERR_END            (-15)
 
 #define SYS_SPAWN      1
 #define SYS_KILL       2
