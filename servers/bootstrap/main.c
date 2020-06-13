@@ -379,6 +379,7 @@ void main(void) {
 
         reply_to = m.src;
         err = handle_message(&m, &reply_to);
+        // FIXME:
         switch (err) {
             case OK: break;
             case DONT_REPLY: reply_to = -1; break;
