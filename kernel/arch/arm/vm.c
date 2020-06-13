@@ -19,10 +19,6 @@ error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
     return OK;
 }
 
-void vm_unlink(struct vm *vm, vaddr_t vaddr) {
-    // Do nothing: we don't support virtual memory.
-}
-
 paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr) {
     return vaddr;
 }

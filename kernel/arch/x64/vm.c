@@ -88,19 +88,6 @@ error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
     return OK;
 }
 
-void vm_unlink(struct vm *vm, vaddr_t vaddr) {
-    ASSERT(vaddr < KERNEL_BASE_ADDR && "tried to unlink a kernel page");
-    ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
-
-    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, 0);
-    if (!entry) {
-        return;
-    }
-
-    *entry = 0;
-    asm_invlpg(vaddr);
-}
-
 paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr) {
     uint64_t *entry = traverse_page_table(vm->pml4, vaddr, 0);
     return (entry) ? ENTRY_PADDR(*entry) : 0;

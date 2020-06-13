@@ -72,10 +72,6 @@ error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
     return OK;
 }
 
-void vm_unlink(struct vm *vm, vaddr_t vaddr) {
-    // TODO:
-}
-
 paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr) {
     uint64_t *entry = traverse_page_table(vm->entries, vaddr, 0);
     return (entry) ? ENTRY_PADDR(*entry) : 0;
