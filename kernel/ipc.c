@@ -8,19 +8,7 @@
 
 extern uint8_t __temp_page[];
 
-static void resume_sender_task(struct task *task) {
-    LIST_FOR_EACH (sender, &task->senders, struct task, sender_next) {
-        if (task->src == IPC_ANY || task->src == sender->tid) {
-            DEBUG_ASSERT(sender->state == TASK_BLOCKED);
-            DEBUG_ASSERT(sender->src == IPC_DENY);
-
-            task_resume(sender);
-            list_remove(&sender->sender_next);
-            break;
-        }
-    }
-}
-
+/// Prefetches pages in [base, base + len) to handle page faults in advance.
 static void prefetch_pages(userptr_t base, size_t len) {
     if (!len) {
         return;
@@ -29,9 +17,33 @@ static void prefetch_pages(userptr_t base, size_t len) {
     userptr_t ptr = base;
     do {
         char tmp;
+        // Try copying a byte from the user pointer. It may cause a page fault
+        // if it's not yet mapped. If the pointer is invalid (i.e. segfault),
+        // the current task will be killed in the page fault handler.
         memcpy_from_user(&tmp, ptr, sizeof(tmp));
         ptr += PAGE_SIZE;
     } while (ptr < ALIGN_UP(base + len, PAGE_SIZE));
+}
+
+/// Resumes a sender task for the `receiver` tasks and updates `receiver->src`
+/// properly.
+static void resume_sender(struct task *receiver, task_t src) {
+    LIST_FOR_EACH (sender, &receiver->senders, struct task, sender_next) {
+        if (src == IPC_ANY || src == sender->tid) {
+            DEBUG_ASSERT(sender->state == TASK_BLOCKED);
+            DEBUG_ASSERT(sender->src == IPC_DENY);
+            task_resume(sender);
+            list_remove(&sender->sender_next);
+
+            // If src == IPC_ANY, allow only `sender` to send a message since
+            // in the send phase in ipc_slowpath(), `sener` won't recheck
+            // whether the `receiver` is ready for receiving from `sender`.
+            receiver->src = sender->tid;
+            return;
+        }
+    }
+
+    receiver->src = src;
 }
 
 /// Sends and receives a message. Note that `m` is a user pointer if
@@ -48,18 +60,20 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
             memcpy_from_user(&tmp_m, (userptr_t) m, sizeof(struct message));
         }
 
-        bool contains_bulk = !IS_ERROR(tmp_m.type) && (tmp_m.type & MSG_BULK);
-        if (contains_bulk) {
+        if (flags & IPC_BULK) {
+            if (tmp_m.bulk_len > CONFIG_BULK_BUFFER_LEN) {
+                return ERR_TOO_LARGE;
+            }
+
+            // Resolve page faults in advance.
             prefetch_pages((userptr_t) tmp_m.bulk_ptr, tmp_m.bulk_len);
         }
 
-        // Wait until the destination (receiver) task gets ready for receiving.
-        while (true) {
-            if (dst->state == TASK_BLOCKED
-                && (dst->src == IPC_ANY || dst->src == CURRENT->tid)) {
-                break;
-            }
-
+        // Check whether the destination (receiver) task is ready for receiving.
+        bool receiver_is_ready =
+            dst->state == TASK_BLOCKED
+            && (dst->src == IPC_ANY || dst->src == CURRENT->tid);
+        if (!receiver_is_ready) {
             if (flags & IPC_NOBLOCK) {
                 return ERR_WOULD_BLOCK;
             }
@@ -71,6 +85,10 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
             list_push_back(&dst->senders, &CURRENT->sender_next);
             task_switch();
 
+            // Sanity check.
+            DEBUG_ASSERT((CURRENT->notifications & NOTIFY_ABORTED)
+                || (dst->src == IPC_ANY || dst->src == CURRENT->tid));
+
             if (CURRENT->notifications & NOTIFY_ABORTED) {
                 // The receiver task has exited. Abort the system call.
                 CURRENT->notifications &= ~NOTIFY_ABORTED;
@@ -79,24 +97,11 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
         }
 
         // Copy the bulk payload.
-        if (contains_bulk) {
+        if (flags & IPC_BULK) {
             size_t len = tmp_m.bulk_len;
             userptr_t src_buf = (userptr_t) tmp_m.bulk_ptr;
             userptr_t dst_buf = dst->bulk_ptr;
-            if ((tmp_m.type & MSG_BULK) == 0) {
-                resume_sender_task(dst);
-                return ERR_INVALID_ARG;
-            }
-
-            if (!dst_buf) {
-                resume_sender_task(dst);
-                return ERR_NOT_ACCEPTABLE;
-            }
-
-            if (len > dst->bulk_len) {
-                resume_sender_task(dst);
-                return ERR_TOO_LARGE;
-            }
+            DEBUG_ASSERT(len <= dst->bulk_len /* must be checked by dst */);
 
             size_t remaining = len;
             while (remaining > 0) {
@@ -112,6 +117,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
                 src_buf += copy_len;
             }
 
+            tmp_m.type |= MSG_BULK;
             tmp_m.bulk_ptr = (void *) dst->bulk_ptr;
         }
 
@@ -143,8 +149,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
         } else {
             // Resume a sender task and sleep until a sender task resumes this
             // task...
-            CURRENT->src = src;
-            resume_sender_task(CURRENT);
+            resume_sender(CURRENT, src);
             task_block(CURRENT);
             task_switch();
 
@@ -168,6 +173,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
 ///
 /// Note that `m` is a user pointer if IPC_KERNEL is not set!
 error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
+    // Resolve page faults in advance.
     if ((flags & IPC_RECV) && !(flags & IPC_KERNEL) && CURRENT->bulk_ptr) {
         prefetch_pages(CURRENT->bulk_ptr, CURRENT->bulk_len);
     }
@@ -203,8 +209,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
 
     // The receive phase: wait for a message, copy it into the user's
     // buffer, and return to the user.
-    CURRENT->src = src;
-    resume_sender_task(CURRENT);
+    resume_sender(CURRENT, src);
     task_block(CURRENT);
 
     task_switch();

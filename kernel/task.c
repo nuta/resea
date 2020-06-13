@@ -73,6 +73,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     task->pager = pager;
     task->src = IPC_DENY;
     task->bulk_ptr = 0;
+    task->bulk_len = 0;
     task->timeout = 0;
     task->quantum = 0;
     strncpy(task->name, name, sizeof(task->name));
