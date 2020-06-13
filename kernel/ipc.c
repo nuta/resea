@@ -201,7 +201,6 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
     // THe send phase: copy the message and resume the receiver task. Note
     // that this user copy may cause a page fault.
     memcpy_from_user(&dst->m, (userptr_t) m, sizeof(struct message));
-    DEBUG_ASSERT((dst->m.type & MSG_BULK) == 0); // FIXME:
 
 #ifdef CONFIG_TRACE_IPC
     TRACE("IPC: %s: %s -> %s (fastpath)",
