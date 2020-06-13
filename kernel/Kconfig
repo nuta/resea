@@ -12,6 +12,7 @@ menu "Kernel"
     config NOMMU
         bool "Disable virtual memory"
         default n
+        depends on ARCH_ARM
 
     config NUM_TASKS
         int "The (maximum) number of tasks"
