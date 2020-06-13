@@ -38,12 +38,6 @@ static void prefetch_pages(userptr_t base, size_t len) {
 /// IPC_KERNEL is not set!
 static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
                             unsigned flags) {
-    // TODO: Needs refactoring.
-
-    if ((flags & IPC_RECV) && !(flags & IPC_KERNEL) && CURRENT->bulk_ptr) {
-        prefetch_pages(CURRENT->bulk_ptr, CURRENT->bulk_len);
-    }
-
     // Send a message.
     if (flags & IPC_SEND) {
         // Copy the message into the receiver's buffer.
@@ -176,6 +170,10 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
 ///
 /// Note that `m` is a user pointer if IPC_KERNEL is not set!
 error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
+    if ((flags & IPC_RECV) && !(flags & IPC_KERNEL) && CURRENT->bulk_ptr) {
+        prefetch_pages(CURRENT->bulk_ptr, CURRENT->bulk_len);
+    }
+
 #ifdef CONFIG_IPC_FASTPATH
     int fastpath =
         (flags & ~IPC_NOBLOCK) == IPC_CALL
