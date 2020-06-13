@@ -73,7 +73,7 @@ static void map_boot_elf(struct vm *vm) {
 }
 
 /// Initializes the kernel and starts the first task.
-void kmain(void) {
+NORETURN void kmain(void) {
     printf("\nBooting Resea " VERSION "...\n");
     memory_init();
     task_init();
@@ -94,7 +94,7 @@ void kmain(void) {
     mpmain();
 }
 
-void mpmain(void) {
+NORETURN void mpmain(void) {
     stack_set_canary();
 
     // Initialize the idle task for this CPU.
@@ -102,7 +102,7 @@ void mpmain(void) {
     task_create(IDLE_TASK, "(idle)", 0, 0, 0);
     CURRENT = IDLE_TASK;
 
-    // Do the very first context switch on this CPU.
+    // Start context switching and enable interrupts...
     INFO("Booted CPU #%d", mp_self());
     arch_idle();
 }

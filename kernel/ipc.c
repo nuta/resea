@@ -92,8 +92,8 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
             }
         }
 
-        // Now we're committed to send the message. We must not abort the
-        // sending: don't return an error or cause a page fault from here!
+        // We've gone beyond the point of no return. We must not abort the
+        // sending from here: don't return an error or cause a page fault!
 
         // Copy the bulk payload.
         if (flags & IPC_BULK && !IS_ERROR(tmp_m.type)) {
@@ -187,11 +187,15 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
     }
 
 #ifdef CONFIG_IPC_FASTPATH
+    // Check if the message can be sent in the fastpath.
     DEBUG_ASSERT((flags & IPC_SEND) == 0 || dst);
     int fastpath =
+        // The fastpath implements only ipc_call() and ipc_replyrecv().
         (flags & ~IPC_NOBLOCK) == IPC_CALL
+        // The receiver is already waiting for us.
         && dst->state == TASK_BLOCKED
         && (dst->src == IPC_ANY || dst->src == CURRENT->tid)
+        // The fastpath doesn't receive pending notifications.
         && CURRENT->notifications == 0;
 
     if (!fastpath) {
