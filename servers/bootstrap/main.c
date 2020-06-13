@@ -314,6 +314,7 @@ static error_t handle_message(struct message *m, task_t *reply_to) {
         }
         default:
             WARN("unknown message type (type=%d)", m->type);
+            // FIXME: Free bulk payloads.
             return ERR_NOT_ACCEPTABLE;
     }
 }
