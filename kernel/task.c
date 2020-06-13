@@ -76,10 +76,15 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     task->bulk_len = 0;
     task->timeout = 0;
     task->quantum = 0;
+    task->ref_count = 0;
     strncpy(task->name, name, sizeof(task->name));
     list_init(&task->senders);
     list_nullify(&task->runqueue_next);
     list_nullify(&task->sender_next);
+
+    if (pager) {
+        pager->ref_count++;
+    }
 
     // Append the newly created task into the runqueue.
     if (task != IDLE_TASK) {
@@ -95,12 +100,18 @@ error_t task_destroy(struct task *task) {
     ASSERT(task != IDLE_TASK);
 
     if (task->tid == INIT_TASK_TID) {
-        TRACE("%s: tried to destroy the init task", task->name);
+        WARN("tried to destroy the init task");
         return ERR_INVALID_ARG;
     }
 
     if (task->state == TASK_UNUSED) {
         return ERR_INVALID_ARG;
+    }
+
+    if (task->ref_count > 0) {
+        WARN("%s (#%d) are still referenced from %d tasks",
+             task->name, task->tid, task->ref_count);
+        return ERR_IN_USE;
     }
 
     TRACE("destroying %s...", task->name);
@@ -110,24 +121,17 @@ error_t task_destroy(struct task *task) {
     arch_task_destroy(task);
     task->state = TASK_UNUSED;
 
+    if (task->pager) {
+        task->pager->ref_count--;
+    }
+
     // Abort sender IPC operations.
     LIST_FOR_EACH (sender, &task->senders, struct task, sender_next) {
         notify(sender, NOTIFY_ABORTED);
         list_remove(&sender->sender_next);
     }
 
-    // FIXME:
-    for (task_t tid = 1; tid <= CONFIG_NUM_TASKS; tid++) {
-        struct task *task2 = task_lookup_unchecked(tid);
-        DEBUG_ASSERT(task2);
-
-        // Ensure that this task is not a pager task.
-        if (task2->state != TASK_UNUSED && task2->pager == task) {
-            PANIC("a pager task '%s' (#%d) is being killed", task->name,
-                  task->tid);
-        }
-    }
-
+    // Release IRQ ownership.
     for (unsigned irq = 0; irq < IRQ_MAX; irq++) {
         if (irq_owners[irq] == task) {
             arch_disable_irq(irq);

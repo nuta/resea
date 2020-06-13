@@ -42,6 +42,8 @@ struct task {
     char name[CONFIG_TASK_NAME_LEN];
     /// Flags.
     unsigned flags;
+    /// Number of references to this task.
+    unsigned ref_count;
     /// The page table.
     struct vm vm;
     /// The pager task. When a page fault or an exception (e.g. divide by zero)
