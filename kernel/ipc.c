@@ -92,11 +92,11 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
             }
         }
 
-        // Copy the bulk payload.
-        if (flags & IPC_BULK) {
-            tmp_m.type |= MSG_BULK;
-            tmp_m.bulk_ptr = (void *) dst->bulk_ptr;
+        // Now we're committed to send the message. We must not abort the
+        // sending: don't return an error or cause a page fault from here!
 
+        // Copy the bulk payload.
+        if (flags & IPC_BULK && !IS_ERROR(tmp_m.type)) {
             size_t len = tmp_m.bulk_len;
             userptr_t src_buf = (userptr_t) tmp_m.bulk_ptr;
             userptr_t dst_buf = dst->bulk_ptr;
@@ -114,12 +114,16 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
                 DEBUG_ASSERT(paddr);
                 vm_link(&CURRENT->vm, temp_vaddr, paddr, PAGE_WRITABLE);
 
-                // Copy the bulk payload into the receiver's buffer.
+                // Copy the bulk payload into the receiver's buffer. Page faults
+                // won't occurr here because `src_buf` is prefetched in above.
                 memcpy_from_user(&__temp_page[offset], src_buf, copy_len);
                 remaining -= copy_len;
                 dst_buf += copy_len;
                 src_buf += copy_len;
             }
+
+            tmp_m.type |= MSG_BULK;
+            tmp_m.bulk_ptr = (void *) dst->bulk_ptr;
         }
 
         // Copy the message.
