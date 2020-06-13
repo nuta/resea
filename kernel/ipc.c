@@ -187,9 +187,9 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
     }
 
 #ifdef CONFIG_IPC_FASTPATH
+    DEBUG_ASSERT((flags & IPC_SEND) == 0 || dst);
     int fastpath =
         (flags & ~IPC_NOBLOCK) == IPC_CALL
-        && dst
         && dst->state == TASK_BLOCKED
         && (dst->src == IPC_ANY || dst->src == CURRENT->tid)
         && CURRENT->notifications == 0;
@@ -219,7 +219,6 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
     // buffer, and return to the user.
     resume_sender(CURRENT, src);
     task_block(CURRENT);
-
     task_switch();
 
     // This user copy should not cause a page fault since we've filled the
