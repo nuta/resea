@@ -133,32 +133,30 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
 
     // Receive a message.
     if (flags & IPC_RECV) {
-        // Check if there're pending notifications.
-        notifications_t pending = CURRENT->notifications;
-        if (src == IPC_ANY && pending) {
-            m->type = NOTIFICATIONS_MSG;
-            m->src = KERNEL_TASK_TID;
-            m->notifications.data = pending;
+        struct message tmp_m;
+        if (src == IPC_ANY && CURRENT->notifications) {
+            // Receive pending notifications as a message.
+            tmp_m.type = NOTIFICATIONS_MSG;
+            tmp_m.src = KERNEL_TASK_TID;
+            tmp_m.notifications.data = CURRENT->notifications;
             CURRENT->notifications = 0;
-            return OK;
+        } else {
+            // Resume a sender task and sleep until a sender task resumes this
+            // task...
+            CURRENT->src = src;
+            resume_sender_task(CURRENT);
+            task_block(CURRENT);
+            task_switch();
+
+            // Copy into `tmp_m` since memcpy_to_user may cause a page fault and
+            // CURRENT->m will be overwritten by page fault mesages.
+            memcpy(&tmp_m, &CURRENT->m, sizeof(struct message));
         }
-
-        // Resume a sender task.
-        CURRENT->src = src;
-        resume_sender_task(CURRENT);
-
-        // Sleep until a sender task resumes this task...
-        task_block(CURRENT);
-        task_switch();
 
         // Received a message. Copy it into the receiver buffer.
         if (flags & IPC_KERNEL) {
-            memcpy(m, &CURRENT->m, sizeof(struct message));
+            memcpy(m, &tmp_m, sizeof(struct message));
         } else {
-            // Copy into `tmp_m` since memcpy_to_user may cause a page fault and
-            // CURRENT->m will be overwritten by page fault mesages.
-            struct message tmp_m;
-            memcpy(&tmp_m, &CURRENT->m, sizeof(struct message));
             memcpy_to_user((userptr_t) m, &tmp_m, sizeof(struct message));
         }
     }
