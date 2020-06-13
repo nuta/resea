@@ -60,10 +60,17 @@ error_t ipc_recv(task_t src, struct message *m) {
     error_t err = sys_ipc(0, src, m, IPC_RECV);
 
     if (m->type & MSG_BULK) {
+        // Received a bulk payload. We've consumed `bulk_ptr` so set NULL to it
+        // and reallocate the receiver buffer later.
         bulk_ptr = NULL;
+
+        // A mitigation for a non-terminated (malicious) string payload.
+        if (m->type & MSG_STR) {
+            char *str = m->bulk_ptr;
+            str[m->bulk_len] = '\0';
+        }
     }
 
-    // TODO: Handle non-terminated MSG_STR.
 
     // Handle the case when m.type is negative: a message represents an error
     // (sent by `ipc_send_err()`).
