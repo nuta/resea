@@ -19,3 +19,4 @@
 - [Porting to a CPU Architecture](porting.md)
 - [Boot Sequence](boot-sequence.md)
 - [Boot FS](bootfs.md)
+- [Changelog](changelog.md)
