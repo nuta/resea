@@ -261,7 +261,7 @@ struct arch_cpuvar {
 struct cpuvar;
 static inline struct cpuvar *get_cpuvar(void) {
     uint64_t gsbase;
-    __asm__ __volatile__("rdgsbase %0" : "=r"(gsbase));
+    __asm__("rdgsbase %0" : "=r"(gsbase));
     return (struct cpuvar *) gsbase;
 }
 
