@@ -9,20 +9,20 @@ static void *bulk_ptr = NULL;
 static const size_t bulk_len = CONFIG_BULK_BUFFER_LEN;
 
 static unsigned pre_send(struct message *m) {
-    if (m->type & MSG_STR) {
-        m->bulk_len = strlen(m->bulk_ptr) + 1;
-    }
-
     unsigned flags = 0;
-    if (m->type & MSG_BULK) {
+    if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
         flags |= IPC_BULK;
+
+        if (m->type & MSG_STR) {
+            m->bulk_len = strlen(m->bulk_ptr) + 1;
+        }
     }
 
     return flags;
  }
 
  static error_t post_recv(error_t err, struct message *m) {
-    if (m->type & MSG_BULK) {
+    if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
         // Received a bulk payload. We've consumed `bulk_ptr` so set NULL to it
         // and reallocate the receiver buffer later.
         bulk_ptr = NULL;
