@@ -23,3 +23,9 @@ start:
 halt:
     int 3
     jmp halt
+
+.section .bootelf_header, "ax"
+.global __bootelf_header
+__bootelf_header:
+    .ascii "00BOOT\xe1\xff"
+    .space 248

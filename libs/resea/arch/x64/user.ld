@@ -16,23 +16,21 @@ SECTIONS {
 
     .text : ALIGN(0x1000) {
         __text = .;
+        *(.bootelf_header);
         *(.text);
         *(.text.*);
         __text_end = .;
-        . = ALIGN(4096); // See the XXX comment above.
     } :text
 
     .rodata : ALIGN(0x1000) {
         *(.rodata);
         *(.rodata.*);
-        . = ALIGN(4096); // See the XXX comment above.
     } :text
 
     . = 0x03000000;
     .data : ALIGN(0x1000) {
         *(.data);
         *(.data.*);
-        . = ALIGN(4096); // See the XXX comment above.
     } :data
 
     . = 0x04000000;
@@ -43,7 +41,6 @@ SECTIONS {
         *(.bss);
         *(.bss.*);
         __bss_end = .;
-        . = ALIGN(4096); // See the XXX comment above.
     } :bss
 
     . = ALIGN(16);

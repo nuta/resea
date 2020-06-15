@@ -292,9 +292,9 @@ $(BUILD_DIR)/%.debug.elf: tools/nm2symbols.py \
 	./tools/embed-symbols.py $(BUILD_DIR)/$(name).symbols $(@).tmp
 	mv $(@).tmp $@
 
-$(BUILD_DIR)/%.elf: $(BUILD_DIR)/%.debug.elf
+$(BUILD_DIR)/%.elf: $(BUILD_DIR)/%.debug.elf ./tools/embed-bootelf-header.py
 	$(PROGRESS) "STRIP" $@
 	$(OBJCOPY) --strip-all-gnu --strip-debug $< $@
-	./tools/embed-server-name.py --name=$(name) $(@)
+	./tools/embed-bootelf-header.py --name=$(name) $(@)
 
 -include $(shell find $(BUILD_DIR) -name "*.deps" 2>/dev/null)

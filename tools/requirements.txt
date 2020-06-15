@@ -3,6 +3,7 @@ lark-parser
 jinja2
 colorama
 watchdog
+pyelftools
 
 # watchmedo internal dependencies
 PyYAML
