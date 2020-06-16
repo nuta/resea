@@ -11,25 +11,20 @@ PHDRS {
 }
 
 SECTIONS {
-    /* XXX: For simplicity of the implementation, kernel's ELF loader assumes
-            the address and the length of program headers are aligned to 4096
-            (PAGE_SIZE). */
-
-    .text :{
+    .text : ALIGN(0x1000) {
+        *(.bootelf_header)
         *(.text*)
     } > rom :text
 
     .rodata :{
         *(.rodata*)
-        . = ALIGN(4096); // See the XXX comment above.
     } > rom :text
 
-    .data :{
+    .data : ALIGN(0x1000) {
         *(.data*)
-        . = ALIGN(4096); // See the XXX comment above.
     } > ram :data
 
-    .bss :{
+    .bss : ALIGN(0x1000) {
         __bss = .;
         *(.bss*);
         __bss_end = .;

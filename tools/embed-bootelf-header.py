@@ -50,11 +50,14 @@ def main():
                               b'W', # TODO: Support so-called W^X
                               1 if zeroed else 0)
 
-    offset = 0x1000
     with open(args.elf_file, "r+b") as f:
+        for offset in [0x1000, 0x10000]:
+            f.seek(offset)
+            if f.read(8) == BOOTELF_PRE_MAGIC:
+                break
+
         f.seek(offset)
         assert f.read(8) == BOOTELF_PRE_MAGIC
-
         f.seek(offset)
         f.write(header)
 

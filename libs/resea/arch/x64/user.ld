@@ -8,10 +8,6 @@ PHDRS {
 }
 
 SECTIONS {
-    /* XXX: For simplicity of the implementation, kernel's ELF loader assumes
-            the address and the length of program headers are aligned to 4096
-            (PAGE_SIZE). */
-
     . = 0x01000000;
 
     .text : ALIGN(0x1000) {

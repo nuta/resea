@@ -11,12 +11,20 @@ extern uint8_t __bootelf[];
 extern uint8_t __bootelf_end[];
 
 static struct bootelf_header *locate_bootelf_header(void) {
-    struct bootelf_header *header = (struct bootelf_header *) &__bootelf[0x1000];
-    if (memcmp(header, BOOTELF_MAGIC, sizeof(header->magic)) != 0) {
-        PANIC("failed to locate the boot ELF header");
+    const offset_t offsets[] = {
+        0x1000,  // x64
+        0x10000, // arm64
+    };
+
+    for (size_t i = 0; i < sizeof(offsets) / sizeof(*offsets); i++) {
+        struct bootelf_header *header =
+            (struct bootelf_header *) &__bootelf[offsets[i]];
+        if (!memcmp(header, BOOTELF_MAGIC, sizeof(header->magic))) {
+            return header;
+        }
     }
 
-    return header;
+    PANIC("failed to locate the boot ELF header");
 }
 
 // Maps ELF segments in the boot ELF into virtual memory.
