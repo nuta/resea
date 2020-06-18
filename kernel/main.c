@@ -45,7 +45,7 @@ static void map_boot_elf(struct bootelf_header *header, struct vm *vm) {
         if (m->zeroed) {
             memset((void *) vaddr, 0, m->num_pages * PAGE_SIZE);
         } else {
-            memcpy((void *) vaddr, paddr, m->num_pages * PAGE_SIZE);
+            memcpy((void *) vaddr, (void *) paddr, m->num_pages * PAGE_SIZE);
         }
 #else
         ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
