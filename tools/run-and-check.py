@@ -14,15 +14,19 @@ def main():
     parser.add_argument("argv", nargs="+", help="The command.")
     args = parser.parse_args()
 
-    p = subprocess.run(args.argv, timeout=args.timeout, universal_newlines=True,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    try:
+        p = subprocess.run(args.argv, timeout=args.timeout, universal_newlines=True,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except subprocess.TimeoutExpired:
+        print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: timed out:{Style.RESET_ALL}\n{stdout}")
+
     stdout = p.stdout.replace("\n\n", "\n") \
         .replace("\x1b\x63", "") \
         .replace("\x1b[2J", "").strip()
     if args.expected not in p.stdout:
         print(stdout)
         print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: " +
-            f"'{args.expected}' is not in stdout:{Style.RESET_ALL}")
+            f"'{args.expected}' is not in stdout:{Style.RESET_ALL}\n{stdout}")
 
         if not args.always_exit_with_zero:
             sys.exit(1)
