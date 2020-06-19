@@ -18,6 +18,7 @@ QEMUFLAGS += $(if $(GUI),,-nographic)
 run: $(kernel_image)
 	cp $(kernel_image) $(BUILD_DIR)/resea.qemu.elf
 	./tools/make-bootable-on-qemu.py $(BUILD_DIR)/resea.qemu.elf
+	$(PROGRESS) "RUN"
 	$(QEMU) $(QEMUFLAGS) -kernel $(BUILD_DIR)/resea.qemu.elf
 
 # FIXME: Fix "make[1]: warning: -jN forced in submake: disabling jobserver mode."

@@ -130,6 +130,7 @@ lint: $(BUILD_DIR)/compile_commands.json
 
 .PHONY: test
 test: $(kernel_image)
+	$(PROGRESS) "TEST"
 	./tools/run-and-check.py $(RUNCHECKFLAGS) "Passed all tests" -- $(MAKE) run
 
 .PHONY: clean

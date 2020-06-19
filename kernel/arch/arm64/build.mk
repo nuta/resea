@@ -13,4 +13,5 @@ QEMUFLAGS += $(if $(GDB),-S -s,)
 
 .PHONY: run
 run: $(kernel_image)
+	$(PROGRESS) "RUN"
 	$(QEMU) $(QEMUFLAGS) -kernel $<

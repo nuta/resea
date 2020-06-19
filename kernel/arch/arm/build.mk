@@ -11,6 +11,7 @@ QEMUFLAGS += $(if $(GDB),-S -s,)
 
 .PHONY: run
 run: $(BUILD_DIR)/resea.hex
+	$(PROGRESS) "RUN"
 	$(QEMU) $(QEMUFLAGS) -device loader,file=$<
 
 .PHONY: hex
