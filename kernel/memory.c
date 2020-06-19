@@ -7,11 +7,6 @@
 #include "syscall.h"
 #include "task.h"
 
-extern char __kernel_heap[];
-extern char __kernel_heap_end[];
-extern char __bootelf[];
-extern char __temp_page[];
-
 static list_t heap;
 
 static void add_free_list(void *addr, size_t num_pages) {
@@ -118,7 +113,13 @@ paddr_t handle_page_fault(vaddr_t addr, vaddr_t ip, pagefault_t fault) {
         paddr = user_pager(addr, ip, fault, &attrs);
     }
 
-    vm_link(&CURRENT->vm, ALIGN_DOWN(addr, PAGE_SIZE), paddr, attrs);
+    error_t err =
+        vm_link(&CURRENT->vm, ALIGN_DOWN(addr, PAGE_SIZE), paddr, attrs);
+    if (IS_ERROR(err)) {
+        WARN("failed to link a page: %s", err2str(err));
+        task_exit(EXP_NO_KERNEL_MEMORY);
+    }
+
     return paddr;
 }
 

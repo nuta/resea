@@ -82,6 +82,13 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     list_nullify(&task->runqueue_next);
     list_nullify(&task->sender_next);
 
+    // Try mapping `__temp_page` so that vm_link() does not fail in IPC because
+    // of run out of kernel memory.
+    if ((err = vm_link(&task->vm, (vaddr_t) __temp_page, 0, PAGE_WRITABLE)) != OK) {
+        vm_destroy(&task->vm);
+        return err;
+    }
+
     if (pager) {
         pager->ref_count++;
     }

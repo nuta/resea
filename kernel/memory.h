@@ -29,4 +29,10 @@ void vm_destroy(struct vm *vm);
 error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr, pageattrs_t attrs);
 paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr);
 
+extern char __kernel_heap[];
+extern char __kernel_heap_end[];
+extern uint8_t __temp_page[];
+extern uint8_t __bootelf[];
+extern uint8_t __bootelf_end[];
+
 #endif

@@ -7,9 +7,6 @@
 #include "syscall.h"
 #include "task.h"
 
-extern uint8_t __bootelf[];
-extern uint8_t __bootelf_end[];
-
 static struct bootelf_header *locate_bootelf_header(void) {
     const offset_t offsets[] = {
         0x1000,  // x64
@@ -57,12 +54,14 @@ static void map_boot_elf(struct bootelf_header *header, struct vm *vm) {
                 void *page = kmalloc(PAGE_SIZE);
                 ASSERT(page);
                 memset(page, 0, PAGE_SIZE);
-                vm_link(vm, vaddr, into_paddr(page), attrs);
+                error_t err = vm_link(vm, vaddr, into_paddr(page), attrs);
+                ASSERT_OK(err);
                 vaddr += PAGE_SIZE;
             }
         } else {
             for (size_t j = 0; j < m->num_pages; j++) {
-                vm_link(vm, vaddr, paddr, attrs);
+                error_t err = vm_link(vm, vaddr, paddr, attrs);
+                ASSERT_OK(err);
                 vaddr += PAGE_SIZE;
                 paddr += PAGE_SIZE;
             }

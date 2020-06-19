@@ -6,8 +6,6 @@
 #include "syscall.h"
 #include "task.h"
 
-extern uint8_t __temp_page[];
-
 /// Prefetches pages in [base, base + len) to handle page faults in advance.
 static void prefetch_pages(userptr_t base, size_t len) {
     if (!len) {
@@ -103,7 +101,6 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
             DEBUG_ASSERT(len <= dst->bulk_len /* it's checked by dst */);
 
             size_t remaining = len;
-            vaddr_t temp_vaddr = (vaddr_t) __temp_page;
             while (remaining > 0) {
                 offset_t offset = dst_buf % PAGE_SIZE;
                 size_t copy_len = MIN(remaining, PAGE_SIZE - offset);
@@ -112,9 +109,11 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
                 vaddr_t dst_page = ALIGN_DOWN(dst_buf, PAGE_SIZE);
                 paddr_t paddr = vm_resolve(&dst->vm, dst_page);
                 DEBUG_ASSERT(paddr);
-                // FIXME: allocate page tables for __temp_page in advance
-                error_t err =
-                    vm_link(&CURRENT->vm, temp_vaddr, paddr, PAGE_WRITABLE);
+
+                // Page tables for temp_vaddr is already allocated in
+                // task_create() so I beleive vm_link() never fail...
+                error_t err = vm_link(&CURRENT->vm, (vaddr_t) __temp_page,
+                                      paddr, PAGE_WRITABLE);
                 ASSERT_OK(err);
 
                 // Copy the bulk payload into the receiver's buffer. Page faults

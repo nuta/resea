@@ -4,8 +4,6 @@
 #include <string.h>
 #include "vm.h"
 
-extern char __temp_page[];
-
 static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
                                      pageattrs_t attrs) {
     ASSERT(vaddr < KERNEL_BASE_ADDR || vaddr == (vaddr_t) __temp_page);
