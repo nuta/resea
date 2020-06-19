@@ -38,6 +38,7 @@ typedef __builtin_va_list va_list;
 #define PACKED                   __attribute__((packed))
 #define NORETURN                 __attribute__((noreturn))
 #define WEAK                     __attribute__((weak))
+#define MUSTUSE                  __attribute__((warn_unused_result))
 #define ALIGNED(align)           __attribute__((aligned(align)))
 #define ALIGN_DOWN(value, align) ((value) & ~((align) -1))
 #define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)

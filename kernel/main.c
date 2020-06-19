@@ -85,7 +85,8 @@ NORETURN void kmain(void) {
     // Create the first userland task.
     struct task *task = task_lookup_unchecked(INIT_TASK_TID);
     ASSERT(task);
-    task_create(task, name, bootelf->entry, NULL, 0);
+    error_t err = task_create(task, name, bootelf->entry, NULL, 0);
+    ASSERT_OK(err);
     map_boot_elf(bootelf, &task->vm);
 
     mpmain();
@@ -96,7 +97,8 @@ NORETURN void mpmain(void) {
 
     // Initialize the idle task for this CPU.
     IDLE_TASK->tid = 0;
-    task_create(IDLE_TASK, "(idle)", 0, 0, 0);
+    error_t err = task_create(IDLE_TASK, "(idle)", 0, 0, 0);
+    ASSERT_OK(err);
     CURRENT = IDLE_TASK;
 
     // Start context switching and enable interrupts...

@@ -162,7 +162,8 @@ NORETURN void task_exit(enum exception_type exp) {
     m.type = EXCEPTION_MSG;
     m.exception.task = CURRENT->tid;
     m.exception.exception = exp;
-    ipc(CURRENT->pager, 0, &m, IPC_SEND | IPC_KERNEL);
+    error_t err = ipc(CURRENT->pager, 0, &m, IPC_SEND | IPC_KERNEL);
+    OOPS_OK(err);
 
     // Wait until the pager task destroys this task...
     CURRENT->state = TASK_BLOCKED;

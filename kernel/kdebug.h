@@ -4,7 +4,7 @@
 #include <types.h>
 
 void kdebug_handle_interrupt(void);
-error_t kdebug_run(const char *cmdline);
+MUSTUSE error_t kdebug_run(const char *cmdline);
 void stack_check(void);
 void stack_set_canary(void);
 

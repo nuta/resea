@@ -62,7 +62,7 @@ void kdebug_handle_interrupt(void) {
             printk("\n");
             cmdline[cursor] = '\0';
             if (cursor > 0) {
-                kdebug_run(cmdline);
+                (void) kdebug_run(cmdline);
                 cursor = 0;
             }
             DPRINTK("kdebug> ");

@@ -85,9 +85,9 @@ struct cpuvar {
     struct task idle_task;
 };
 
-error_t task_create(struct task *task, const char *name, vaddr_t ip,
-                    struct task *pager, unsigned flags);
-error_t task_destroy(struct task *task);
+MUSTUSE error_t task_create(struct task *task, const char *name, vaddr_t ip,
+                            struct task *pager, unsigned flags);
+MUSTUSE error_t task_destroy(struct task *task);
 NORETURN void task_exit(enum exception_type exp);
 void task_block(struct task *task);
 void task_resume(struct task *task);
@@ -95,8 +95,8 @@ void task_notify(struct task *task, notifications_t notifications);
 struct task *task_lookup(task_t tid);
 struct task *task_lookup_unchecked(task_t tid);
 void task_switch(void);
-error_t task_listen_irq(struct task *task, unsigned irq);
-error_t task_unlisten_irq(unsigned irq);
+MUSTUSE error_t task_listen_irq(struct task *task, unsigned irq);
+MUSTUSE error_t task_unlisten_irq(unsigned irq);
 void handle_timer_irq(void);
 void handle_irq(unsigned irq);
 void task_dump(void);
@@ -109,7 +109,7 @@ void unlock(void);
 int mp_self(void);
 int mp_num_cpus(void);
 void mp_reschedule(void);
-error_t arch_task_create(struct task *task, vaddr_t ip);
+MUSTUSE error_t arch_task_create(struct task *task, vaddr_t ip);
 void arch_task_destroy(struct task *task);
 void arch_task_switch(struct task *prev, struct task *next);
 void arch_enable_irq(unsigned irq);
