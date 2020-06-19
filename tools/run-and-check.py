@@ -4,6 +4,11 @@ import subprocess
 import sys
 from colorama import Fore, Back, Style
 
+def scrub_stdout(stdout):
+    return stdout.replace("\n\n", "\n") \
+        .replace("\x1b\x63", "") \
+        .replace("\x1b[2J", "").strip()
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run a command and check its output contains an expected string.")
@@ -17,13 +22,12 @@ def main():
     try:
         p = subprocess.run(args.argv, timeout=args.timeout, universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as e:
+        stdout = scrub_stdout(e.stdout.decode("utf-8"))
         print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: timed out:{Style.RESET_ALL}\n{stdout}")
 
-    stdout = p.stdout.replace("\n\n", "\n") \
-        .replace("\x1b\x63", "") \
-        .replace("\x1b[2J", "").strip()
-    if args.expected not in p.stdout:
+    stdout = scrub_stdout(p.stdout)
+    if args.expected not in stdout:
         print(stdout)
         print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: " +
             f"'{args.expected}' is not in stdout:{Style.RESET_ALL}\n{stdout}")
