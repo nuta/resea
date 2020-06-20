@@ -35,7 +35,7 @@ SECTIONS {
         *(.bss*)
     } > ram
 
-    // We don't use __temp_page in NOMMU
+    /* We don't use __temp_page in NOMMU but it is still refrenced from code. */
     . = 0;
     __temp_page;
 
