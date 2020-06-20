@@ -72,8 +72,11 @@ const char *__program_name(void);
 #define ASSERT(expr)                                                           \
     do {                                                                       \
         if (!(expr)) {                                                         \
-            printf(SGR_ERR "[%s] ASSERTION FAILURE: %s" SGR_RESET "\n",        \
-                   __program_name(), #expr);                                   \
+            printf(SGR_ERR "[%s] %s:%d: ASSERTION FAILURE: %s" SGR_RESET "\n", \
+                   __program_name(),                                           \
+                   __FILE__,                                                   \
+                   __LINE__,                                                   \
+                   #expr);                                                     \
             backtrace();                                                       \
             halt();                                                            \
             __builtin_unreachable();                                           \
@@ -86,8 +89,11 @@ const char *__program_name(void);
     do {                                                                       \
         __typeof__(expr) __expr = (expr);                                      \
         if (IS_ERROR(__expr)) {                                                \
-            printf(SGR_ERR "[%s] unexpected error (%s)\n" SGR_RESET,           \
-                   __program_name(), err2str(__expr));                         \
+            printf(SGR_ERR "[%s] %s:%d: unexpected error (%s)\n" SGR_RESET,    \
+                   __program_name(),                                           \
+                   __FILE__,                                                   \
+                   __LINE__,                                                   \
+                   err2str(__expr));                                           \
             backtrace();                                                       \
             halt();                                                            \
             __builtin_unreachable();                                           \
