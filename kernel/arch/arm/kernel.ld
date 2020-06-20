@@ -36,8 +36,7 @@ SECTIONS {
     } > ram
 
     /* We don't use __temp_page in NOMMU but it is still refrenced from code. */
-    . = 0;
-    __temp_page;
+    __temp_page = 0;
 
     /DISCARD/ :{
         *(.ARM.exidx)
