@@ -2,8 +2,6 @@
 #include <syscall.h>
 #include <string.h>
 
-int __temp_page; // unused as we don't use virtual memory
-
 error_t vm_create(struct vm *vm) {
     // Do nothing: we don't support virtual memory.
     return OK;

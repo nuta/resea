@@ -35,6 +35,10 @@ SECTIONS {
         *(.bss*)
     } > ram
 
+    // We don't use __temp_page in NOMMU
+    . = 0;
+    __temp_page;
+
     /DISCARD/ :{
         *(.ARM.exidx)
     }
