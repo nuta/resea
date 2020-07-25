@@ -6,23 +6,6 @@
 #include "syscall.h"
 #include "task.h"
 
-/// Prefetches pages in [base, base + len) to handle page faults in advance.
-static void prefetch_pages(userptr_t base, size_t len) {
-    if (!len) {
-        return;
-    }
-
-    userptr_t ptr = base;
-    do {
-        char tmp;
-        // Try copying a byte from the user pointer. It may cause a page fault
-        // if it's not yet mapped. If the pointer is invalid (i.e. segfault),
-        // the current task will be killed in the page fault handler.
-        memcpy_from_user(&tmp, ptr, sizeof(tmp));
-        ptr += PAGE_SIZE;
-    } while (ptr < ALIGN_UP(base + len, PAGE_SIZE));
-}
-
 /// Resumes a sender task for the `receiver` tasks and updates `receiver->src`
 /// properly.
 static void resume_sender(struct task *receiver, task_t src) {
@@ -58,15 +41,6 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
             memcpy_from_user(&tmp_m, (userptr_t) m, sizeof(struct message));
         }
 
-        if (flags & IPC_BULK) {
-            if (tmp_m.bulk_len > CONFIG_BULK_BUFFER_LEN) {
-                return ERR_TOO_LARGE;
-            }
-
-            // Resolve page faults in advance.
-            prefetch_pages((userptr_t) tmp_m.bulk_ptr, tmp_m.bulk_len);
-        }
-
         // Check whether the destination (receiver) task is ready for receiving.
         bool receiver_is_ready =
             dst->state == TASK_BLOCKED
@@ -93,41 +67,6 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
         // We've gone beyond the point of no return. We must not abort the
         // sending from here: don't return an error or cause a page fault!
 
-        // Copy the bulk payload.
-        if (flags & IPC_BULK && !IS_ERROR(tmp_m.type)) {
-            size_t len = tmp_m.bulk_len;
-            userptr_t src_buf = (userptr_t) tmp_m.bulk_ptr;
-            userptr_t dst_buf = dst->bulk_ptr;
-            DEBUG_ASSERT(len <= dst->bulk_len /* it's checked by dst */);
-
-            size_t remaining = len;
-            while (remaining > 0) {
-                offset_t offset = dst_buf % PAGE_SIZE;
-                size_t copy_len = MIN(remaining, PAGE_SIZE - offset);
-
-                // Temporarily map the page containing the receiver's buffer
-                vaddr_t dst_page = ALIGN_DOWN(dst_buf, PAGE_SIZE);
-                paddr_t paddr = vm_resolve(&dst->vm, dst_page);
-                DEBUG_ASSERT(paddr);
-
-                // Page tables for temp_vaddr is already allocated in
-                // task_create() so I beleive vm_link() never fail...
-                error_t err = vm_link(&CURRENT->vm, (vaddr_t) __temp_page,
-                                      paddr, PAGE_WRITABLE);
-                ASSERT_OK(err);
-
-                // Copy the bulk payload into the receiver's buffer. Page faults
-                // won't occurr here because `src_buf` is prefetched in above.
-                memcpy_from_user(&__temp_page[offset], src_buf, copy_len);
-                remaining -= copy_len;
-                dst_buf += copy_len;
-                src_buf += copy_len;
-            }
-
-            tmp_m.type |= MSG_BULK;
-            tmp_m.bulk_ptr = (void *) dst->bulk_ptr;
-        }
-
         // Copy the message.
         tmp_m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
         memcpy(&dst->m, &tmp_m, sizeof(dst->m));
@@ -136,14 +75,8 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
         task_resume(dst);
 
 #ifdef CONFIG_TRACE_IPC
-        if (flags & IPC_BULK) {
-            TRACE("IPC: %s: %s -> %s (%d bytes in bulk%s)",
-                  msgtype2str(tmp_m.type), CURRENT->name, dst->name,
-                  tmp_m.bulk_len, (tmp_m.type & MSG_STR) ? ", string" : "");
-        } else {
-            TRACE("IPC: %s: %s -> %s",
-                  msgtype2str(tmp_m.type), CURRENT->name, dst->name);
-        }
+        TRACE("IPC: %s: %s -> %s",
+              msgtype2str(tmp_m.type), CURRENT->name, dst->name);
 #endif
     }
 
@@ -183,9 +116,10 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
 ///
 /// Note that `m` is a user pointer if IPC_KERNEL is not set!
 error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
-    // Resolve page faults in advance.
-    if ((flags & IPC_RECV) && !(flags & IPC_KERNEL) && CURRENT->bulk_ptr) {
-        prefetch_pages(CURRENT->bulk_ptr, CURRENT->bulk_len);
+    if (dst == CURRENT) {
+        // TODO: WARN_DBG()
+        WARN("%s: tried to send a message to myself", CURRENT->name);
+        return ERR_INVALID_ARG;
     }
 
 #ifdef CONFIG_IPC_FASTPATH

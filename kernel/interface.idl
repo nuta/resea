@@ -1,7 +1,6 @@
 oneway notifications(data: notifications);
 oneway exception(task: task, exception: exception_type);
-rpc page_fault(task: task, vaddr: vaddr, ip: vaddr, fault: pagefault)
-        -> (vaddr: vaddr, attrs: pageattrs);
+rpc page_fault(task: task, vaddr: vaddr, ip: vaddr, fault: pagefault) -> ();
 
 enum abi_hook_type {
     INITIAL = 1,

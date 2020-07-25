@@ -1,6 +1,8 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include <types.h>
+
 struct bootelf_mapping {
     uint64_t vaddr;
     uint32_t offset;

@@ -16,3 +16,8 @@ void task_exit(void) {
 task_t task_self(void) {
     return sys_setattrs(NULL, 0, 0);
 }
+
+error_t task_map(task_t task, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
+                 unsigned flags) {
+    return sys_map(task, vaddr, src, kpage, flags);
+}

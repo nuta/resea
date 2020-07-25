@@ -1,4 +1,3 @@
-#include <memory.h>
 #include <syscall.h>
 #include <string.h>
 

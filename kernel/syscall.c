@@ -4,7 +4,6 @@
 #include <types.h>
 #include "ipc.h"
 #include "kdebug.h"
-#include "memory.h"
 #include "printk.h"
 #include "syscall.h"
 #include "task.h"
@@ -81,9 +80,6 @@ static task_t sys_setattrs(userptr_t bulk_ptr, size_t bulk_len,
         if (bulk_len < CONFIG_BULK_BUFFER_LEN) {
             return ERR_TOO_SMALL;
         }
-
-        CURRENT->bulk_ptr = bulk_ptr;
-        CURRENT->bulk_len = bulk_len;
     }
 
     if (timeout) {
@@ -180,6 +176,57 @@ static error_t sys_kdebug(userptr_t cmdline) {
     return kdebug_run(input);
 }
 
+static paddr_t resolve_paddr(vaddr_t vaddr) {
+    if (CURRENT->tid == INIT_TASK_TID) {
+        if (is_kernel_paddr(vaddr)) {
+            return 0;
+        }
+        return vaddr;
+    } else {
+        paddr_t paddr = vm_resolve(&CURRENT->vm, vaddr);
+        if (!paddr) {
+            return ERR_NOT_FOUND;
+        }
+        return paddr;
+    }
+}
+
+static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
+                       unsigned flags) {
+    if (!IS_ALIGNED(vaddr, PAGE_SIZE) || !IS_ALIGNED(vaddr, PAGE_SIZE)
+        || !IS_ALIGNED(kpage, PAGE_SIZE)) {
+        return ERR_INVALID_ARG;
+    }
+
+    // TODO: Check if kpage is mapped in the kernel's address space.
+    // TODO: Deny if the given page is in use for page table.
+
+    struct task *task = task_lookup(tid);
+    if (!task) {
+        return ERR_INVALID_ARG;
+    }
+
+    // Resolve paddrs.
+    paddr_t paddr = resolve_paddr(src);
+    paddr_t kpage_paddr = resolve_paddr(kpage);
+    if (!paddr || !kpage_paddr) {
+        return ERR_NOT_FOUND;
+    }
+
+    if (flags & MAP_DELETE) {
+        vm_unlink(&task->vm, vaddr);
+    }
+
+    if (flags & MAP_UPDATE) {
+        error_t err = vm_link(&task->vm, vaddr, paddr, kpage, flags);
+        if (err != OK) {
+            return err;
+        }
+    }
+
+    return OK;
+}
+
 /// The system call handler.
 long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
     stack_check();
@@ -197,6 +244,9 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             break;
         case SYS_IPC:
             ret = sys_ipc(a1, a2, a3, a4);
+            break;
+        case SYS_MAP:
+            ret = sys_map(a1, a2, a3, a4, a5);
             break;
         case SYS_LISTENIRQ:
             ret = sys_listenirq(a1, a2);

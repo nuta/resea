@@ -1,5 +1,6 @@
 #include <resea/malloc.h>
 #include <resea/handle.h>
+#include <resea/printf.h>
 #include <string.h>
 
 extern char __bss[];

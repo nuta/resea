@@ -2,10 +2,14 @@
 #include <string.h>
 #include "main.h"
 #include "kdebug.h"
-#include "memory.h"
 #include "printk.h"
 #include "syscall.h"
 #include "task.h"
+
+// Defined in arch.
+extern uint8_t __bootelf[];
+extern uint8_t __bootelf_end[];
+struct bootelf_header *bootelf = NULL;
 
 static struct bootelf_header *locate_bootelf_header(void) {
     const offset_t offsets[] = {
@@ -24,8 +28,33 @@ static struct bootelf_header *locate_bootelf_header(void) {
     PANIC("failed to locate the boot ELF header");
 }
 
+/// Allocates a memory page for the first user task.
+static void *alloc_page(void) {
+    static uint8_t heap[PAGE_SIZE * 2448] ALIGNED(PAGE_SIZE);
+    static uint8_t *current = heap;
+    if (current >= heap + sizeof(heap)) {
+        PANIC("run out of memory for init task");
+    }
+
+    void *ptr = current;
+    current += PAGE_SIZE;
+    return ptr;
+}
+
+static error_t map_page(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
+                        unsigned flags) {
+    while (true) {
+        paddr_t kpage = into_paddr(alloc_page());
+        error_t err = vm_link(vm, vaddr, paddr, kpage, MAP_UPDATE | flags);
+        if (err != ERR_TRY_AGAIN) {
+            return err;
+        }
+    }
+}
+
+
 // Maps ELF segments in the boot ELF into virtual memory.
-static void map_boot_elf(struct bootelf_header *header, struct vm *vm) {
+void map_bootelf(struct bootelf_header *header, struct vm *vm) {
     TRACE("boot ELF: entry=%p", header->entry);
     for (unsigned i = 0; i < header->num_mappings; i++) {
         struct bootelf_mapping *m = &header->mappings[i];
@@ -48,19 +77,18 @@ static void map_boot_elf(struct bootelf_header *header, struct vm *vm) {
         ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
         ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
-        pageattrs_t attrs = PAGE_USER | PAGE_WRITABLE;
         if (m->zeroed) {
             for (size_t j = 0; j < m->num_pages; j++) {
-                void *page = kmalloc(PAGE_SIZE);
+                void *page = alloc_page();
                 ASSERT(page);
                 memset(page, 0, PAGE_SIZE);
-                error_t err = vm_link(vm, vaddr, into_paddr(page), attrs);
+                error_t err = map_page(vm, vaddr, into_paddr(page), MAP_W);
                 ASSERT_OK(err);
                 vaddr += PAGE_SIZE;
             }
         } else {
             for (size_t j = 0; j < m->num_pages; j++) {
-                error_t err = vm_link(vm, vaddr, paddr, attrs);
+                error_t err = map_page(vm, vaddr, paddr, MAP_W);
                 ASSERT_OK(err);
                 vaddr += PAGE_SIZE;
                 paddr += PAGE_SIZE;
@@ -73,7 +101,6 @@ static void map_boot_elf(struct bootelf_header *header, struct vm *vm) {
 /// Initializes the kernel and starts the first task.
 NORETURN void kmain(void) {
     printf("\nBooting Resea " VERSION "...\n");
-    memory_init();
     task_init();
     mp_start();
 
@@ -87,7 +114,7 @@ NORETURN void kmain(void) {
     ASSERT(task);
     error_t err = task_create(task, name, bootelf->entry, NULL, 0);
     ASSERT_OK(err);
-    map_boot_elf(bootelf, &task->vm);
+    map_bootelf(bootelf, &task->vm);
 
     mpmain();
 }

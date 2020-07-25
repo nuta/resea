@@ -5,28 +5,20 @@
 #include "interrupt.h"
 #include "trap.h"
 
+static uint64_t pml4_tables[CONFIG_NUM_TASKS][512] ALIGNED(4096);
+static uint8_t kernel_stacks[CONFIG_NUM_TASKS][8192] ALIGNED(4096);
+static uint8_t syscall_stacks[CONFIG_NUM_TASKS][8192] ALIGNED(4096);
+static uint8_t xsave_areas[CONFIG_NUM_TASKS][4096] ALIGNED(4096);
+
 error_t arch_task_create(struct task *task, vaddr_t ip) {
-    void *interrupt_stack_bottom = kmalloc(PAGE_SIZE);
-    if (!interrupt_stack_bottom) {
-        return ERR_NO_MEMORY;
-    }
+    void *kstack = (void *) kernel_stacks[task->tid];
+    void *syscall_stack_bottom = (void *) syscall_stacks[task->tid];
+    void *xsave = (void *) xsave_areas[task->tid];
 
-    void *syscall_stack_bottom = kmalloc(PAGE_SIZE);
-    if (!syscall_stack_bottom) {
-        kfree(interrupt_stack_bottom);
-        return ERR_NO_MEMORY;
-    }
-
-    void *xsave = kmalloc(PAGE_SIZE);
-    if (!xsave) {
-        kfree(interrupt_stack_bottom);
-        kfree(syscall_stack_bottom);
-        return ERR_NO_MEMORY;
-    }
-
-    task->arch.interrupt_stack = (uint64_t) interrupt_stack_bottom + PAGE_SIZE;
+    task->vm.pml4 = into_paddr(pml4_tables[task->tid]);
+    task->arch.interrupt_stack_bottom = kstack;
+    task->arch.interrupt_stack = (uint64_t) kstack + PAGE_SIZE;
     task->arch.syscall_stack = (uint64_t) syscall_stack_bottom + PAGE_SIZE;
-    task->arch.interrupt_stack_bottom = interrupt_stack_bottom;
     task->arch.syscall_stack_bottom = syscall_stack_bottom;
     task->arch.xsave = xsave;
     task->arch.gsbase = 0;
@@ -58,9 +50,6 @@ error_t arch_task_create(struct task *task, vaddr_t ip) {
 }
 
 void arch_task_destroy(struct task *task) {
-    kfree(task->arch.interrupt_stack_bottom);
-    kfree(task->arch.syscall_stack_bottom);
-    kfree(task->arch.xsave);
 }
 
 static void update_tss_iomap(struct task *task) {

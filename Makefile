@@ -267,6 +267,7 @@ $(eval $(BUILD_DIR)/$(1).debug.elf: name := $(name))
 $(eval $(BUILD_DIR)/$(1).debug.elf: objs := $(objs))
 $(eval $(BUILD_DIR)/$(1).debug.elf: $(objs) $(build_mks))
 $(eval $(objs): CFLAGS += $(cflags))
+$(eval $(objs): CFLAGS += -DBOOTSTRAP)
 $(foreach lib, $(all_libs),
 	$(eval $(objs): CFLAGS += -Ilibs/$(lib)/include))
 endef
@@ -276,7 +277,13 @@ $(foreach server, $(bootstrap) $(servers), \
 %/__name__.c:
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
-	echo "const char *__program_name(void) { return \"$(name)\"; }" > $(@)
+	echo "#include <types.h>" > $(@)
+	echo "const char *__program_name(void) { return \"$(name)\"; }" >> $(@)
+	if [ "$(CONFIG_BOOTSTRAP)" = "$(name)" ]; then \
+		echo "bool __is_bootstrap(void) { return true; }" >> $(@); \
+	else \
+		echo "bool __is_bootstrap(void) { return false; }" >> $(@); \
+	fi
 
 %/__name__.o: %/__name__.c $(autogen_files)
 	$(PROGRESS) "CC" $@

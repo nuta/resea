@@ -1,13 +1,13 @@
 #include <arch.h>
-#include <memory.h>
 #include <printk.h>
 #include <string.h>
 #include "vm.h"
 
 static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
-                                     pageattrs_t attrs) {
-    ASSERT(vaddr < KERNEL_BASE_ADDR || vaddr == (vaddr_t) __temp_page);
+                                     paddr_t kpage, pageattrs_t attrs) {
+    ASSERT(vaddr < KERNEL_BASE_ADDR);
     ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
+    ASSERT(IS_ALIGNED(kpage, PAGE_SIZE));
 
     uint64_t *table = from_paddr(pml4);
     for (int level = 4; level > 1; level--) {
@@ -17,14 +17,14 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
                 return NULL;
             }
 
-            /* The PDPT, PD or PT is not allocated. Allocate it. */
-            void *page = kmalloc(PAGE_SIZE);
-            if (!page) {
+            /* The PDPT, PD or PT is not allocated. */
+            if (!kpage) {
                 return NULL;
             }
 
-            memset(page, 0, PAGE_SIZE);
-            table[index] = (uint64_t) into_paddr(page);
+            memset(from_paddr(kpage), 0, PAGE_SIZE);
+            table[index] = kpage;
+            kpage = 0;
         }
 
         // Update attributes if given.
@@ -39,46 +39,30 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
 
 extern char __kernel_heap[];
 
-static void free_page_table(const uint64_t *table, int level) {
-    for (int i = 0; i < PAGE_ENTRY_NUM; i++) {
-        paddr_t paddr = ENTRY_PADDR(table[i]);
-        if (level > 1 && paddr && paddr >= (paddr_t) __kernel_heap) {
-            free_page_table(from_paddr(paddr), level - 1);
-        }
-    }
-}
-
 error_t vm_create(struct vm *vm) {
-    uint64_t *pml4 = kmalloc(PAGE_SIZE);
-    if (!pml4) {
-        return ERR_NO_MEMORY;
-    }
-
-    memcpy(pml4, from_paddr((paddr_t) __kernel_pml4), PAGE_SIZE);
+    uint64_t *table = from_paddr(vm->pml4);
+    memcpy(table, from_paddr((paddr_t) __kernel_pml4), PAGE_SIZE);
 
     // The kernel no longer access a virtual address around 0x0000_0000. Unmap
     // the area to catch bugs (especially NULL pointer dereferences in the
     // kernel).
-    pml4[0] = 0;
-
-    vm->pml4 = into_paddr(pml4);
+    table[0] = 0;
     return OK;
 }
 
 void vm_destroy(struct vm *vm) {
-    free_page_table(from_paddr(vm->pml4), 4);
 }
 
-error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
-                pageattrs_t attrs) {
-    ASSERT(vaddr < KERNEL_BASE_ADDR || vaddr == (vaddr_t) __temp_page);
-    ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
+error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
+                unsigned flags) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
-    attrs |= PAGE_PRESENT;
-    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, attrs);
+    pageattrs_t attrs = PAGE_PRESENT | PAGE_USER;
+    attrs |= (flags & MAP_W) ? PAGE_WRITABLE : 0;
+
+    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, kpage, attrs);
     if (!entry) {
-        return ERR_NO_MEMORY;
+        return (kpage) ? ERR_TRY_AGAIN : ERR_EMPTY;
     }
 
     *entry = paddr | attrs;
@@ -86,7 +70,15 @@ error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
     return OK;
 }
 
+void vm_unlink(struct vm *vm, vaddr_t vaddr) {
+    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, 0, 0);
+    if (entry) {
+        *entry = 0;
+        asm_invlpg(vaddr);
+    }
+}
+
 paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr) {
-    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, 0);
+    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, 0, 0);
     return (entry) ? ENTRY_PADDR(*entry) : 0;
 }

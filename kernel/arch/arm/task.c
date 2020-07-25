@@ -2,7 +2,6 @@
 #include <string.h>
 #include <main.h>
 #include <task.h>
-#include <memory.h>
 
 #define STACK_SIZE 1024
 

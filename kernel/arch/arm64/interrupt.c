@@ -1,7 +1,6 @@
 #include <types.h>
 #include <config.h>
 #include <task.h>
-#include <memory.h>
 #include <syscall.h>
 #include <printk.h>
 #include "asm.h"

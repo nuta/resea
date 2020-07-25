@@ -40,15 +40,10 @@ static inline bool is_kernel_addr_range(vaddr_t base, size_t len) {
 // Note that these symbols point to *physical* addresses.
 extern char __kernel_image[];
 extern char __kernel_image_end[];
-extern char __kernel_data[];
-extern char __kernel_data_end[];
 
 static inline bool is_kernel_paddr(paddr_t paddr) {
-    return
-        ((paddr_t) __kernel_image <= paddr
-            && paddr <= (paddr_t) __kernel_image_end)
-        || ((paddr_t) __kernel_data <= paddr
-            && paddr <= (paddr_t) __kernel_data_end);
+    return (paddr_t) __kernel_image <= paddr
+            && paddr <= (paddr_t) __kernel_image_end;
 }
 
 static inline int mp_self(void) {

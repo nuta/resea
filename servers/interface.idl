@@ -1,5 +1,8 @@
 include "servers/*/interface.idl";
 
+rpc accept_bulkcopy(addr: vaddr, len: size)-> ();
+rpc do_bulkcopy(dst: task, addr: vaddr, len: size)-> (id: vaddr);
+rpc verify_bulkcopy(src: task, id: vaddr, len: size)-> (received_at: vaddr);
 rpc nop(value: int) -> (value: int);
 rpc nop_with_bulk(data: bytes) -> (data: bytes);
 rpc lookup(name: str) -> (task: task);

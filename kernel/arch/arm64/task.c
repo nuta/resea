@@ -2,10 +2,13 @@
 #include <string.h>
 #include <main.h>
 #include <task.h>
-#include <memory.h>
 #include "asm.h"
 
 void arm64_start_task(void);
+
+static uint64_t page_tables[CONFIG_NUM_TASKS][512] ALIGNED(4096);
+static uint8_t kernel_stacks[CONFIG_NUM_TASKS][8192] ALIGNED(4096);
+static uint8_t exception_stacks[CONFIG_NUM_TASKS][8192] ALIGNED(4096);
 
 // Prepare the initial stack for arm64_task_switch().
 static void init_stack(struct task *task, vaddr_t pc) {
@@ -23,17 +26,9 @@ static void init_stack(struct task *task, vaddr_t pc) {
 }
 
 error_t arch_task_create(struct task *task, vaddr_t pc) {
-    void *syscall_stack = kmalloc(PAGE_SIZE);
-    if (!syscall_stack) {
-        return ERR_NO_MEMORY;
-    }
-
-    void *exception_stack = kmalloc(PAGE_SIZE);
-    if (!exception_stack) {
-        kfree(syscall_stack);
-        return ERR_NO_MEMORY;
-    }
-
+    void *syscall_stack = (void *) kernel_stacks[task->tid];
+    void *exception_stack = (void *) exception_stacks[task->tid];
+    task->vm.entries = page_tables[task->tid];
     task->arch.syscall_stack = (vaddr_t) syscall_stack + PAGE_SIZE;
     task->arch.syscall_stack_bottom = syscall_stack;
     task->arch.exception_stack_bottom = exception_stack;
@@ -42,8 +37,6 @@ error_t arch_task_create(struct task *task, vaddr_t pc) {
 }
 
 void arch_task_destroy(struct task *task) {
-    kfree((void *) task->arch.syscall_stack_bottom);
-    kfree((void *) task->arch.exception_stack_bottom);
 }
 
 void arm64_task_switch(vaddr_t *prev_sp, vaddr_t next_sp);

@@ -2,10 +2,11 @@
 #include "pages.h"
 
 static struct page pages[PAGES_MAX];
-extern char __heap_end[];
-#define PAGES_BASE_ADDR ((paddr_t) __heap_end)
+extern char __straight_mapping[];
+#define PAGES_BASE_ADDR ((paddr_t) __straight_mapping)
 
 bool is_mappable_paddr(paddr_t paddr) {
+    // FIXME: arch-dependent code
     bool is_user_pages = paddr >= PAGES_BASE_ADDR;
     bool is_mmio_pages = paddr <= 0x100000;
     return IS_ALIGNED(paddr, PAGE_SIZE) && (is_user_pages || is_mmio_pages);

@@ -88,10 +88,16 @@ typedef int error_t;
 #define SYS_WRITELOG   6
 #define SYS_READLOG    7
 #define SYS_KDEBUG     8
+#define SYS_MAP     9
 
 // Task flags.
 #define TASK_IO      (1 << 0)
 #define TASK_ABI_EMU (1 << 1)
+
+// Map flags.
+#define MAP_UPDATE (1 << 0)
+#define MAP_DELETE (1 << 1)
+#define MAP_W      (1 << 2)
 
 // IPC source task IDs.
 #define IPC_ANY     0  /* So-called "open receive". */

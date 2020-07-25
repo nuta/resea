@@ -2,10 +2,10 @@
 #define __TASK_H__
 
 #include <config.h>
+#include <types.h>
 #include <arch.h>
 #include <message.h>
-#include <types.h>
-#include "memory.h"
+#include <list.h>
 
 /// The context switching time slice (# of ticks).
 #define TASK_TIME_SLICE ((CONFIG_TASK_TIME_SLICE_MS * TICK_HZ) / 1000)
@@ -58,10 +58,6 @@ struct task {
     /// The acceptable sender task ID. If it's IPC_ANY, the task accepts
     /// messages from any tasks.
     task_t src;
-    /// The receive buffer for bulk IPC. Be careful since it's a user pointer.
-    vaddr_t bulk_ptr;
-    /// The size of the receiver buffer for bulk IPC.
-    size_t bulk_len;
     /// The pending notifications. It's cleared when the task received them as
     /// an message (NOTIFICATIONS_MSG).
     notifications_t notifications;
@@ -99,6 +95,7 @@ MUSTUSE error_t task_listen_irq(struct task *task, unsigned irq);
 MUSTUSE error_t task_unlisten_irq(unsigned irq);
 void handle_timer_irq(void);
 void handle_irq(unsigned irq);
+void handle_page_fault(vaddr_t addr, vaddr_t ip, pagefault_t fault);
 void task_dump(void);
 void task_init(void);
 
@@ -114,5 +111,12 @@ void arch_task_destroy(struct task *task);
 void arch_task_switch(struct task *prev, struct task *next);
 void arch_enable_irq(unsigned irq);
 void arch_disable_irq(unsigned irq);
+struct vm;
+MUSTUSE error_t vm_create(struct vm *vm);
+void vm_destroy(struct vm *vm);
+MUSTUSE error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
+                        paddr_t kpage, unsigned flags);
+void vm_unlink(struct vm *vm, vaddr_t vaddr);
+paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr);
 
 #endif

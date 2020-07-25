@@ -55,11 +55,8 @@ static inline bool is_kernel_paddr(paddr_t paddr) {
         return false;
     }
 
-    return
-        ((paddr_t) __kernel_image <= paddr
-            && paddr <= (paddr_t) __kernel_image_end)
-        || ((paddr_t) __kernel_data <= paddr
-            && paddr <= (paddr_t) __kernel_data_end);
+    return (paddr_t) __kernel_image <= paddr
+        && paddr <= (paddr_t) __kernel_image_end;
 }
 
 static inline int mp_self(void) {
@@ -261,7 +258,7 @@ struct arch_cpuvar {
 struct cpuvar;
 static inline struct cpuvar *get_cpuvar(void) {
     uint64_t gsbase;
-    __asm__("rdgsbase %0" : "=r"(gsbase));
+    __asm__ __volatile__("rdgsbase %0" : "=r"(gsbase));
     return (struct cpuvar *) gsbase;
 }
 

@@ -1,76 +1,55 @@
 ENTRY(boot);
 
 LMA_OFFSET = 0xffff000000000000;
-KERNEL_BOOT_ADDR = 0x80000;
-KERNEL_BASE_ADDR = 0xffff000000080000;
 
-PHDRS {
-	boot PT_LOAD FLAGS(5); /* flags = rx */
-	text PT_LOAD FLAGS(5); /* flags = rx */
-	data PT_LOAD FLAGS(6); /* flags = rw */
+MEMORY {
+    boot_ram (rwx): ORIGIN = 0x0000000000080000, LENGTH = 0x0001000
+    ram (rwx):      ORIGIN = 0xffff000000081000, LENGTH = 0x2fff000
+    lma_ram (rwx):  ORIGIN = 0x0000000000081000, LENGTH = 0x2fff000
 }
 
 SECTIONS {
-    . = KERNEL_BOOT_ADDR;
-    __kernel_image = .; /* paddr_t */
-    .boot : AT(KERNEL_BOOT_ADDR) {
+    .boot : {
+        __kernel_image = .; /* paddr_t */
         KEEP(*(.boot));
-    } :boot
+    } > boot_ram
 
-    . = KERNEL_BASE_ADDR + SIZEOF(.boot);
-
-    .text : AT(ADDR(.text) - LMA_OFFSET) ALIGN(8) {
+    .text : ALIGN(8) {
         *(.text);
         *(.text.*);
-    } :text
+    } > ram AT > lma_ram
 
-    .rodata : AT(ADDR(.rodata) - LMA_OFFSET) ALIGN(8) {
+    .rodata : ALIGN(8) {
         *(.rodata);
         *(.rodata.*);
-    } :text
+    } > ram AT > lma_ram
 
-    .data : AT(ADDR(.data) - LMA_OFFSET) ALIGN(8) {
+    .data : ALIGN(8) {
         *(.data);
         *(.data.*);
-    } :data
+    } > ram AT > lma_ram
 
-    .bss : AT(ADDR(.bss) - LMA_OFFSET) ALIGN(8) {
+    .bss : ALIGN(8) {
         __bss = .;
         *(.bss);
         *(.bss.*);
         __bss_end = .;
-    } :data
 
-    . = ALIGN(4096);
-    __kernel_image_end = . - KERNEL_BASE_ADDR + KERNEL_BOOT_ADDR; /* paddr_t */
+        /* Kernel paging table. */
+        . = ALIGN(4096);
+        __kernel_page_table = . - LMA_OFFSET;
+        . += 0x4000;
 
-    . = 0x1000000;
-    __kernel_data = .; /* paddr_t */
+        /* CPU variables and boot stacks (paddr_t). */
+        . = ALIGN(4096);
+        __cpuvar_base = . - LMA_OFFSET;
+        . += 0x4000 * 16; /* CPUVAR_SIZE_MAX * CPU_NUM_MAX */
+        __boot_stack_base = . - LMA_OFFSET;
+        . += 0x1000 * 16; /* PAGE_SIZE * CPU_NUM_MAX */
 
-    /* Kernel paging table. */
-    . = ALIGN(4096);
-    __kernel_page_table = .;
-    . += 0x4000;
-
-    /* CPU variables and boot stacks (paddr_t). */
-    . = ALIGN(4096);
-    __cpuvar_base = .;
-    . += 0x4000 * 16; /* CPUVAR_SIZE_MAX * CPU_NUM_MAX */
-    __boot_stack_base = .;
-    . += 0x1000 * 16; /* PAGE_SIZE * CPU_NUM_MAX */
-
-    /* Kernel Heap (vaddr_t). */
-    . = ALIGN(4096);
-    . += LMA_OFFSET;
-    __kernel_heap = .;
-    . = LMA_OFFSET + 0x3000000;
-    . = ALIGN(4096);
-    __kernel_heap_end = .;
-
-    __kernel_data_end = . - LMA_OFFSET; /* paddr_t */
-
-    /* A temporary page used internally by kernel (virtual address). */
-    __temp_page = 0xc000;
+        . = ALIGN(4096);
+        __kernel_image_end = . - LMA_OFFSET; /* paddr_t */
+    } > ram AT > lma_ram
 
     /DISCARD/ :{
         *(*.eh_frame);

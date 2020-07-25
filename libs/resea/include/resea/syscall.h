@@ -25,6 +25,11 @@ static inline error_t sys_ipc(task_t dst, task_t src, struct message *m,
     return syscall(SYS_IPC, dst, src, (uintptr_t) m, flags, 0);
 }
 
+static inline error_t sys_map(task_t task, vaddr_t vaddr, vaddr_t src,
+                              vaddr_t kpage, unsigned flags) {
+    return syscall(SYS_MAP, task, vaddr, src, kpage, flags);
+}
+
 static inline error_t sys_writelog(const char *buf, size_t len) {
     return syscall(SYS_WRITELOG, (uintptr_t) buf, len, 0, 0, 0);
 }
