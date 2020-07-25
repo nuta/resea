@@ -46,9 +46,10 @@ static struct malloc_chunk *insert(void *ptr, size_t len) {
 
 static struct malloc_chunk *split(struct malloc_chunk *chunk, size_t len) {
     size_t new_chunk_len = MALLOC_FRAME_LEN + len;
+    ASSERT(chunk->capacity >= new_chunk_len);
+
     void *new_chunk =
         &chunk->data[chunk->capacity + MALLOC_REDZONE_LEN - new_chunk_len];
-    ASSERT(chunk->capacity >= new_chunk_len);
     chunk->capacity -= new_chunk_len;
     return insert(new_chunk, new_chunk_len);
 }
@@ -58,7 +59,8 @@ void *malloc(size_t size) {
         size = 1;
     }
 
-    // Align up to 16-bytes boundary. Allocate 16 bytes if len equals 0.
+    // Align up to 16-bytes boundary. If the size is less than 16 (including
+    // size == 0), allocate 16 bytes.
     size = ALIGN_UP(size, 16);
 
     for (struct malloc_chunk *chunk = chunks; chunk; chunk = chunk->next) {
@@ -69,7 +71,7 @@ void *malloc(size_t size) {
 
         struct malloc_chunk *allocated = NULL;
         if (chunk->capacity > size + MALLOC_FRAME_LEN) {
-            allocated = split(chunk, size + MALLOC_FRAME_LEN);
+            allocated = split(chunk, size);
         } else if (chunk->capacity >= size) {
             allocated = chunk;
         }
