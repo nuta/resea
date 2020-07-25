@@ -4,8 +4,7 @@ config_interface: textconfig
 display_library: nogui
 # display_library: sdl2
 
-# Enabling SMP could make emulation significantly slow. Commented out by default.
-cpu: model=corei7_ivy_bridge_3770k, ips=2000000 #, count=4
+cpu: model=corei7_ivy_bridge_3770k, ips=2000000, count=2
 memory: guest=512, host=512
 
 boot: cdrom
