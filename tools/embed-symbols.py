@@ -40,11 +40,11 @@ def main():
             + "(hint: increase NUM_SYMBOLS config)")
 
     # Build a symbol table.
-    symbol_table = struct.pack("<8sII", SYMBOL_TABLE_MAGIC, len(symbols), 0)
+    symbol_table = struct.pack("<4sIQ", SYMBOL_TABLE_MAGIC, len(symbols), 0)
     for addr, name in symbols:
         symbol_table += struct.pack("<Q56s", addr, bytes(name[:55], "ascii"))
     for _ in range(len(symbols), num_symbols):
-        symbol_table += struct.pack("<Q56s", 0, b"")
+        symbol_table += struct.pack("<Q56s", 0xffffffffffffffff, b"")
 
     # Embed the symbol table.
     image = image[:offset] + symbol_table + image[offset + len(symbol_table):]
