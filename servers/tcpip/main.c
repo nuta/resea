@@ -280,6 +280,7 @@ void main(void) {
                 }
 
                 ethernet_receive(driver->device, m.net_rx.payload, m.net_rx.payload_len);
+                free((void *) m.net_rx.payload);
                 dhcp_receive();
                 break;
             }
