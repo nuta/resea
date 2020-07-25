@@ -38,7 +38,7 @@ jobs:
       - name: Install apt packages
         if: matrix.os == 'ubuntu-20.04'
         run: >
-          sudo apt-get install -y llvm clang lld qemu-system gcc-arm-none-eabi
+          sudo apt-get update && sudo apt-get install -y llvm clang lld qemu-system gcc-arm-none-eabi
 
       - name: Install Homebrew packages
         if: matrix.os == 'macos-latest'
