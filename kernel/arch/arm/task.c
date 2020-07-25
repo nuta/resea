@@ -4,6 +4,7 @@
 #include <task.h>
 
 #define STACK_SIZE 1024
+static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] ALIGNED(8);
 
 void arm_start_task(void);
 
@@ -33,18 +34,12 @@ static void init_stack(struct task *task, vaddr_t pc) {
 }
 
 error_t arch_task_create(struct task *task, vaddr_t pc) {
-    void *stack = kmalloc(STACK_SIZE);
-    if (!stack) {
-        return ERR_NO_MEMORY;
-    }
-
-    task->arch.stack_bottom = stack;
+    task->arch.stack_bottom = kernel_stacks[task->tid];
     init_stack(task, pc);
     return OK;
 }
 
 void arch_task_destroy(struct task *task) {
-    kfree((void *) task->arch.stack_bottom);
 }
 
 void arm_task_switch(vaddr_t *prev_sp, vaddr_t next_sp);

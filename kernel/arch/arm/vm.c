@@ -1,5 +1,6 @@
 #include <syscall.h>
 #include <string.h>
+#include <arch.h>
 
 error_t vm_create(struct vm *vm) {
     // Do nothing: we don't support virtual memory.
@@ -10,10 +11,14 @@ void vm_destroy(struct vm *vm) {
     // Do nothing: we don't support virtual memory.
 }
 
-error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
-                pageattrs_t attrs) {
+error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
+                unsigned flags) {
     // Do nothing: we don't support virtual memory.
     return OK;
+}
+
+void vm_unlink(struct vm *vm, vaddr_t vaddr) {
+    // Do nothing: we don't support virtual memory.
 }
 
 paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr) {

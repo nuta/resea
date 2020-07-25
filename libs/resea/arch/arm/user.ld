@@ -1,5 +1,4 @@
 MEMORY {
-    /* Copied from libs/resea/arch/arm/user.ld */
     rom : ORIGIN = 0x00011000, LENGTH = 0x30000
     ram : ORIGIN = 0x20002000, LENGTH = 0x2000
 }
@@ -32,7 +31,6 @@ SECTIONS {
         . = ALIGN(4);
         __heap = .;
         . += 4096;
-        . = ALIGN(4096); // See the XXX comment above.
         __heap_end = .;
     } > ram :bss
 

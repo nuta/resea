@@ -14,6 +14,7 @@ WEAK error_t call_self(struct message *m) {
 }
 
 static error_t call_pager(struct message *m) {
+    // FIXME: Support NOMMU systems
     if (__is_bootstrap()) {
         return call_self(m);
     } else {

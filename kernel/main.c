@@ -28,6 +28,7 @@ static struct bootelf_header *locate_bootelf_header(void) {
     PANIC("failed to locate the boot ELF header");
 }
 
+#if !defined(CONFIG_NOMMU)
 /// Allocates a memory page for the first user task.
 static void *alloc_page(void) {
     static uint8_t heap[PAGE_SIZE * 2448] ALIGNED(PAGE_SIZE);
@@ -51,10 +52,12 @@ static error_t map_page(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
         }
     }
 }
-
+#endif
 
 // Maps ELF segments in the boot ELF into virtual memory.
 void map_bootelf(struct bootelf_header *header, struct vm *vm) {
+    DBG("header %p", header);
+    DBG("entry %p", header->entry);
     TRACE("boot ELF: entry=%p", header->entry);
     for (unsigned i = 0; i < header->num_mappings; i++) {
         struct bootelf_mapping *m = &header->mappings[i];
@@ -71,6 +74,10 @@ void map_bootelf(struct bootelf_header *header, struct vm *vm) {
         if (m->zeroed) {
             memset((void *) vaddr, 0, m->num_pages * PAGE_SIZE);
         } else {
+        TRACE("copying %p (%x) -> %p", paddr, m->offset, vaddr);
+            if (vaddr == paddr) {
+                continue;
+            }
             memcpy((void *) vaddr, (void *) paddr, m->num_pages * PAGE_SIZE);
         }
 #else

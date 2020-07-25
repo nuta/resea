@@ -1,7 +1,7 @@
 MEMORY {
     /* Don't forget to update libs/resea/arch/arm/user.ld */
     rom : ORIGIN = 0x00000000, LENGTH = 0x10000
-    app : ORIGIN = 0x00010000, LENGTH = 0x30000
+    bootelf : ORIGIN = 0x00010000, LENGTH = 0x30000
     ram : ORIGIN = 0x20000000, LENGTH = 0x2000
 }
 
@@ -17,7 +17,7 @@ SECTIONS {
 
     .bootelf :{
         *(.bootelf)
-    } > app
+    } > bootelf
 
     .stack :{
         . += 1024;
@@ -29,14 +29,10 @@ SECTIONS {
     } > ram
 
     .bss :{
-        __kernel_heap = .;
-        . += 0x1800;
-        __kernel_heap_end = .;
+        __bss = .;
         *(.bss*)
+        __bss_end = .;
     } > ram
-
-    /* We don't use __temp_page in NOMMU but it is still refrenced from code. */
-    __temp_page = 0;
 
     /DISCARD/ :{
         *(.ARM.exidx)
