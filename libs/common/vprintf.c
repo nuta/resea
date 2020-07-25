@@ -194,6 +194,7 @@ int snprintf(char *buf, size_t size, const char *fmt, ...) {
 /// SYMBOL_TABLE_MAGIC.
 const struct symbol_table symbol_table = {
     .magic = SYMBOL_TABLE_EMPTY,
+    // FIXME: clang optimizes this into a constant!
     .num_symbols = CONFIG_NUM_SYMBOLS,
 };
 
