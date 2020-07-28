@@ -1,2 +1,70 @@
-include "kernel/interface.idl";
-include "servers/interface.idl";
+oneway notifications(data: notifications);
+oneway exception(task: task, exception: exception_type);
+rpc page_fault(task: task, vaddr: vaddr, ip: vaddr, fault: pagefault) -> ();
+
+enum abi_hook_type {
+    INITIAL = 1,
+    SYSCALL = 2,
+};
+rpc abi_hook(task: task, type: int, frame: trap_frame) -> (frame: trap_frame);
+
+rpc accept_bulkcopy(addr: vaddr, len: size)-> ();
+rpc do_bulkcopy(dst: task, addr: vaddr, len: size)-> (id: vaddr);
+rpc verify_bulkcopy(src: task, id: vaddr, len: size)-> (received_at: vaddr);
+rpc nop(value: int) -> (value: int);
+rpc nop_with_bulk(data: bytes) -> (data: bytes);
+rpc lookup(name: str) -> (task: task);
+rpc launch_task(name: str) -> (task: task);
+rpc alloc_pages(num_pages: size, paddr: paddr) -> (vaddr: vaddr, paddr: paddr);
+
+namespace fs {
+    rpc open(path: str) -> (handle: handle);
+    rpc close(handle: handle) -> ();
+    rpc read(handle: handle, offset: offset, len: size) -> (data: bytes);
+    rpc stat(path: str) -> (size: size);
+}
+
+namespace textscreen {
+    // Screen text color codes. See https://wiki.osdev.org/Printing_To_Screen
+    enum color {
+        BLACK = 0,
+        BLUE = 9,
+        GREEN = 10,
+        CYAN = 11,
+        RED = 12,
+        MAGENTA = 13,
+        YELLOW = 14,
+        WHITE = 15,
+        NORMAL = 15,
+    };
+
+    oneway draw_char(ch: char, fg_color: color, bg_color: color, x: uint, y: uint);
+    oneway move_cursor(x: uint, y: uint);
+    oneway clear();
+    oneway scroll();
+    rpc get_size() -> (width: uint, height: uint);
+}
+
+namespace kbd {
+    // Lower 7 bits are ASCII code and upper bits are modifier keys combination
+    // such as Ctrl and Alt.
+    type keycode = u16;
+
+    const KEY_MOD_CTRL: u16 = 0x100;
+    const KEY_MOD_ALT: u16  = 0x200;
+
+    rpc listen() -> ();
+    rpc read() -> (keycode: keycode);
+}
+
+namespace blk {
+    rpc read(sector: offset, num_sectors: size) -> (data: bytes);
+}
+
+namespace net {
+    oneway rx(payload: bytes);
+    oneway tx(payload: bytes);
+    oneway get_tx(); // FIXME:
+}
+
+include "servers/*/interface.idl";
