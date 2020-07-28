@@ -1,6 +1,8 @@
 #include <resea/timer.h>
 #include <resea/syscall.h>
 
+// TODO: Support multiple timers.
+
 error_t timer_set(msec_t timeout) {
-    return sys_setattrs(NULL, 0, timeout);
+    return sys_time(timeout);
 }

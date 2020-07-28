@@ -13,10 +13,8 @@ static inline error_t sys_kill(task_t task) {
     return syscall(SYS_KILL, task, 0, 0, 0, 0);
 }
 
-static inline task_t sys_setattrs(const void *bulk_ptr, size_t bulk_len,
-                                  msec_t timeout) {
-    return syscall(SYS_SETATTRS, (uint64_t) bulk_ptr, bulk_len, timeout,
-                   0, 0);
+static inline task_t sys_time(msec_t timeout) {
+    return syscall(SYS_TIME, timeout, 0, 0, 0, 0);
 }
 
 struct message;

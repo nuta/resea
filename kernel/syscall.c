@@ -73,19 +73,14 @@ static error_t sys_kill(task_t tid) {
     return task_destroy(task);
 }
 
-/// Sets task attributes.
-static task_t sys_setattrs(userptr_t bulk_ptr, size_t bulk_len,
-                           msec_t timeout) {
-    if (bulk_ptr) {
-        if (bulk_len < CONFIG_BULK_BUFFER_LEN) {
-            return ERR_TOO_SMALL;
-        }
-    }
-
+/// Sets task's timer.
+static task_t sys_time(msec_t timeout) {
     if (timeout) {
         CURRENT->timeout = timeout;
     }
 
+    // FIXME: Returning the task ID look weird. We should add a system call which
+    // returns the task's environment (including `uname(2)`-like string, etc.).
     return CURRENT->tid;
 }
 
@@ -239,8 +234,8 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
         case SYS_KILL:
             ret = sys_kill(a1);
             break;
-        case SYS_SETATTRS:
-            ret = sys_setattrs(a1, a2, a3);
+        case SYS_TIME:
+            ret = sys_time(a1);
             break;
         case SYS_IPC:
             ret = sys_ipc(a1, a2, a3, a4);

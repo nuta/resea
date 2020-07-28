@@ -82,7 +82,7 @@ typedef int error_t;
 
 #define SYS_SPAWN      1
 #define SYS_KILL       2
-#define SYS_SETATTRS   3
+#define SYS_TIME       3
 #define SYS_IPC        4
 #define SYS_LISTENIRQ  5
 #define SYS_WRITELOG   6
