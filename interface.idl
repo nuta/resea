@@ -8,6 +8,7 @@ enum abi_hook_type {
 };
 rpc abi_hook(task: task, type: int, frame: trap_frame) -> (frame: trap_frame);
 
+oneway async();
 rpc accept_bulkcopy(addr: vaddr, len: size)-> ();
 rpc do_bulkcopy(dst: task, addr: vaddr, len: size)-> (id: vaddr);
 rpc verify_bulkcopy(src: task, id: vaddr, len: size)-> (received_at: vaddr);
