@@ -29,8 +29,7 @@ error_t async_send(task_t dst, struct message *m) {
     list_push_back(q, &am->next);
 
     // Notify the destination task that a new async message is available.
-    ipc_notify(dst, NOTIFY_ASYNC);
-    return OK;
+    return ipc_notify(dst, NOTIFY_ASYNC);
 }
 
 error_t async_recv(task_t src, struct message *m) {
