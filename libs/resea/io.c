@@ -4,16 +4,12 @@
 #include <resea/printf.h>
 #include <resea/syscall.h>
 
-static error_t irq_listen(unsigned irq, task_t listener) {
-    return syscall(SYS_LISTENIRQ, irq, listener, 0, 0, 0);
-}
-
 error_t irq_acquire(unsigned irq) {
-    return irq_listen(irq, task_self());
+    return sys_listen(-1 /* do nothing */, irq + 1);
 }
 
 error_t irq_release(unsigned irq) {
-    return irq_listen(irq, 0);
+    return sys_listen(-1 /* do nothing */, -(irq + 1));
 }
 
 void *io_alloc_pages(size_t num_pages, paddr_t map_to, paddr_t *paddr) {

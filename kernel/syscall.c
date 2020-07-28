@@ -73,10 +73,19 @@ static error_t sys_kill(task_t tid) {
     return task_destroy(task);
 }
 
-/// Sets task's timer.
-static task_t sys_time(msec_t timeout) {
-    if (timeout) {
+/// Sets task's timer and updates an IRQ ownership. Note that `irq` is 1-based:
+/// irq=1 means "listening to IRQ 0", not IRQ 1.
+static task_t sys_listen(msec_t timeout, int irq) {
+    if (timeout >= 0) {
         CURRENT->timeout = timeout;
+    }
+
+    if (irq != 0) {
+        if (irq > 0) {
+            return task_listen_irq(CURRENT, irq - 1);
+        } else {
+            return task_unlisten_irq(irq - 1);
+        }
     }
 
     // FIXME: Returning the task ID look weird. We should add a system call which
@@ -108,20 +117,6 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
     }
 
     return ipc(dst_task, src, (struct message *) m, flags);
-}
-
-/// Registers a interrupt listener task.
-static error_t sys_listenirq(unsigned irq, task_t listener) {
-    if (listener) {
-        struct task *task = task_lookup(listener);
-        if (!task) {
-            return ERR_INVALID_ARG;
-        }
-
-        return task_listen_irq(task, irq);
-    } else {
-        return task_unlisten_irq(irq);
-    }
 }
 
 /// Writes log messages into the kernel log buffer.
@@ -234,17 +229,14 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
         case SYS_KILL:
             ret = sys_kill(a1);
             break;
-        case SYS_TIME:
-            ret = sys_time(a1);
-            break;
         case SYS_IPC:
             ret = sys_ipc(a1, a2, a3, a4);
             break;
+        case SYS_LISTEN:
+            ret = sys_listen(a1, a2);
+            break;
         case SYS_MAP:
             ret = sys_map(a1, a2, a3, a4, a5);
-            break;
-        case SYS_LISTENIRQ:
-            ret = sys_listenirq(a1, a2);
             break;
         case SYS_WRITELOG:
             ret = sys_writelog(a1, a2);

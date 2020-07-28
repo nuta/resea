@@ -14,7 +14,7 @@ void task_exit(void) {
 }
 
 task_t task_self(void) {
-    return sys_time(0);
+    return sys_listen(-1 /* do nothing */, 0 /* do nothing */);
 }
 
 error_t task_map(task_t task, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
