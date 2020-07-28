@@ -2,7 +2,7 @@
 #include <resea/syscall.h>
 
 error_t klog_write(const char *buf, size_t len) {
-    return sys_writelog(buf, len);
+    return sys_print(buf, len);
 }
 
 int klog_read(char *buf, size_t len, bool listen) {

@@ -28,8 +28,8 @@ static inline error_t sys_map(task_t task, vaddr_t vaddr, vaddr_t src,
     return syscall(SYS_MAP, task, vaddr, src, kpage, flags);
 }
 
-static inline error_t sys_writelog(const char *buf, size_t len) {
-    return syscall(SYS_WRITELOG, (uintptr_t) buf, len, 0, 0, 0);
+static inline error_t sys_print(const char *buf, size_t len) {
+    return syscall(SYS_PRINT, (uintptr_t) buf, len, 0, 0, 0);
 }
 
 static inline int sys_readlog(char *buf, size_t len, bool listen) {

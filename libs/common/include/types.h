@@ -80,14 +80,14 @@ typedef int error_t;
 #define ERR_TRY_AGAIN      (-15)
 #define ERR_END            (-16)
 
-#define SYS_SPAWN      1
-#define SYS_KILL       2
-#define SYS_LISTEN     3
-#define SYS_IPC        4
-#define SYS_MAP        5
-#define SYS_WRITELOG   6
-#define SYS_KDEBUG     7
-#define SYS_READLOG    8
+#define SYS_SPAWN   1
+#define SYS_KILL    2
+#define SYS_LISTEN  3
+#define SYS_IPC     4
+#define SYS_MAP     5
+#define SYS_PRINT   6
+#define SYS_KDEBUG  7
+#define SYS_READLOG 8
 
 // Task flags.
 #define TASK_IO      (1 << 0)

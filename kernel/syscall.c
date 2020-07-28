@@ -120,7 +120,7 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
 }
 
 /// Writes log messages into the kernel log buffer.
-static int sys_writelog(userptr_t buf, size_t buf_len) {
+static int sys_print(userptr_t buf, size_t buf_len) {
     char kbuf[256];
     int remaining = buf_len;
     while (remaining > 0) {
@@ -238,8 +238,8 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
         case SYS_MAP:
             ret = sys_map(a1, a2, a3, a4, a5);
             break;
-        case SYS_WRITELOG:
-            ret = sys_writelog(a1, a2);
+        case SYS_PRINT:
+            ret = sys_print(a1, a2);
             break;
         case SYS_READLOG:
             ret = sys_readlog(a1, a2, a3);
