@@ -39,6 +39,7 @@ typedef __builtin_va_list va_list;
 #define __noreturn               __attribute__((noreturn))
 #define __weak                   __attribute__((weak))
 #define __mustuse                __attribute__((warn_unused_result))
+#define MEMORY_BARRIER()         __asm__ __volatile__("" ::: "memory");
 #define __aligned(aligned_to)    __attribute__((aligned(aligned_to)))
 #define ALIGN_DOWN(value, align) ((value) & ~((align) -1))
 #define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)

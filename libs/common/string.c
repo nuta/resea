@@ -74,6 +74,11 @@ int memcmp(const void *p1, const void *p2, size_t len) {
     return (len > 0) ? *s1 - *s2 : 0;
 }
 
+void bzero(void *dst, size_t len) {
+    memset(dst, 0, len);
+    MEMORY_BARRIER();
+}
+
 __weak void memset(void *dst, int ch, size_t len) {
     uint8_t *d = dst;
     while (len-- > 0) {
