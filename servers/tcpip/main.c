@@ -1,5 +1,6 @@
 #include <list.h>
 #include <resea/ipc.h>
+#include <resea/async.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/map.h>
@@ -48,14 +49,11 @@ static void transmit(device_t device, mbuf_t pkt) {
     mbuf_delete(pkt);
 
     struct driver *driver = device->arg;
-    struct packet *packet = malloc(sizeof(*packet));
-    packet->dst = driver->tid;
-    packet->m.type = NET_TX_MSG;
-    packet->m.net_tx.payload = payload;
-    packet->m.net_tx.payload_len = len;
-    list_push_back(&driver->tx_queue, &packet->next);
-
-    OOPS_OK(ipc_notify(driver->tid, NOTIFY_NEW_DATA));
+    struct message m;
+    m.type = NET_TX_MSG;
+    m.net_tx.payload = payload;
+    m.net_tx.payload_len = len;
+    async_send(driver->tid, &m);
 }
 
 static error_t do_process_event(struct event *e) {
@@ -121,7 +119,6 @@ static void register_device(task_t driver_task, macaddr_t *macaddr) {
     struct driver *driver = malloc(sizeof(*driver));
     next_driver_id++;
     driver->tid = driver_task;
-    list_init(&driver->tx_queue);
 
     // Create a new device.
     char name[] = {'n', 'e', 't', '0' + next_driver_id, '\0'};
@@ -185,6 +182,9 @@ void main(void) {
                     ASSERT_OK(err);
                     uptime += TIMER_INTERVAL;
                 }
+                break;
+            case ASYNC_MSG:
+                async_reply(m.src);
                 break;
             case TCPIP_LISTEN_MSG: {
                 tcp_sock_t sock = tcp_new();
@@ -282,23 +282,6 @@ void main(void) {
                 ethernet_receive(driver->device, m.net_rx.payload, m.net_rx.payload_len);
                 free((void *) m.net_rx.payload);
                 dhcp_receive();
-                break;
-            }
-            case NET_GET_TX_MSG: {
-                struct driver *driver = get_driver_by_tid(m.src);
-                if (!driver) {
-                    break;
-                }
-
-                struct packet *pkt = LIST_POP_FRONT(&driver->tx_queue, struct packet, next);
-                if (!pkt) {
-                    ipc_reply_err(m.src, ERR_EMPTY);
-                    break;
-                }
-
-                ipc_reply(m.src, &pkt->m);
-                free((void *) pkt->m.net_tx.payload);
-                free(pkt);
                 break;
             }
             default:

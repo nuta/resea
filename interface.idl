@@ -65,7 +65,6 @@ namespace blk {
 namespace net {
     oneway rx(payload: bytes);
     oneway tx(payload: bytes);
-    oneway get_tx(); // FIXME:
 }
 
 include "servers/*/interface.idl";

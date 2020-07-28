@@ -1,4 +1,5 @@
 #include <resea/ipc.h>
+#include <resea/async.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/io.h>
@@ -20,8 +21,7 @@ static void receive(const void *payload, size_t len) {
 
 void transmit(void) {
     struct message m;
-    m.type = NET_GET_TX_MSG;
-    ASSERT_OK(ipc_call(tcpip_tid, &m));
+    ASSERT_OK(async_recv(tcpip_tid, &m));
     ASSERT(m.type == NET_TX_MSG);
     e1000_transmit(m.net_tx.payload, m.net_tx.payload_len);
     free((void *) m.net_tx.payload);
@@ -74,7 +74,7 @@ void main(void) {
                     e1000_handle_interrupt(receive);
                 }
 
-                if (m.notifications.data & NOTIFY_NEW_DATA) {
+                if (m.notifications.data & NOTIFY_ASYNC) {
                     transmit();
                 }
                 break;
