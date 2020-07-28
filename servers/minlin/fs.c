@@ -16,32 +16,32 @@ struct inode *inode_alloc(void) {
     return inode;
 }
 
-int nyi_acquire(UNUSED struct file *file) {
+int nyi_acquire(__unused struct file *file) {
     NYI();
     return 0;
 }
 
-int nyi_release(UNUSED struct file *file) {
+int nyi_release(__unused struct file *file) {
     NYI();
     return 0;
 }
 
-ssize_t nyi_read(UNUSED struct file *file, UNUSED uint8_t *buf, UNUSED size_t len) {
+ssize_t nyi_read(__unused struct file *file, __unused uint8_t *buf, __unused size_t len) {
     NYI();
     return 0;
 }
 
-ssize_t nyi_write(UNUSED struct file *file, UNUSED const uint8_t *buf, UNUSED size_t len) {
+ssize_t nyi_write(__unused struct file *file, __unused const uint8_t *buf, __unused size_t len) {
     NYI();
     return 0;
 }
 
-ssize_t nyi_ioctl(UNUSED struct file *file, UNUSED unsigned cmd, UNUSED unsigned arg) {
+ssize_t nyi_ioctl(__unused struct file *file, __unused unsigned cmd, __unused unsigned arg) {
     NYI();
     return 0;
 }
 
-loff_t nyi_seek(UNUSED struct file *file, UNUSED loff_t off, UNUSED int whence) {
+loff_t nyi_seek(__unused struct file *file, __unused loff_t off, __unused int whence) {
     switch (whence) {
         case SEEK_SET:
             file->pos = off;
@@ -56,7 +56,7 @@ loff_t nyi_seek(UNUSED struct file *file, UNUSED loff_t off, UNUSED int whence) 
     return file->pos;
 }
 
-int nyi_stat(UNUSED const char *path, UNUSED struct stat *stat) {
+int nyi_stat(__unused const char *path, __unused struct stat *stat) {
     return -ENOENT;
 }
 

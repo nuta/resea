@@ -23,7 +23,7 @@ struct mp_float_ptr {
     uint8_t info1;
     uint8_t info2;
     uint8_t info3[3];
-} PACKED;
+} __packed;
 
 struct mp_table_header {
     uint32_t signature;
@@ -39,7 +39,7 @@ struct mp_table_header {
     uint16_t extended_table_length;
     uint8_t extended_table_checksum;
     uint8_t reserved;
-} PACKED;
+} __packed;
 
 struct mp_processor_entry {
     uint8_t type;  // 0
@@ -50,13 +50,13 @@ struct mp_processor_entry {
     uint32_t feature_flags;
     uint32_t reserved1;
     uint32_t reserved2;
-} PACKED;
+} __packed;
 
 struct mp_bus_entry {
     uint8_t type;  // 1
     uint8_t id;
     uint8_t type_str[6];
-} PACKED;
+} __packed;
 
 struct mp_ioapic_entry {
     uint8_t type;  // 2
@@ -64,7 +64,7 @@ struct mp_ioapic_entry {
     uint8_t ioapic_ver;
     uint8_t ioapic_flags;
     uint32_t memmaped_ioapic_addr;
-} PACKED;
+} __packed;
 
 struct mp_ioint_assign_entry {
     uint8_t type;  // 3
@@ -74,7 +74,7 @@ struct mp_ioint_assign_entry {
     uint8_t src_bus_irq;
     uint8_t dest_ioapic_id;
     uint8_t dest_ioapic_intin;
-} PACKED;
+} __packed;
 
 struct mp_localint_assign_entry {
     uint8_t type;  // 4
@@ -84,7 +84,7 @@ struct mp_localint_assign_entry {
     uint8_t src_bus_irq;
     uint8_t dest_localapic_id;
     uint8_t dest_localapic_intin;
-} PACKED;
+} __packed;
 
 //
 //  IPI

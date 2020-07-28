@@ -106,17 +106,17 @@ static int acquire(struct file *file) {
     return 0;
 }
 
-static int release(UNUSED struct file *file) {
+static int release(__unused struct file *file) {
     NYI();
     return 0;
 }
 
-static ssize_t ioctl(UNUSED struct file *file, UNUSED unsigned cmd, UNUSED unsigned arg) {
+static ssize_t ioctl(__unused struct file *file, __unused unsigned cmd, __unused unsigned arg) {
     NYI();
     return 0;
 }
 
-static loff_t seek(UNUSED struct file *file, UNUSED loff_t off, UNUSED int whence) {
+static loff_t seek(__unused struct file *file, __unused loff_t off, __unused int whence) {
     NYI();
     return 0;
 }

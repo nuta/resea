@@ -4,7 +4,7 @@
 #include <task.h>
 
 #define STACK_SIZE 1024
-static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] ALIGNED(8);
+static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(8);
 
 void arm_start_task(void);
 

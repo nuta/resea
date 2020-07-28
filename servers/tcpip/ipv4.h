@@ -17,7 +17,7 @@ struct ipv4_header {
     uint16_t checksum;
     uint32_t src_addr;
     uint32_t dst_addr;
-} PACKED;
+} __packed;
 
 void ipv4_transmit(ipv4addr_t dst, ip_proto_t proto, mbuf_t payload);
 void ipv4_receive(device_t device, mbuf_t pkt);

@@ -41,28 +41,28 @@ struct dhcp_header {
     uint8_t unused[202];
     uint32_t magic;
     uint8_t options[];
-} PACKED;
+} __packed;
 
 struct dhcp_type_option {
     uint8_t dhcp_type;
-} PACKED;
+} __packed;
 
 struct dhcp_netmask_option {
     uint32_t netmask;
-} PACKED;
+} __packed;
 
 struct dhcp_router_option {
     uint32_t router;
-} PACKED;
+} __packed;
 
 #define DHCP_PARMAS_MAX 2
 struct dhcp_params_option {
     uint8_t params[DHCP_PARMAS_MAX];
-} PACKED;
+} __packed;
 
 struct dhcp_reqaddr_option {
     uint32_t ipaddr;
-} PACKED;
+} __packed;
 
 void dhcp_transmit(device_t device, enum dhcp_type type,
                    ipv4addr_t requested_addr);

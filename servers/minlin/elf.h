@@ -18,7 +18,7 @@ struct elf64_ehdr {
     uint16_t e_shentsize;
     uint16_t e_shnum;
     uint16_t e_shstrndx;
-} PACKED;
+} __packed;
 
 struct elf64_phdr {
     uint32_t p_type;
@@ -29,6 +29,6 @@ struct elf64_phdr {
     uint64_t p_filesz;
     uint64_t p_memsz;
     uint64_t p_align;
-} PACKED;
+} __packed;
 
 #endif

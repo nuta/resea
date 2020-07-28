@@ -142,13 +142,13 @@ static void echo_command(int argc, char **argv) {
     logputc('\n');
 }
 
-static void clear_command(UNUSED int argc, UNUSED char **argv) {
+static void clear_command(__unused int argc, __unused char **argv) {
     clear_screen();
     cursor_x = 0;
     cursor_y = 0;
 }
 
-static void help_command(UNUSED int argc, UNUSED char **argv) {
+static void help_command(__unused int argc, __unused char **argv) {
     logputstr("help   -  Print this message.\n");
     logputstr("echo   -  Print strings.\n");
     logputstr("clear  -  Clear the screen.\n");

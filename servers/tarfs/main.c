@@ -32,7 +32,7 @@ struct tar_header {
     char filename_prefix[155];
     char padding[12];
     char data[];
-} PACKED;
+} __packed;
 
 struct file {
     list_elem_t next;

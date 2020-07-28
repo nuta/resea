@@ -76,7 +76,7 @@ struct tcp_header {
     uint16_t win_size;
     uint16_t checksum;
     uint16_t urgent;
-} PACKED;
+} __packed;
 
 tcp_sock_t tcp_new(void);
 void tcp_close(tcp_sock_t sock);

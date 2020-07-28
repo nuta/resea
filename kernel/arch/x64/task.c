@@ -5,10 +5,10 @@
 #include "interrupt.h"
 #include "trap.h"
 
-static uint64_t pml4_tables[CONFIG_NUM_TASKS][512] ALIGNED(4096);
-static uint8_t kernel_stacks[CONFIG_NUM_TASKS][8192] ALIGNED(4096);
-static uint8_t syscall_stacks[CONFIG_NUM_TASKS][8192] ALIGNED(4096);
-static uint8_t xsave_areas[CONFIG_NUM_TASKS][4096] ALIGNED(4096);
+static uint64_t pml4_tables[CONFIG_NUM_TASKS][512] __aligned(4096);
+static uint8_t kernel_stacks[CONFIG_NUM_TASKS][8192] __aligned(4096);
+static uint8_t syscall_stacks[CONFIG_NUM_TASKS][8192] __aligned(4096);
+static uint8_t xsave_areas[CONFIG_NUM_TASKS][4096] __aligned(4096);
 
 error_t arch_task_create(struct task *task, vaddr_t ip) {
     void *kstack = (void *) kernel_stacks[task->tid];

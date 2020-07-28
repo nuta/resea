@@ -46,7 +46,7 @@ void klog_unlisten(void) {
     listener = NULL;
 }
 
-static void printchar(UNUSED struct vprintf_context *ctx, char ch) {
+static void printchar(__unused struct vprintf_context *ctx, char ch) {
     arch_printchar(ch);
     klog_write(ch);
 }

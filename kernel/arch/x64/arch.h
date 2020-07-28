@@ -23,7 +23,7 @@ struct arch_task {
     void *xsave;
     uint64_t gsbase;
     uint64_t fsbase;
-} PACKED;
+} __packed;
 
 static inline void *from_paddr(paddr_t addr) {
     return (void *) (addr + KERNEL_BASE_ADDR);
@@ -86,12 +86,12 @@ struct gdt {
     uint64_t user_cs64;
     uint64_t tss_low;
     uint64_t tss_high;
-} PACKED;
+} __packed;
 
 struct gdtr {
     uint16_t len;
     uint64_t laddr;
-} PACKED;
+} __packed;
 
 //
 //  Interrupt Descriptor Table (IDT)
@@ -108,16 +108,16 @@ struct idt_desc {
     uint16_t offset2;
     uint32_t offset3;
     uint32_t reserved;
-} PACKED;
+} __packed;
 
 struct idt {
     struct idt_desc descs[IDT_DESC_NUM];
-} PACKED;
+} __packed;
 
 struct idtr {
     uint16_t len;
     uint64_t laddr;
-} PACKED;
+} __packed;
 
 //
 //  Control Registers
@@ -167,7 +167,7 @@ struct tss {
     uint8_t iomap[TSS_IOMAP_SIZE];
     // According to Intel SDM, all bits of the last byte must be set to 1.
     uint8_t iomap_last_byte;
-} PACKED;
+} __packed;
 
 //
 //  Page Table

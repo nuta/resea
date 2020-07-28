@@ -81,7 +81,7 @@ struct stat {
     unsigned long st_rdev;
     long st_size;
     // TODO: Add remaining fields.
-} PACKED;
+} __packed;
 
 /// Used by uname(2).
 struct utsname {

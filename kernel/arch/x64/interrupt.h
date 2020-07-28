@@ -29,7 +29,7 @@ struct iframe {
     uint64_t rflags;
     uint64_t rsp;
     uint64_t ss;
-} PACKED;
+} __packed;
 
 void x64_handle_interrupt(uint8_t vec, struct iframe *frame);
 uintmax_t x64_handle_syscall(uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,

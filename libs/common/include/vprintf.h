@@ -11,19 +11,19 @@
 struct symbol {
     uint64_t addr;
     char name[56];
-} PACKED;
+} __packed;
 
 struct symbol_table {
     uint32_t magic;
     uint32_t num_symbols;
     uint64_t padding;
     struct symbol symbols[CONFIG_NUM_SYMBOLS];
-} PACKED;
+} __packed;
 
 struct stack_frame {
     struct stack_frame *next;
     uint64_t return_addr;
-} PACKED;
+} __packed;
 
 struct vprintf_context {
     void (*printchar)(struct vprintf_context *ctx, char ch);

@@ -6,7 +6,7 @@
 #define STACK_CANARY_VALUE 0xdeadca71
 
 void kdebug_handle_interrupt(void);
-MUSTUSE error_t kdebug_run(const char *cmdline);
+__mustuse error_t kdebug_run(const char *cmdline);
 void stack_check(void);
 void stack_set_canary(void);
 

@@ -10,7 +10,7 @@ struct udp_header {
     uint16_t dst_port;
     uint16_t len;
     uint16_t checksum;
-} PACKED;
+} __packed;
 
 struct udp_datagram {
     list_elem_t next;

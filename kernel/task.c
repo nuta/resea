@@ -139,7 +139,7 @@ error_t task_destroy(struct task *task) {
 }
 
 /// Exits the current task. `exp` is the reason why the task is being exited.
-NORETURN void task_exit(enum exception_type exp) {
+__noreturn void task_exit(enum exception_type exp) {
     ASSERT(CURRENT != IDLE_TASK);
 
     if (!CURRENT->pager) {

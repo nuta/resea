@@ -9,7 +9,7 @@ static void *bulk_ptr = NULL;
 static const size_t bulk_len = CONFIG_BULK_BUFFER_LEN;
 bool __is_bootstrap(void);
 
-WEAK error_t call_self(struct message *m) {
+__weak error_t call_self(struct message *m) {
     return OK;
 }
 

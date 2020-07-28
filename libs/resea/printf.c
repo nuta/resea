@@ -27,7 +27,7 @@ void printchar(char ch) {
     }
 }
 
-static void vprintf_printchar(UNUSED struct vprintf_context *ctx, char ch) {
+static void vprintf_printchar(__unused struct vprintf_context *ctx, char ch) {
     printchar(ch);
 }
 

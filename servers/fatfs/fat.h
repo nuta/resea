@@ -74,7 +74,7 @@ struct bpb {
     uint8_t   fat32_string[8];
     uint8_t   bootcode[420];
     uint8_t   magic[2]; // 0x55, 0xaa
-} PACKED;
+} __packed;
 
 struct fat_dirent {
     // name[0]
@@ -93,7 +93,7 @@ struct fat_dirent {
     uint16_t  date_modified;
     uint16_t  cluster_begin_low;
     uint32_t  size;
-} PACKED;
+} __packed;
 
 error_t fat_probe(struct fat *fs,
                   void (*blk_read)(offset_t sector, void *buf, size_t num_sectors),

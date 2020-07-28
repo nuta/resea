@@ -86,7 +86,7 @@ struct rx_desc {
     uint8_t status;
     uint8_t errors;
     uint16_t special;
-} PACKED;
+} __packed;
 
 /// Descriptor Done.
 #define RX_DESC_DD (1 << 0)
@@ -101,7 +101,7 @@ struct tx_desc {
     uint8_t status;
     uint8_t css;
     uint16_t special;
-} PACKED;
+} __packed;
 
 /// Insert FCS.
 #define TX_DESC_IFCS (1 << 1)
@@ -111,7 +111,7 @@ struct tx_desc {
 /// A packet buffer.
 struct buffer {
     uint8_t data[BUFFER_SIZE];
-} PACKED;
+} __packed;
 
 /// A received packet.
 struct rx_packet {

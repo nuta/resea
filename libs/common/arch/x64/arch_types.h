@@ -40,6 +40,6 @@ typedef struct {
     uint64_t r14;
     uint64_t r15;
     uint64_t rsp;
-} PACKED trap_frame_t;
+} __packed trap_frame_t;
 
 #endif

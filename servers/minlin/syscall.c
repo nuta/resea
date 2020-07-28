@@ -322,7 +322,7 @@ long sys_wait4(struct proc *proc) {
 }
 
 int pre_wait4(struct proc *proc, pid_t pid, vaddr_t wstatus, int options,
-              UNUSED vaddr_t rusage) {
+              __unused vaddr_t rusage) {
     TRACE("%s: sys_wait4()", proc->name);
     proc->syscall.wait4.pid = pid;
     proc->syscall.wait4.wstatus = wstatus;

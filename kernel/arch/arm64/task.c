@@ -6,9 +6,9 @@
 
 void arm64_start_task(void);
 
-static uint64_t page_tables[CONFIG_NUM_TASKS][512] ALIGNED(4096);
-static uint8_t kernel_stacks[CONFIG_NUM_TASKS][8192] ALIGNED(4096);
-static uint8_t exception_stacks[CONFIG_NUM_TASKS][8192] ALIGNED(4096);
+static uint64_t page_tables[CONFIG_NUM_TASKS][512] __aligned(4096);
+static uint8_t kernel_stacks[CONFIG_NUM_TASKS][8192] __aligned(4096);
+static uint8_t exception_stacks[CONFIG_NUM_TASKS][8192] __aligned(4096);
 
 // Prepare the initial stack for arm64_task_switch().
 static void init_stack(struct task *task, vaddr_t pc) {

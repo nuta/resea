@@ -81,18 +81,18 @@ struct cpuvar {
     struct task idle_task;
 };
 
-MUSTUSE error_t task_create(struct task *task, const char *name, vaddr_t ip,
+__mustuse error_t task_create(struct task *task, const char *name, vaddr_t ip,
                             struct task *pager, unsigned flags);
-MUSTUSE error_t task_destroy(struct task *task);
-NORETURN void task_exit(enum exception_type exp);
+__mustuse error_t task_destroy(struct task *task);
+__noreturn void task_exit(enum exception_type exp);
 void task_block(struct task *task);
 void task_resume(struct task *task);
 void task_notify(struct task *task, notifications_t notifications);
 struct task *task_lookup(task_t tid);
 struct task *task_lookup_unchecked(task_t tid);
 void task_switch(void);
-MUSTUSE error_t task_listen_irq(struct task *task, unsigned irq);
-MUSTUSE error_t task_unlisten_irq(unsigned irq);
+__mustuse error_t task_listen_irq(struct task *task, unsigned irq);
+__mustuse error_t task_unlisten_irq(unsigned irq);
 void handle_timer_irq(void);
 void handle_irq(unsigned irq);
 void handle_page_fault(vaddr_t addr, vaddr_t ip, pagefault_t fault);
@@ -106,15 +106,15 @@ void unlock(void);
 int mp_self(void);
 int mp_num_cpus(void);
 void mp_reschedule(void);
-MUSTUSE error_t arch_task_create(struct task *task, vaddr_t ip);
+__mustuse error_t arch_task_create(struct task *task, vaddr_t ip);
 void arch_task_destroy(struct task *task);
 void arch_task_switch(struct task *prev, struct task *next);
 void arch_enable_irq(unsigned irq);
 void arch_disable_irq(unsigned irq);
 struct vm;
-MUSTUSE error_t vm_create(struct vm *vm);
+__mustuse error_t vm_create(struct vm *vm);
 void vm_destroy(struct vm *vm);
-MUSTUSE error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
+__mustuse error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
                         paddr_t kpage, unsigned flags);
 void vm_unlink(struct vm *vm, vaddr_t vaddr);
 paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr);

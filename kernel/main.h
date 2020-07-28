@@ -9,7 +9,7 @@ struct bootelf_mapping {
     uint16_t num_pages;
     uint8_t type;   // 'R': readonly, 'W': writable, 'X': executable.
     uint8_t zeroed; // If it's non-zero value, the pages are filled with zeros.
-} PACKED;
+} __packed;
 
 struct bootelf_header {
 #define BOOTELF_MAGIC "11BOOT\xe1\xff"
@@ -19,14 +19,14 @@ struct bootelf_header {
     uint8_t num_mappings;
     uint8_t padding[7];
     struct bootelf_mapping mappings[];
-} PACKED;
+} __packed;
 
 void kmain(void);
-NORETURN void mpmain(void);
+__noreturn void mpmain(void);
 
 // Implemented in arch.
 void mp_start(void);
-NORETURN void arch_idle(void);
+__noreturn void arch_idle(void);
 void halt(void);
 
 #endif

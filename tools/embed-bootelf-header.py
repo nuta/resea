@@ -24,7 +24,7 @@ def main():
     #     uint8_t num_mappings;
     #     uint8_t padding[7];
     #     struct bootelf_mapping mappings[];
-    # } PACKED;
+    # } __packed;
     header = struct.pack("8s16sQB7x", BOOTELF_MAGIC, args.name.encode("ascii"),
                          elf.header.e_entry, elf.num_segments())
 
@@ -41,7 +41,7 @@ def main():
         #     uint16_t num_pages;
         #     uint8_t type;   // 'R': readonly, 'W': writable, 'X': executable.
         #     uint8_t zeroed; // If it's non-zero value, the pages are filled with zeros.
-        # } PACKED;
+        # } __packed;
         vaddr = segment.header.p_vaddr
         offset = segment.header.p_offset
         num_pages = (segment.header.p_memsz + PAGE_SIZE - 1) // PAGE_SIZE

@@ -326,8 +326,8 @@ static error_t handle_verify_bulkcopy(struct message *m) {
     return OK;
 }
 
-uint8_t __src_page[PAGE_SIZE] ALIGNED(PAGE_SIZE);
-uint8_t __dst_page[PAGE_SIZE] ALIGNED(PAGE_SIZE);
+uint8_t __src_page[PAGE_SIZE] __aligned(PAGE_SIZE);
+uint8_t __dst_page[PAGE_SIZE] __aligned(PAGE_SIZE);
 
 static error_t handle_do_bulkcopy(struct message *m) {
     struct task *src_task = get_task_by_tid(m->src);

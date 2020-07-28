@@ -43,7 +43,7 @@ struct arp_packet {
     uint32_t sender_addr;
     macaddr_t target;
     uint32_t target_addr;
-} PACKED;
+} __packed;
 
 bool arp_resolve(struct arp_table *arp, ipv4addr_t ipaddr, macaddr_t *macaddr);
 struct device;

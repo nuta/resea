@@ -31,7 +31,7 @@ static struct bootelf_header *locate_bootelf_header(void) {
 #if !defined(CONFIG_NOMMU)
 /// Allocates a memory page for the first user task.
 static void *alloc_page(void) {
-    static uint8_t heap[PAGE_SIZE * 2448] ALIGNED(PAGE_SIZE);
+    static uint8_t heap[PAGE_SIZE * 2448] __aligned(PAGE_SIZE);
     static uint8_t *current = heap;
     if (current >= heap + sizeof(heap)) {
         PANIC("run out of memory for init task");
@@ -106,7 +106,7 @@ void map_bootelf(struct bootelf_header *header, struct vm *vm) {
 }
 
 /// Initializes the kernel and starts the first task.
-NORETURN void kmain(void) {
+__noreturn void kmain(void) {
     printf("\nBooting Resea " VERSION "...\n");
     task_init();
     mp_start();
@@ -126,7 +126,7 @@ NORETURN void kmain(void) {
     mpmain();
 }
 
-NORETURN void mpmain(void) {
+__noreturn void mpmain(void) {
     stack_set_canary();
 
     // Initialize the idle task for this CPU.

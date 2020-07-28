@@ -68,7 +68,7 @@ static void add_aux_vector(uintptr_t **sp, int type, uintptr_t ptr) {
 
 /// Initializes a user stack. See "Initial Process Stack" in System V ABI spec
 /// for details.
-static errno_t init_stack(struct proc *proc, char *argv[], UNUSED char *envp[]) {
+static errno_t init_stack(struct proc *proc, char *argv[], __unused char *envp[]) {
     uintptr_t *sp = proc->stack->buf + STACK_TOP;
     char *strbuf = proc->stack->buf + STACK_STRBUF;
     vaddr_t strbuf_top = (vaddr_t) proc->stack->buf + STACK_STRBUF;

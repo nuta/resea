@@ -8,7 +8,7 @@ struct ethernet_header {
     macaddr_t dst;
     macaddr_t src;
     uint16_t type;
-} PACKED;
+} __packed;
 
 struct device;
 void ethernet_transmit(struct device *device, enum ether_type type,
