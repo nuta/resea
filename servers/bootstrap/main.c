@@ -433,29 +433,70 @@ error_t call_self(struct message *m) {
     return err;
 }
 
-static error_t handle_message(struct message *m, task_t *reply_to) {
+static void handle_message(const struct message *m) {
+    struct message r;
+    bzero(&r, sizeof(r));
+
     switch (m->type) {
-        case ACCEPT_BULKCOPY_MSG:
-            return handle_accept_bulkcopy(m);
-        case VERIFY_BULKCOPY_MSG:
-            return handle_verify_bulkcopy(m);
-        case DO_BULKCOPY_MSG:
-            return handle_do_bulkcopy(m);
+        case ACCEPT_BULKCOPY_MSG: {
+            memcpy(&r, m, sizeof(r));
+            error_t err = handle_accept_bulkcopy(&r);
+            switch (err) {
+                case DONT_REPLY:
+                    break;
+                case OK:
+                    ipc_reply(m->src, &r);
+                    break;
+                default:
+                    ipc_reply_err(m->src, err);
+            }
+            break;
+        }
+        case VERIFY_BULKCOPY_MSG: {
+            memcpy(&r, m, sizeof(r));
+            error_t err = handle_verify_bulkcopy(&r);
+            switch (err) {
+                case DONT_REPLY:
+                    break;
+                case OK:
+                    ipc_reply(m->src, &r);
+                    break;
+                default:
+                    ipc_reply_err(m->src, err);
+            }
+            break;
+        }
+        case DO_BULKCOPY_MSG: {
+            memcpy(&r, m, sizeof(r));
+            error_t err = handle_do_bulkcopy(&r);
+            switch (err) {
+                case DONT_REPLY:
+                    break;
+                case OK:
+                    ipc_reply(m->src, &r);
+                    break;
+                default:
+                    ipc_reply_err(m->src, err);
+            }
+            break;
+        }
         case NOP_MSG:
-            m->type = NOP_REPLY_MSG;
-            m->nop_reply.value = m->nop.value * 7;
-            return OK;
+            r.type = NOP_REPLY_MSG;
+            r.nop_reply.value = m->nop.value * 7;
+            ipc_reply(m->src, &r);
+            break;
         case NOP_WITH_BULK_MSG:
             free((void *) m->nop_with_bulk.data);
-            m->type = NOP_WITH_BULK_REPLY_MSG;
-            m->nop_with_bulk_reply.data = "reply!";
-            m->nop_with_bulk_reply.data_len = 7;
-            return OK;
+            r.type = NOP_WITH_BULK_REPLY_MSG;
+            r.nop_with_bulk_reply.data = "reply!";
+            r.nop_with_bulk_reply.data_len = 7;
+            ipc_reply(m->src, &r);
+            break;
         case EXCEPTION_MSG: {
             if (m->src != KERNEL_TASK_TID) {
                 WARN("forged exception message from #%d, ignoring...",
                      m->src);
-                return DONT_REPLY;
+                break;
             }
 
             struct task *task = get_task_by_tid(m->exception.task);
@@ -470,13 +511,13 @@ static error_t handle_message(struct message *m, task_t *reply_to) {
             }
 
             kill(task);
-            return DONT_REPLY;
+            break;
         }
         case PAGE_FAULT_MSG: {
             if (m->src != KERNEL_TASK_TID) {
                 WARN("forged page fault message from #%d, ignoring...",
                      m->src);
-                return DONT_REPLY;
+                break;
             }
 
             struct task *task = get_task_by_tid(m->page_fault.task);
@@ -485,17 +526,17 @@ static error_t handle_message(struct message *m, task_t *reply_to) {
 
             paddr_t paddr =
                 pager(task, m->page_fault.vaddr, m->page_fault.fault);
-            if (paddr) {
-                vaddr_t aligned_vaddr =
-                    ALIGN_DOWN(m->page_fault.vaddr, PAGE_SIZE);
-                ASSERT_OK(map_page(task->tid, aligned_vaddr, paddr, MAP_W, false));
-                m->type = PAGE_FAULT_REPLY_MSG;
-                *reply_to = task->tid;
-                return OK;
-            } else {
-                kill(task);
-                return DONT_REPLY;
+            if (!paddr) {
+                ipc_reply_err(m->src, ERR_NOT_FOUND);
+                break;
             }
+
+            vaddr_t aligned_vaddr = ALIGN_DOWN(m->page_fault.vaddr, PAGE_SIZE);
+            ASSERT_OK(map_page(task->tid, aligned_vaddr, paddr, MAP_W, false));
+            r.type = PAGE_FAULT_REPLY_MSG;
+
+            ipc_reply(task->tid, &r);
+            break;
         }
         case LOOKUP_MSG: {
             char *name = (char *) m->lookup.name;
@@ -507,16 +548,17 @@ static error_t handle_message(struct message *m, task_t *reply_to) {
                 }
             }
 
+            free(name);
             if (!task) {
                 WARN("Failed to locate the task named '%s'", name);
-                free(name);
-                return ERR_NOT_FOUND;
+                ipc_reply_err(m->src, ERR_NOT_FOUND);
+                break;
             }
 
-            m->type = LOOKUP_REPLY_MSG;
-            m->lookup_reply.task = task->tid;
-            free(name);
-            return OK;
+            r.type = LOOKUP_REPLY_MSG;
+            r.lookup_reply.task = task->tid;
+            ipc_reply(m->src, &r);
+            break;
         }
         case ALLOC_PAGES_MSG: {
             struct task *task = get_task_by_tid(m->src);
@@ -527,13 +569,15 @@ static error_t handle_message(struct message *m, task_t *reply_to) {
             error_t err =
                 phy_alloc_pages(task, &vaddr, &paddr, m->alloc_pages.num_pages);
             if (err != OK) {
-                return err;
+                ipc_reply_err(m->src, err);
+                break;
             }
 
-            m->type = ALLOC_PAGES_REPLY_MSG;
-            m->alloc_pages_reply.vaddr = vaddr;
-            m->alloc_pages_reply.paddr = paddr;
-            return OK;
+            r.type = ALLOC_PAGES_REPLY_MSG;
+            r.alloc_pages_reply.vaddr = vaddr;
+            r.alloc_pages_reply.paddr = paddr;
+            ipc_reply(m->src, &r);
+            break;
         }
         case LAUNCH_TASK_MSG: {
             // Look for the program in the apps directory.
@@ -546,19 +590,20 @@ static error_t handle_message(struct message *m, task_t *reply_to) {
                 }
             }
 
+            free(name);
             if (!file) {
-                free(name);
-                return ERR_NOT_FOUND;
+                ipc_reply_err(m->src, ERR_NOT_FOUND);
+                break;
             }
 
             launch_task(file);
-            m->type = LAUNCH_TASK_REPLY_MSG;
-            return OK;
+            r.type = LAUNCH_TASK_REPLY_MSG;
+            ipc_reply(m->src, &r);
+            break;
         }
         default:
             WARN("unknown message type (type=%d)", m->type);
             // FIXME: Free bulk payloads.
-            return ERR_NOT_ACCEPTABLE;
     }
 }
 
@@ -612,20 +657,10 @@ void main(void) {
 
     // The mainloop: receive and handle messages.
     INFO("ready");
-    task_t reply_to = -1;
     while (true) {
         struct message m;
-        // TODO: bzero(m)
-        error_t err = ipc_replyrecv(reply_to, &m);
+        error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
-
-        reply_to = m.src;
-        err = handle_message(&m, &reply_to);
-        // FIXME:
-        switch (err) {
-            case OK: break;
-            case DONT_REPLY: reply_to = -1; break;
-            default: m.type = err;
-        }
+        handle_message(&m);
     }
 }
