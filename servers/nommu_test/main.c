@@ -29,7 +29,7 @@ static void task_b(void) {
     }
 
     INFO("Passed all tests!");
-    sys_kdebug("q");
+    sys_kdebug("q", NULL, 0);
 }
 
 void main(void) {
