@@ -5,6 +5,6 @@ error_t klog_write(const char *buf, size_t len) {
     return sys_print(buf, len);
 }
 
-int klog_read(char *buf, size_t len, bool listen) {
-    return sys_readlog(buf, len, listen);
+int klog_read(char *buf, size_t len) {
+    return sys_kdebug("", buf, len);
 }

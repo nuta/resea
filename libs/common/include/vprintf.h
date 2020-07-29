@@ -32,7 +32,8 @@ struct vprintf_context {
     size_t index;
 };
 
-void vprintf(struct vprintf_context *ctx, const char *fmt, va_list vargs);
+void vprintf_with_context(struct vprintf_context *ctx, const char *fmt, va_list vargs);
+void printf_with_context(struct vprintf_context *ctx, const char *fmt, ...);
 int vsnprintf(char *buf, size_t size, const char *fmt, va_list vargs);
 int snprintf(char *buf, size_t size, const char *fmt, ...);
 void backtrace(void);

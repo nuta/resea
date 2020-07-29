@@ -112,20 +112,6 @@ void logputc(char ch) {
     update_cursor();
 }
 
-static void pull_kernel_log(void) {
-    while (true) {
-        char buf[512];
-        size_t read_len = klog_read(buf, sizeof(buf), true);
-        if (!read_len) {
-            break;
-        }
-
-        for (size_t i = 0; i < read_len; i++) {
-            logputc(buf[i]);
-        }
-    }
-}
-
 void logputstr(const char *str) {
     while (*str) {
         logputc(*str);
@@ -154,6 +140,20 @@ static void help_command(__unused int argc, __unused char **argv) {
     logputstr("clear  -  Clear the screen.\n");
 }
 
+static void log_command(__unused int argc, __unused char **argv) {
+    while (true) {
+        char buf[512];
+        size_t read_len = klog_read(buf, sizeof(buf));
+        if (!read_len) {
+            break;
+        }
+
+        for (size_t i = 0; i < read_len; i++) {
+            logputc(buf[i]);
+        }
+    }
+}
+
 struct command {
     const char *name;
     void (*run)(int argc, char **argv);
@@ -162,6 +162,7 @@ struct command {
 static struct command commands[] = {
     { .name = "echo", .run = echo_command },
     { .name = "clear", .run = clear_command },
+    { .name = "log", .run = log_command },
     { .name = "help", .run = help_command },
     { .name = NULL, .run = NULL },
 };
@@ -257,7 +258,6 @@ static void input(char ch) {
                     if (argc > 0) {
                         run(argv[0], argc, argv);
                     }
-                    pull_kernel_log();
                     prompt();
                     break;
                 }
@@ -313,7 +313,6 @@ void main(void) {
 
     get_screen_size();
     clear_screen();
-    pull_kernel_log();
 
     // The mainloop: receive and handle messages.
     prompt();
@@ -325,7 +324,6 @@ void main(void) {
         switch (m.type) {
             case NOTIFICATIONS_MSG:
                 if (m.notifications.data & NOTIFY_NEW_DATA) {
-                    pull_kernel_log();
                     pull_input();
                 }
                 break;

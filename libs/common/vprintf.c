@@ -37,7 +37,7 @@ static void print_uint(struct vprintf_context *ctx, uintmax_t n, int base,
 ///  %x  - A hexadecimal integer.
 ///  %p  - An pointer value.
 ///  %pI - An IPv4 address (uint32_t).
-void vprintf(struct vprintf_context *ctx, const char *fmt, va_list vargs) {
+void vprintf_with_context(struct vprintf_context *ctx, const char *fmt, va_list vargs) {
     while (*fmt) {
         if (*fmt != '%') {
             ctx->printchar(ctx, *fmt++);
@@ -177,7 +177,7 @@ int vsnprintf(char *buf, size_t size, const char *fmt, va_list vargs) {
         .size = size,
     };
 
-    vprintf(&ctx, fmt, vargs);
+    vprintf_with_context(&ctx, fmt, vargs);
     buf[size - 1] = '\0';
     return ctx.index;
 }
@@ -188,6 +188,13 @@ int snprintf(char *buf, size_t size, const char *fmt, ...) {
     int ret = vsnprintf(buf, size, fmt, vargs);
     va_end(vargs);
     return ret;
+}
+
+void printf_with_context(struct vprintf_context *ctx, const char *fmt, ...) {
+    va_list vargs;
+    va_start(vargs, fmt);
+    vprintf_with_context(ctx, fmt, vargs);
+    va_end(vargs);
 }
 
 /// The symbol table. embed-symbols.py fills the symbol table and set `magic` to

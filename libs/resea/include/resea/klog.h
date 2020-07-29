@@ -3,7 +3,7 @@
 
 #include <types.h>
 
-int klog_read(char *buf, size_t len, bool listen);
+int klog_read(char *buf, size_t len);
 error_t klog_write(const char *buf, size_t len);
 
 #endif

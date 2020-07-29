@@ -36,6 +36,6 @@ void printf(const char *fmt, ...) {
     struct vprintf_context ctx = { .printchar = vprintf_printchar };
     va_list vargs;
     va_start(vargs, fmt);
-    vprintf(&ctx, fmt, vargs);
+    vprintf_with_context(&ctx, fmt, vargs);
     va_end(vargs);
 }

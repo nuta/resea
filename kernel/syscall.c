@@ -135,11 +135,18 @@ static int sys_print(userptr_t buf, size_t buf_len) {
     return OK;
 }
 
-/// Read log messages from the kernel log buffer.
-static error_t sys_readlog(userptr_t buf, size_t buf_len, bool listen) {
-    char kbuf[256];
-    int remaining = buf_len;
+static int sys_kdebug(userptr_t cmdline, userptr_t buf, size_t len) {
+    char cmdline_buf[128];
+    strncpy_from_user(cmdline_buf, cmdline, sizeof(cmdline_buf));
+
+    error_t err = kdebug_run(cmdline_buf);
+    if (err != OK) {
+        return err;
+    }
+
+    size_t remaining = len;
     while (remaining > 0) {
+        char kbuf[256];
         int max_len = MIN(remaining, (int) sizeof(kbuf));
         int read_len = klog_read(kbuf, max_len);
         if (!read_len) {
@@ -151,19 +158,7 @@ static error_t sys_readlog(userptr_t buf, size_t buf_len, bool listen) {
         remaining -= read_len;
     }
 
-    if (listen) {
-        klog_listen(CURRENT);
-    } else {
-        klog_unlisten();
-    }
-
-    return buf_len - remaining;
-}
-
-static error_t sys_kdebug(userptr_t cmdline) {
-    char input[128];
-    strncpy_from_user(input, cmdline, sizeof(input));
-    return kdebug_run(input);
+    return len - remaining;
 }
 
 static paddr_t resolve_paddr(vaddr_t vaddr) {
@@ -241,11 +236,8 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
         case SYS_PRINT:
             ret = sys_print(a1, a2);
             break;
-        case SYS_READLOG:
-            ret = sys_readlog(a1, a2, a3);
-            break;
         case SYS_KDEBUG:
-            ret = sys_kdebug(a1);
+            ret = sys_kdebug(a1, a2, a3);
             break;
         default:
             ret = ERR_INVALID_ARG;

@@ -38,14 +38,6 @@ void klog_write(char ch) {
     }
 }
 
-void klog_listen(struct task *task) {
-    listener = task;
-}
-
-void klog_unlisten(void) {
-    listener = NULL;
-}
-
 static void printchar(__unused struct vprintf_context *ctx, char ch) {
     arch_printchar(ch);
     klog_write(ch);
@@ -56,6 +48,6 @@ void printk(const char *fmt, ...) {
     struct vprintf_context ctx = { .printchar = printchar };
     va_list vargs;
     va_start(vargs, fmt);
-    vprintf(&ctx, fmt, vargs);
+    vprintf_with_context(&ctx, fmt, vargs);
     va_end(vargs);
 }

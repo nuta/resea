@@ -35,7 +35,10 @@ static void quit(void) {
 }
 
 error_t kdebug_run(const char *cmdline) {
-    if (strcmp(cmdline, "help") == 0) {
+    if (strlen(cmdline) == 0) {
+        // An empty command. Just ignore it.
+        return OK;
+    } else if (strcmp(cmdline, "help") == 0) {
         DPRINTK("Kernel debugger commands:\n");
         DPRINTK("\n");
         DPRINTK("  ps - List tasks.\n");
@@ -61,10 +64,7 @@ void kdebug_handle_interrupt(void) {
         if (ch == '\r') {
             printk("\n");
             cmdline[cursor] = '\0';
-            if (cursor > 0) {
-                (void) kdebug_run(cmdline);
-                cursor = 0;
-            }
+            (void) kdebug_run(cmdline);
             DPRINTK("kdebug> ");
             continue;
         }

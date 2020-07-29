@@ -32,12 +32,8 @@ static inline error_t sys_print(const char *buf, size_t len) {
     return syscall(SYS_PRINT, (uintptr_t) buf, len, 0, 0, 0);
 }
 
-static inline int sys_readlog(char *buf, size_t len, bool listen) {
-    return syscall(SYS_READLOG, (uintptr_t) buf, len, listen, 0, 0);
-}
-
-static inline error_t sys_kdebug(const char *cmdline) {
-    return syscall(SYS_KDEBUG, (uintptr_t) cmdline, 0, 0, 0, 0);
+static inline error_t sys_kdebug(const char *cmdline, char *buf, size_t len) {
+    return syscall(SYS_KDEBUG, (uintptr_t) cmdline, (uintptr_t) buf, len, 0, 0);
 }
 
 #endif
