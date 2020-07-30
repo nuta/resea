@@ -30,13 +30,11 @@ static error_t call_pager(struct message *m) {
 #endif
 }
 
-static unsigned pre_send(task_t dst, struct message *m, void **saved_bulk_ptr) {
+static void pre_send(task_t dst, struct message *m, void **saved_bulk_ptr) {
     *saved_bulk_ptr = m->bulk_ptr;
-    unsigned flags = 0;
 
 #ifndef CONFIG_NOMMU
     if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
-        flags |= IPC_BULK;
         if (m->type & MSG_STR) {
             m->bulk_len = strlen(m->bulk_ptr) + 1;
         }
@@ -53,9 +51,7 @@ static unsigned pre_send(task_t dst, struct message *m, void **saved_bulk_ptr) {
         m->bulk_ptr = (void *) m2.do_bulkcopy_reply.id;
     }
 #endif
-
-    return flags;
- }
+}
 
 static void post_send_only(struct message *m, void **saved_bulk_ptr) {
     m->bulk_ptr = *saved_bulk_ptr;
@@ -117,16 +113,16 @@ static void post_send_only(struct message *m, void **saved_bulk_ptr) {
 
 error_t ipc_send(task_t dst, struct message *m) {
     void *saved_bulk_ptr;
-    unsigned flags = pre_send(dst, m, &saved_bulk_ptr);
-    error_t err = sys_ipc(dst, 0, m, flags | IPC_SEND);
+    pre_send(dst, m, &saved_bulk_ptr);
+    error_t err = sys_ipc(dst, 0, m, IPC_SEND);
     post_send_only(m, &saved_bulk_ptr);
     return err;
 }
 
 error_t ipc_send_noblock(task_t dst, struct message *m) {
     void *saved_bulk_ptr;
-    unsigned flags = pre_send(dst, m, &saved_bulk_ptr);
-    error_t err = sys_ipc(dst, 0, m, flags | IPC_SEND | IPC_NOBLOCK);
+    pre_send(dst, m, &saved_bulk_ptr);
+    error_t err = sys_ipc(dst, 0, m, IPC_SEND | IPC_NOBLOCK);
     post_send_only(m, &saved_bulk_ptr);
     return err;
 }
@@ -161,16 +157,16 @@ error_t ipc_recv(task_t src, struct message *m) {
 error_t ipc_call(task_t dst, struct message *m) {
     void *saved_bulk_ptr;
     pre_recv();
-    unsigned flags = pre_send(dst, m, &saved_bulk_ptr);
-    error_t err = sys_ipc(dst, dst, m, flags | IPC_CALL);
+    pre_send(dst, m, &saved_bulk_ptr);
+    error_t err = sys_ipc(dst, dst, m, IPC_CALL);
     return post_recv(err, m);
 }
 
 error_t ipc_replyrecv(task_t dst, struct message *m) {
     void *saved_bulk_ptr;
     pre_recv();
-    unsigned flags = pre_send(dst, m, &saved_bulk_ptr);
-    flags |= (dst < 0) ? IPC_RECV : (IPC_SEND | IPC_RECV | IPC_NOBLOCK);
+    pre_send(dst, m, &saved_bulk_ptr);
+    unsigned flags = (dst < 0) ? IPC_RECV : (IPC_SEND | IPC_RECV | IPC_NOBLOCK);
     error_t err = sys_ipc(dst, IPC_ANY, m, flags);
     return post_recv(err, m);
 }

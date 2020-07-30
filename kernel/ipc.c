@@ -141,18 +141,13 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
     // THe send phase: copy the message and resume the receiver task. Note
     // that this user copy may cause a page fault.
     memcpy_from_user(&dst->m, (userptr_t) m, sizeof(struct message));
+    dst->m.src = CURRENT->tid;
+    task_resume(dst);
 
 #ifdef CONFIG_TRACE_IPC
     TRACE("IPC: %s: %s -> %s (fastpath)",
           msgtype2str(dst->m.type), CURRENT->name, dst->name);
 #endif
-
-    // We just ignore invalid flags. To eliminate branches for performance,
-    // we don't return an error code.
-    dst->m.type = MSG_ID(dst->m.type);
-    dst->m.src = CURRENT->tid;
-
-    task_resume(dst);
 
     // The receive phase: wait for a message, copy it into the user's
     // buffer, and return to the user.
