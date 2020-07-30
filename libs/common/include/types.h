@@ -121,7 +121,6 @@ typedef uint8_t notifications_t;
 #define NOTIFY_ABORTED  (1 << 2)
 #define NOTIFY_ASYNC    (1 << 3)
 
-// TODO: Migrate into error_t
 enum exception_type {
     EXP_GRACE_EXIT,
     EXP_INVALID_MSG_FROM_PAGER,
