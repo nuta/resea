@@ -153,3 +153,9 @@ void arch_idle(void) {
         lock();
     }
 }
+
+void arch_semihosting_halt(void) {
+    // QEMU
+    __asm__ __volatile__("outw %0, %1" ::
+        "a"((uint16_t) 0x2000), "Nd"((uint16_t) 0x604));
+}

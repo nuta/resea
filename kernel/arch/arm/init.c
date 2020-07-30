@@ -23,3 +23,15 @@ void arm_init(void) {
         halt();
     }
 }
+
+void arch_semihosting_halt(void) {
+    // ARM Semihosting
+    uint32_t params[] = {
+        0x20026, // application exit
+        0,       // exit code
+    };
+
+    register uint32_t r0 __asm__("r0") = 0x20;    // exit
+    register uint32_t r1 __asm__("r1") = (uint32_t) params;
+    __asm__ __volatile__("bkpt 0xab" :: "r"(r0), "r"(r1));
+}

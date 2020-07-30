@@ -12,5 +12,6 @@ void stack_set_canary(void);
 
 // Implemented in arch.
 int kdebug_readchar(void);
+void arch_semihosting_halt(void);
 
 #endif

@@ -2,38 +2,6 @@
 #include "kdebug.h"
 #include "task.h"
 
-static void quit(void) {
-#ifdef CONFIG_ARCH_X64
-    // QEMU
-    __asm__ __volatile__("outw %0, %1" ::
-        "a"((uint16_t) 0x2000), "Nd"((uint16_t) 0x604));
-#endif
-#ifdef CONFIG_ARCH_ARM64
-    // ARM Semihosting
-    uint64_t params[] = {
-        0x20026, // application exit
-        0,       // exit code
-    };
-
-    register uint64_t x0 __asm__("x0") = 0x20; // exit
-    register uint64_t x1 __asm__("x1") = (uint64_t) params;
-    __asm__ __volatile__("hlt #0xf000" :: "r"(x0), "r"(x1));
-#endif
-#ifdef CONFIG_ARCH_ARM
-    // ARM Semihosting
-    uint32_t params[] = {
-        0x20026, // application exit
-        0,       // exit code
-    };
-
-    register uint32_t r0 __asm__("r0") = 0x20;    // exit
-    register uint32_t r1 __asm__("r1") = (uint32_t) params;
-    __asm__ __volatile__("bkpt 0xab" :: "r"(r0), "r"(r1));
-#endif
-
-    PANIC("halted by the kdebug");
-}
-
 error_t kdebug_run(const char *cmdline) {
     if (strlen(cmdline) == 0) {
         // An empty command. Just ignore it.
@@ -47,7 +15,8 @@ error_t kdebug_run(const char *cmdline) {
     } else if (strcmp(cmdline, "ps") == 0) {
         task_dump();
     } else if (strcmp(cmdline, "q") == 0) {
-        quit();
+        arch_semihosting_halt();
+        PANIC("halted by the kdebug");
     } else {
         WARN("Invalid debugger command: '%s'.", cmdline);
         return ERR_NOT_FOUND;

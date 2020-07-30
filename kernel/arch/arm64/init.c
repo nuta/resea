@@ -37,3 +37,15 @@ void arm64_init(void) {
         halt();
     }
 }
+
+void arch_semihosting_halt(void) {
+    // ARM Semihosting
+    uint64_t params[] = {
+        0x20026, // application exit
+        0,       // exit code
+    };
+
+    register uint64_t x0 __asm__("x0") = 0x20; // exit
+    register uint64_t x1 __asm__("x1") = (uint64_t) params;
+    __asm__ __volatile__("hlt #0xf000" :: "r"(x0), "r"(x1));
+}
