@@ -62,7 +62,7 @@ static error_t sys_exec(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
 
     struct task *task = task_lookup_unchecked(tid);
     if (!task || task == CURRENT) {
-        return ERR_INVALID_ARG;
+        return ERR_INVALID_TASK;
     }
 
     if (pager >= 0) {
@@ -113,7 +113,7 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
     if (flags & (IPC_SEND | IPC_NOTIFY)) {
         dst_task = task_lookup(dst);
         if (!dst_task) {
-            return ERR_INVALID_ARG;
+            return ERR_INVALID_TASK;
         }
 
         if (flags & IPC_NOTIFY) {
@@ -194,7 +194,7 @@ static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
 
     struct task *task = task_lookup(tid);
     if (!task) {
-        return ERR_INVALID_ARG;
+        return ERR_INVALID_TASK;
     }
 
     // Resolve paddrs.

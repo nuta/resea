@@ -70,14 +70,15 @@ typedef int error_t;
 #define ERR_TOO_SMALL      (-6)
 #define ERR_NOT_FOUND      (-7)
 #define ERR_INVALID_ARG    (-8)
-#define ERR_ALREADY_EXISTS (-9)
-#define ERR_UNAVAILABLE    (-10)
-#define ERR_NOT_ACCEPTABLE (-11)
-#define ERR_EMPTY          (-12)
-#define DONT_REPLY         (-13)
-#define ERR_IN_USE         (-14)
-#define ERR_TRY_AGAIN      (-15)
-#define ERR_END            (-16)
+#define ERR_INVALID_TASK   (-9)
+#define ERR_ALREADY_EXISTS (-10)
+#define ERR_UNAVAILABLE    (-11)
+#define ERR_NOT_ACCEPTABLE (-12)
+#define ERR_EMPTY          (-13)
+#define DONT_REPLY         (-14)
+#define ERR_IN_USE         (-15)
+#define ERR_TRY_AGAIN      (-16)
+#define ERR_END            (-17)
 
 // System call numbers.
 #define SYS_EXEC    1

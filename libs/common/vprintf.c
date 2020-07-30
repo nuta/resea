@@ -259,6 +259,7 @@ static const char *error_names[] = {
     [-ERR_TOO_SMALL] = "Too Small",
     [-ERR_NOT_FOUND] = "Not Found",
     [-ERR_INVALID_ARG] = "Invalid Arg",
+    [-ERR_INVALID_TASK] = "Invalid Task ID",
     [-ERR_ALREADY_EXISTS] = "Already Exists",
     [-ERR_UNAVAILABLE] = "Unavailable",
     [-ERR_EMPTY] = "Empty",
