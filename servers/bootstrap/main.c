@@ -602,7 +602,6 @@ static void handle_message(const struct message *m) {
             }
 
             strncpy(task->waiting_for, m->lookup.name, sizeof(task->waiting_for));
-            DBG("WAIT: %s for %s", task->name, task->waiting_for);
             free((void *) m->lookup.name);
             break;
         }

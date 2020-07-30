@@ -73,8 +73,6 @@ static void process(struct client *client, uint8_t *data, size_t len) {
     memcpy(&client->request[client->request_len], data, len);
     client->request_len = new_len;
 
-    DBG("client->request = %s", client->request);
-
     // Return if we have not yet received the complete HTTP request.
     if (!strstr(client->request, "\r\n\r\n")) {
         return;
@@ -130,7 +128,6 @@ void main(void) {
                     ASSERT_OK(async_recv(tcpip_server, &m));
                     switch (m.type) {
                         case TCPIP_RECEIVED_MSG: {
-                            DBG("new data");
                             struct client *c =
                                 map_get(clients, (void *) m.tcpip_received.handle);
                             ASSERT(c);
