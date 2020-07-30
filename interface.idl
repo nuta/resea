@@ -56,7 +56,7 @@ namespace kbd {
     const KEY_MOD_ALT: u16  = 0x200;
 
     rpc listen() -> ();
-    rpc read() -> (keycode: keycode);
+    oneway on_key_up(keycode: keycode);
 }
 
 namespace blk {

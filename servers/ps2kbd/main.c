@@ -1,12 +1,10 @@
 #include <resea/ipc.h>
+#include <resea/async.h>
 #include <resea/io.h>
 #include <resea/printf.h>
+#include <string.h>
 #include "ps2kbd.h"
 
-#define QUEUE_SIZE 64
-static uint16_t queue[QUEUE_SIZE];
-static int queue_head = 0;
-static int queue_tail = 0;
 static task_t listener = 0;
 
 // Modifier keys. True if the key is being pressed.
@@ -82,11 +80,12 @@ static void handle_irq(void) {
                 // TRACE("key event: scancode=%02x, keycode=%04x", scancode,
                 //       keycode);
 
-                queue[queue_head] = keycode;
-                queue_head = (queue_head + 1) % QUEUE_SIZE;
-
                 if (listener) {
-                    ipc_notify(listener, NOTIFY_NEW_DATA);
+                    struct message m;
+                    bzero(&m, sizeof(m));
+                    m.type = KBD_ON_KEY_UP_MSG;
+                    m.kbd_on_key_up.keycode = keycode;
+                    async_send(listener, &m);
                 }
             }
         }
@@ -105,6 +104,7 @@ void main(void) {
     INFO("ready");
     while (true) {
         struct message m;
+        bzero(&m, sizeof(m));
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
@@ -114,20 +114,12 @@ void main(void) {
                     handle_irq();
                 }
                 break;
+            case ASYNC_MSG:
+                async_reply(m.src);
+                break;
             case KBD_LISTEN_MSG:
                 listener = m.src;
                 m.type = KBD_LISTEN_REPLY_MSG;
-                ipc_reply(m.src, &m);
-                break;
-            case KBD_READ_MSG:
-                if (queue_head == queue_tail) {
-                    ipc_reply_err(m.src, ERR_EMPTY);
-                    break;
-                }
-
-                m.type = KBD_READ_REPLY_MSG;
-                m.kbd_read_reply.keycode = queue[queue_tail];
-                queue_tail = (queue_tail + 1) % QUEUE_SIZE;
                 ipc_reply(m.src, &m);
                 break;
             default:

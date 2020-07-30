@@ -2,6 +2,7 @@
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/klog.h>
+#include <resea/async.h>
 #include <string.h>
 
 static task_t bootstrap_server = 1;
@@ -275,19 +276,6 @@ static void input(char ch) {
     }
 }
 
-static void pull_input(void) {
-    struct message m;
-    m.type = KBD_READ_MSG;
-    error_t err = ipc_call(kbd_server, &m);
-    if (err == ERR_EMPTY) {
-        return;
-    }
-
-    ASSERT_OK(err);
-    ASSERT(m.type == KBD_READ_REPLY_MSG);
-    input(m.kbd_read_reply.keycode);
-}
-
 static void get_screen_size(void) {
     struct message m;
     m.type = TEXTSCREEN_GET_SIZE_MSG;
@@ -325,8 +313,16 @@ void main(void) {
 
         switch (m.type) {
             case NOTIFICATIONS_MSG:
-                if (m.notifications.data & NOTIFY_NEW_DATA) {
-                    pull_input();
+                if (m.notifications.data & NOTIFY_ASYNC) {
+                    async_recv(kbd_server, &m);
+                    switch (m.type) {
+                        case KBD_ON_KEY_UP_MSG:
+                            input(m.kbd_on_key_up.keycode);
+                            break;
+                        default:
+                            WARN("unknown message type (type=%d)", m.type);
+                            break;
+                    }
                 }
                 break;
             default:
