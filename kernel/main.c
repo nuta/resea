@@ -56,8 +56,6 @@ static error_t map_page(struct vm *vm, vaddr_t vaddr, paddr_t paddr,
 
 // Maps ELF segments in the boot ELF into virtual memory.
 void map_bootelf(struct bootelf_header *header, struct vm *vm) {
-    DBG("header %p", header);
-    DBG("entry %p", header->entry);
     TRACE("boot ELF: entry=%p", header->entry);
     for (unsigned i = 0; i < header->num_mappings; i++) {
         struct bootelf_mapping *m = &header->mappings[i];
