@@ -119,8 +119,7 @@ typedef uint64_t notifications_t;
 #define NOTIFY_TIMER    (1ULL << 0)
 #define NOTIFY_IRQ      (1ULL << 1)
 #define NOTIFY_ABORTED  (1ULL << 2)
-#define NOTIFY_NEW_DATA (1ULL << 3) // TODO: Use async and remove this type.
-#define NOTIFY_ASYNC    (1ULL << 4)
+#define NOTIFY_ASYNC    (1ULL << 3)
 
 // TODO: Migrate into error_t
 enum exception_type {
