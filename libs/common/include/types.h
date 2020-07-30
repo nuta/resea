@@ -115,12 +115,6 @@ typedef int error_t;
 #define MSG_BULK (1 << 29)
 #define MSG_ID(type) ((type) & 0xffff)
 
-// klogctl operations.
-#define KLOGCTL_READ     1
-#define KLOGCTL_WRITE    2
-#define KLOGCTL_LISTEN   3
-#define KLOGCTL_UNLISTEN 4
-
 typedef uint64_t notifications_t;
 #define NOTIFY_TIMER    (1ULL << 0)
 #define NOTIFY_IRQ      (1ULL << 1)
