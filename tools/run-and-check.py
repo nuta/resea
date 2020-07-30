@@ -23,7 +23,7 @@ def main():
         p = subprocess.run(args.argv, timeout=args.timeout, universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except subprocess.TimeoutExpired as e:
-        stdout = scrub_stdout(e.stdout.decode("utf-8"))
+        stdout = scrub_stdout(e.stdout.decode("utf-8", "backslashreplace"))
         print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: timed out:{Style.RESET_ALL}\n{stdout}")
 
     stdout = scrub_stdout(p.stdout)
