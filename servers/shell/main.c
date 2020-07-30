@@ -221,7 +221,9 @@ void run(const char *cmd_name, int argc, char **argv) {
         case OK:
             break;
         case ERR_NOT_FOUND:
-            WARN("unknown command or task: %s", cmd_name);
+            logputstr("unknown command or task: ");
+            logputstr(cmd_name);
+            logputstr("\n");
             break;
         default:
             WARN("failed launch a task '%s': %s", cmd_name, err2str(err));
