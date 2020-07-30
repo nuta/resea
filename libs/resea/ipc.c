@@ -5,8 +5,11 @@
 #include <string.h>
 
 /// The internal buffer to receive bulk payloads.
+#ifndef CONFIG_NOMMU
 static void *bulk_ptr = NULL;
 static const size_t bulk_len = CONFIG_BULK_BUFFER_LEN;
+#endif
+
 bool __is_bootstrap(void);
 
 __weak error_t call_self(struct message *m) {
@@ -14,18 +17,24 @@ __weak error_t call_self(struct message *m) {
 }
 
 static error_t call_pager(struct message *m) {
-    // FIXME: Support NOMMU systems
+#ifdef CONFIG_NOMMU
+    // We don't use this feature. Discard messages with a warning.
+    WARN("ignoring %s", msgtype2str(m->type));
+    return OK;
+#else
     if (__is_bootstrap()) {
         return call_self(m);
     } else {
         return ipc_call(INIT_TASK_TID, m);
     }
+#endif
 }
 
 static unsigned pre_send(task_t dst, struct message *m, void **saved_bulk_ptr) {
     *saved_bulk_ptr = m->bulk_ptr;
-
     unsigned flags = 0;
+
+#ifndef CONFIG_NOMMU
     if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
         flags |= IPC_BULK;
         if (m->type & MSG_STR) {
@@ -43,6 +52,7 @@ static unsigned pre_send(task_t dst, struct message *m, void **saved_bulk_ptr) {
 
         m->bulk_ptr = (void *) m2.do_bulkcopy_reply.id;
     }
+#endif
 
     return flags;
  }
@@ -52,6 +62,7 @@ static void post_send_only(struct message *m, void **saved_bulk_ptr) {
 }
 
  static void pre_recv(void) {
+#ifndef CONFIG_NOMMU
     if (!bulk_ptr) {
         bulk_ptr = malloc(bulk_len);
 
@@ -63,9 +74,11 @@ static void post_send_only(struct message *m, void **saved_bulk_ptr) {
         ASSERT_OK(err);
         ASSERT(m.type == ACCEPT_BULKCOPY_REPLY_MSG);
     }
+#endif
 }
 
  static error_t post_recv(error_t err, struct message *m) {
+#ifndef CONFIG_NOMMU
     if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
 
         // Received a bulk payload.
@@ -95,6 +108,7 @@ static void post_send_only(struct message *m, void **saved_bulk_ptr) {
             str[m->bulk_len] = '\0';
         }
     }
+#endif
 
     // Handle the case when m.type is negative: a message represents an error
     // (sent by `ipc_send_err()`).
