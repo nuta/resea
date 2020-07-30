@@ -52,13 +52,13 @@ void arch_disable_irq(unsigned irq) {
 
 // Dumps the interrupt frame (for debugging).
 static void dump_frame(struct iframe *frame) {
-    WARN("RIP = %p CS  = %p  RFL = %p", frame->rip, frame->cs, frame->rflags);
-    WARN("SS  = %p RSP = %p  RBP = %p", frame->ss, frame->rsp, frame->rbp);
-    WARN("RAX = %p RBX = %p  RCX = %p", frame->rax, frame->rbx, frame->rcx);
-    WARN("RDX = %p RSI = %p  RDI = %p", frame->rdx, frame->rsi, frame->rdi);
-    WARN("R8  = %p R9  = %p  R10 = %p", frame->r8, frame->r9, frame->r10);
-    WARN("R11 = %p R12 = %p  R13 = %p", frame->r11, frame->r12, frame->r13);
-    WARN("R14 = %p R15 = %p  ERR = %p", frame->r14, frame->r15, frame->error);
+    TRACE("RIP = %p CS  = %p  RFL = %p", frame->rip, frame->cs, frame->rflags);
+    TRACE("SS  = %p RSP = %p  RBP = %p", frame->ss, frame->rsp, frame->rbp);
+    TRACE("RAX = %p RBX = %p  RCX = %p", frame->rax, frame->rbx, frame->rcx);
+    TRACE("RDX = %p RSI = %p  RDI = %p", frame->rdx, frame->rsi, frame->rdi);
+    TRACE("R8  = %p R9  = %p  R10 = %p", frame->r8, frame->r9, frame->r10);
+    TRACE("R11 = %p R12 = %p  R13 = %p", frame->r11, frame->r12, frame->r13);
+    TRACE("R14 = %p R15 = %p  ERR = %p", frame->r14, frame->r15, frame->error);
 }
 
 void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
@@ -107,7 +107,7 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
         default:
             lock();
             if (vec <= 20) {
-                WARN("Exception #%d\n", vec);
+                WARN_DBG("Exception #%d\n", vec);
                 dump_frame(frame);
                 if (frame->cs == KERNEL_CS) {
                     PANIC("Exception #%d occurred in the kernel space!", vec);

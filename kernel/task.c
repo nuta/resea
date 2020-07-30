@@ -46,7 +46,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
 
 #ifndef CONFIG_ABI_EMU
     if ((flags & TASK_ABI_EMU) != 0) {
-        WARN("ABI emulation is not enabled");
+        WARN_DBG("ABI emulation is not enabled");
         return ERR_UNAVAILABLE;
     }
 #endif
@@ -96,7 +96,7 @@ error_t task_destroy(struct task *task) {
     ASSERT(task != IDLE_TASK);
 
     if (task->tid == INIT_TASK_TID) {
-        WARN("tried to destroy the init task");
+        WARN_DBG("tried to destroy the init task");
         return ERR_INVALID_ARG;
     }
 
@@ -105,8 +105,8 @@ error_t task_destroy(struct task *task) {
     }
 
     if (task->ref_count > 0) {
-        WARN("%s (#%d) are still referenced from %d tasks",
-             task->name, task->tid, task->ref_count);
+        WARN_DBG("%s (#%d) are still referenced from %d tasks",
+                 task->name, task->tid, task->ref_count);
         return ERR_IN_USE;
     }
 

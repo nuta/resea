@@ -262,14 +262,14 @@ void abi_emu_hook(trap_frame_t *frame, enum abi_hook_type type) {
     error_t err = ipc(CURRENT->pager, CURRENT->pager->tid, &m,
                       IPC_CALL | IPC_KERNEL);
     if (IS_ERROR(err)) {
-        WARN("%s: aborted kernel ipc", CURRENT->name);
+        WARN_DBG("%s: aborted kernel ipc", CURRENT->name);
         task_exit(EXP_ABORTED_KERNEL_IPC);
     }
 
     // Check if the reply is valid.
     if (m.type != ABI_HOOK_REPLY_MSG) {
-        WARN("%s: invalid abi hook reply (type=%d)",
-             CURRENT->name, m.type);
+        WARN_DBG("%s: invalid abi hook reply (type=%d)",
+                 CURRENT->name, m.type);
         task_exit(EXP_INVALID_MSG_FROM_PAGER);
     }
 
