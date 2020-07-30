@@ -174,7 +174,7 @@ static paddr_t pager(struct task *task, vaddr_t vaddr, pagefault_t fault) {
     if (zeroed_pages_start <= vaddr && vaddr < zeroed_pages_end) {
         // The accessed page is zeroed one (.bss section, stack, or heap).
         paddr_t paddr = alloc_pages(task, vaddr, 1);
-        ASSERT_OK(map_page(INIT_TASK_TID, paddr, paddr, MAP_W, false));
+        ASSERT_OK(map_page(INIT_TASK, paddr, paddr, MAP_W, false));
         memset((void *) paddr, 0, PAGE_SIZE);
         return paddr;
     }
@@ -199,7 +199,7 @@ static paddr_t pager(struct task *task, vaddr_t vaddr, pagefault_t fault) {
         if (phdr) {
             // Allocate a page and fill it with the file data.
             paddr_t paddr = alloc_pages(task, vaddr, 1);
-            ASSERT_OK(map_page(INIT_TASK_TID, paddr, paddr, MAP_W, false));
+            ASSERT_OK(map_page(INIT_TASK, paddr, paddr, MAP_W, false));
             size_t offset_in_segment = (vaddr - phdr->p_vaddr) + phdr->p_offset;
             read_file(task->file, offset_in_segment, (void *) paddr, PAGE_SIZE);
             return paddr;
@@ -372,7 +372,7 @@ static error_t handle_do_bulkcopy(struct message *m) {
         size_t copy_len = MIN(remaining, MIN(PAGE_SIZE - src_off, PAGE_SIZE - dst_off));
 
         void *src_ptr;
-        if (src_task->tid == INIT_TASK_TID) {
+        if (src_task->tid == INIT_TASK) {
             src_ptr = (void *) src_buf;
         } else {
             paddr_t src_paddr = vaddr2paddr(src_task, ALIGN_DOWN(src_buf, PAGE_SIZE));
@@ -381,13 +381,13 @@ static error_t handle_do_bulkcopy(struct message *m) {
                 return DONT_REPLY;
             }
 
-            ASSERT_OK(map_page(INIT_TASK_TID, (vaddr_t) __src_page, src_paddr,
+            ASSERT_OK(map_page(INIT_TASK, (vaddr_t) __src_page, src_paddr,
                                MAP_W, true));
             src_ptr = &__src_page[src_off];
         }
 
         void *dst_ptr;
-        if (dst_task->tid == INIT_TASK_TID) {
+        if (dst_task->tid == INIT_TASK) {
             dst_ptr = (void *) dst_buf;
         } else {
             paddr_t dst_paddr = vaddr2paddr(dst_task, ALIGN_DOWN(dst_buf, PAGE_SIZE));
@@ -397,7 +397,7 @@ static error_t handle_do_bulkcopy(struct message *m) {
             }
 
             // Temporarily map the pages into the our address space.
-            ASSERT_OK(map_page(INIT_TASK_TID, (vaddr_t) __dst_page, dst_paddr,
+            ASSERT_OK(map_page(INIT_TASK, (vaddr_t) __dst_page, dst_paddr,
                                MAP_W, true));
             dst_ptr = &__dst_page[dst_off];
         }
@@ -421,7 +421,7 @@ static error_t handle_do_bulkcopy(struct message *m) {
 }
 
 error_t call_self(struct message *m) {
-    m->src = INIT_TASK_TID;
+    m->src = INIT_TASK;
     error_t err;
     switch (m->type) {
         case ACCEPT_BULKCOPY_MSG:
@@ -668,7 +668,7 @@ void main(void) {
     }
 
     // Initialize a task struct for bootstrap.
-    init_task_struct(&tasks[INIT_TASK_TID - 1], "bootstrap", NULL, NULL, NULL);
+    init_task_struct(&tasks[INIT_TASK - 1], "bootstrap", NULL, NULL, NULL);
 
     // Launch servers in bootfs.
     int num_launched = 0;

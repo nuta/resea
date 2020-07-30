@@ -95,7 +95,7 @@ error_t task_destroy(struct task *task) {
     ASSERT(task != CURRENT);
     ASSERT(task != IDLE_TASK);
 
-    if (task->tid == INIT_TASK_TID) {
+    if (task->tid == INIT_TASK) {
         WARN_DBG("tried to destroy the init task");
         return ERR_INVALID_ARG;
     }

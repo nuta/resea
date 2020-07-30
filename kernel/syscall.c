@@ -168,7 +168,7 @@ static int sys_kdebug(userptr_t cmdline, userptr_t buf, size_t len) {
 }
 
 static paddr_t resolve_paddr(vaddr_t vaddr) {
-    if (CURRENT->tid == INIT_TASK_TID) {
+    if (CURRENT->tid == INIT_TASK) {
         if (is_kernel_paddr(vaddr)) {
             return 0;
         }

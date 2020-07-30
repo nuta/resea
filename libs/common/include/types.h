@@ -136,7 +136,7 @@ enum exception_type {
 /// task ID.
 #define KERNEL_TASK 0
 /// The initial task ID.
-#define INIT_TASK_TID 1
+#define INIT_TASK 1
 
 #include <arch_types.h>
 

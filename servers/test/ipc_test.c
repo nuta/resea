@@ -11,7 +11,7 @@ void ipc_test(void) {
     for (int i = 0; i < 10; i++) {
         m.type = NOP_MSG;
         m.nop.value = i;
-        err = ipc_call(INIT_TASK_TID, &m);
+        err = ipc_call(INIT_TASK, &m);
         TEST_ASSERT(err == OK);
         TEST_ASSERT(m.type == NOP_REPLY_MSG);
         TEST_ASSERT(m.nop.value == i * 7);
@@ -21,7 +21,7 @@ void ipc_test(void) {
     m.type = NOP_WITH_BULK_MSG;
     m.nop_with_bulk.data = "hi!";
     m.nop_with_bulk.data_len = 3;
-    err = ipc_call(INIT_TASK_TID, &m);
+    err = ipc_call(INIT_TASK, &m);
     TEST_ASSERT(err == OK);
     TEST_ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
     TEST_ASSERT(m.nop_with_bulk_reply.data_len == 7);
@@ -32,7 +32,7 @@ void ipc_test(void) {
     m.type = NOP_WITH_BULK_MSG;
     m.nop_with_bulk.data = page;
     m.nop_with_bulk.data_len = sizeof(page);
-    err = ipc_call(INIT_TASK_TID, &m);
+    err = ipc_call(INIT_TASK, &m);
     TEST_ASSERT(err == OK);
     TEST_ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
 
@@ -40,7 +40,7 @@ void ipc_test(void) {
     m.type = NOP_WITH_BULK_MSG;
     m.nop_with_bulk.data = NULL;
     m.nop_with_bulk.data_len = 0;
-    err = ipc_call(INIT_TASK_TID, &m);
+    err = ipc_call(INIT_TASK, &m);
     TEST_ASSERT(err == OK);
     TEST_ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
 }

@@ -115,7 +115,7 @@ __noreturn void kmain(void) {
             MIN(sizeof(name), sizeof(bootelf->name)));
 
     // Create the first userland task.
-    struct task *task = task_lookup_unchecked(INIT_TASK_TID);
+    struct task *task = task_lookup_unchecked(INIT_TASK);
     ASSERT(task);
     error_t err = task_create(task, name, bootelf->entry, NULL, 0);
     ASSERT_OK(err);

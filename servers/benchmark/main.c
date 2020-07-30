@@ -36,7 +36,7 @@ void main(void) {
     for (int i = 0; i < NUM_ITERS; i++) {
         struct message m = { .type = NOP_MSG };
         cycles_t start = cycle_counter();
-        ipc_call(INIT_TASK_TID, &m);
+        ipc_call(INIT_TASK, &m);
         iters[i] = cycle_counter() - start;
     }
     print_stats("IPC round-trip", iters, NUM_ITERS);
@@ -56,7 +56,7 @@ void main(void) {
         m.nop_with_bulk.data_len = PAGE_SIZE;
 
         cycles_t start = cycle_counter();
-        ipc_call(INIT_TASK_TID, &m);
+        ipc_call(INIT_TASK, &m);
         iters[i] = cycle_counter() - start;
         ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
         free((void *) m.nop_with_bulk_reply.data);
@@ -78,7 +78,7 @@ void main(void) {
         m.nop_with_bulk.data_len = PAGE_SIZE;
 
         cycles_t start = cycle_counter();
-        ipc_call(INIT_TASK_TID, &m);
+        ipc_call(INIT_TASK, &m);
         iters[i] = cycle_counter() - start;
         ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
         free((void *) m.nop_with_bulk_reply.data);

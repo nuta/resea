@@ -25,7 +25,7 @@ static error_t call_pager(struct message *m) {
     if (__is_bootstrap()) {
         return call_self(m);
     } else {
-        return ipc_call(INIT_TASK_TID, m);
+        return ipc_call(INIT_TASK, m);
     }
 #endif
 }
