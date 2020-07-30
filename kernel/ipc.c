@@ -34,6 +34,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
     // Send a message.
     if (flags & IPC_SEND) {
         // Copy the message into the receiver's buffer.
+        // TODO: Do we still need to handle page faults here?
         struct message tmp_m;
         if (flags & IPC_KERNEL) {
             memcpy(&tmp_m, m, sizeof(struct message));
