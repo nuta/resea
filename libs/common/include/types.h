@@ -28,7 +28,6 @@ typedef char bool;
 #define NULL ((void *) 0)
 
 typedef __builtin_va_list va_list;
-
 #define offsetof(type, field)    __builtin_offsetof(type, field)
 #define is_constant(expr)        __builtin_constant_p(expr)
 #define va_start(ap, param)      __builtin_va_start(ap, param)
@@ -58,11 +57,10 @@ typedef __builtin_va_list va_list;
         (__a < __b) ? __a : __b;                                               \
     })
 
+// Error values. Don't forget to update `error_names` as well!
 typedef int error_t;
 #define IS_ERROR(err) ((err) < 0)
 #define IS_OK(err)    ((err) >= 0)
-
-// Error values. Don't forget to update `error_names` as well!
 #define OK                 (0)
 #define ERR_NO_MEMORY      (-1)
 #define ERR_NOT_PERMITTED  (-2)
@@ -81,6 +79,7 @@ typedef int error_t;
 #define ERR_TRY_AGAIN      (-15)
 #define ERR_END            (-16)
 
+// System call numbers.
 #define SYS_EXEC    1
 #define SYS_IPC     2
 #define SYS_LISTEN  3
@@ -98,8 +97,8 @@ typedef int error_t;
 #define MAP_W      (1 << 2)
 
 // IPC source task IDs.
-#define IPC_ANY     0  /* So-called "open receive". */
-#define IPC_DENY    -1 /* Blocked in the IPC send phase. Internally used by kernel. */
+#define IPC_ANY  0  /* So-called "open receive". */
+#define IPC_DENY -1 /* Blocked in the IPC send phase. Internally used by kernel. */
 
 // IPC options.
 #define IPC_SEND    (1 << 0)
@@ -107,14 +106,14 @@ typedef int error_t;
 #define IPC_CALL    (IPC_SEND | IPC_RECV)
 #define IPC_NOBLOCK (1 << 2)
 #define IPC_NOTIFY  (1 << 3)
-#define IPC_BULK    (1 << 4)
-#define IPC_KERNEL  (1 << 5) /* Internally used by kernel. */
+#define IPC_KERNEL  (1 << 4) /* Internally used by kernel. */
 
 // Flags in the message type (m->type).
 #define MSG_STR  (1 << 30)
 #define MSG_BULK (1 << 29)
 #define MSG_ID(type) ((type) & 0xffff)
 
+// Notifications.
 typedef uint8_t notifications_t;
 #define NOTIFY_TIMER    (1 << 0)
 #define NOTIFY_IRQ      (1 << 1)
