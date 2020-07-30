@@ -19,12 +19,13 @@ static inline void panic_lock(void) {}
 const char *__program_name(void);
 
 // ANSI escape sequences (SGR).
-#define SGR_ERR     "\e[1;91m"  // Bold red.
-#define SGR_WARN    "\e[0;33m"  // Yellow.
-#define SGR_INFO    "\e[0;96m"  // Cyan.
-#define SGR_DEBUG   "\e[1;32m"  // Bold green.
-#define SGR_DPRINTK "\e[1m"     // Bold.
-#define SGR_RESET   "\e[0m"
+#define SGR_ERR      "\e[1;91m"  // Bold red.
+#define SGR_WARN     "\e[0;33m"  // Yellow.
+#define SGR_WARN_DBG "\e[1;33m"  // Bold yellow.
+#define SGR_INFO     "\e[0;96m"  // Cyan.
+#define SGR_DEBUG    "\e[1;32m"  // Bold green.
+#define SGR_DPRINTK  "\e[1m"     // Bold.
+#define SGR_RESET    "\e[0m"
 
 #define TRACE(fmt, ...)                                                        \
     do {                                                                       \
@@ -46,6 +47,12 @@ const char *__program_name(void);
 #define WARN(fmt, ...)                                                         \
     do {                                                                       \
         printf(SGR_WARN "[%s] WARN: " fmt SGR_RESET "\n", __program_name(),    \
+               ##__VA_ARGS__);                                                 \
+    } while (0)
+
+#define WARN_DBG(fmt, ...)                                                     \
+    do {                                                                       \
+        printf(SGR_WARN_DBG "[%s] WARN: " fmt SGR_RESET "\n", __program_name(),\
                ##__VA_ARGS__);                                                 \
     } while (0)
 
@@ -151,6 +158,8 @@ const char *__program_name(void);
 #    define DEBUG_ASSERT(expr)
 #    undef TRACE
 #    define TRACE(fmt, ...)
+#    undef WARN_DBG
+#    define WARN_DBG(fmt, ...)
 #endif
 
 #endif
