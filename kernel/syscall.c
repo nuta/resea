@@ -39,38 +39,46 @@ static void strncpy_from_user(char *dst, userptr_t src, size_t max_len) {
 }
 
 
-/// Initializes and starts a task.
-static error_t sys_spawn(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
-                         unsigned flags) {
+/// Starts or deletes a task based on the parameters:
+///
+///    tid < 0: Return the current task ID.
+///    tid == 0: Exit the current task (won't return).
+///    tid > 0 && pager > 0: Starts a task.
+///    tid > 0 && pager < 0: Deletes a task.
+///    tid > 0 && pager == 0: ERR_INVALID_ARG
+///
+static error_t sys_exec(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
+                        unsigned flags) {
+    if (tid < 0) {
+        // Return the current task ID.
+        return CURRENT->tid;
+    }
+
+    if (!tid) {
+        // Exit the current task.
+        task_exit(EXP_GRACE_EXIT);
+        UNREACHABLE();
+    }
+
     struct task *task = task_lookup_unchecked(tid);
     if (!task || task == CURRENT) {
         return ERR_INVALID_ARG;
     }
 
-    struct task *pager_task = task_lookup(pager);
-    if (!pager_task) {
-        return ERR_INVALID_ARG;
+    if (pager >= 0) {
+        // Create a task. We handle pager == 0 as an error here.
+        struct task *pager_task = task_lookup(pager);
+        if (!pager_task) {
+            return ERR_INVALID_ARG;
+        }
+
+        char namebuf[CONFIG_TASK_NAME_LEN];
+        strncpy_from_user(namebuf, name, sizeof(namebuf));
+        return task_create(task, namebuf, ip, pager_task, flags);
+    } else {
+        // Destroys a task.
+        return task_destroy(task);
     }
-
-    // Create a task.
-    char namebuf[CONFIG_TASK_NAME_LEN];
-    strncpy_from_user(namebuf, name, sizeof(namebuf));
-    return task_create(task, namebuf, ip, pager_task, flags);
-}
-
-/// Kills a task.
-static error_t sys_kill(task_t tid) {
-    if (!tid) {
-        task_exit(EXP_GRACE_EXIT);
-        UNREACHABLE();
-    }
-
-    struct task *task = task_lookup(tid);
-    if (!task || task == CURRENT) {
-        return ERR_INVALID_ARG;
-    }
-
-    return task_destroy(task);
 }
 
 /// Sets task's timer and updates an IRQ ownership. Note that `irq` is 1-based:
@@ -88,9 +96,7 @@ static task_t sys_listen(msec_t timeout, int irq) {
         }
     }
 
-    // FIXME: Returning the task ID look weird. We should add a system call which
-    // returns the task's environment (including `uname(2)`-like string, etc.).
-    return CURRENT->tid;
+    return OK;
 }
 
 /// Send/receive IPC messages and notifications.
@@ -218,11 +224,8 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
 
     long ret;
     switch (n) {
-        case SYS_SPAWN:
-            ret = sys_spawn(a1, a2, a3, a4, a5);
-            break;
-        case SYS_KILL:
-            ret = sys_kill(a1);
+        case SYS_EXEC:
+            ret = sys_exec(a1, a2, a3, a4, a5);
             break;
         case SYS_IPC:
             ret = sys_ipc(a1, a2, a3, a4);

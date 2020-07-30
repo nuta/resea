@@ -81,11 +81,10 @@ typedef int error_t;
 #define ERR_TRY_AGAIN      (-15)
 #define ERR_END            (-16)
 
-#define SYS_SPAWN   1
-#define SYS_KILL    2
+#define SYS_EXEC    1
+#define SYS_IPC     2
 #define SYS_LISTEN  3
-#define SYS_IPC     4
-#define SYS_MAP     5
+#define SYS_MAP     4
 #define SYS_PRINT   6
 #define SYS_KDEBUG  7
 

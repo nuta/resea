@@ -4,13 +4,9 @@
 #include <arch/syscall.h>
 #include <types.h>
 
-static inline error_t sys_spawn(task_t tid, const char *name, vaddr_t ip,
-                                task_t pager, unsigned flags) {
-    return syscall(SYS_SPAWN, tid, (uintptr_t) name, ip, pager, flags);
-}
-
-static inline error_t sys_kill(task_t task) {
-    return syscall(SYS_KILL, task, 0, 0, 0, 0);
+static inline task_t sys_exec(task_t tid, const char *name, vaddr_t ip,
+                              task_t pager, unsigned flags) {
+    return syscall(SYS_EXEC, tid, (uintptr_t) name, ip, pager, flags);
 }
 
 static inline task_t sys_listen(msec_t timeout, int irq) {
