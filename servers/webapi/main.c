@@ -2,6 +2,7 @@
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/map.h>
+#include <resea/async.h>
 #include <string.h>
 #include <vprintf.h>
 #include "webapi.h"
@@ -125,9 +126,8 @@ void main(void) {
 
         switch (m.type) {
             case NOTIFICATIONS_MSG: {
-                if (m.notifications.data & NOTIFY_NEW_DATA) {
-                    m.type = TCPIP_PULL_MSG;
-                    ASSERT_OK(ipc_call(tcpip_server, &m));
+                if (m.notifications.data & NOTIFY_ASYNC) {
+                    ASSERT_OK(async_recv(tcpip_server, &m));
                     switch (m.type) {
                         case TCPIP_RECEIVED_MSG: {
                             DBG("new data");

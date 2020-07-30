@@ -19,15 +19,9 @@ struct client {
     tcp_sock_t sock;
 };
 
-struct pending {
-    list_elem_t next;
-    struct message m;
-};
-
 static unsigned next_driver_id = 0;
 static list_t drivers;
 static list_t pending_events;
-static list_t pending_msgs;
 static msec_t uptime = 0;
 
 static struct driver *get_driver_by_tid(task_t tid) {
@@ -57,32 +51,30 @@ static void transmit(device_t device, mbuf_t pkt) {
 }
 
 static error_t do_process_event(struct event *e) {
-    struct pending *pending = malloc(sizeof(*pending));
+    struct message m;
+    bzero(&m, sizeof(m));
     switch (e->type) {
         case TCP_NEW_CLIENT: {
             tcp_sock_t sock = e->tcp_new_client.listen_sock;
-
-            pending->m.type = TCPIP_NEW_CLIENT_MSG;
-            pending->m.tcpip_new_client.handle = sock->client->handle;
-            ipc_notify(sock->client->task, NOTIFY_NEW_DATA);
+            m.type = TCPIP_NEW_CLIENT_MSG;
+            m.tcpip_new_client.handle = sock->client->handle;
+            async_send(sock->client->task, &m);
             break;
         }
         case TCP_RECEIVED: {
             tcp_sock_t sock = e->tcp_received.sock;
             if (!sock->client) {
                 // Not yet accepted by the owner task.
-                free(pending);
                 return ERR_NOT_FOUND;
             }
 
-            pending->m.type = TCPIP_RECEIVED_MSG;
-            pending->m.tcpip_received.handle = sock->client->handle;
-            ipc_notify(sock->client->task, NOTIFY_NEW_DATA);
+            m.type = TCPIP_RECEIVED_MSG;
+            m.tcpip_received.handle = sock->client->handle;
+            async_send(sock->client->task, &m);
+            break;
         }
     }
 
-    // TODO: Use client-local queues.
-    list_push_back(&pending_msgs, &pending->next);
     return OK;
 }
 
@@ -156,7 +148,6 @@ msec_t sys_uptime(void) {
 void main(void) {
     TRACE("starting...");
     list_init(&pending_events);
-    list_init(&pending_msgs);
     list_init(&drivers);
 
     // Initialize the TCP/IP protocol stack.
@@ -264,17 +255,6 @@ void main(void) {
                 m.type = TCPIP_REGISTER_DEVICE_REPLY_MSG;
                 ipc_reply(m.src, &m);
                 break;
-            case TCPIP_PULL_MSG: {
-                struct pending *pending =
-                    LIST_POP_FRONT(&pending_msgs, struct pending, next);
-                if (!pending) {
-                    ipc_reply_err(m.src, ERR_EMPTY);
-                }
-
-                ipc_reply(m.src, &pending->m);
-                free(pending);
-                break;
-            }
             case NET_RX_MSG: {
                 struct driver *driver = get_driver_by_tid(m.src);
                 if (!driver) {
