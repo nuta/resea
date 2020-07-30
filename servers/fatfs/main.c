@@ -59,8 +59,6 @@ void main(void) {
         switch (m.type) {
             case FS_OPEN_MSG: {
                 struct fat_file *file = malloc(sizeof(*file));
-                // TODO: Ensure path is null-terminated.
-
                 error_t err = fat_open(&fs, file, m.fs_open.path);
                 if (IS_ERROR(err)) {
                     free(file);
