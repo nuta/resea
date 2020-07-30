@@ -115,11 +115,11 @@ typedef int error_t;
 #define MSG_BULK (1 << 29)
 #define MSG_ID(type) ((type) & 0xffff)
 
-typedef uint64_t notifications_t;
-#define NOTIFY_TIMER    (1ULL << 0)
-#define NOTIFY_IRQ      (1ULL << 1)
-#define NOTIFY_ABORTED  (1ULL << 2)
-#define NOTIFY_ASYNC    (1ULL << 3)
+typedef uint8_t notifications_t;
+#define NOTIFY_TIMER    (1 << 0)
+#define NOTIFY_IRQ      (1 << 1)
+#define NOTIFY_ABORTED  (1 << 2)
+#define NOTIFY_ASYNC    (1 << 3)
 
 // TODO: Migrate into error_t
 enum exception_type {
