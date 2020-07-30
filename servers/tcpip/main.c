@@ -219,7 +219,7 @@ void main(void) {
 
                 m.type = TCPIP_ACCEPT_REPLY_MSG;
                 m.tcpip_accept_reply.new_handle = new_sock->client->handle;
-                ipc_send(m.src, &m);
+                ipc_reply(m.src, &m);
                 break;
             }
             case TCPIP_READ_MSG: {

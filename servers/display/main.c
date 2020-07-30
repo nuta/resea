@@ -82,7 +82,7 @@ void main(void) {
                 m.type = TEXTSCREEN_GET_SIZE_REPLY_MSG;
                 m.textscreen_get_size_reply.width = SCREEN_WIDTH;
                 m.textscreen_get_size_reply.height = SCREEN_HEIGHT;
-                ipc_send(m.src, &m);
+                ipc_reply(m.src, &m);
                 break;
             }
             default:
