@@ -38,16 +38,23 @@ error_t async_recv(task_t src, struct message *m) {
 }
 
 error_t async_reply(task_t dst) {
+    bool sent = false;
     LIST_FOR_EACH (am, get_queue(dst), struct async_message, next) {
         if (am->dst == dst) {
-            ipc_reply(am->dst, &am->m);
-            list_remove(&am->next);
-            free(am);
-            return OK;
+            if (sent) {
+                // Notify that we have more messages for `dst`.
+                ipc_notify(dst, NOTIFY_ASYNC);
+            } else {
+                ipc_reply(dst, &am->m);
+                list_remove(&am->next);
+                free(am);
+                sent = true;
+            }
         }
     }
 
-    // No queued messages asynchronously sent to `dst`.
-    return ERR_NOT_FOUND;
+    // Return ER_NOT_FOUND if there're no messages asynchronously sent to `dst`
+    // in the queue.
+    return (sent) ? OK : ERR_NOT_FOUND;
 }
 
