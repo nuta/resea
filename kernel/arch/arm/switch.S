@@ -37,6 +37,4 @@ arm_task_switch:
 arm_start_task:
     bl stack_set_canary
     pop {r0}
-    movs r1, #1
-    orrs r0, r1
     bx r0

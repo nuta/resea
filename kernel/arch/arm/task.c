@@ -15,7 +15,7 @@ static void init_stack(struct task *task, vaddr_t pc) {
     // always runs the kernel code in the handler mode because of exceptions
     // (e.g. timer interrupts and system calls).
     *--sp = 1 << 24; // psr
-    *--sp = pc | 1; // pc
+    *--sp = pc & ~1; // pc: LSB should be cleared when returning from the exception
     *--sp = 0; // lr
     *--sp = 0; // r12
     *--sp = 0; // r3
