@@ -4,7 +4,6 @@
 #include <vprintf.h>
 
 static struct klog klog;
-static struct task *listener = NULL;
 
 /// Reads the kernel log buffer.
 size_t klog_read(char *buf, size_t buf_len) {
@@ -31,10 +30,6 @@ void klog_write(char ch) {
     if (klog.head == klog.tail) {
         // The buffer is full. Discard a character by moving the tail.
         klog.tail = (klog.tail + 1) % CONFIG_KLOG_BUF_SIZE;
-    }
-
-    if (ch == '\n' && listener) {
-        notify(listener, NOTIFY_NEW_DATA);
     }
 }
 
