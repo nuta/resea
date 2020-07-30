@@ -161,6 +161,13 @@ error_t ipc_replyrecv(task_t dst, struct message *m) {
     return post_recv(err, m);
 }
 
+error_t ipc_serve(const char *name) {
+    struct message m;
+    m.type = SERVE_MSG;
+    m.serve.name = name;
+    return call_pager(&m);
+}
+
 task_t ipc_lookup(const char *name) {
     struct message m;
     m.type = LOOKUP_MSG;
@@ -171,5 +178,6 @@ task_t ipc_lookup(const char *name) {
         return err;
     }
 
+    ASSERT_OK(m.type == LOOKUP_REPLY_MSG);
     return m.lookup_reply.task;
 }

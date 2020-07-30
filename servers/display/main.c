@@ -55,6 +55,8 @@ void main(void) {
     paddr_t paddr;
     screen = io_alloc_pages(1, 0xb8000, &paddr);
 
+    ASSERT_OK(ipc_serve("display"));
+
     // The mainloop: receive and handle messages.
     INFO("ready");
     while (true) {

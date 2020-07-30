@@ -13,6 +13,7 @@ error_t ipc_recv(task_t src, struct message *m);
 error_t ipc_call(task_t dst, struct message *m);
 error_t ipc_send_err(task_t dst, error_t error);
 error_t ipc_replyrecv(task_t dst, struct message *m);
+error_t ipc_serve(const char *name);
 task_t ipc_lookup(const char *name);
 
 #endif

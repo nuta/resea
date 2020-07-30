@@ -304,7 +304,7 @@ void main(void) {
     display_server = ipc_lookup("display");
     ASSERT_OK(display_server);
 
-    kbd_server = ipc_lookup("ps2kbd");
+    kbd_server = ipc_lookup("kbd");
     ASSERT_OK(kbd_server);
 
     struct message m;

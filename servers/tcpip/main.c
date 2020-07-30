@@ -167,6 +167,7 @@ void main(void) {
 
     error_t err = timer_set(TIMER_INTERVAL);
     ASSERT_OK(err);
+    ASSERT_OK(ipc_serve("tcpip"));
 
     // The mainloop: receive and handle messages.
     INFO("ready");

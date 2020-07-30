@@ -318,6 +318,6 @@ ssize_t fs_write(struct file *file, const void *buf, size_t len) {
 }
 
 void fs_init(void) {
-    fs_server = ipc_lookup("tarfs");
+    fs_server = ipc_lookup("fs");
     ASSERT_OK(fs_server);
 }

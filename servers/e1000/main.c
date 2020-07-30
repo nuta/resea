@@ -55,6 +55,8 @@ void main(void) {
     tcpip_tid = ipc_lookup("tcpip");
     ASSERT_OK(tcpip_tid);
 
+    ASSERT_OK(ipc_serve("net"));
+
     // Register this driver.
     struct message m;
     m.type = TCPIP_REGISTER_DEVICE_MSG;

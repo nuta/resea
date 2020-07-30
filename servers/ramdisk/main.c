@@ -9,6 +9,7 @@ extern uint8_t __image[];
 extern uint8_t __image_end[];
 
 void main(void) {
+    ASSERT_OK(ipc_serve("disk"));
     TRACE("ready");
     size_t disk_size = (uintptr_t) __image_end - (uintptr_t) __image;
     while (true) {

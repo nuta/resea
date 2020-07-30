@@ -112,6 +112,7 @@ void main(void) {
     TRACE("starting...");
     list_init(&files);
     load_all_files();
+    ASSERT_OK(ipc_serve("fs"));
 
     TRACE("ready");
     while (true) {

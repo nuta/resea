@@ -21,6 +21,8 @@ struct page_area {
     size_t num_pages;
 };
 
+#define SERVICE_NAME_LEN 32
+
 /// Task Control Block (TCB).
 struct task {
     bool in_use;
@@ -40,11 +42,19 @@ struct task {
     list_t bulk_sender_queue;
     list_elem_t bulk_sender_next;
     struct message bulk_sender_m;
+    char waiting_for[SERVICE_NAME_LEN];
+};
+
+struct service {
+    list_elem_t next;
+    char name[SERVICE_NAME_LEN];
+    task_t task;
 };
 
 static struct task tasks[CONFIG_NUM_TASKS];
 static struct bootfs_file *files;
 static unsigned num_files;
+static list_t services;
 
 static paddr_t alloc_pages(struct task *task, vaddr_t vaddr, size_t num_pages);
 
@@ -86,6 +96,7 @@ static void init_task_struct(struct task *task, const char *name,
     list_init(&task->bulk_sender_queue);
     list_nullify(&task->bulk_sender_next);
     strncpy(task->name, name, sizeof(task->name));
+    strncpy(task->waiting_for, "", sizeof(task->waiting_for));
     list_init(&task->page_areas);
 }
 
@@ -538,26 +549,61 @@ static void handle_message(const struct message *m) {
             ipc_reply(task->tid, &r);
             break;
         }
-        case LOOKUP_MSG: {
-            char *name = (char *) m->lookup.name;
-            struct task *task = NULL;
+        case SERVE_MSG: {
+            struct service *service = malloc(sizeof(*service));
+            service->task = m->src;
+            strncpy(service->name, m->serve.name, sizeof(service->name));
+            list_nullify(&service->next);
+            list_push_back(&services, &service->next);
+
+            r.type = SERVE_REPLY_MSG;
+            ipc_reply(m->src, &r);
+
             for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
-                if (tasks[i].in_use && !strcmp(tasks[i].name, name)) {
-                    task = &tasks[i];
+                struct task *task = &tasks[i];
+                if (!strcmp(task->waiting_for, service->name)) {
+                    bzero(&r, sizeof(r));
+                    r.type = LOOKUP_REPLY_MSG;
+                    r.lookup_reply.task = service->task;
+                    ipc_reply(task->tid, &r);
+
+                    // The task no longer wait for the service. Clear the field.
+                    strncpy(task->waiting_for, "", sizeof(task->waiting_for));
+                }
+            }
+
+            free((void *) m->serve.name);
+            break;
+        }
+        case LOOKUP_MSG: {
+            struct service *service = NULL;
+            LIST_FOR_EACH (s, &services, struct service, next) {
+                if (!strcmp(s->name, m->lookup.name)) {
+                    service = s;
                     break;
                 }
             }
 
-            free(name);
-            if (!task) {
-                WARN("Failed to locate the task named '%s'", name);
-                ipc_reply_err(m->src, ERR_NOT_FOUND);
+            if (service) {
+                r.type = LOOKUP_REPLY_MSG;
+                r.lookup_reply.task = service->task;
+                ipc_reply(m->src, &r);
+                free((void *) m->lookup.name);
                 break;
             }
 
-            r.type = LOOKUP_REPLY_MSG;
-            r.lookup_reply.task = task->tid;
-            ipc_reply(m->src, &r);
+            // The service is not yet available. Block the caller task until the
+            // server is registered by `ipc_serve()`.
+            struct task *task = get_task_by_tid(m->src);
+            if (!task) {
+                ipc_reply_err(m->src, ERR_NOT_FOUND);
+                free((void *) m->lookup.name);
+                break;
+            }
+
+            strncpy(task->waiting_for, m->lookup.name, sizeof(task->waiting_for));
+            DBG("WAIT: %s for %s", task->name, task->waiting_for);
+            free((void *) m->lookup.name);
             break;
         }
         case ALLOC_PAGES_MSG: {
@@ -614,6 +660,7 @@ void main(void) {
     files =
         (struct bootfs_file *) (((uintptr_t) &__bootfs) + header->files_off);
     pages_init();
+    list_init(&services);
 
     for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
         tasks[i].in_use = false;

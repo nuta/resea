@@ -90,7 +90,7 @@ static int acquire(struct file *file) {
     }
 
     tty_inode = file->inode;
-    kbd_server = ipc_lookup("ps2kbd");
+    kbd_server = ipc_lookup("kbd");
     ASSERT_OK(kbd_server);
     display_server = ipc_lookup("display");
     ASSERT_OK(display_server);

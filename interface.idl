@@ -14,6 +14,7 @@ rpc do_bulkcopy(dst: task, addr: vaddr, len: size)-> (id: vaddr);
 rpc verify_bulkcopy(src: task, id: vaddr, len: size)-> (received_at: vaddr);
 rpc nop(value: int) -> (value: int);
 rpc nop_with_bulk(data: bytes) -> (data: bytes);
+rpc serve(name: str) -> ();
 rpc lookup(name: str) -> (task: task);
 rpc launch_task(name: str) -> (task: task);
 rpc alloc_pages(num_pages: size, paddr: paddr) -> (vaddr: vaddr, paddr: paddr);

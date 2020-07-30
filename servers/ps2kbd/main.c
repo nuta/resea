@@ -99,6 +99,7 @@ void main(void) {
 
     err = irq_acquire(KEYBOARD_IRQ);
     ASSERT_OK(err);
+    ASSERT_OK(ipc_serve("kbd"));
 
     // The mainloop: receive and handle messages.
     INFO("ready");

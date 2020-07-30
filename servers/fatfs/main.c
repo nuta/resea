@@ -28,7 +28,7 @@ void main(void) {
     TRACE("starting...");
     clients = map_new();
 
-    ramdisk_server = ipc_lookup("ramdisk");
+    ramdisk_server = ipc_lookup("disk");
     ASSERT_OK(ramdisk_server);
 
     struct fat fs;
@@ -46,6 +46,8 @@ void main(void) {
         DBG("/%s", tmp);
     }
     DBG("---------------------------------------------------");
+
+    ASSERT_OK(ipc_serve("fs"));
 
     TRACE("ready");
     while (true) {
