@@ -124,7 +124,6 @@ typedef uint8_t notifications_t;
 // TODO: Migrate into error_t
 enum exception_type {
     EXP_GRACE_EXIT,
-    EXP_NO_KERNEL_MEMORY,
     EXP_INVALID_MSG_FROM_PAGER,
     EXP_INVALID_MEMORY_ACCESS,
     EXP_INVALID_OP,
