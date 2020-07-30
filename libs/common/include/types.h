@@ -134,7 +134,7 @@ enum exception_type {
 
 /// The kernel sends messages (e.g. EXCEPTION_MSG and PAGE_FAULT_MSG) as this
 /// task ID.
-#define KERNEL_TASK_TID 0
+#define KERNEL_TASK 0
 /// The initial task ID.
 #define INIT_TASK_TID 1
 

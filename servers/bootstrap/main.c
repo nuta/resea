@@ -504,7 +504,7 @@ static void handle_message(const struct message *m) {
             ipc_reply(m->src, &r);
             break;
         case EXCEPTION_MSG: {
-            if (m->src != KERNEL_TASK_TID) {
+            if (m->src != KERNEL_TASK) {
                 WARN("forged exception message from #%d, ignoring...",
                      m->src);
                 break;
@@ -525,7 +525,7 @@ static void handle_message(const struct message *m) {
             break;
         }
         case PAGE_FAULT_MSG: {
-            if (m->src != KERNEL_TASK_TID) {
+            if (m->src != KERNEL_TASK) {
                 WARN("forged page fault message from #%d, ignoring...",
                      m->src);
                 break;

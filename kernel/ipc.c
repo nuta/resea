@@ -68,7 +68,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
         // sending from here: don't return an error or cause a page fault!
 
         // Copy the message.
-        tmp_m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_TID : CURRENT->tid;
+        tmp_m.src = (flags & IPC_KERNEL) ? KERNEL_TASK : CURRENT->tid;
         memcpy(&dst->m, &tmp_m, sizeof(dst->m));
 
         // Resume the receiver task.
@@ -87,7 +87,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
             // Receive pending notifications as a message.
             bzero(&tmp_m, sizeof(tmp_m));
             tmp_m.type = NOTIFICATIONS_MSG;
-            tmp_m.src = KERNEL_TASK_TID;
+            tmp_m.src = KERNEL_TASK;
             tmp_m.notifications.data = CURRENT->notifications;
             CURRENT->notifications = 0;
         } else {
@@ -174,7 +174,7 @@ void notify(struct task *dst, notifications_t notifications) {
     if (dst->state == TASK_BLOCKED && dst->src == IPC_ANY) {
         // Send a NOTIFICATIONS_MSG message immediately.
         dst->m.type = NOTIFICATIONS_MSG;
-        dst->m.src = KERNEL_TASK_TID;
+        dst->m.src = KERNEL_TASK;
         dst->m.notifications.data = dst->notifications | notifications;
         dst->notifications = 0;
         task_resume(dst);
