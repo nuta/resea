@@ -139,6 +139,7 @@ static void help_command(__unused int argc, __unused char **argv) {
     logputstr("help   -  Print this message.\n");
     logputstr("echo   -  Print strings.\n");
     logputstr("clear  -  Clear the screen.\n");
+    logputstr("log    -  Read the kernel log.\n");
 }
 
 static void log_command(__unused int argc, __unused char **argv) {
