@@ -30,9 +30,7 @@ static error_t call_pager(struct message *m) {
 #endif
 }
 
-static void pre_send(task_t dst, struct message *m, void **saved_bulk_ptr) {
-    *saved_bulk_ptr = m->bulk_ptr;
-
+static void pre_send(task_t dst, struct message *m) {
 #ifndef CONFIG_NOMMU
     if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
         if (m->type & MSG_STR) {
@@ -53,11 +51,7 @@ static void pre_send(task_t dst, struct message *m, void **saved_bulk_ptr) {
 #endif
 }
 
-static void post_send_only(struct message *m, void **saved_bulk_ptr) {
-    m->bulk_ptr = *saved_bulk_ptr;
-}
-
- static void pre_recv(void) {
+static void pre_recv(void) {
 #ifndef CONFIG_NOMMU
     if (!bulk_ptr) {
         bulk_ptr = malloc(bulk_len);
@@ -112,18 +106,18 @@ static void post_send_only(struct message *m, void **saved_bulk_ptr) {
  }
 
 error_t ipc_send(task_t dst, struct message *m) {
-    void *saved_bulk_ptr;
-    pre_send(dst, m, &saved_bulk_ptr);
+    void *saved_bulk_ptr = m->bulk_ptr;
+    pre_send(dst, m);
     error_t err = sys_ipc(dst, 0, m, IPC_SEND);
-    post_send_only(m, &saved_bulk_ptr);
+    m->bulk_ptr = saved_bulk_ptr;
     return err;
 }
 
 error_t ipc_send_noblock(task_t dst, struct message *m) {
-    void *saved_bulk_ptr;
-    pre_send(dst, m, &saved_bulk_ptr);
+    void *saved_bulk_ptr = m->bulk_ptr;
+    pre_send(dst, m);
     error_t err = sys_ipc(dst, 0, m, IPC_SEND | IPC_NOBLOCK);
-    post_send_only(m, &saved_bulk_ptr);
+    m->bulk_ptr = saved_bulk_ptr;
     return err;
 }
 
@@ -155,17 +149,15 @@ error_t ipc_recv(task_t src, struct message *m) {
 }
 
 error_t ipc_call(task_t dst, struct message *m) {
-    void *saved_bulk_ptr;
     pre_recv();
-    pre_send(dst, m, &saved_bulk_ptr);
+    pre_send(dst, m);
     error_t err = sys_ipc(dst, dst, m, IPC_CALL);
     return post_recv(err, m);
 }
 
 error_t ipc_replyrecv(task_t dst, struct message *m) {
-    void *saved_bulk_ptr;
     pre_recv();
-    pre_send(dst, m, &saved_bulk_ptr);
+    pre_send(dst, m);
     unsigned flags = (dst < 0) ? IPC_RECV : (IPC_SEND | IPC_RECV | IPC_NOBLOCK);
     error_t err = sys_ipc(dst, IPC_ANY, m, flags);
     return post_recv(err, m);
