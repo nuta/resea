@@ -3,12 +3,9 @@
 
 #include <types.h>
 
-#define HANDLES_MAX 128
-
-void handle_init(void);
-handle_t handle_alloc(void);
-void *handle_get(handle_t handle);
-void handle_set(handle_t handle, void *data);
-void handle_free(handle_t handle);
+handle_t handle_alloc(task_t owner);
+void *handle_get(task_t owner, handle_t handle);
+void handle_set(task_t owner, handle_t handle, void *data);
+void handle_free(task_t owner, handle_t handle);
 
 #endif

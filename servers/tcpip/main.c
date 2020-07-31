@@ -190,8 +190,8 @@ void main(void) {
                 sock->client = malloc(sizeof(*sock->client));
                 sock->client->sock = sock;
                 sock->client->task = m.src;
-                sock->client->handle = handle_alloc();
-                handle_set(sock->client->handle, sock->client);
+                sock->client->handle = handle_alloc(m.src);
+                handle_set(m.src, sock->client->handle, sock->client);
 
                 m.type = TCPIP_LISTEN_REPLY_MSG;
                 m.tcpip_listen_reply.handle = sock->client->handle;
@@ -199,7 +199,7 @@ void main(void) {
                 break;
             }
             case TCPIP_ACCEPT_MSG: {
-                struct client *c = handle_get(m.tcpip_accept.handle);
+                struct client *c = handle_get(m.src, m.tcpip_accept.handle);
                 if (!c) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
@@ -214,8 +214,8 @@ void main(void) {
                 new_sock->client = malloc(sizeof(*new_sock->client));
                 new_sock->client->sock = new_sock;
                 new_sock->client->task = m.src;
-                new_sock->client->handle = handle_alloc();
-                handle_set(new_sock->client->handle, new_sock->client);
+                new_sock->client->handle = handle_alloc(m.src);
+                handle_set(m.src, new_sock->client->handle, new_sock->client);
 
                 m.type = TCPIP_ACCEPT_REPLY_MSG;
                 m.tcpip_accept_reply.new_handle = new_sock->client->handle;
@@ -224,7 +224,7 @@ void main(void) {
             }
             case TCPIP_READ_MSG: {
                 size_t max_len = MIN(4096, m.tcpip_read.len);
-                struct client *c = handle_get(m.tcpip_read.handle);
+                struct client *c = handle_get(m.src, m.tcpip_read.handle);
                 if (!c) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;
@@ -239,7 +239,7 @@ void main(void) {
                 break;
             }
             case TCPIP_WRITE_MSG: {
-                struct client *c = handle_get(m.tcpip_write.handle);
+                struct client *c = handle_get(m.src, m.tcpip_write.handle);
                 if (!c) {
                     ipc_send_err(m.src, ERR_INVALID_ARG);
                     break;

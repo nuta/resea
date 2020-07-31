@@ -9,5 +9,4 @@ extern char __bss_end[];
 void resea_init(void) {
     memset(__bss, 0, (vaddr_t) __bss_end - (vaddr_t) __bss);
     malloc_init();
-    handle_init();
 }
