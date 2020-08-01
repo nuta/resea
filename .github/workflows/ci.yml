@@ -26,7 +26,7 @@ jobs:
           - os: ubuntu-20.04
             TARGET: arm_release
           - os: ubuntu-20.04
-           TARGET: minlin
+            TARGET: minlin
           - os: macos-latest
             TARGET: x64
     steps:
