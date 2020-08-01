@@ -3,7 +3,7 @@ import argparse
 import struct
 from elftools.elf.elffile import ELFFile
 
-PAGE_SIZE = 0x1000
+PAGE_SIZE = 0x1000 # FIXME: This could be other values.
 BOOTELF_PRE_MAGIC = b"00BOOT\xe1\xff"
 BOOTELF_MAGIC = b"11BOOT\xe1\xff"
 
