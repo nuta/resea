@@ -128,8 +128,8 @@ void main(void) {
                     break;
                 }
 
-                handle_t handle = handle_alloc();
-                handle_set(handle, file);
+                handle_t handle = handle_alloc(m.src);
+                handle_set(m.src, handle, file);
                 m.type = FS_OPEN_REPLY_MSG;
                 m.fs_open_reply.handle = handle;
                 ipc_reply(m.src, &m);
@@ -148,7 +148,7 @@ void main(void) {
                 break;
             }
             case FS_READ_MSG: {
-                struct file *file = handle_get(m.fs_read.handle);
+                struct file *file = handle_get(m.src, m.fs_read.handle);
                 if (!file) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;
