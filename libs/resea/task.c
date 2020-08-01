@@ -6,7 +6,7 @@ error_t task_create(task_t tid, const char *name, vaddr_t ip, task_t pager,
 }
 
 error_t task_destroy(task_t task) {
-    return sys_exec(task, NULL, 0, 0, 0);
+    return sys_exec(task, NULL, 0, -1, 0);
 }
 
 void task_exit(void) {
