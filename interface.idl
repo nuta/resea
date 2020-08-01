@@ -1,4 +1,5 @@
 oneway notifications(data: notifications);
+oneway invalid();
 oneway exception(task: task, exception: exception_type);
 rpc page_fault(task: task, vaddr: vaddr, ip: vaddr, fault: pagefault) -> ();
 

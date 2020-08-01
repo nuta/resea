@@ -30,6 +30,43 @@ static error_t call_pager(struct message *m) {
 #endif
 }
 
+static void accept_bulkcopy(vaddr_t ptr, size_t len) {
+    struct message m;
+    m.type = ACCEPT_BULKCOPY_MSG;
+    m.accept_bulkcopy.addr = ptr;
+    m.accept_bulkcopy.len = len;
+    error_t err = call_pager(&m);
+    ASSERT_OK(err);
+    ASSERT(m.type == ACCEPT_BULKCOPY_REPLY_MSG);
+}
+
+static vaddr_t do_bulkcopy(task_t dst, vaddr_t ptr, size_t len) {
+    struct message m;
+    m.type = DO_BULKCOPY_MSG;
+    m.do_bulkcopy.dst = dst;
+    m.do_bulkcopy.addr = ptr;
+    m.do_bulkcopy.len = len;
+    error_t err = call_pager(&m);
+    ASSERT_OK(err);
+    ASSERT(m.type == DO_BULKCOPY_REPLY_MSG);
+    return m.do_bulkcopy_reply.id;
+}
+
+static vaddr_t verify_bulkcopy(task_t src, vaddr_t ptr, size_t len) {
+    struct message m;
+    m.type = VERIFY_BULKCOPY_MSG;
+    m.verify_bulkcopy.src = src;
+    m.verify_bulkcopy.id = ptr;
+    m.verify_bulkcopy.len = len;
+    error_t err = call_pager(&m);
+    if (err != OK) {
+        return 0;
+    }
+
+    ASSERT(m.type == VERIFY_BULKCOPY_REPLY_MSG);
+    return m.verify_bulkcopy_reply.received_at;
+}
+
 static void pre_send(task_t dst, struct message *m) {
 #ifndef CONFIG_NOMMU
     if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
@@ -37,16 +74,7 @@ static void pre_send(task_t dst, struct message *m) {
             m->bulk_len = strlen(m->bulk_ptr) + 1;
         }
 
-        struct message m2;
-        m2.type = DO_BULKCOPY_MSG;
-        m2.do_bulkcopy.dst = dst;
-        m2.do_bulkcopy.addr = (vaddr_t) m->bulk_ptr;
-        m2.do_bulkcopy.len = m->bulk_len;
-        error_t err = call_pager(&m2);
-        OOPS_OK(err);
-        ASSERT(m2.type == DO_BULKCOPY_REPLY_MSG);
-
-        m->bulk_ptr = (void *) m2.do_bulkcopy_reply.id;
+        m->bulk_ptr = (void *) do_bulkcopy(dst, (vaddr_t) m->bulk_ptr, m->bulk_len);
     }
 #endif
 }
@@ -55,14 +83,7 @@ static void pre_recv(void) {
 #ifndef CONFIG_NOMMU
     if (!bulk_ptr) {
         bulk_ptr = malloc(bulk_len);
-
-        struct message m;
-        m.type = ACCEPT_BULKCOPY_MSG;
-        m.accept_bulkcopy.addr = (vaddr_t) bulk_ptr;
-        m.accept_bulkcopy.len = bulk_len;
-        error_t err = call_pager(&m);
-        ASSERT_OK(err);
-        ASSERT(m.type == ACCEPT_BULKCOPY_REPLY_MSG);
+        accept_bulkcopy((vaddr_t) bulk_ptr, bulk_len);
     }
 #endif
 }
@@ -70,23 +91,15 @@ static void pre_recv(void) {
  static error_t post_recv(error_t err, struct message *m) {
 #ifndef CONFIG_NOMMU
     if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
-
         // Received a bulk payload.
-        // TODO: add comment
-        struct message m2;
-        m2.type = VERIFY_BULKCOPY_MSG;
-        m2.verify_bulkcopy.src = m->src;
-        m2.verify_bulkcopy.id = (vaddr_t) m->bulk_ptr;
-        m2.verify_bulkcopy.len = m->bulk_len;
-        error_t err = call_pager(&m2);
-        OOPS_OK(err); // FIXME:
-        ASSERT(m2.type == VERIFY_BULKCOPY_REPLY_MSG);
-        if (err != OK) {
-            // FIXME: Use internal original error value to retry.
-            return ERR_TRY_AGAIN;
+        m->bulk_ptr = (void *) verify_bulkcopy(m->src, (vaddr_t) m->bulk_ptr,
+                                               m->bulk_len);
+        if (!m->bulk_ptr) {
+            WARN_DBG("received an invalid bulkcopy payload from #%d: %s",
+                     m->src, err2str(err));
+            m->type = INVALID_MSG;
+            return OK;
         }
-
-        m->bulk_ptr = (void *) m2.verify_bulkcopy_reply.received_at;
 
         // We've consumed `bulk_ptr` so set NULL to it
         // and reallocate the receiver buffer later.
