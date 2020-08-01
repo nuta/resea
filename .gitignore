@@ -11,3 +11,4 @@
 *.log
 *.tmp
 *.pyc
+/servers/*/target

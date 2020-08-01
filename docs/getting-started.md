@@ -21,6 +21,16 @@ $ apt install llvm-8 lld-8 clang-8 qemu bochs grub2 xorriso mtools \
     python3 python3-dev python3-pip python3-setuptools \
     gcc-arm-none-eabi
 $ pip3 install --user -r tools/requirements.txt
+$ cargo install cargo-xbuild
+```
+
+### Rust
+If you'd like to work on Rust applications, install Rust toolchain:
+
+1. Install [rustup](https://rustup.rs/).
+2. Install some cargo applications:
+```
+$ cargo install cargo-xbuild
 ```
 
 ## Building Resea
