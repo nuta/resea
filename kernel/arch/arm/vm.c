@@ -28,9 +28,7 @@ paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr) {
 void arch_memcpy_from_user(void *dst, userptr_t src, size_t len) {
     memcpy(dst, (void *) src, len);
 }
+
 void arch_memcpy_to_user(userptr_t dst, const void *src, size_t len) {
     memcpy((void *) dst, src, len);
-}
-void arch_strncpy_from_user(char *dst, userptr_t src, size_t max_len) {
-    strncpy(dst, (char *) src, max_len);
 }

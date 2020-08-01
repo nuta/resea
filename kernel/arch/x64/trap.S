@@ -381,59 +381,15 @@ switch_context:
 ///
 /// Copies a memory buffer from/to the user space. We don't check the validity
 /// of the user's addresses, instead, we handles a page fault occurred at
-/// `usercopy1` as a user's fault.
+/// `usercopy` as a user's fault.
 ///
 /// Note that caller MUST check that the memory range does not overlaps with the
 /// kernel sapce!
-.global arch_memcpy_from_user, arch_memcpy_to_user, usercopy1
+.global arch_memcpy_from_user, arch_memcpy_to_user, usercopy
 arch_memcpy_from_user:
 arch_memcpy_to_user:
     mov rcx, rdx
     cld
-usercopy1:
+usercopy:
     rep movsb
-    ret
-
-/// arch_strncpy_from_user(char *dst, vaddr_t src, size_t max_len);
-///
-/// Copies a NUL-terminated string from the user space. Unlike traditional
-/// strncpy, if max_len > 0, this function always set a NUL character at the end
-/// of the destination buffer even if max_len is less than or equals to the
-/// length of the source string.
-///
-/// We don't check the validity of the user's addresses, instead, we handles a
-/// page fault occurred at `usercopy2` as a user's fault.
-///
-/// Note that caller MUST check that the memory range does not overlaps with the
-/// kernel sapce!
-.global arch_strncpy_from_user, usercopy2
-arch_strncpy_from_user:
-    // Check if max_len > 0.
-    test rdx, rdx
-    jz 3f
-
-    mov rcx, rdx
-1:
-    // Does dst has more room?
-    test rcx, rcx
-    jz 2f
-
-usercopy2:
-    mov al, [rsi]
-    mov [rdi], al
-    add rdi, 1
-
-    // Is a NUL character?
-    test al, al
-    jz 2f
-
-    // Continue copying.
-    add rsi, 1
-    sub rcx, 1
-    jmp 1b
-
-2:
-    // Set a NUL character at the end of dst.
-    mov byte ptr [rdi - 1], 0
-3:
     ret

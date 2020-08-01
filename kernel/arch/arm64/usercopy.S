@@ -24,25 +24,3 @@ arm64_usercopy2:
     b    1b
 2:
     ret
-
-// void arch_strncpy_from_user(char *dst, userptr_t src, size_t max_len);
-.global arch_strncpy_from_user, arm64_usercopy3
-arch_strncpy_from_user:
-    cbz  x2, 3f // check if max_len > 0 (there's a room for '\0')
-1:
-    cmp  x2, 1
-    ble  2f
-arm64_usercopy3:
-    ldrb w4, [x1], #1
-    cbz  w4, 2f
-    strb w4, [x0], #1
-    sub  x2, x2, 1
-    b    1b
-
-2:
-    // Append '\0'.
-    mov   w4, 0
-    strb  w4, [x0]
-3:
-    ret
-

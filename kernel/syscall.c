@@ -28,16 +28,14 @@ void memcpy_to_user(userptr_t dst, const void *src, size_t len) {
     arch_memcpy_to_user(dst, src, len);
 }
 
-/// Copy a string terminated by NUL from the userspace. If the user's pointer is
-/// invalid, this function or the page fault handler kills the current task.
-static void strncpy_from_user(char *dst, userptr_t src, size_t max_len) {
-    if (is_kernel_addr_range(src, max_len)) {
-        task_exit(EXP_INVALID_MEMORY_ACCESS);
-    }
-
-    arch_strncpy_from_user(dst, src, max_len);
+// Copies bytes from the userspace. It doesn't care NUL characters: it simply
+// copies `len` bytes and set '\0' to the `len`-th byte. Thus, `dst` needs to
+// have `len + 1` bytes space. In case `len` is zero, caller MUST ensure that
+// `dst` has at least 1-byte space.
+static void strncpy_from_user(char *dst, userptr_t src, size_t len) {
+    memcpy_from_user(dst, src, len);
+    dst[len] = '\0';
 }
-
 
 /// Starts or deletes a task based on the parameters:
 ///
@@ -73,7 +71,7 @@ static error_t sys_exec(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
         }
 
         char namebuf[CONFIG_TASK_NAME_LEN];
-        strncpy_from_user(namebuf, name, sizeof(namebuf));
+        strncpy_from_user(namebuf, name, sizeof(namebuf) - 1);
         return task_create(task, namebuf, ip, pager_task, flags);
     } else {
         // Destroys a task.
@@ -141,16 +139,16 @@ static int sys_print(userptr_t buf, size_t buf_len) {
     return OK;
 }
 
-static int sys_kdebug(userptr_t cmdline, userptr_t buf, size_t len) {
-    char cmdline_buf[128];
-    strncpy_from_user(cmdline_buf, cmdline, sizeof(cmdline_buf));
+static int sys_kdebug(userptr_t cmd, size_t cmd_len, userptr_t buf, size_t buf_len) {
+    char cmd_buf[128];
+    strncpy_from_user(cmd_buf, cmd, MIN(sizeof(cmd_buf) - 1, cmd_len));
 
-    error_t err = kdebug_run(cmdline_buf);
+    error_t err = kdebug_run(cmd_buf);
     if (err != OK) {
         return err;
     }
 
-    size_t remaining = len;
+    size_t remaining = buf_len;
     while (remaining > 0) {
         char kbuf[256];
         int max_len = MIN(remaining, (int) sizeof(kbuf));
@@ -164,7 +162,7 @@ static int sys_kdebug(userptr_t cmdline, userptr_t buf, size_t len) {
         remaining -= read_len;
     }
 
-    return len - remaining;
+    return buf_len - remaining;
 }
 
 static paddr_t resolve_paddr(vaddr_t vaddr) {
@@ -240,7 +238,7 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             ret = sys_print(a1, a2);
             break;
         case SYS_KDEBUG:
-            ret = sys_kdebug(a1, a2, a3);
+            ret = sys_kdebug(a1, a2, a3, a4);
             break;
         default:
             ret = ERR_INVALID_ARG;

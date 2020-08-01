@@ -28,8 +28,9 @@ static inline error_t sys_print(const char *buf, size_t len) {
     return syscall(SYS_PRINT, (uintptr_t) buf, len, 0, 0, 0);
 }
 
-static inline error_t sys_kdebug(const char *cmdline, char *buf, size_t len) {
-    return syscall(SYS_KDEBUG, (uintptr_t) cmdline, (uintptr_t) buf, len, 0, 0);
+static inline error_t sys_kdebug(const char *cmd, size_t cmd_len, char *buf,
+                                 size_t buf_len) {
+    return syscall(SYS_KDEBUG, (uintptr_t) cmd, cmd_len, (uintptr_t) buf, buf_len, 0);
 }
 
 #endif

@@ -49,8 +49,7 @@ void arm64_handle_exception(void) {
              TRACE("Data Abort (kernel): far=%p, elr=%p", far, elr);
 #endif
             if (elr != (vaddr_t) arm64_usercopy1
-                && elr != (vaddr_t) arm64_usercopy2
-                && elr != (vaddr_t) arm64_usercopy3) {
+                && elr != (vaddr_t) arm64_usercopy2) {
                 PANIC("page fault in the kernel: task=%s, far=%p, elr=%p",
                       CURRENT->name, far, elr);
             }

@@ -18,8 +18,7 @@ extern interrupt_handler_t interrupt_handlers[];
 void syscall_entry(void);
 void userland_entry(void);
 void switch_context(uint64_t *prev_rsp, uint64_t *next_rsp);
-extern char usercopy1[];
-extern char usercopy2[];
+extern char usercopy[];
 
 STATIC_ASSERT(offsetof(struct arch_cpuvar, rsp0) == GS_RSP0);
 STATIC_ASSERT(offsetof(struct arch_cpuvar, rsp3) == GS_RSP3);

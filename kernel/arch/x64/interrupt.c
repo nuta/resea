@@ -83,7 +83,7 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
                       "(page table is presumably corrupted!)");
             }
 
-            if (ip == (uint64_t) usercopy1 || ip == (uint64_t) usercopy2) {
+            if (ip == (uint64_t) usercopy) {
                 // We don't do lock() here beucase we already have the lock
                 // in usercopy functions.
                 fault |= PF_USER;
