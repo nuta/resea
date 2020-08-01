@@ -6,13 +6,13 @@
 
 void arm64_start_task(void);
 
-static uint64_t page_tables[CONFIG_NUM_TASKS][512] __aligned(4096);
-static uint8_t kernel_stacks[CONFIG_NUM_TASKS][8192] __aligned(4096);
-static uint8_t exception_stacks[CONFIG_NUM_TASKS][8192] __aligned(4096);
+static uint64_t page_tables[CONFIG_NUM_TASKS][512] __aligned(PAGE_SIZE);
+static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(STACK_SIZE);
+static uint8_t exception_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(STACK_SIZE);
 
 // Prepare the initial stack for arm64_task_switch().
 static void init_stack(struct task *task, vaddr_t pc) {
-    uint64_t *sp = (uint64_t *) ((vaddr_t) task->arch.exception_stack_bottom + PAGE_SIZE);
+    uint64_t *sp = (uint64_t *) ((vaddr_t) task->arch.exception_stack_bottom + STACK_SIZE);
     // Fill the stack values for arm64_start_task().
     *--sp = pc;
 
@@ -29,7 +29,7 @@ error_t arch_task_create(struct task *task, vaddr_t pc) {
     void *syscall_stack = (void *) kernel_stacks[task->tid];
     void *exception_stack = (void *) exception_stacks[task->tid];
     task->vm.entries = page_tables[task->tid];
-    task->arch.syscall_stack = (vaddr_t) syscall_stack + PAGE_SIZE;
+    task->arch.syscall_stack = (vaddr_t) syscall_stack + STACK_SIZE;
     task->arch.syscall_stack_bottom = syscall_stack;
     task->arch.exception_stack_bottom = exception_stack;
     init_stack(task, pc);

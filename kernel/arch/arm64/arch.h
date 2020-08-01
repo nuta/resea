@@ -3,6 +3,7 @@
 
 #include <types.h>
 
+#define STACK_SIZE 4096
 #define TICK_HZ 1000
 #define IRQ_MAX 32
 #define KERNEL_BASE_ADDR  0xffff000000000000

@@ -3,6 +3,7 @@
 
 #include <types.h>
 
+#define STACK_SIZE 4096
 #define IRQ_MAX   256
 #define TIMER_IRQ 0
 

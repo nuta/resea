@@ -51,7 +51,7 @@ void kdebug_handle_interrupt(void) {
 
 static uint32_t *get_canary_ptr(void) {
     vaddr_t sp = (vaddr_t) __builtin_frame_address(0);
-    return (uint32_t *) ALIGN_DOWN(sp, PAGE_SIZE);
+    return (uint32_t *) ALIGN_DOWN(sp, STACK_SIZE);
 }
 
 /// Writes the stack canary at the borrom of the current kernel stack.

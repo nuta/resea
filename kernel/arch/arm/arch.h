@@ -3,6 +3,7 @@
 
 #include <types.h>
 
+#define STACK_SIZE 1024
 #define TICK_HZ 1000
 #define IRQ_MAX 32
 #define STRAIGHT_MAP_ADDR 0 // Unused.
