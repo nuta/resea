@@ -72,7 +72,6 @@ void map_bootelf(struct bootelf_header *header, struct vm *vm) {
         if (m->zeroed) {
             memset((void *) vaddr, 0, m->num_pages * PAGE_SIZE);
         } else {
-        TRACE("copying %p (%x) -> %p", paddr, m->offset, vaddr);
             if (vaddr == paddr) {
                 continue;
             }
