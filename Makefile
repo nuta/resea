@@ -135,10 +135,11 @@ build: $(kernel_image) $(BUILD_DIR)/compile_commands.json
 lint: $(BUILD_DIR)/compile_commands.json
 	find kernel servers libs -name "*.c" | xargs $(CLANG_TIDY) -p $(BUILD_DIR)
 
+EXPECTED ?= Passed all tests
 .PHONY: test
 test: $(kernel_image)
 	$(PROGRESS) "TEST"
-	./tools/run-and-check.py $(RUNCHECKFLAGS) "Passed all tests" -- $(MAKE) run
+	./tools/run-and-check.py $(RUNCHECKFLAGS) "$(EXPECTED)" -- $(MAKE) run
 
 .PHONY: clean
 clean:

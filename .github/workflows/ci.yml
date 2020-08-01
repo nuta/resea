@@ -14,19 +14,21 @@ jobs:
       matrix:
         include:
           - os: ubuntu-20.04
-            ARCH: x64
+            TARGET: x64
           - os: ubuntu-20.04
-            ARCH: arm64
+            TARGET: arm64
           - os: ubuntu-20.04
-            ARCH: arm
+            TARGET: arm
           - os: ubuntu-20.04
-            ARCH: x64_release
+            TARGET: x64_release
           - os: ubuntu-20.04
-            ARCH: arm64_release
+            TARGET: arm64_release
           - os: ubuntu-20.04
-            ARCH: arm_release
+            TARGET: arm_release
+          - os: ubuntu-20.04
+           TARGET: minlin
           - os: macos-latest
-            ARCH: x64
+            TARGET: x64
     steps:
       - uses: actions/checkout@v2
 
@@ -49,9 +51,13 @@ jobs:
         run: pip3 install --user -r tools/requirements.txt
 
       - name: Build
-        run: |
-          cp ci/${{ matrix.ARCH }}.config .config
+       run: |
+         cp ci/${{ matrix.TARGET }}.config .config
           make -j2 build
 
       - name: Test
-        run: make -j2 test
+       run: |
+         if [ "${{ matrix.TARGET }}" = "minlin" ]; then
+            export EXPECTED="built-in shell (ash)"
+          fi
+          make -j2 test
