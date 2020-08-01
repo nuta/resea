@@ -7,7 +7,7 @@
 int failed = 0;
 
 static void exit_emulator(void) {
-    sys_kdebug("q", NULL, 0);
+    kdebug("q", 1, NULL, 0);
 }
 
 void main(void) {
