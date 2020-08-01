@@ -2,10 +2,13 @@
 import argparse
 import subprocess
 import sys
+import signal
+import os
 from colorama import Fore, Back, Style
 
 def scrub_stdout(stdout):
     return stdout.replace("\n\n", "\n") \
+        .replace("\r", "") \
         .replace("\x1b\x63", "") \
         .replace("\x1b[2J", "").strip()
 
@@ -20,17 +23,21 @@ def main():
     args = parser.parse_args()
 
     try:
-        p = subprocess.run(args.argv, timeout=args.timeout, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p = subprocess.Popen(args.argv,
+            preexec_fn=os.setsid,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        p.wait(args.timeout)
     except subprocess.TimeoutExpired as e:
-        stdout = scrub_stdout(e.stdout.decode("utf-8", "backslashreplace"))
-        print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: timed out:{Style.RESET_ALL}\n{stdout}")
+        os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+        print(f"{Fore.YELLOW}{Style.BRIGHT}run-and-check.py: timed out:{Style.RESET_ALL}")
 
-    stdout = scrub_stdout(p.stdout)
+    stdout = scrub_stdout(p.stdout.read().decode("utf-8", "backslashreplace"))
     if args.expected not in stdout:
         print(stdout)
         print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: " +
-            f"'{args.expected}' is not in stdout:{Style.RESET_ALL}\n{stdout}")
+            f"'{args.expected}' is not in stdout:{Style.RESET_ALL}")
 
         if not args.always_exit_with_zero:
             sys.exit(1)
