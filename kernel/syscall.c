@@ -176,7 +176,7 @@ static paddr_t resolve_paddr(vaddr_t vaddr) {
     } else {
         paddr_t paddr = vm_resolve(&CURRENT->vm, vaddr);
         if (!paddr) {
-            return ERR_NOT_FOUND;
+            return 0;
         }
         return paddr;
     }
@@ -209,7 +209,7 @@ static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
     }
 
     if (flags & MAP_UPDATE) {
-        error_t err = vm_link(&task->vm, vaddr, paddr, kpage, flags);
+        error_t err = vm_link(&task->vm, vaddr, paddr, kpage_paddr, flags);
         if (err != OK) {
             return err;
         }
