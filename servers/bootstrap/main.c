@@ -354,7 +354,6 @@ static error_t handle_do_bulkcopy(struct message *m) {
 //        m->do_bulkcopy.addr, dst_task->bulk_buf,
 //        m->do_bulkcopy.len);
     if (!dst_task->bulk_buf) {
-        // TODO: block the sender until it gets filled.
         memcpy(&src_task->bulk_sender_m, m, sizeof(*m));
         list_push_back(&dst_task->bulk_sender_queue, &src_task->bulk_sender_next);
         return DONT_REPLY;
