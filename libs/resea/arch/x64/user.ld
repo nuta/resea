@@ -38,7 +38,7 @@ SECTIONS {
     __zeroed_pages = .;
     .bss : ALIGN(0x1000) {
         __heap = .;
-        . += 0x20000;
+        . += 0x50000;
         __heap_end = .;
 
         . = ALIGN(0x1000);
