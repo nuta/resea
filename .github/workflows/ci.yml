@@ -52,12 +52,12 @@ jobs:
 
       - name: Build
        run: |
-         cp ci/${{ matrix.TARGET }}.config .config
+          cp ci/${{ matrix.TARGET }}.config .config
           make -j2 build
 
       - name: Test
        run: |
-         if [ "${{ matrix.TARGET }}" = "minlin" ]; then
+          if [ "${{ matrix.TARGET }}" = "minlin" ]; then
             export EXPECTED="built-in shell (ash)"
           fi
           make -j2 test
