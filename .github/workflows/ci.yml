@@ -51,12 +51,12 @@ jobs:
         run: pip3 install --user -r tools/requirements.txt
 
       - name: Build
-       run: |
+        run: |
           cp ci/${{ matrix.TARGET }}.config .config
           make -j2 build
 
       - name: Test
-       run: |
+        run: |
           if [ "${{ matrix.TARGET }}" = "minlin" ]; then
             export EXPECTED="built-in shell (ash)"
           fi
