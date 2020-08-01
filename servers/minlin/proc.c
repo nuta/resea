@@ -135,11 +135,9 @@ errno_t proc_execve(struct proc *proc, const char *path, char *argv[],
     list_init(&proc->mm.mchunks);
     DEBUG_ASSERT(list_is_empty(&proc->mm.mchunks));
 
-    DBG("destroy and exec: %d", proc->task);
     error_t e;
     e = task_destroy(proc->task);
     if (e != OK) {
-        PANIC("fail!");
         return -EINVAL;
     }
 
