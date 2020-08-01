@@ -1,4 +1,5 @@
 #include <resea/ipc.h>
+#include <resea/async.h>
 #include <resea/printf.h>
 #include "fs.h"
 #include "tty.h"
@@ -43,16 +44,11 @@ static void putc(char ch) {
 
 void on_new_data(void) {
     struct message m;
-    m.type = KBD_READ_MSG;
-    error_t err = ipc_call(kbd_server, &m);
-    if (err == ERR_EMPTY) {
-        return;
-    }
-
+    error_t err = async_recv(kbd_server, &m);
     ASSERT_OK(err);
-    ASSERT(m.type == KBD_READ_REPLY_MSG);
+    ASSERT(m.type == KBD_ON_KEY_UP_MSG);
 
-    char ch = m.kbd_read_reply.keycode;
+    char ch = m.kbd_on_key_up.keycode;
     queue[wp++ % QUEUE_LEN] = ch;
     putc(ch);
     waitqueue_wake_all(&tty_inode->read_wq);

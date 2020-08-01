@@ -1,5 +1,6 @@
 #include <resea/io.h>
 #include <resea/malloc.h>
+#include <resea/task.h>
 #include <string.h>
 #include "elf.h"
 #include "fs.h"
@@ -54,10 +55,7 @@ error_t copy_from_user(struct proc *proc, void *dst, vaddr_t src,
         vaddr_t src_aligned = ALIGN_DOWN(src, PAGE_SIZE);
         struct mchunk *mchunk = mm_resolve(&proc->mm, src_aligned);
         if (!mchunk) {
-            if (!handle_page_fault(proc, src, PF_USER)) {
-                return ERR_NOT_PERMITTED;
-            }
-
+            handle_page_fault(proc, src, PF_USER);
             mchunk = mm_resolve(&proc->mm, src);
             DEBUG_ASSERT(mchunk);
         }
@@ -118,7 +116,29 @@ size_t strncpy_from_user(struct proc *proc, char *dst, vaddr_t src,
     return read_len;
 }
 
-vaddr_t handle_page_fault(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
+volatile unsigned long long x = 123; // TODO: remove me
+
+static error_t map_page(struct proc *proc, vaddr_t vaddr, vaddr_t paddr,
+                        unsigned flags, bool overwrite) {
+    ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
+    ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
+
+    flags |= overwrite ? (MAP_DELETE | MAP_UPDATE) : MAP_UPDATE;
+    while (true) {
+        struct mchunk *m = mm_alloc_mchunk(&proc->mm, vaddr, PAGE_SIZE);
+        x += *((uint8_t *) paddr); // Handle page faults in advance. FIXME: remove me
+        x += *((uint8_t *) m->buf); // Handle page faults in advance. FIXME: remove me
+        error_t err = task_map(proc->task, vaddr, paddr, (vaddr_t) m->buf, flags);
+        switch (err) {
+            case ERR_TRY_AGAIN:
+                continue;
+            default:
+                return err;
+        }
+    }
+}
+
+static vaddr_t fill_page(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
     vaddr_t aligned_vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
 
     if (fault & PF_PRESENT) {
@@ -203,4 +223,17 @@ vaddr_t handle_page_fault(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
                 offset_in_file, copy_len);
 
     return (vaddr_t) new_mchunk->buf;
+}
+
+error_t handle_page_fault(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
+    vaddr_t target = fill_page(proc, vaddr, fault);
+    if (!target) {
+        WARN_DBG("failed to fill a page for %s", proc->name);
+        // TODO: Kill the proc.
+        return ERR_ABORTED;
+    }
+
+    vaddr_t aligned_vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
+    ASSERT_OK(map_page(proc, aligned_vaddr, target, MAP_W /* TODO: */, false));
+    return OK;
 }

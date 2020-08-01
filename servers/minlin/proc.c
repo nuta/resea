@@ -135,12 +135,17 @@ errno_t proc_execve(struct proc *proc, const char *path, char *argv[],
     list_init(&proc->mm.mchunks);
     DEBUG_ASSERT(list_is_empty(&proc->mm.mchunks));
 
-    task_destroy(proc->task);
-    free_task(proc->task);
-    proc->task = alloc_task();
-    error_t e = task_create(proc->task, proc->name, 0, task_self(), TASK_ABI_EMU);
+    DBG("destroy and exec: %d", proc->task);
+    error_t e;
+    e = task_destroy(proc->task);
     if (e != OK) {
-        return -EAGAIN;
+        PANIC("fail!");
+        return -EINVAL;
+    }
+
+    e = task_create(proc->task, proc->name, 0, task_self(), TASK_ABI_EMU);
+    if (e != OK) {
+        return -EINVAL;
     }
 
     // Open the executable file.

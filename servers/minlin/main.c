@@ -36,11 +36,11 @@ void main(void) {
         ASSERT_OK(err);
 
         switch (m.type) {
-            case NOTIFICATIONS_MSG: {
-                // FIXME:
-                on_new_data();
+            case NOTIFICATIONS_MSG:
+                if (m.notifications.data & NOTIFY_ASYNC) {
+                    on_new_data();
+                }
                 break;
-            }
             case ABI_HOOK_MSG: {
                 task_t task = m.abi_hook.task;
                 struct proc *proc = proc_lookup_by_task(task);
@@ -83,16 +83,14 @@ void main(void) {
                 task_t task = m.page_fault.task;
                 struct proc *proc = proc_lookup_by_task(task);
                 ASSERT(proc);
-                vaddr_t vaddr = handle_page_fault(proc, m.page_fault.vaddr,
-                                                  m.page_fault.fault);
-                if (vaddr) {
+
+                error_t err = handle_page_fault(proc, m.page_fault.vaddr,
+                                                m.page_fault.fault);
+                if (err == OK) {
                     m.type = PAGE_FAULT_REPLY_MSG;
-                    m.page_fault_reply.vaddr = vaddr;
-                    m.page_fault_reply.attrs = PAGE_WRITABLE;
-                    volatile int x = *((volatile char *) vaddr); // FIXME: Handle page faults in kernel
-                    ASSERT(x != 0xaaffaa);
-                    ipc_reply(task, &m);
+                    ipc_reply(proc->task, &m);
                 }
+
                 break;
             }
             default:
