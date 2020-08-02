@@ -1,7 +1,7 @@
 menu "NOMMU test"
-	depends on BOOTSTRAP_NOMMU_TEST
+	depends on BOOT_TASK_NOMMU_TEST
 
-    config BOOTSTRAP
+    config BOOT_TASK
         string
         default "nommu_test"
 endmenu

@@ -40,7 +40,7 @@ endif
 include .config
 
 export ARCH  := $(patsubst "%",%,$(CONFIG_ARCH))
-bootstrap    := $(patsubst "%",%,$(CONFIG_BOOTSTRAP))
+boot_task    := $(patsubst "%",%,$(CONFIG_BOOT_TASK))
 kernel_image := $(BUILD_DIR)/resea.elf
 bootfs_bin   := $(BUILD_DIR)/bootfs.bin
 builtin_libs := common resea
@@ -109,7 +109,7 @@ CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
 CFLAGS += -I$(BUILD_DIR)/include
 CFLAGS += -DVERSION='"$(VERSION)"'
-CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/$(bootstrap).elf"'
+CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/$(boot_task).elf"'
 CFLAGS += -DBOOTFS_PATH='"$(bootfs_bin)"'
 CFLAGS += -DAUTOSTARTS='"$(autostarts)"'
 
@@ -180,7 +180,7 @@ $(BUILD_DIR)/kernel/%.o: %.c Makefile $(autogen_files)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/$(bootstrap).elf $(autogen_files)
+$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/$(boot_task).elf $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
@@ -277,11 +277,10 @@ $(eval $(BUILD_DIR)/$(1).debug.elf: objs := $(objs))
 $(eval $(BUILD_DIR)/$(1).debug.elf: objs += $(if $(rust), $(BUILD_DIR)/rust/$(name).a))
 $(eval $(BUILD_DIR)/$(1).debug.elf: $(objs) $(if $(rust), $(BUILD_DIR)/rust/$(name).a) $(build_mks))
 $(eval $(objs): CFLAGS += $(cflags))
-$(eval $(objs): CFLAGS += -DBOOTSTRAP)
 $(foreach lib, $(all_libs),
 	$(eval $(objs): CFLAGS += -Ilibs/$(lib)/include))
 endef
-$(foreach server, $(bootstrap) $(servers), \
+$(foreach server, $(boot_task) $(servers), \
 	$(eval $(call server-build-rule,$(server))))
 
 %/__name__.c:
@@ -289,10 +288,10 @@ $(foreach server, $(bootstrap) $(servers), \
 	mkdir -p $(@D)
 	echo "#include <types.h>" > $(@)
 	echo "const char *__program_name(void) { return \"$(name)\"; }" >> $(@)
-	if [ "$(CONFIG_BOOTSTRAP)" = "$(name)" ]; then \
-		echo "bool __is_bootstrap(void) { return true; }" >> $(@); \
+	if [ "$(CONFIG_BOOT_TASK)" = "$(name)" ]; then \
+		echo "bool __is_boot_task(void) { return true; }" >> $(@); \
 	else \
-		echo "bool __is_bootstrap(void) { return false; }" >> $(@); \
+		echo "bool __is_boot_task(void) { return false; }" >> $(@); \
 	fi
 
 %/__name__.o: %/__name__.c $(autogen_files)

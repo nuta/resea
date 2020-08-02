@@ -1,7 +1,0 @@
-menu "Bootstrap"
-	depends on BOOTSTRAP_BOOTSTRAP
-
-    config BOOTSTRAP
-        string
-        default "bootstrap"
-endmenu

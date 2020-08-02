@@ -665,8 +665,8 @@ void main(void) {
         tasks[i].tid = i + 1;
     }
 
-    // Initialize a task struct for bootstrap.
-    init_task_struct(&tasks[INIT_TASK - 1], "bootstrap", NULL, NULL, NULL);
+    // Initialize a task struct for myself.
+    init_task_struct(&tasks[INIT_TASK - 1], "vm", NULL, NULL, NULL);
 
     // Launch servers in bootfs.
     int num_launched = 0;

@@ -5,7 +5,7 @@
 #include <resea/async.h>
 #include <string.h>
 
-static task_t bootstrap_server = 1;
+static task_t boot_task_server = 1;
 static task_t display_server;
 static task_t kbd_server;
 
@@ -207,7 +207,7 @@ static error_t launch_task(const char *task_name) {
     struct message m;
     m.type = LAUNCH_TASK_MSG;
     m.launch_task.name = task_name;
-    return ipc_call(bootstrap_server, &m);
+    return ipc_call(boot_task_server, &m);
 }
 
 void run(const char *cmd_name, int argc, char **argv) {

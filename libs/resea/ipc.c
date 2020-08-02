@@ -10,7 +10,7 @@ static void *ool_ptr = NULL;
 static const size_t ool_len = CONFIG_OOL_BUFFER_LEN;
 #endif
 
-bool __is_bootstrap(void);
+bool __is_boot_task(void);
 
 __weak error_t call_self(struct message *m) {
     return OK;
@@ -22,7 +22,7 @@ static error_t call_pager(struct message *m) {
     WARN("ignoring %s", msgtype2str(m->type));
     return OK;
 #else
-    if (__is_bootstrap()) {
+    if (__is_boot_task()) {
         return call_self(m);
     } else {
         return ipc_call(INIT_TASK, m);

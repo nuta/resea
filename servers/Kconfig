@@ -6,9 +6,9 @@ config MODULES
 menu "Servers"
     choice
         prompt "Initial task"
-        config BOOTSTRAP_BOOTSTRAP
-            bool "Bootstrap"
-        config BOOTSTRAP_NOMMU_TEST
+        config BOOT_TASK_VM
+            bool "VM"
+        config BOOT_TASK_NOMMU_TEST
             bool "Kernel test for a NOMMU CPU"
             depends on NOMMU
     endchoice
