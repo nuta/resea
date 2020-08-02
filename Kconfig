@@ -21,7 +21,7 @@ endchoice
 menu "Common Setup (kernel and userland)"
     config NUM_SYMBOLS
         int "The (maximum) number of symbols"
-        range 0 2048
+        range 0 4096
         default 512
 endmenu
 
