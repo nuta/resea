@@ -47,6 +47,7 @@ jobs:
       - name: Set up Rust
         run: |
           cargo install cargo-xbuild
+          rustup component add rust-src
           rustup override set nightly
 
       - name: Install apt packages
