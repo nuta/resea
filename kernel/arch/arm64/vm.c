@@ -5,7 +5,7 @@
 #include "vm.h"
 
 static uint64_t *traverse_page_table(uint64_t *table, vaddr_t vaddr,
-                                     paddr_t kpage, pageattrs_t attrs) {
+                                     paddr_t kpage, uint64_t attrs) {
     ASSERT(vaddr < KERNEL_BASE_ADDR);
     ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     ASSERT(IS_ALIGNED(kpage, PAGE_SIZE));
@@ -50,8 +50,8 @@ error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
                 unsigned flags) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
-    pageattrs_t attrs = PAGE_PRESENT | PAGE_USER;
-    attrs |= (flags & MAP_W) ? PAGE_WRITABLE : 0;
+    uint64_t attrs = 1 << 6; // user
+    // TODO: MAP_W
 
     uint64_t *entry = traverse_page_table(vm->entries, vaddr, kpage, attrs);
     if (!entry) {

@@ -150,10 +150,10 @@ static error_t map_page(task_t tid, vaddr_t vaddr, paddr_t paddr,
     }
 }
 
-static paddr_t pager(struct task *task, vaddr_t vaddr, pagefault_t fault) {
+static paddr_t pager(struct task *task, vaddr_t vaddr, unsigned fault) {
     vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
 
-    if (fault & PF_PRESENT) {
+    if (fault & EXP_PF_PRESENT) {
         // Invalid access. For instance the user thread has tried to write to
         // readonly area.
         WARN("%s: invalid memory access at %p (perhaps segfault?)", task->name,
@@ -273,7 +273,7 @@ static paddr_t vaddr2paddr(struct task *task, vaddr_t vaddr) {
     }
 
     // The page is not mapped. Try filling it with pager.
-    return pager(task, vaddr, PF_USER | PF_WRITE /* FIXME: strip PF_WRITE */);
+    return pager(task, vaddr, EXP_PF_USER | EXP_PF_WRITE /* FIXME: strip PF_WRITE */);
 }
 
 static error_t handle_ool_send(struct message *m);

@@ -138,10 +138,10 @@ static error_t map_page(struct proc *proc, vaddr_t vaddr, vaddr_t paddr,
     }
 }
 
-static vaddr_t fill_page(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
+static vaddr_t fill_page(struct proc *proc, vaddr_t vaddr, unsigned fault) {
     vaddr_t aligned_vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
 
-    if (fault & PF_PRESENT) {
+    if (fault & EXP_PF_PRESENT) {
         // Invalid access. For instance the user thread has tried to write to
         // readonly area.
         WARN("%s: invalid memory access at %p (perhaps segfault?)", proc->name,
@@ -225,7 +225,7 @@ static vaddr_t fill_page(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
     return (vaddr_t) new_mchunk->buf;
 }
 
-error_t handle_page_fault(struct proc *proc, vaddr_t vaddr, pagefault_t fault) {
+error_t handle_page_fault(struct proc *proc, vaddr_t vaddr, unsigned fault) {
     vaddr_t target = fill_page(proc, vaddr, fault);
     if (!target) {
         WARN_DBG("failed to fill a page for %s", proc->name);

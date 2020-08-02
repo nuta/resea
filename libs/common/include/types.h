@@ -27,6 +27,8 @@ typedef char bool;
 #define false 0
 #define NULL ((void *) 0)
 
+#define PAGE_SIZE 4096
+
 typedef __builtin_va_list va_list;
 #define offsetof(type, field)    __builtin_offsetof(type, field)
 #define is_constant(expr)        __builtin_constant_p(expr)
@@ -120,6 +122,11 @@ typedef uint8_t notifications_t;
 #define NOTIFY_IRQ      (1 << 1)
 #define NOTIFY_ABORTED  (1 << 2)
 #define NOTIFY_ASYNC    (1 << 3)
+
+// Page Fault exception error codes.
+#define EXP_PF_PRESENT (1 << 0)
+#define EXP_PF_WRITE   (1 << 1)
+#define EXP_PF_USER    (1 << 2)
 
 enum exception_type {
     EXP_GRACE_EXIT,

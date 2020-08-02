@@ -8,6 +8,7 @@
 #include "serial.h"
 #include "task.h"
 #include "trap.h"
+#include "vm.h"
 
 static uint32_t ioapic_read(uint8_t reg) {
     *((uint32_t *) from_paddr(IOAPIC_ADDR)) = reg;
@@ -74,21 +75,24 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
     bool needs_unlock = true;
     switch (vec) {
         case EXP_PAGE_FAULT: {
-            vaddr_t addr = asm_read_cr2();
-            pagefault_t fault = frame->error;
-            uint64_t ip = frame->rip;
-
-            if (fault & (1 << 3)) {
+            if (frame->error & (1 << 3)) {
                 PANIC("#PF: RSVD bit violation "
                       "(page table is presumably corrupted!)");
             }
 
+            vaddr_t addr = asm_read_cr2();
+            uint64_t ip = frame->rip;
+            unsigned fault = 0;
+            fault |= (frame->error & X64_PF_PRESENT) ? EXP_PF_PRESENT : 0;
+            fault |= (frame->error & X64_PF_USER) ? EXP_PF_USER : 0;
+            fault |= (frame->error & X64_PF_WRITE) ? EXP_PF_WRITE : 0;
+
             if (ip == (uint64_t) usercopy) {
                 // We don't do lock() here beucase we already have the lock
                 // in usercopy functions.
-                fault |= PF_USER;
+                fault |= EXP_PF_USER;
                 needs_unlock = false;
-            } else if ((fault & PF_USER) == 0) {
+            } else if ((fault & EXP_PF_USER) == 0) {
                 // This will never occur. NEVER!
                 panic_lock();
                 dump_frame(frame);
