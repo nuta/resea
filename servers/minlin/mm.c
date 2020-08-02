@@ -55,7 +55,7 @@ error_t copy_from_user(struct proc *proc, void *dst, vaddr_t src,
         vaddr_t src_aligned = ALIGN_DOWN(src, PAGE_SIZE);
         struct mchunk *mchunk = mm_resolve(&proc->mm, src_aligned);
         if (!mchunk) {
-            handle_page_fault(proc, src, PF_USER);
+            handle_page_fault(proc, src, EXP_PF_USER);
             mchunk = mm_resolve(&proc->mm, src);
             DEBUG_ASSERT(mchunk);
         }
@@ -77,7 +77,7 @@ error_t copy_to_user(struct proc *proc, vaddr_t dst, const void *src,
         vaddr_t dst_aligned = ALIGN_DOWN(dst, PAGE_SIZE);
         struct mchunk *mchunk = mm_resolve(&proc->mm, dst_aligned);
         if (!mchunk) {
-            if (!handle_page_fault(proc, dst, PF_USER)) {
+            if (!handle_page_fault(proc, dst, EXP_PF_USER | EXP_PF_WRITE)) {
                 return ERR_NOT_PERMITTED;
             }
 
