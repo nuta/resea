@@ -1,7 +1,7 @@
 menu "Userland"
 
-config BULK_BUFFER_LEN
-    int "The length of a bulk buffer."
+config OOL_BUFFER_LEN
+    int "The length of a ool buffer."
     range 0 32768
     default 16384
 

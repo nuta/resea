@@ -10,15 +10,18 @@ enum abi_hook_type {
 rpc abi_hook(task: task, type: int, frame: trap_frame) -> (frame: trap_frame);
 
 oneway async();
-rpc accept_bulkcopy(addr: vaddr, len: size)-> ();
-rpc do_bulkcopy(dst: task, addr: vaddr, len: size)-> (id: vaddr);
-rpc verify_bulkcopy(src: task, id: vaddr, len: size)-> (received_at: vaddr);
 rpc nop(value: int) -> (value: int);
-rpc nop_with_bulk(data: bytes) -> (data: bytes);
+rpc nop_with_ool(data: bytes) -> (data: bytes);
 rpc serve(name: str) -> ();
 rpc lookup(name: str) -> (task: task);
 rpc launch_task(name: str) -> (task: task);
 rpc alloc_pages(num_pages: size, paddr: paddr) -> (vaddr: vaddr, paddr: paddr);
+
+namespace ool {
+    rpc recv(addr: vaddr, len: size)-> ();
+    rpc send(dst: task, addr: vaddr, len: size)-> (id: vaddr);
+    rpc verify(src: task, id: vaddr, len: size)-> (received_at: vaddr);
+}
 
 namespace fs {
     rpc open(path: str) -> (handle: handle);

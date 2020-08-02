@@ -24,10 +24,10 @@ struct message {
 
         // The common header of message fields.
         struct {
-            /// The bulk pointer to be sent. Used if MSG_BULK is set.
-            void *bulk_ptr;
-            /// The size of bulk payload in bytes.
-            size_t bulk_len;
+            /// The ool pointer to be sent. Used if MSG_OOL is set.
+            void *ool_ptr;
+            /// The size of ool payload in bytes.
+            size_t ool_len;
         };
 
         // Auto-generated message fields:

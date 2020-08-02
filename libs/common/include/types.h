@@ -111,7 +111,7 @@ typedef int error_t;
 
 // Flags in the message type (m->type).
 #define MSG_STR  (1 << 30)
-#define MSG_BULK (1 << 29)
+#define MSG_OOL (1 << 29)
 #define MSG_ID(type) ((type) & 0xffff)
 
 // Notifications.

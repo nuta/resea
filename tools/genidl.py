@@ -121,9 +121,9 @@ class IDLParser:
             "value": tree.children[1].value,
         }
 
-    def is_bulk_field_type(self, typename):
-        bulk_builtins = ["str", "bytes"]
-        return typename in bulk_builtins
+    def is_ool_field_type(self, typename):
+        ool_builtins = ["str", "bytes"]
+        return typename in ool_builtins
 
     def visit_msg_def(self, tree):
         global next_msg_id
@@ -154,21 +154,21 @@ class IDLParser:
         return msg_def
 
     def visit_fields(self, trees):
-        bulk_field = None
+        ool_field = None
         inline_fields = []
         for tree in trees:
             field = self.visit_field(tree)
-            if self.is_bulk_field_type(field["type"]["name"]):
-                if bulk_field:
-                    raise Exception(f"{name}: multiple bulk fields are not allowed: {bulk_field['name']}, {field['name']}")
-                bulk_field = field
-                bulk_field["is_str"] = field["type"]["name"] == "str"
+            if self.is_ool_field_type(field["type"]["name"]):
+                if ool_field:
+                    raise Exception(f"{name}: multiple ool fields are not allowed: {ool_field['name']}, {field['name']}")
+                ool_field = field
+                ool_field["is_str"] = field["type"]["name"] == "str"
             else:
                 inline_fields.append(field)
 
         return {
             "inlines": inline_fields,
-            "bulk": bulk_field,
+            "ool": ool_field,
         }
 
     def visit_field(self, tree):
@@ -213,9 +213,9 @@ def c_generator(args, idl):
 
     def msg_type(fields):
         flags = ""
-        if fields["bulk"]:
-            flags += "| MSG_BULK"
-            if fields["bulk"]["is_str"]:
+        if fields["ool"]:
+            flags += "| MSG_OOL"
+            if fields["ool"]["is_str"]:
                 flags += "| MSG_STR"
         return flags
 
@@ -306,13 +306,13 @@ enum {{ e | enum_name }} {{ "{" }}
 //
 {% for msg in msgs %}
 struct {{ msg | msg_name }}_fields {{ "{" }}
-{%- if msg.args.bulk %}
-    {%- if msg.args.bulk.is_str %}
-    const char *{{ msg.args.bulk.name }};
+{%- if msg.args.ool %}
+    {%- if msg.args.ool.is_str %}
+    const char *{{ msg.args.ool.name }};
     {% else %}
-    const void *{{ msg.args.bulk.name }};
+    const void *{{ msg.args.ool.name }};
     {% endif %}
-    size_t {{ msg.args.bulk.name }}_len;
+    size_t {{ msg.args.ool.name }}_len;
 {% endif %}
 {%- for field in msg.args.inlines %}
     {{ field | field_def(msg.namespace) }};
@@ -321,13 +321,13 @@ struct {{ msg | msg_name }}_fields {{ "{" }}
 
 {%- if not msg.oneway %}
 struct {{ msg | msg_name }}_reply_fields {{ "{" }}
-{%- if msg.rets.bulk %}
-    {%- if msg.rets.bulk.is_str %}
-    const char *{{ msg.rets.bulk.name }};
+{%- if msg.rets.ool %}
+    {%- if msg.rets.ool.is_str %}
+    const char *{{ msg.rets.ool.name }};
     {% else %}
-    const void *{{ msg.rets.bulk.name }};
+    const void *{{ msg.rets.ool.name }};
     {% endif %}
-    size_t {{ msg.rets.bulk.name }}_len;
+    size_t {{ msg.rets.ool.name }}_len;
 {% endif %}
 {%- for field in msg.rets.inlines %}
     {{ field | field_def(msg.namespace) }};
@@ -353,14 +353,14 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
 
 #define IDL_STATIC_ASSERTS \\
 {%- for msg in msgs %}
-{%- if msg.args.bulk %}
-    STATIC_ASSERT(offsetof(struct message, {{ msg | msg_name }}.{{ msg.args.bulk.name }}) == offsetof(struct message, bulk_ptr)); \\
-    STATIC_ASSERT(offsetof(struct message, {{ msg | msg_name }}.{{ msg.args.bulk.name }}_len) == offsetof(struct message, bulk_len)); \\
+{%- if msg.args.ool %}
+    STATIC_ASSERT(offsetof(struct message, {{ msg | msg_name }}.{{ msg.args.ool.name }}) == offsetof(struct message, ool_ptr)); \\
+    STATIC_ASSERT(offsetof(struct message, {{ msg | msg_name }}.{{ msg.args.ool.name }}_len) == offsetof(struct message, ool_len)); \\
 {%- endif %}
 {%- if not msg.oneway %}
-{%- if msg.rets.bulk %}
-    STATIC_ASSERT(offsetof(struct message, {{ msg | msg_name }}_reply.{{ msg.rets.bulk.name }}) == offsetof(struct message, bulk_ptr)); \\
-    STATIC_ASSERT(offsetof(struct message, {{ msg | msg_name }}_reply.{{ msg.rets.bulk.name }}_len) == offsetof(struct message, bulk_len)); \\
+{%- if msg.rets.ool %}
+    STATIC_ASSERT(offsetof(struct message, {{ msg | msg_name }}_reply.{{ msg.rets.ool.name }}) == offsetof(struct message, ool_ptr)); \\
+    STATIC_ASSERT(offsetof(struct message, {{ msg | msg_name }}_reply.{{ msg.rets.ool.name }}_len) == offsetof(struct message, ool_len)); \\
 {%- endif %}
 {%- endif %}
 {%- endfor %}

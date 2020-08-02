@@ -17,7 +17,7 @@ A message is fixed sized and consists of the following fields:
 - The type of message (e.g. `FS_READ_MSG`).
 - The sender task ID.
 - The fixed-sized payload (less than 256 bytes).
-  - Resea supports an indirect arbitrary-length data copy called *bulk payload*.
+  - Resea supports an indirect arbitrary-length data copy called *out-of-line payload* (*"ool"* in short) .
     It is mainly used for sending/receiving buffer (a pair of the pointer and
     the length).
 

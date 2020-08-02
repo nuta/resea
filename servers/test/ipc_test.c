@@ -17,30 +17,30 @@ void ipc_test(void) {
         TEST_ASSERT(m.nop.value == i * 7);
     }
 
-    // A bulk IPC call.
-    m.type = NOP_WITH_BULK_MSG;
-    m.nop_with_bulk.data = "hi!";
-    m.nop_with_bulk.data_len = 3;
+    // A ool IPC call.
+    m.type = NOP_WITH_OOL_MSG;
+    m.nop_with_ool.data = "hi!";
+    m.nop_with_ool.data_len = 3;
     err = ipc_call(INIT_TASK, &m);
     TEST_ASSERT(err == OK);
-    TEST_ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
-    TEST_ASSERT(m.nop_with_bulk_reply.data_len == 7);
-    TEST_ASSERT(!memcmp(m.nop_with_bulk_reply.data, "reply!\0", 7));
+    TEST_ASSERT(m.type == NOP_WITH_OOL_REPLY_MSG);
+    TEST_ASSERT(m.nop_with_ool_reply.data_len == 7);
+    TEST_ASSERT(!memcmp(m.nop_with_ool_reply.data, "reply!\0", 7));
 
-    // A bulk IPC call.
+    // A ool IPC call.
     static char page[PAGE_SIZE * 2] = {'a', 'b', 'c'};
-    m.type = NOP_WITH_BULK_MSG;
-    m.nop_with_bulk.data = page;
-    m.nop_with_bulk.data_len = sizeof(page);
+    m.type = NOP_WITH_OOL_MSG;
+    m.nop_with_ool.data = page;
+    m.nop_with_ool.data_len = sizeof(page);
     err = ipc_call(INIT_TASK, &m);
     TEST_ASSERT(err == OK);
-    TEST_ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
+    TEST_ASSERT(m.type == NOP_WITH_OOL_REPLY_MSG);
 
-     // A bulk IPC call (with empty payload).
-    m.type = NOP_WITH_BULK_MSG;
-    m.nop_with_bulk.data = NULL;
-    m.nop_with_bulk.data_len = 0;
+     // A ool IPC call (with empty payload).
+    m.type = NOP_WITH_OOL_MSG;
+    m.nop_with_ool.data = NULL;
+    m.nop_with_ool.data_len = 0;
     err = ipc_call(INIT_TASK, &m);
     TEST_ASSERT(err == OK);
-    TEST_ASSERT(m.type == NOP_WITH_BULK_REPLY_MSG);
+    TEST_ASSERT(m.type == NOP_WITH_OOL_REPLY_MSG);
 }

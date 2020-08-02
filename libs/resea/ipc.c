@@ -4,10 +4,10 @@
 #include <resea/printf.h>
 #include <string.h>
 
-/// The internal buffer to receive bulk payloads.
+/// The internal buffer to receive ool payloads.
 #ifndef CONFIG_NOMMU
-static void *bulk_ptr = NULL;
-static const size_t bulk_len = CONFIG_BULK_BUFFER_LEN;
+static void *ool_ptr = NULL;
+static const size_t ool_len = CONFIG_OOL_BUFFER_LEN;
 #endif
 
 bool __is_bootstrap(void);
@@ -30,85 +30,85 @@ static error_t call_pager(struct message *m) {
 #endif
 }
 
-static void accept_bulkcopy(vaddr_t ptr, size_t len) {
+static void ool_recv(vaddr_t ptr, size_t len) {
     struct message m;
-    m.type = ACCEPT_BULKCOPY_MSG;
-    m.accept_bulkcopy.addr = ptr;
-    m.accept_bulkcopy.len = len;
+    m.type = OOL_RECV_MSG;
+    m.ool_recv.addr = ptr;
+    m.ool_recv.len = len;
     error_t err = call_pager(&m);
     ASSERT_OK(err);
-    ASSERT(m.type == ACCEPT_BULKCOPY_REPLY_MSG);
+    ASSERT(m.type == OOL_RECV_REPLY_MSG);
 }
 
-static vaddr_t do_bulkcopy(task_t dst, vaddr_t ptr, size_t len) {
+static vaddr_t ool_send(task_t dst, vaddr_t ptr, size_t len) {
     struct message m;
-    m.type = DO_BULKCOPY_MSG;
-    m.do_bulkcopy.dst = dst;
-    m.do_bulkcopy.addr = ptr;
-    m.do_bulkcopy.len = len;
+    m.type = OOL_SEND_MSG;
+    m.ool_send.dst = dst;
+    m.ool_send.addr = ptr;
+    m.ool_send.len = len;
     error_t err = call_pager(&m);
     ASSERT_OK(err);
-    ASSERT(m.type == DO_BULKCOPY_REPLY_MSG);
-    return m.do_bulkcopy_reply.id;
+    ASSERT(m.type == OOL_SEND_REPLY_MSG);
+    return m.ool_send_reply.id;
 }
 
-static vaddr_t verify_bulkcopy(task_t src, vaddr_t ptr, size_t len) {
+static vaddr_t ool_verify(task_t src, vaddr_t ptr, size_t len) {
     struct message m;
-    m.type = VERIFY_BULKCOPY_MSG;
-    m.verify_bulkcopy.src = src;
-    m.verify_bulkcopy.id = ptr;
-    m.verify_bulkcopy.len = len;
+    m.type = OOL_VERIFY_MSG;
+    m.ool_verify.src = src;
+    m.ool_verify.id = ptr;
+    m.ool_verify.len = len;
     error_t err = call_pager(&m);
     if (err != OK) {
         return 0;
     }
 
-    ASSERT(m.type == VERIFY_BULKCOPY_REPLY_MSG);
-    return m.verify_bulkcopy_reply.received_at;
+    ASSERT(m.type == OOL_VERIFY_REPLY_MSG);
+    return m.ool_verify_reply.received_at;
 }
 
 static void pre_send(task_t dst, struct message *m) {
 #ifndef CONFIG_NOMMU
-    if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
+    if (!IS_ERROR(m->type) && m->type & MSG_OOL) {
         if (m->type & MSG_STR) {
-            m->bulk_len = strlen(m->bulk_ptr) + 1;
+            m->ool_len = strlen(m->ool_ptr) + 1;
         }
 
-        m->bulk_ptr = (void *) do_bulkcopy(dst, (vaddr_t) m->bulk_ptr, m->bulk_len);
+        m->ool_ptr = (void *) ool_send(dst, (vaddr_t) m->ool_ptr, m->ool_len);
     }
 #endif
 }
 
 static void pre_recv(void) {
 #ifndef CONFIG_NOMMU
-    if (!bulk_ptr) {
-        bulk_ptr = malloc(bulk_len);
-        accept_bulkcopy((vaddr_t) bulk_ptr, bulk_len);
+    if (!ool_ptr) {
+        ool_ptr = malloc(ool_len);
+        ool_recv((vaddr_t) ool_ptr, ool_len);
     }
 #endif
 }
 
  static error_t post_recv(error_t err, struct message *m) {
 #ifndef CONFIG_NOMMU
-    if (!IS_ERROR(m->type) && m->type & MSG_BULK) {
-        // Received a bulk payload.
-        m->bulk_ptr = (void *) verify_bulkcopy(m->src, (vaddr_t) m->bulk_ptr,
-                                               m->bulk_len);
-        if (!m->bulk_ptr) {
-            WARN_DBG("received an invalid bulkcopy payload from #%d: %s",
+    if (!IS_ERROR(m->type) && m->type & MSG_OOL) {
+        // Received a ool payload.
+        m->ool_ptr = (void *) ool_verify(m->src, (vaddr_t) m->ool_ptr,
+                                               m->ool_len);
+        if (!m->ool_ptr) {
+            WARN_DBG("received an invalid oolcopy payload from #%d: %s",
                      m->src, err2str(err));
             m->type = INVALID_MSG;
             return OK;
         }
 
-        // We've consumed `bulk_ptr` so set NULL to it
+        // We've consumed `ool_ptr` so set NULL to it
         // and reallocate the receiver buffer later.
-        bulk_ptr = NULL;
+        ool_ptr = NULL;
 
         // A mitigation for a non-terminated (malicious) string payload.
         if (m->type & MSG_STR) {
-            char *str = m->bulk_ptr;
-            str[m->bulk_len] = '\0';
+            char *str = m->ool_ptr;
+            str[m->ool_len] = '\0';
         }
     }
 #endif
@@ -119,18 +119,18 @@ static void pre_recv(void) {
  }
 
 error_t ipc_send(task_t dst, struct message *m) {
-    void *saved_bulk_ptr = m->bulk_ptr;
+    void *saved_ool_ptr = m->ool_ptr;
     pre_send(dst, m);
     error_t err = sys_ipc(dst, 0, m, IPC_SEND);
-    m->bulk_ptr = saved_bulk_ptr;
+    m->ool_ptr = saved_ool_ptr;
     return err;
 }
 
 error_t ipc_send_noblock(task_t dst, struct message *m) {
-    void *saved_bulk_ptr = m->bulk_ptr;
+    void *saved_ool_ptr = m->ool_ptr;
     pre_send(dst, m);
     error_t err = sys_ipc(dst, 0, m, IPC_SEND | IPC_NOBLOCK);
-    m->bulk_ptr = saved_bulk_ptr;
+    m->ool_ptr = saved_ool_ptr;
     return err;
 }
 

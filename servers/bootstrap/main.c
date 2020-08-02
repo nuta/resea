@@ -34,14 +34,14 @@ struct task {
     struct elf64_phdr *phdrs;
     vaddr_t free_vaddr;
     list_t page_areas;
-    vaddr_t bulk_buf;
-    size_t bulk_len;
-    task_t received_bulk_from;
-    vaddr_t received_bulk_buf;
-    size_t received_bulk_len;
-    list_t bulk_sender_queue;
-    list_elem_t bulk_sender_next;
-    struct message bulk_sender_m;
+    vaddr_t ool_buf;
+    size_t ool_len;
+    task_t received_ool_from;
+    vaddr_t received_ool_buf;
+    size_t received_ool_len;
+    list_t ool_sender_queue;
+    list_elem_t ool_sender_next;
+    struct message ool_sender_m;
     char waiting_for[SERVICE_NAME_LEN];
 };
 
@@ -88,13 +88,13 @@ static void init_task_struct(struct task *task, const char *name,
     }
 
     task->free_vaddr = (vaddr_t) __free_vaddr;
-    task->bulk_buf = 0;
-    task->bulk_len = 0;
-    task->received_bulk_buf = 0;
-    task->received_bulk_len = 0;
-    task->received_bulk_from = 0;
-    list_init(&task->bulk_sender_queue);
-    list_nullify(&task->bulk_sender_next);
+    task->ool_buf = 0;
+    task->ool_len = 0;
+    task->received_ool_buf = 0;
+    task->received_ool_len = 0;
+    task->received_ool_from = 0;
+    list_init(&task->ool_sender_queue);
+    list_nullify(&task->ool_sender_next);
     strncpy(task->name, name, sizeof(task->name));
     strncpy(task->waiting_for, "", sizeof(task->waiting_for));
     list_init(&task->page_areas);
@@ -276,29 +276,29 @@ static paddr_t vaddr2paddr(struct task *task, vaddr_t vaddr) {
     return pager(task, vaddr, PF_USER | PF_WRITE /* FIXME: strip PF_WRITE */);
 }
 
-static error_t handle_do_bulkcopy(struct message *m);
+static error_t handle_ool_send(struct message *m);
 
-static error_t handle_accept_bulkcopy(struct message *m) {
+static error_t handle_ool_recv(struct message *m) {
     struct task *task = get_task_by_tid(m->src);
     ASSERT(task);
 
 //    TRACE("accept: %s: %p %d (old=%p)",
-//        task->name, m->accept_bulkcopy.addr, m->accept_bulkcopy.len, task->bulk_buf);
-    if (task->bulk_buf) {
+//        task->name, m->ool_recv.addr, m->ool_recv.len, task->ool_buf);
+    if (task->ool_buf) {
         return ERR_ALREADY_EXISTS;
     }
 
-    task->bulk_buf = m->accept_bulkcopy.addr;
-    task->bulk_len = m->accept_bulkcopy.len;
+    task->ool_buf = m->ool_recv.addr;
+    task->ool_len = m->ool_recv.len;
 
-    struct task *sender = LIST_POP_FRONT(&task->bulk_sender_queue, struct task,
-                                         bulk_sender_next);
+    struct task *sender = LIST_POP_FRONT(&task->ool_sender_queue, struct task,
+                                         ool_sender_next);
     if (sender) {
         struct message m;
-        memcpy(&m, &sender->bulk_sender_m, sizeof(m));
+        memcpy(&m, &sender->ool_sender_m, sizeof(m));
 //        TRACE("%s -> %s: src = %d / %d", task->name, sender->name,
-//              sender->bulk_sender_m.src, m.src);
-        error_t err = handle_do_bulkcopy(&m);
+//              sender->ool_sender_m.src, m.src);
+        error_t err = handle_ool_send(&m);
         switch (err) {
             case OK:
                 ipc_reply(sender->tid, &m);
@@ -312,57 +312,57 @@ static error_t handle_accept_bulkcopy(struct message *m) {
         }
     }
 
-    m->type = ACCEPT_BULKCOPY_REPLY_MSG;
+    m->type = OOL_RECV_REPLY_MSG;
     return OK;
 }
 
-static error_t handle_verify_bulkcopy(struct message *m) {
+static error_t handle_ool_verify(struct message *m) {
     struct task *task = get_task_by_tid(m->src);
     ASSERT(task);
 
 //    TRACE("verify: %s: id=%p len=%d (src=%d)", task->name,
-//          m->verify_bulkcopy.id, m->verify_bulkcopy.len, m->src);
-    if (m->verify_bulkcopy.src != task->received_bulk_from
-        || m->verify_bulkcopy.id != task->received_bulk_buf
-        || m->verify_bulkcopy.len != task->received_bulk_len) {
+//          m->ool_verify.id, m->ool_verify.len, m->src);
+    if (m->ool_verify.src != task->received_ool_from
+        || m->ool_verify.id != task->received_ool_buf
+        || m->ool_verify.len != task->received_ool_len) {
         return ERR_INVALID_ARG;
     }
 
-    m->type = VERIFY_BULKCOPY_REPLY_MSG;
-    m->verify_bulkcopy_reply.received_at = task->received_bulk_buf;
+    m->type = OOL_VERIFY_REPLY_MSG;
+    m->ool_verify_reply.received_at = task->received_ool_buf;
 
-    task->received_bulk_buf = 0;
-    task->received_bulk_len = 0;
-    task->received_bulk_from = 0;
+    task->received_ool_buf = 0;
+    task->received_ool_len = 0;
+    task->received_ool_from = 0;
     return OK;
 }
 
 uint8_t __src_page[PAGE_SIZE] __aligned(PAGE_SIZE);
 uint8_t __dst_page[PAGE_SIZE] __aligned(PAGE_SIZE);
 
-static error_t handle_do_bulkcopy(struct message *m) {
+static error_t handle_ool_send(struct message *m) {
     struct task *src_task = get_task_by_tid(m->src);
     ASSERT(src_task);
 
-    struct task *dst_task = get_task_by_tid(m->do_bulkcopy.dst);
+    struct task *dst_task = get_task_by_tid(m->ool_send.dst);
     if (!dst_task) {
         return ERR_NOT_FOUND;
     }
 
 //    TRACE("do_copy: %s -> %s: %p -> %p, len=%d",
 //        src_task->name, dst_task->name,
-//        m->do_bulkcopy.addr, dst_task->bulk_buf,
-//        m->do_bulkcopy.len);
-    if (!dst_task->bulk_buf) {
-        memcpy(&src_task->bulk_sender_m, m, sizeof(*m));
-        list_push_back(&dst_task->bulk_sender_queue, &src_task->bulk_sender_next);
+//        m->ool_send.addr, dst_task->ool_buf,
+//        m->ool_send.len);
+    if (!dst_task->ool_buf) {
+        memcpy(&src_task->ool_sender_m, m, sizeof(*m));
+        list_push_back(&dst_task->ool_sender_queue, &src_task->ool_sender_next);
         return DONT_REPLY;
     }
 
-    size_t len = m->do_bulkcopy.len;
-    vaddr_t src_buf = m->do_bulkcopy.addr;
-    vaddr_t dst_buf = dst_task->bulk_buf;
-    DEBUG_ASSERT(len <= dst_task->bulk_len);
+    size_t len = m->ool_send.len;
+    vaddr_t src_buf = m->ool_send.addr;
+    vaddr_t dst_buf = dst_task->ool_buf;
+    DEBUG_ASSERT(len <= dst_task->ool_len);
 
     size_t remaining = len;
     while (remaining > 0) {
@@ -408,14 +408,14 @@ static error_t handle_do_bulkcopy(struct message *m) {
         src_buf += copy_len;
     }
 
-    dst_task->received_bulk_buf = dst_task->bulk_buf;
-    dst_task->received_bulk_len = m->do_bulkcopy.len;
-    dst_task->received_bulk_from = src_task->tid;
-    dst_task->bulk_buf = 0;
-    dst_task->bulk_len = 0;
+    dst_task->received_ool_buf = dst_task->ool_buf;
+    dst_task->received_ool_len = m->ool_send.len;
+    dst_task->received_ool_from = src_task->tid;
+    dst_task->ool_buf = 0;
+    dst_task->ool_len = 0;
 
-    m->type = DO_BULKCOPY_REPLY_MSG;
-    m->do_bulkcopy_reply.id = dst_task->received_bulk_buf;
+    m->type = OOL_SEND_REPLY_MSG;
+    m->ool_send_reply.id = dst_task->received_ool_buf;
     return OK;
 }
 
@@ -423,14 +423,14 @@ error_t call_self(struct message *m) {
     m->src = INIT_TASK;
     error_t err;
     switch (m->type) {
-        case ACCEPT_BULKCOPY_MSG:
-            err = handle_accept_bulkcopy(m);
+        case OOL_RECV_MSG:
+            err = handle_ool_recv(m);
             break;
-        case VERIFY_BULKCOPY_MSG:
-            err = handle_verify_bulkcopy(m);
+        case OOL_VERIFY_MSG:
+            err = handle_ool_verify(m);
             break;
-        case DO_BULKCOPY_MSG:
-            err = handle_do_bulkcopy(m);
+        case OOL_SEND_MSG:
+            err = handle_ool_send(m);
             break;
         default:
             UNREACHABLE();
@@ -448,9 +448,9 @@ static void handle_message(const struct message *m) {
     bzero(&r, sizeof(r));
 
     switch (m->type) {
-        case ACCEPT_BULKCOPY_MSG: {
+        case OOL_RECV_MSG: {
             memcpy(&r, m, sizeof(r));
-            error_t err = handle_accept_bulkcopy(&r);
+            error_t err = handle_ool_recv(&r);
             switch (err) {
                 case DONT_REPLY:
                     break;
@@ -462,9 +462,9 @@ static void handle_message(const struct message *m) {
             }
             break;
         }
-        case VERIFY_BULKCOPY_MSG: {
+        case OOL_VERIFY_MSG: {
             memcpy(&r, m, sizeof(r));
-            error_t err = handle_verify_bulkcopy(&r);
+            error_t err = handle_ool_verify(&r);
             switch (err) {
                 case DONT_REPLY:
                     break;
@@ -476,9 +476,9 @@ static void handle_message(const struct message *m) {
             }
             break;
         }
-        case DO_BULKCOPY_MSG: {
+        case OOL_SEND_MSG: {
             memcpy(&r, m, sizeof(r));
-            error_t err = handle_do_bulkcopy(&r);
+            error_t err = handle_ool_send(&r);
             switch (err) {
                 case DONT_REPLY:
                     break;
@@ -495,11 +495,11 @@ static void handle_message(const struct message *m) {
             r.nop_reply.value = m->nop.value * 7;
             ipc_reply(m->src, &r);
             break;
-        case NOP_WITH_BULK_MSG:
-            free((void *) m->nop_with_bulk.data);
-            r.type = NOP_WITH_BULK_REPLY_MSG;
-            r.nop_with_bulk_reply.data = "reply!";
-            r.nop_with_bulk_reply.data_len = 7;
+        case NOP_WITH_OOL_MSG:
+            free((void *) m->nop_with_ool.data);
+            r.type = NOP_WITH_OOL_REPLY_MSG;
+            r.nop_with_ool_reply.data = "reply!";
+            r.nop_with_ool_reply.data_len = 7;
             ipc_reply(m->src, &r);
             break;
         case EXCEPTION_MSG: {
@@ -647,7 +647,7 @@ static void handle_message(const struct message *m) {
         }
         default:
             WARN("unknown message type (type=%d)", m->type);
-            // FIXME: Free bulk payloads.
+            // FIXME: Free ool payloads.
     }
 }
 
