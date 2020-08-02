@@ -126,6 +126,5 @@ macro_rules! info {
 
 #[no_mangle]
 pub fn main() {
-
     info!("Hello, World from Rust!");
 }
