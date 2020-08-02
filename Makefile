@@ -260,6 +260,7 @@ $(BUILD_DIR)/libs/%.lib.o:
 #  Server build rules
 #
 define server-build-rule
+$(eval server_dir := $(shell tools/scan-servers-dir.py --dir $(1)))
 $(eval name :=)
 $(eval objs :=)
 $(eval libs := $(builtin_libs))
@@ -268,11 +269,11 @@ $(eval build_mks :=)
 $(eval rust :=)
 $(eval objs += $(BUILD_DIR)/$(1)/__name__.o)
 $(eval objs += $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(lib).lib.o))
-$(eval $(call visit-subdir,$(shell tools/scan-servers-dir.py --dir $(1)),$(BUILD_DIR)))
+$(eval $(call visit-subdir,$(server_dir),$(BUILD_DIR)))
 $(eval $(BUILD_DIR)/$(1)/__name__.c: name := $(name))
 $(eval $(BUILD_DIR)/$(1).elf: name := $(name))
 $(eval $(BUILD_DIR)/$(1).debug.elf: name := $(name))
-$(eval $(BUILD_DIR)/$(1).debug.elf: server_dir := servers/$(name))
+$(eval $(BUILD_DIR)/$(1).debug.elf: server_dir := $(server_dir))
 $(eval $(BUILD_DIR)/$(1).debug.elf: objs := $(objs))
 $(eval $(BUILD_DIR)/$(1).debug.elf: objs += $(if $(rust), $(BUILD_DIR)/rust/$(name).a))
 $(eval $(BUILD_DIR)/$(1).debug.elf: $(objs) $(if $(rust), $(BUILD_DIR)/rust/$(name).a) $(build_mks))
