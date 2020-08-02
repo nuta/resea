@@ -47,8 +47,8 @@ jobs:
       - name: Set up Rust
         run: |
           cargo install cargo-xbuild
-          rustup component add rust-src
           rustup override set nightly
+          rustup component add rust-src
 
       - name: Install apt packages
         if: matrix.os == 'ubuntu-20.04'
