@@ -27,6 +27,10 @@ jobs:
             TARGET: arm_release
           - os: ubuntu-20.04
             TARGET: minlin
+            EXPECTED: "built-in shell (ash)"
+          - os: ubuntu-20.04
+            TARGET: tcpip
+            EXPECTED: "dhcp: leased ip=10.0.2.15"
           - os: macos-latest
             TARGET: x64
     steps:
@@ -57,7 +61,4 @@ jobs:
 
       - name: Test
         run: |
-          if [ "${{ matrix.TARGET }}" = "minlin" ]; then
-            export EXPECTED="built-in shell (ash)"
-          fi
-          make -j2 test
+          EXPECTED="${{ matrix.EXPECTED }}" make -j2 test
