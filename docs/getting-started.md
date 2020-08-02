@@ -28,10 +28,7 @@ $ cargo install cargo-xbuild
 If you'd like to work on Rust applications, install Rust toolchain:
 
 1. Install [rustup](https://rustup.rs/).
-2. Install some cargo applications:
-```
-$ cargo install cargo-xbuild
-```
+2. Add `rust-src` component: `rustup component add rust-src --toolchain nightly`.
 
 ## Building Resea
 ```

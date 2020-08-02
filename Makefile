@@ -113,7 +113,7 @@ CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/$(bootstrap).elf"'
 CFLAGS += -DBOOTFS_PATH='"$(bootfs_bin)"'
 CFLAGS += -DAUTOSTARTS='"$(autostarts)"'
 
-CARGOFLAGS += --quiet
+CARGOFLAGS +=-Z build-std=core --quiet
 RUSTFLAGS += -C lto -Z emit-stack-sizes -Z external-macro-backtrace
 
 ifdef CONFIG_BUILD_RELEASE
@@ -320,7 +320,7 @@ $(BUILD_DIR)/rust/%.a:
 	$(PROGRESS) "CARGO" servers/$(name)
 	mkdir -p $(BUILD_DIR)/rust/$(name)
 	PROGRAM_NAME="$(name)" \
-		$(CARGO) xbuild \
+		$(CARGO) +nightly build \
 			--manifest-path servers/$(name)/Cargo.toml \
 			--target libs/resea/rust/arch/$(ARCH)/$(ARCH).json \
 			--target-dir $(BUILD_DIR)/rust/$(name) \
