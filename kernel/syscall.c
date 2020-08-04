@@ -141,7 +141,11 @@ static int sys_print(userptr_t buf, size_t buf_len) {
 
 static int sys_kdebug(userptr_t cmd, size_t cmd_len, userptr_t buf, size_t buf_len) {
     char cmd_buf[128];
-    strncpy_from_user(cmd_buf, cmd, MIN(sizeof(cmd_buf) - 1, cmd_len));
+    if (cmd_len >= sizeof(cmd_buf) - 1) {
+        return ERR_TOO_LARGE;
+    }
+
+    strncpy_from_user(cmd_buf, cmd, cmd_len);
 
     error_t err = kdebug_run(cmd_buf);
     if (err != OK) {
