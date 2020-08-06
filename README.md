@@ -29,6 +29,23 @@ Road Map in 2020
 - Developer tools improvements: userland debugger, fuzzer, unit testing, etc.
 - GUI server
 
+Build Instructions
+------------------
+### Mac
+```
+brew install llvm python qemu bochs i386-elf-grub xorris
+pip install -r tools/requirements.txt
+make menuconfig
+make
+```
+### Ubuntu
+```
+apt install llvm clang lld python3 qemu-system-x86 bochs grub2 xorriso git make
+pip install -r tools/requirements.txt
+make menuconfig
+make
+```
+
 Contributing
 ------------
 We accept bug reports, feature requests, and patches on
