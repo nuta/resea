@@ -46,6 +46,12 @@ make menuconfig
 make
 ```
 
+How to Run This Project
+-----------------------
+```
+make run
+```
+
 Contributing
 ------------
 We accept bug reports, feature requests, and patches on
