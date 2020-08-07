@@ -63,12 +63,6 @@ static error_t sys_exec(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
         return ERR_INVALID_TASK;
     }
 
-    if (!SYSCALL_AUTH(task)) {
-        WARN_DBG("SYSCALL_AUTH failure: #%d (%s) tried to control #%d (%s)",
-                 CURRENT->tid, CURRENT->name, task->tid, task->name);
-        return ERR_NOT_PERMITTED;
-    }
-
     if (pager >= 0) {
         // Create a task. We handle pager == 0 as an error here.
         struct task *pager_task = task_lookup(pager);
@@ -203,12 +197,6 @@ static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
     struct task *task = task_lookup(tid);
     if (!task) {
         return ERR_INVALID_TASK;
-    }
-
-    if (!SYSCALL_AUTH(task)) {
-        WARN_DBG("SYSCALL_AUTH failure: #%d (%s) tried to control #%d (%s)",
-                 CURRENT->tid, CURRENT->name, task->tid, task->name);
-        return ERR_NOT_PERMITTED;
     }
 
     // Resolve paddrs.

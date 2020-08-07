@@ -4,15 +4,6 @@
 #include <types.h>
 #include <message.h>
 
-/// Checks if the current task is allowed to control (dangerous operations) the
-/// `target` task. This macro is true if any following statements are hold:
-///
-///  - The current task is the init task.
-///  - The current task is the pager task for `target`.
-///
-#define SYSCALL_AUTH(target) \
-    (!CURRENT->pager || CURRENT == (target)->pager)
-
 /// A pointer given by the user. Don't reference it directly; access it through
 /// safe functions such as memcpy_from_user and memcpy_to_user!
 typedef vaddr_t userptr_t;
