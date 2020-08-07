@@ -31,9 +31,9 @@ Road Map in 2020
 
 Build Instructions
 ------------------
-### Mac
+### macOS
 ```
-brew install llvm python qemu bochs i386-elf-grub xorris
+brew install llvm python qemu bochs i386-elf-grub xorriso
 pip install -r tools/requirements.txt
 make menuconfig
 make
