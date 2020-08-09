@@ -123,52 +123,6 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
     return ipc(dst_task, src, (struct message *) m, flags);
 }
 
-/// Writes log messages into the kernel log buffer.
-static int sys_print(userptr_t buf, size_t buf_len) {
-    char kbuf[256];
-    int remaining = buf_len;
-    while (remaining > 0) {
-        int copy_len = MIN(remaining, (int) sizeof(kbuf));
-        memcpy_from_user(kbuf, buf, copy_len);
-        for (int i = 0; i < copy_len; i++) {
-            printk("%c", kbuf[i]);
-        }
-        remaining -= copy_len;
-    }
-
-    return OK;
-}
-
-static int sys_kdebug(userptr_t cmd, size_t cmd_len, userptr_t buf, size_t buf_len) {
-    char cmd_buf[128];
-    if (cmd_len >= sizeof(cmd_buf) - 1) {
-        return ERR_TOO_LARGE;
-    }
-
-    strncpy_from_user(cmd_buf, cmd, cmd_len);
-
-    error_t err = kdebug_run(cmd_buf);
-    if (err != OK) {
-        return err;
-    }
-
-    size_t remaining = buf_len;
-    while (remaining > 0) {
-        char kbuf[256];
-        int max_len = MIN(remaining, (int) sizeof(kbuf));
-        int read_len = klog_read(kbuf, max_len);
-        if (!read_len) {
-            break;
-        }
-
-        memcpy_to_user(buf, kbuf, read_len);
-        buf += read_len;
-        remaining -= read_len;
-    }
-
-    return buf_len - remaining;
-}
-
 static paddr_t resolve_paddr(vaddr_t vaddr) {
     if (CURRENT->tid == INIT_TASK) {
         if (is_kernel_paddr(vaddr)) {
@@ -218,6 +172,52 @@ static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
     }
 
     return OK;
+}
+
+/// Writes log messages into the kernel log buffer.
+static int sys_print(userptr_t buf, size_t buf_len) {
+    char kbuf[256];
+    int remaining = buf_len;
+    while (remaining > 0) {
+        int copy_len = MIN(remaining, (int) sizeof(kbuf));
+        memcpy_from_user(kbuf, buf, copy_len);
+        for (int i = 0; i < copy_len; i++) {
+            printk("%c", kbuf[i]);
+        }
+        remaining -= copy_len;
+    }
+
+    return OK;
+}
+
+static int sys_kdebug(userptr_t cmd, size_t cmd_len, userptr_t buf, size_t buf_len) {
+    char cmd_buf[128];
+    if (cmd_len >= sizeof(cmd_buf) - 1) {
+        return ERR_TOO_LARGE;
+    }
+
+    strncpy_from_user(cmd_buf, cmd, cmd_len);
+
+    error_t err = kdebug_run(cmd_buf);
+    if (err != OK) {
+        return err;
+    }
+
+    size_t remaining = buf_len;
+    while (remaining > 0) {
+        char kbuf[256];
+        int max_len = MIN(remaining, (int) sizeof(kbuf));
+        int read_len = klog_read(kbuf, max_len);
+        if (!read_len) {
+            break;
+        }
+
+        memcpy_to_user(buf, kbuf, read_len);
+        buf += read_len;
+        remaining -= read_len;
+    }
+
+    return buf_len - remaining;
 }
 
 /// The system call handler.
