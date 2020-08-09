@@ -4,6 +4,7 @@
 #include <task.h>
 #include "interrupt.h"
 #include "trap.h"
+#include "vm.h"
 
 static uint64_t pml4_tables[CONFIG_NUM_TASKS][512] __aligned(PAGE_SIZE);
 static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(STACK_SIZE);
@@ -15,7 +16,6 @@ error_t arch_task_create(struct task *task, vaddr_t ip) {
     void *syscall_stack_bottom = (void *) syscall_stacks[task->tid];
     void *xsave = (void *) xsave_areas[task->tid];
 
-    task->vm.pml4 = into_paddr(pml4_tables[task->tid]);
     task->arch.interrupt_stack_bottom = kstack;
     task->arch.interrupt_stack = (uint64_t) kstack + STACK_SIZE;
     task->arch.syscall_stack = (uint64_t) syscall_stack_bottom + STACK_SIZE;
@@ -23,6 +23,16 @@ error_t arch_task_create(struct task *task, vaddr_t ip) {
     task->arch.xsave = xsave;
     task->arch.gsbase = 0;
     task->arch.fsbase = 0;
+
+    // Initialize the page table.
+    task->arch.pml4 = into_paddr(pml4_tables[task->tid]);
+    uint64_t *table = from_paddr(task->arch.pml4);
+    memcpy(table, from_paddr((paddr_t) __kernel_pml4), PAGE_SIZE);
+
+    // The kernel no longer access a virtual address around 0x0000_0000. Unmap
+    // the area to catch bugs (especially NULL pointer dereferences in the
+    // kernel).
+    table[0] = 0;
 
     // Set up a temporary kernel stack frame.
     uint64_t *rsp = (uint64_t *) task->arch.interrupt_stack;
@@ -69,7 +79,7 @@ void arch_task_switch(struct task *prev, struct task *next) {
     prev->arch.fsbase = asm_rdfsbase();
     asm_wrfsbase(next->arch.fsbase);
     // Switch the page table.
-    asm_write_cr3(next->vm.pml4);
+    asm_write_cr3(next->arch.pml4);
     // Enable ABI emulation if needed.
     ARCH_CPUVAR->abi_emu = (next->flags & TASK_ABI_EMU) ? 1 : 0;
     // Update the kernel stack for syscall and interrupt/exception handlers.

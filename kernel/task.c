@@ -57,11 +57,6 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
         return err;
     }
 
-    // Initialize the page table.
-    if ((err = vm_create(&task->vm)) != OK) {
-        return err;
-    }
-
     // Initialize fields.
     TRACE("new task #%d: %s (pager=%s)",
           task->tid, name, pager ? pager->name : NULL);
@@ -113,7 +108,6 @@ error_t task_destroy(struct task *task) {
     TRACE("destroying %s...", task->name);
     list_remove(&task->runqueue_next);
     list_remove(&task->sender_next);
-    vm_destroy(&task->vm);
     arch_task_destroy(task);
     task->state = TASK_UNUSED;
 

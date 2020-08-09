@@ -10,18 +10,15 @@
 #define STRAIGHT_MAP_ADDR 0x03000000
 #define STRAIGHT_MAP_END  0x3f000000
 
-struct vm {
-    /// The level-0 page table.
-    uint64_t *entries;
-    /// The user's page table paddr.
-    paddr_t ttbr0;
-};
-
 struct arch_task {
     vaddr_t syscall_stack;
     vaddr_t stack;
     void *syscall_stack_bottom;
     void *exception_stack_bottom;
+    /// The level-0 page table.
+    uint64_t *page_table;
+    /// The user's page table paddr.
+    paddr_t ttbr0;
 };
 
 static inline void *from_paddr(paddr_t addr) {

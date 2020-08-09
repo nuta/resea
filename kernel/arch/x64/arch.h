@@ -11,10 +11,6 @@
 #define STRAIGHT_MAP_ADDR 0x0000000003000000
 #define STRAIGHT_MAP_END  0xffff800000000000
 
-struct vm {
-    paddr_t pml4;
-};
-
 struct arch_task {
     uint64_t rsp;
     uint64_t interrupt_stack;
@@ -24,6 +20,7 @@ struct arch_task {
     void *xsave;
     uint64_t gsbase;
     uint64_t fsbase;
+    paddr_t pml4;
 } __packed;
 
 static inline void *from_paddr(paddr_t addr) {

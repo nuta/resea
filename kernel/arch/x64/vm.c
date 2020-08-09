@@ -1,4 +1,5 @@
 #include <arch.h>
+#include <task.h>
 #include <printk.h>
 #include <string.h>
 #include "vm.h"
@@ -37,29 +38,13 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
     return &table[NTH_LEVEL_INDEX(1, vaddr)];
 }
 
-extern char __kernel_heap[];
-
-error_t vm_create(struct vm *vm) {
-    uint64_t *table = from_paddr(vm->pml4);
-    memcpy(table, from_paddr((paddr_t) __kernel_pml4), PAGE_SIZE);
-
-    // The kernel no longer access a virtual address around 0x0000_0000. Unmap
-    // the area to catch bugs (especially NULL pointer dereferences in the
-    // kernel).
-    table[0] = 0;
-    return OK;
-}
-
-void vm_destroy(struct vm *vm) {
-}
-
-error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
+error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
                 unsigned flags) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
     uint64_t attrs = (1 << 2) | 1 /* user, present */;
     attrs |= (flags & MAP_W) ? X64_PAGE_WRITABLE : 0;
 
-    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, kpage, attrs);
+    uint64_t *entry = traverse_page_table(task->arch.pml4, vaddr, kpage, attrs);
     if (!entry) {
         return (kpage) ? ERR_TRY_AGAIN : ERR_EMPTY;
     }
@@ -69,15 +54,15 @@ error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
     return OK;
 }
 
-void vm_unlink(struct vm *vm, vaddr_t vaddr) {
-    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, 0, 0);
+void vm_unlink(struct task *task, vaddr_t vaddr) {
+    uint64_t *entry = traverse_page_table(task->arch.pml4, vaddr, 0, 0);
     if (entry) {
         *entry = 0;
         asm_invlpg(vaddr);
     }
 }
 
-paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr) {
-    uint64_t *entry = traverse_page_table(vm->pml4, vaddr, 0, 0);
+paddr_t vm_resolve(struct task *task, vaddr_t vaddr) {
+    uint64_t *entry = traverse_page_table(task->arch.pml4, vaddr, 0, 0);
     return (entry) ? ENTRY_PADDR(*entry) : 0;
 }

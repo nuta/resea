@@ -1,4 +1,5 @@
 #include <arch.h>
+#include <task.h>
 #include <syscall.h>
 #include <printk.h>
 #include <string.h>
@@ -36,24 +37,14 @@ static uint64_t *traverse_page_table(uint64_t *table, vaddr_t vaddr,
     return &table[NTH_LEVEL_INDEX(1, vaddr)];
 }
 
-error_t vm_create(struct vm *vm) {
-    memset(vm->entries, 0, PAGE_SIZE);
-    vm->ttbr0 = into_paddr(vm->entries);
-    return OK;
-}
-
-void vm_destroy(struct vm *vm) {
-    // TODO:
-}
-
-error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
+error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
                 unsigned flags) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
     uint64_t attrs = 1 << 6; // user
     // TODO: MAP_W
 
-    uint64_t *entry = traverse_page_table(vm->entries, vaddr, kpage, attrs);
+    uint64_t *entry = traverse_page_table(task->arch.page_table, vaddr, kpage, attrs);
     if (!entry) {
         return (kpage) ? ERR_TRY_AGAIN : ERR_EMPTY;
     }
@@ -69,8 +60,8 @@ error_t vm_link(struct vm *vm, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
     return OK;
 }
 
-void vm_unlink(struct vm *vm, vaddr_t vaddr) {
-    uint64_t *entry = traverse_page_table(vm->entries, vaddr, 0, 0);
+void vm_unlink(struct task *task, vaddr_t vaddr) {
+    uint64_t *entry = traverse_page_table(task->arch.page_table, vaddr, 0, 0);
     if (entry) {
         *entry = 0;
         // FIXME: Flush only the affected page.
@@ -82,7 +73,7 @@ void vm_unlink(struct vm *vm, vaddr_t vaddr) {
     }
 }
 
-paddr_t vm_resolve(struct vm *vm, vaddr_t vaddr) {
-    uint64_t *entry = traverse_page_table(vm->entries, vaddr, 0, 0);
+paddr_t vm_resolve(struct task *task, vaddr_t vaddr) {
+    uint64_t *entry = traverse_page_table(task->arch.page_table, vaddr, 0, 0);
     return (entry) ? ENTRY_PADDR(*entry) : 0;
 }
