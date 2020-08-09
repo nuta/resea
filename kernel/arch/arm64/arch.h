@@ -13,8 +13,6 @@
 struct arch_task {
     vaddr_t syscall_stack;
     vaddr_t stack;
-    void *syscall_stack_bottom;
-    void *exception_stack_bottom;
     /// The level-0 page table.
     uint64_t *page_table;
     /// The user's page table paddr.

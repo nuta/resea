@@ -15,8 +15,6 @@ struct arch_task {
     uint64_t rsp;
     uint64_t interrupt_stack;
     uint64_t syscall_stack;
-    void *interrupt_stack_bottom;
-    void *syscall_stack_bottom;
     void *xsave;
     uint64_t gsbase;
     uint64_t fsbase;

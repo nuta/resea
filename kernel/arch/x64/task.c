@@ -16,10 +16,8 @@ error_t arch_task_create(struct task *task, vaddr_t ip) {
     void *syscall_stack_bottom = (void *) syscall_stacks[task->tid];
     void *xsave = (void *) xsave_areas[task->tid];
 
-    task->arch.interrupt_stack_bottom = kstack;
     task->arch.interrupt_stack = (uint64_t) kstack + STACK_SIZE;
     task->arch.syscall_stack = (uint64_t) syscall_stack_bottom + STACK_SIZE;
-    task->arch.syscall_stack_bottom = syscall_stack_bottom;
     task->arch.xsave = xsave;
     task->arch.gsbase = 0;
     task->arch.fsbase = 0;

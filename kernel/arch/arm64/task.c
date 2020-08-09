@@ -16,7 +16,8 @@ static void init_stack(struct task *task, vaddr_t pc) {
     memset(task->arch.page_table, 0, PAGE_SIZE);
     task->arch.ttbr0 = into_paddr(task->arch.page_table);
 
-    uint64_t *sp = (uint64_t *) ((vaddr_t) task->arch.exception_stack_bottom + STACK_SIZE);
+    vaddr_t exception_stack = (vaddr_t) exception_stacks[task->tid];
+    uint64_t *sp = (uint64_t *) (exception_stack + STACK_SIZE);
     // Fill the stack values for arm64_start_task().
     *--sp = pc;
 
@@ -31,11 +32,8 @@ static void init_stack(struct task *task, vaddr_t pc) {
 
 error_t arch_task_create(struct task *task, vaddr_t pc) {
     void *syscall_stack = (void *) kernel_stacks[task->tid];
-    void *exception_stack = (void *) exception_stacks[task->tid];
     task->arch.page_table = page_tables[task->tid];
     task->arch.syscall_stack = (vaddr_t) syscall_stack + STACK_SIZE;
-    task->arch.syscall_stack_bottom = syscall_stack;
-    task->arch.exception_stack_bottom = exception_stack;
     init_stack(task, pc);
     return OK;
 }
