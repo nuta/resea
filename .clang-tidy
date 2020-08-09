@@ -6,6 +6,7 @@ Checks: >-
   -readability-magic-numbers,
   -readability-isolate-declaration,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  -clang-analyzer-security.insecureAPI.bzero,
   -hicpp-multiway-paths-covered,
   -hicpp-signed-bitwise,
   -hicpp-no-assembler,
