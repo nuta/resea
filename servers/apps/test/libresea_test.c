@@ -8,7 +8,7 @@ void libresea_test(void) {
     ptr = malloc(128);
     TEST_ASSERT(ptr != NULL);
     free(ptr);
-    ptr = malloc(0);
+    ptr = malloc(1);
     TEST_ASSERT(ptr != NULL);
     free(ptr);
 }

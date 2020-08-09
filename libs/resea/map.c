@@ -96,13 +96,13 @@ void *map_set(map_t map, void *key, void *value) {
 
 void *map_remove(map_t map, void *key) {
     struct map_elem *e = search(map, key);
-    if (e) {
-        void *value = e->value;
-        list_remove(&e->next);
-        free(e);
-        map->len--;
-        return value;
-    } else {
+    if (!e) {
         return NULL;
     }
+
+    void *value = e->value;
+    list_remove(&e->next);
+    free(e);
+    map->len--;
+    return value;
 }
