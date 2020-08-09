@@ -36,6 +36,9 @@ jobs:
           - os: ubuntu-20.04
             TARGET: rust
             EXPECTED: "Hello World from Rust!"
+          - os: ubuntu-20.04
+            TARGET: example_arch
+            EXPECTED: "Implement 'make run' in kernel/<arch>/build.mk!"
     steps:
       - uses: actions/checkout@v2
 

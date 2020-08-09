@@ -1,10 +1,14 @@
 # Porting to a CPU Architecture
 
-Porting to a new CPU architecture (*arch* in short) is threefold:
+Porting to a new CPU architecture (*arch* in short) is pretty easy if you're
+already familiar with the architecture:
 
-1. Define arch-specific types and build settings in the `common` library.
-2. Implement Hardware Abstraction Layer (HAL) for kernel.
-3. Define arch-specific part in the `resea` library.
+1. Scaffold your new port using the *example* arch:
+  `libs/common/arch/example`, `kernel/arch/example`, and `libs/common/arch/example`.
+2. Define arch-specific types and build settings in the `common` library.
+3. Implement Hardware Abstraction Layer (HAL) for kernel.
+4. Define arch-specific part in the `resea` library.
+5. Add the architecture in `Kconfig`.
 
 ## Implementing `common` library
 The common library (`libs/common`) is responsible for providing libraries and types (`typedef`) for both kernel and userspace programs. You'll need to implement
@@ -13,13 +17,11 @@ the following files.
 - `libs/common/arch/<arch-name>/arch.mk`
   - Build options for the arch: `$CFLAGS`, `run` command, etc.
 - `libs/common/arch/<arch-name>/arch_types.h`
-  - Arch-specific `#define`s and `typedef`s. It likely to be changed.
+  - Arch-specific `#define`s and `typedef`s.
 
 ## Porting the kernel
 For portability, the kernel separates the arch-specific layer
 (*Hardware Abstraction Layer*) into `kernel/arch`.
-
-That said, its interface is not yet stable and undocumented.
 
 Roughly speaking, you'll need to implement:
 
@@ -27,12 +29,11 @@ Roughly speaking, you'll need to implement:
 - Debugging log output (e.g. serial port)
 - Context switching
 - Virtual memory management (updating and switching page tables)
+  - Resea Kernel also supports `NOMMU` mode for CPUs that don't implement virtual memory.
 - Interrupt/exception/system call handlers
 - Multi-Processor support *(optional)*
 - Kernel Debugger input driver *(optional)*
 - The linker script for the kernel executable (`kernel/arch/<arch-name>/kernel.ld`)
-
-The x86_64 HAL (`kernel/arch/x64`) would be a good reference.
 
 ## Implementing `resea` library
 The `resea` library is the standard library for userspace Resea applications.

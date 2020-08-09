@@ -8,6 +8,8 @@ choice
         bool "Raspberry Pi 3 (AArch64)"
     config ARCH_ARM
         bool "micro:bit (ARM)"
+    config ARCH_EXAMPLE
+        bool "Example (a template for porting)"
 endchoice
 
 choice
