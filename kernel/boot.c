@@ -1,6 +1,6 @@
 #include <config.h>
 #include <string.h>
-#include "main.h"
+#include "boot.h"
 #include "kdebug.h"
 #include "printk.h"
 #include "syscall.h"

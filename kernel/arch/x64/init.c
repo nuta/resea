@@ -1,5 +1,5 @@
 #include <arch.h>
-#include <main.h>
+#include <boot.h>
 #include <printk.h>
 #include <task.h>
 #include "serial.h"

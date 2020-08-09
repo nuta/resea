@@ -1,5 +1,5 @@
 #include <types.h>
-#include <main.h>
+#include <boot.h>
 #include <printk.h>
 #include <string.h>
 #include "peripherals.h"

@@ -8,7 +8,7 @@
 #include <resea/handle.h>
 #include "device.h"
 #include "dhcp.h"
-#include "main.h"
+#include "boot.h"
 #include "sys.h"
 #include "tcp.h"
 #include "udp.h"

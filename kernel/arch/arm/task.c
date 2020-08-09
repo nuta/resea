@@ -1,6 +1,6 @@
 #include <syscall.h>
 #include <string.h>
-#include <main.h>
+#include <boot.h>
 #include <task.h>
 
 static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(STACK_SIZE);

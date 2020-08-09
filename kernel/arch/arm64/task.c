@@ -1,6 +1,6 @@
 #include <syscall.h>
 #include <string.h>
-#include <main.h>
+#include <boot.h>
 #include <task.h>
 #include "asm.h"
 
