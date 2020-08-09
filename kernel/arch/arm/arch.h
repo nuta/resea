@@ -9,9 +9,6 @@
 #define STRAIGHT_MAP_ADDR 0 // Unused.
 #define STRAIGHT_MAP_END  0 // Unused.
 
-struct vm {
-};
-
 struct arch_task {
     void *stack_bottom;
     vaddr_t stack;
