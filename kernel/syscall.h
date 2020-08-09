@@ -17,7 +17,6 @@ void abi_emu_hook(trap_frame_t *frame, enum abi_hook_type type);
 #endif
 
 // Implemented in arch.
-struct task;
 void arch_memcpy_from_user(void *dst, userptr_t src, size_t len);
 void arch_memcpy_to_user(userptr_t dst, const void *src, size_t len);
 

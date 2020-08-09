@@ -85,7 +85,6 @@ __mustuse error_t task_destroy(struct task *task);
 __noreturn void task_exit(enum exception_type exp);
 void task_block(struct task *task);
 void task_resume(struct task *task);
-void task_notify(struct task *task, notifications_t notifications);
 struct task *task_lookup(task_t tid);
 struct task *task_lookup_unchecked(task_t tid);
 void task_switch(void);
