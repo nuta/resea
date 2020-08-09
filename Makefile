@@ -93,6 +93,7 @@ CLANG_TIDY := $(LLVM_PREFIX)clang-tidy$(LLVM_SUFFIX)
 PROGRESS   := printf "  \\033[1;96m%8s\\033[0m  \\033[1;m%s\\033[0m\\n"
 PYTHON3    ?= python3
 CARGO      ?= cargo
+SPARSE     ?= sparse
 
 CFLAGS += -g3 -std=c11 -ffreestanding -fno-builtin -nostdlib -nostdinc
 CFLAGS += -Wall -Wextra
@@ -123,6 +124,12 @@ else
 RUST_BUILD := debug
 CFLAGS += -O1 -fsanitize=undefined
 RUSTFLAGS += -C opt-level=3 -C debug_assertions=no
+endif
+
+# Disable sparse(1), a C source code analyzer if $(C) is not set.
+ifeq ($(C),)
+# `:` is a valid command: it do nothing and always exits with 0.
+SPARSE := :
 endif
 
 #
@@ -179,6 +186,8 @@ $(BUILD_DIR)/kernel/%.o: %.c Makefile $(autogen_files)
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	$(SPARSE) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL $<
+
 
 $(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/$(boot_task).elf $(autogen_files)
 	$(PROGRESS) "CC" $<
@@ -202,11 +211,7 @@ $(BUILD_DIR)/%.o: %.c Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
-
-$(BUILD_DIR)/%.o: %.c Makefile $(autogen_files)
-	$(PROGRESS) "CC" $<
-	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	$(SPARSE) $(CFLAGS) $<
 
 $(BUILD_DIR)/%.o: %.S Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<

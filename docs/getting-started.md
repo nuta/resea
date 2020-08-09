@@ -10,7 +10,7 @@
 
 ### macOS
 ```
-$ brew install llvm python3 qemu bochs i386-elf-grub xorriso mtools
+$ brew install llvm python3 qemu bochs i386-elf-grub xorriso mtools sparse
 $ brew cask install gcc-arm-embedded
 $ pip3 install -r tools/requirements.txt
 ```
