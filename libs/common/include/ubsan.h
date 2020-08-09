@@ -22,4 +22,16 @@ struct ubsan_mismatch_data_v1 {
     uint8_t kind;
 };
 
+void __ubsan_handle_type_mismatch_v1(struct ubsan_mismatch_data_v1 *data,
+                                     vaddr_t ptr);
+void __ubsan_handle_add_overflow(void);
+void __ubsan_handle_sub_overflow(void);
+void __ubsan_handle_mul_overflow(void);
+void __ubsan_handle_divrem_overflow(void);
+void __ubsan_handle_negate_overflow(void);
+void __ubsan_handle_pointer_overflow(void);
+void __ubsan_handle_out_of_bounds(void);
+void __ubsan_handle_shift_out_of_bounds(void);
+void __ubsan_handle_builtin_unreachable(void);
+
 #endif

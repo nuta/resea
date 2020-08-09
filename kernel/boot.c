@@ -9,7 +9,6 @@
 // Defined in arch.
 extern uint8_t __bootelf[];
 extern uint8_t __bootelf_end[];
-struct bootelf_header *bootelf = NULL;
 
 static struct bootelf_header *locate_bootelf_header(void) {
     const offset_t offsets[] = {
@@ -55,7 +54,7 @@ static error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
 #endif
 
 // Maps ELF segments in the boot ELF into virtual memory.
-void map_bootelf(struct bootelf_header *header, struct task *task) {
+static void map_bootelf(struct bootelf_header *header, struct task *task) {
     TRACE("boot ELF: entry=%p", header->entry);
     for (unsigned i = 0; i < header->num_mappings; i++) {
         struct bootelf_mapping *m = &header->mappings[i];
@@ -128,7 +127,7 @@ __noreturn void mpmain(void) {
 
     // Initialize the idle task for this CPU.
     IDLE_TASK->tid = 0;
-    error_t err = task_create(IDLE_TASK, "(idle)", 0, 0, 0);
+    error_t err = task_create(IDLE_TASK, "(idle)", 0, NULL, 0);
     ASSERT_OK(err);
     CURRENT = IDLE_TASK;
 

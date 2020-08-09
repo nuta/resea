@@ -2,6 +2,7 @@
 #include <boot.h>
 #include <printk.h>
 #include <task.h>
+#include <kdebug.h>
 #include "serial.h"
 #include "task.h"
 #include "trap.h"
@@ -127,6 +128,10 @@ static void common_setup(void) {
     apic_timer_init();
     syscall_init();
 }
+
+// Add declarations to make sparse happy.
+void init(void);
+void mpinit(void);
 
 void init(void) {
     lock();

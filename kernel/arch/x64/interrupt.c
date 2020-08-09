@@ -147,6 +147,9 @@ uintmax_t x64_handle_syscall(uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,
 }
 
 #ifdef CONFIG_ABI_EMU
+// Add declarations to make sparse happy.
+void x64_abi_emu_hook(trap_frame_t *frame);
+void x64_abi_emu_hook_initial(trap_frame_t *frame);
 
 void x64_abi_emu_hook(trap_frame_t *frame) {
     lock();

@@ -100,6 +100,7 @@ void task_init(void);
 void lock(void);
 void panic_lock(void);
 void unlock(void);
+void mp_start(void);
 int mp_self(void);
 int mp_num_cpus(void);
 void mp_reschedule(void);

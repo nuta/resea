@@ -36,5 +36,6 @@ uintmax_t x64_handle_syscall(uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,
                              uintmax_t arg4, uintmax_t arg5, uintmax_t type);
 struct task;
 void release_task_irq(struct task *task);
+void interrupt_init(void);
 
 #endif

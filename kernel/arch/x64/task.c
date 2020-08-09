@@ -92,8 +92,3 @@ void arch_task_switch(struct task *prev, struct task *next) {
     // Restore registers (resume the next thread).
     switch_context(&prev->arch.rsp, &next->arch.rsp);
 }
-
-error_t arch_caps_updated(struct task *task) {
-    update_tss_iomap(task);
-    return OK;
-}

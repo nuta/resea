@@ -1,6 +1,7 @@
 #include <arch.h>
 #include <printk.h>
 #include <task.h>
+#include <kdebug.h>
 #include "serial.h"
 
 static void serial_write(char ch) {

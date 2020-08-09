@@ -21,7 +21,7 @@ struct bootelf_header {
     struct bootelf_mapping mappings[];
 } __packed;
 
-void kmain(void);
+__noreturn void kmain(void);
 __noreturn void mpmain(void);
 
 // Implemented in arch.
