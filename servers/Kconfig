@@ -55,6 +55,8 @@ menu "Servers"
 
         config HELLO_FROM_RUST_SERVER
                 tristate "Hello World from Rust"
+        config EXAMPLE_SERVER
+            tristate "Example server (template)"
     endmenu
 
     source "servers/*/Kconfig"
