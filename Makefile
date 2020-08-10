@@ -294,11 +294,6 @@ $(foreach server, $(boot_task) $(servers), \
 	mkdir -p $(@D)
 	echo "#include <types.h>" > $(@)
 	echo "const char *__program_name(void) { return \"$(name)\"; }" >> $(@)
-	if [ "$(CONFIG_BOOT_TASK)" = "$(name)" ]; then \
-		echo "bool __is_boot_task(void) { return true; }" >> $(@); \
-	else \
-		echo "bool __is_boot_task(void) { return false; }" >> $(@); \
-	fi
 
 %/__name__.o: %/__name__.c $(autogen_files)
 	$(PROGRESS) "CC" $@

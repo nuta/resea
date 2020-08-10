@@ -11,7 +11,7 @@
 #include "mm.h"
 #include "ool.h"
 
-error_t call_self(struct message *m) {
+error_t call_pager(struct message *m) {
     m->src = INIT_TASK;
     error_t err;
     switch (m->type) {
@@ -29,7 +29,7 @@ error_t call_self(struct message *m) {
     }
 
     if (err != OK) {
-        PANIC("call_self failed (%s)", err2str(err));
+        PANIC("call_pager failed (%s)", err2str(err));
     }
 
     return err;
