@@ -7,5 +7,5 @@ error_t klog_write(const char *buf, size_t len) {
 }
 
 int klog_read(char *buf, size_t len) {
-    return sys_kdebug("", strlen(buf), buf, len);
+    return sys_kdebug("", 0, buf, len);
 }
