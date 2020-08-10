@@ -17,4 +17,8 @@ struct bootfs_file {
     uint8_t padding[8];
 } __packed;
 
+struct bootfs_file *bootfs_open(unsigned index);
+void read_file(struct bootfs_file *file, offset_t off, void *buf, size_t len);
+void bootfs_init(void);
+
 #endif
