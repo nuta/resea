@@ -34,9 +34,9 @@ struct service {
     task_t task;
 };
 
-task_t launch_task(struct bootfs_file *file);
-struct task *get_task_by_tid(task_t tid);
-void kill(struct task *task);
+task_t task_spawn(struct bootfs_file *file);
+struct task *task_lookup(task_t tid);
+void task_kill(struct task *task);
 void service_register(struct task *task, const char *name);
 task_t service_wait(struct task *task, const char *name);
 void task_init(void);

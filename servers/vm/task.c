@@ -13,7 +13,7 @@ static struct task tasks[CONFIG_NUM_TASKS];
 static list_t services;
 
 /// Look for the task in the our task table.
-struct task *get_task_by_tid(task_t tid) {
+struct task *task_lookup(task_t tid) {
     if (tid <= 0 || tid > CONFIG_NUM_TASKS) {
         PANIC("invalid tid %d", tid);
     }
@@ -48,7 +48,7 @@ static void init_task_struct(struct task *task, const char *name,
     list_init(&task->page_areas);
 }
 
-task_t launch_task(struct bootfs_file *file) {
+task_t task_spawn(struct bootfs_file *file) {
     TRACE("launching %s...", file->name);
 
     // Look for an unused task ID.
@@ -83,7 +83,7 @@ task_t launch_task(struct bootfs_file *file) {
     return task->tid;
 }
 
-void kill(struct task *task) {
+void task_kill(struct task *task) {
     task_destroy(task->tid);
     task->in_use = false;
     if (task->file_header) {

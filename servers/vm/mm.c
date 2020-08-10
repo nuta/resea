@@ -29,7 +29,7 @@ static vaddr_t alloc_virt_pages(struct task *task, size_t num_pages) {
 
     if (vaddr + size >= (vaddr_t) __free_vaddr_end) {
         // Task's virtual memory space has been exhausted.
-        kill(task);
+        task_kill(task);
         return 0;
     }
 
@@ -37,7 +37,7 @@ static vaddr_t alloc_virt_pages(struct task *task, size_t num_pages) {
     return vaddr;
 }
 
-error_t phy_alloc_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
+error_t alloc_phy_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
                         size_t num_pages) {
     if (*paddr && !is_mappable_paddr(*paddr)) {
         return ERR_INVALID_ARG;

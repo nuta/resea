@@ -10,7 +10,7 @@ static uint8_t __src_page[PAGE_SIZE] __aligned(PAGE_SIZE);
 static uint8_t __dst_page[PAGE_SIZE] __aligned(PAGE_SIZE);
 
 error_t handle_ool_recv(struct message *m) {
-    struct task *task = get_task_by_tid(m->src);
+    struct task *task = task_lookup(m->src);
     ASSERT(task);
 
 //    TRACE("accept: %s: %p %d (old=%p)",
@@ -48,7 +48,7 @@ error_t handle_ool_recv(struct message *m) {
 }
 
 error_t handle_ool_verify(struct message *m) {
-    struct task *task = get_task_by_tid(m->src);
+    struct task *task = task_lookup(m->src);
     ASSERT(task);
 
 //    TRACE("verify: %s: id=%p len=%d (src=%d)", task->name,
@@ -69,10 +69,10 @@ error_t handle_ool_verify(struct message *m) {
 }
 
 error_t handle_ool_send(struct message *m) {
-    struct task *src_task = get_task_by_tid(m->src);
+    struct task *src_task = task_lookup(m->src);
     ASSERT(src_task);
 
-    struct task *dst_task = get_task_by_tid(m->ool_send.dst);
+    struct task *dst_task = task_lookup(m->ool_send.dst);
     if (!dst_task) {
         return ERR_NOT_FOUND;
     }
@@ -104,7 +104,7 @@ error_t handle_ool_send(struct message *m) {
         } else {
             paddr_t src_paddr = vaddr2paddr(src_task, ALIGN_DOWN(src_buf, PAGE_SIZE));
             if (!src_paddr) {
-                kill(src_task);
+                task_kill(src_task);
                 return DONT_REPLY;
             }
 
@@ -119,7 +119,7 @@ error_t handle_ool_send(struct message *m) {
         } else {
             paddr_t dst_paddr = vaddr2paddr(dst_task, ALIGN_DOWN(dst_buf, PAGE_SIZE));
             if (!dst_paddr) {
-                kill(dst_task);
+                task_kill(dst_task);
                 return ERR_UNAVAILABLE;
             }
 
