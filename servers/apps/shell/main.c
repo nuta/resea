@@ -146,6 +146,8 @@ static void log_command(__unused int argc, __unused char **argv) {
     while (true) {
         char buf[512];
         size_t read_len = klog_read(buf, sizeof(buf));
+        ASSERT_OK(read_len);
+
         if (!read_len) {
             break;
         }
