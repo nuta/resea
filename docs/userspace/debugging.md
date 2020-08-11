@@ -3,10 +3,10 @@ We don't have rich debugging features yet. Use printf macros. Good luck!
 
 ## How to deal with dead locks in IPC
 Even if you don't use locks like *mutex* (note that we don't provide such
-a thing), your program could blocked forever by an IPC operation.
+a thing), your program could be blocked forever by an IPC operation.
 
 The common case is that both your program and the destination task are trying
-to send a message to each other. You can notice the situation by `ps` command
+to send a message to each other. You can check it by `ps` command
 in the kernel debugger:
 
 ```
