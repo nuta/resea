@@ -37,7 +37,7 @@ The most important thing when you're writing a Resea application is:
 How can we avoid deadlocks in Resea? This is where notifications comes into play.
 
 ## Notify & Pull Pattern
-Instead of sending message each other, when TCP/IP wants to send some data to
+Instead of sending message each other, when TCP/IP sends some data to
 the driver, it *notifies* the driver asynchronously that there's pending data.
 When the device driver receives the notification, it pulls the pending data
 via message passing:
@@ -53,3 +53,5 @@ via message passing:
          1. notify that new data is
           available asynchronously
 ```
+
+See [Asynchronous IPC](../userspace/async-message-passing) for more detials.

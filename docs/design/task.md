@@ -3,9 +3,7 @@ A *task* is a unit of execution just like *process* in other operating systems.
 It contains a CPU context (registers) and its own virtual address space.
 
 The biggest difference is that **Resea does not kernel-level threading**:
-in other words, only single thread can exist in a task.
-It might let you down, however, writing a program in a (single-threaded)
-event-driven programming model makes debugging easy[^1].
+in other words, only single thread can exist in a task [^1].
 
 ## Server
 *Server* is a task which provides services like device driver, file system,
@@ -26,7 +24,7 @@ communicates with the pager task to handle them:
 - **ABI Emulation Hook:** If ABI emulation is enabled for the task, the kernel
   asks the pager to handle system calls, etc.
 
-This mechanism is introduced for achieving [the separation of mechanism and policy](https://en.wikipedia.org/wiki/Separation_of_mechanism_and_policy)
+This *pager* mechanism is introduced for achieving [the separation of mechanism and policy](https://en.wikipedia.org/wiki/Separation_of_mechanism_and_policy)
 and it suprisingly improves the flexibility of the operating system.
 
-[^1]: [John Ousterhout. Why Threads Are A Bad Idea (for most purposes) [PDF]](https://web.stanford.edu/~ouster/cgi-bin/papers/threads.pdf)
+[^1]: Note that you can still implement *threads* in Resea by simply mapping *same* physical memory pages in your pager. I suppose the size of page table is negligible.
