@@ -56,10 +56,8 @@ error_t kdebug_run(const char *cmdline, char *buf, size_t len) {
     return OK;
 }
 
-bool kdebug_is_input_empty(void);
-
 void kdebug_handle_interrupt(void) {
-    if (!kdebug_is_input_empty() && listener) {
+    if (!kdebug_is_readable() && listener) {
         notify(listener, NOTIFY_IRQ);
     }
 }

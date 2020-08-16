@@ -21,6 +21,11 @@ char kdebug_readchar(void) {
     return '\0'; // TODO:
 }
 
+bool kdebug_is_readable(void) {
+    // TODO: Not yet implemented.
+    return false;
+}
+
 void arm64_timer_reload(void) {
     uint64_t hz = ARM64_MRS(cntfrq_el0);
     ASSERT(hz >= 1000);

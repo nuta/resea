@@ -20,6 +20,11 @@ char kdebug_readchar(void) {
     return mmio_read(UART_RXD);
 }
 
+bool kdebug_is_readable(void) {
+    // TODO: Not yet implemented.
+    return false;
+}
+
 void arm_peripherals_init(void) {
     // UART: Set baudrate and RX/TX pins, enable interrupts.
     mmio_write(GPIO_DIRSET, (1 << UART_PIN_TX) | (0 << UART_PIN_RX));

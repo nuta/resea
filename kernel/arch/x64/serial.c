@@ -16,7 +16,7 @@ void arch_printchar(char ch) {
     }
 }
 
-bool kdebug_is_input_empty(void) {
+bool kdebug_is_readable(void) {
     return (asm_in8(IOPORT_SERIAL + LSR) & 1) == 0;
 }
 
