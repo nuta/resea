@@ -288,12 +288,12 @@ void task_dump(void) {
             continue;
         }
 
-        DPRINTK("#%d %s: state=%s, src=%d\n", task->tid, task->name,
+        INFO("#%d %s: state=%s, src=%d", task->tid, task->name,
                 states[task->state], task->src);
         if (!list_is_empty(&task->senders)) {
-            DPRINTK("  senders:\n");
+            INFO("  senders:");
             LIST_FOR_EACH (sender, &task->senders, struct task, sender_next) {
-                DPRINTK("    - #%d %s\n", sender->tid, sender->name);
+                INFO("    - #%d %s", sender->tid, sender->name);
             }
         }
     }

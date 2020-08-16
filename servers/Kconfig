@@ -43,10 +43,6 @@ menu "Servers"
         endmenu
 
         menu "Device Drivers"
-            config DISPLAY_SERVER
-                tristate "Text-based display driver (x64)"
-            config PS2KBD_SERVER
-                tristate "PS2 keyboard driver (x64)"
             config RAMDISK_SERVER
                 tristate "RAM disk driver"
             config E1000_SERVER

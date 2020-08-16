@@ -30,39 +30,6 @@ namespace fs {
     rpc stat(path: str) -> (size: size);
 }
 
-namespace textscreen {
-    // Screen text color codes. See https://wiki.osdev.org/Printing_To_Screen
-    enum color {
-        BLACK = 0,
-        BLUE = 9,
-        GREEN = 10,
-        CYAN = 11,
-        RED = 12,
-        MAGENTA = 13,
-        YELLOW = 14,
-        WHITE = 15,
-        NORMAL = 15,
-    };
-
-    oneway draw_char(ch: char, fg_color: color, bg_color: color, x: uint, y: uint);
-    oneway move_cursor(x: uint, y: uint);
-    oneway clear();
-    oneway scroll();
-    rpc get_size() -> (width: uint, height: uint);
-}
-
-namespace kbd {
-    // Lower 7 bits are ASCII code and upper bits are modifier keys combination
-    // such as Ctrl and Alt.
-    type keycode = u16;
-
-    const KEY_MOD_CTRL: u16 = 0x100;
-    const KEY_MOD_ALT: u16  = 0x200;
-
-    rpc listen() -> ();
-    oneway on_key_up(keycode: keycode);
-}
-
 namespace blk {
     rpc read(sector: offset, num_sectors: size) -> (data: bytes);
 }

@@ -16,12 +16,17 @@ void arch_printchar(char ch) {
     }
 }
 
+bool kdebug_is_input_empty(void) {
+    return (asm_in8(IOPORT_SERIAL + LSR) & 1) == 0;
+}
+
 int kdebug_readchar(void) {
     if ((asm_in8(IOPORT_SERIAL + LSR) & 1) == 0) {
         return -1;
     }
 
-    return asm_in8(IOPORT_SERIAL + RBR);
+    char ch = asm_in8(IOPORT_SERIAL + RBR);
+    return ch == '\r' ? '\n' : ch;
 }
 
 void serial_init(void) {
@@ -31,7 +36,7 @@ void serial_init(void) {
     asm_out8(IOPORT_SERIAL + DLL, divisor & 0xff);
     asm_out8(IOPORT_SERIAL + DLH, (divisor >> 8) & 0xff);
     asm_out8(IOPORT_SERIAL + LCR, 0x03);  // 8n1.
-    asm_out8(IOPORT_SERIAL + FCR, 0x00);  // No FIFO.
+    asm_out8(IOPORT_SERIAL + FCR, 0x01);  // Enable FIFO.
     asm_out8(IOPORT_SERIAL + IER, 0x01);  // Enable interrupts.
 }
 

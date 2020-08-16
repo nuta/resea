@@ -6,6 +6,7 @@
 
 #define PRINT_BUF_SIZE 256
 
+void printf_flush(void);
 void printf(const char *fmt, ...);
 
 #endif

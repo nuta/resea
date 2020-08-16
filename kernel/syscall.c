@@ -190,34 +190,26 @@ static int sys_print(userptr_t buf, size_t buf_len) {
     return OK;
 }
 
-static int sys_kdebug(userptr_t cmd, size_t cmd_len, userptr_t buf, size_t buf_len) {
+static error_t sys_kdebug(userptr_t cmd, size_t cmd_len, userptr_t buf, size_t buf_len) {
     char cmd_buf[128];
     if (cmd_len >= sizeof(cmd_buf) - 1) {
         return ERR_TOO_LARGE;
     }
 
+    char out_buf[512] = { '\0' };
+    if (buf_len >= sizeof(out_buf) - 1) {
+        return ERR_TOO_LARGE;
+    }
+
     strncpy_from_user(cmd_buf, cmd, cmd_len);
 
-    error_t err = kdebug_run(cmd_buf);
+    error_t err = kdebug_run(cmd_buf, out_buf, buf_len);
     if (err != OK) {
         return err;
     }
 
-    size_t remaining = buf_len;
-    while (remaining > 0) {
-        char kbuf[256];
-        int max_len = MIN(remaining, (int) sizeof(kbuf));
-        int read_len = klog_read(kbuf, max_len);
-        if (!read_len) {
-            break;
-        }
-
-        memcpy_to_user(buf, kbuf, read_len);
-        buf += read_len;
-        remaining -= read_len;
-    }
-
-    return buf_len - remaining;
+    memcpy_to_user(buf, out_buf, strlen(out_buf) + 1);
+    return OK;
 }
 
 /// The system call handler.

@@ -3,9 +3,27 @@
 #include <printk.h>
 #include <task.h>
 #include <kdebug.h>
+#include <string.h>
 #include "serial.h"
 #include "task.h"
 #include "trap.h"
+
+static void draw_text_screen(void) {
+    const char *message = "Resea " VERSION " - Talk with me over the serial port :)";
+    uint16_t *vram = from_paddr(0xb8000);
+
+    // Clear the screen.
+    for (int y = 0; y < 25; y++) {
+        for (int x = 0; x < 80; x++) {
+            vram[y * 80 + x] = 0x1f20;
+        }
+    }
+
+    // Print the message.
+    for (int i = 0; message[i] != '\0'; i++) {
+        vram[i] = message[i] | (0x1f << 8);
+    }
+}
 
 static void gdt_init(void) {
     uint64_t tss_addr = (uint64_t) &ARCH_CPUVAR->tss;
@@ -135,6 +153,7 @@ void mpinit(void);
 
 void init(void) {
     lock();
+    draw_text_screen();
     serial_init();
     pic_init();
     common_setup();

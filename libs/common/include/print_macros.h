@@ -24,7 +24,6 @@ const char *__program_name(void);
 #define SGR_WARN_DBG "\e[1;33m"  // Bold yellow.
 #define SGR_INFO     "\e[0;96m"  // Cyan.
 #define SGR_DEBUG    "\e[1;32m"  // Bold green.
-#define SGR_DPRINTK  "\e[1m"     // Bold.
 #define SGR_RESET    "\e[0m"
 
 #define TRACE(fmt, ...)                                                        \
@@ -56,7 +55,6 @@ const char *__program_name(void);
                ##__VA_ARGS__);                                                 \
     } while (0)
 
-#define DPRINTK(fmt, ...) printk(SGR_DPRINTK fmt SGR_RESET, ##__VA_ARGS__)
 
 #define HEXDUMP(ptr, len)                                                      \
     do {                                                                       \

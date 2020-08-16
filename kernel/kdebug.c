@@ -1,22 +1,53 @@
 #include <string.h>
 #include "kdebug.h"
 #include "task.h"
+#include "printk.h"
+#include "ipc.h"
 
-error_t kdebug_run(const char *cmdline) {
+static struct task *listener = NULL;
+
+error_t kdebug_run(const char *cmdline, char *buf, size_t len) {
     if (strlen(cmdline) == 0) {
         // An empty command. Just ignore it.
         return OK;
     } else if (strcmp(cmdline, "help") == 0) {
-        DPRINTK("Kernel debugger commands:\n");
-        DPRINTK("\n");
-        DPRINTK("  ps - List tasks.\n");
-        DPRINTK("  q  - Quit the emulator.\n");
-        DPRINTK("\n");
+        INFO("Kernel debugger commands:");
+        INFO("");
+        INFO("  ps - List tasks.");
+        INFO("  q  - Quit the emulator.");
+        INFO("");
     } else if (strcmp(cmdline, "ps") == 0) {
         task_dump();
     } else if (strcmp(cmdline, "q") == 0) {
         arch_semihosting_halt();
         PANIC("halted by the kdebug");
+    } else if (strcmp(cmdline, "_listeninput") == 0) {
+        listener = CURRENT;
+        notify(listener, NOTIFY_IRQ);
+        // TODO: Free in task_destroy
+    } else if (strcmp(cmdline, "_input") == 0) {
+        if (!len) {
+            return ERR_TOO_SMALL;
+        }
+
+        size_t i = 0;
+        for (; i < len - 1; i++) {
+            char ch;
+            if ((ch = kdebug_readchar()) <= 0) {
+                break;
+            }
+
+            buf[i] = ch;
+        }
+
+        buf[i] = '\0';
+    } else if (strcmp(cmdline, "_log") == 0) {
+        if (!len) {
+            return ERR_TOO_SMALL;
+        }
+
+        int read_len = klog_read(buf, len - 1);
+        buf[read_len - 1] = '\0';
     } else {
         WARN("Invalid debugger command: '%s'.", cmdline);
         return ERR_NOT_FOUND;
@@ -25,27 +56,11 @@ error_t kdebug_run(const char *cmdline) {
     return OK;
 }
 
+bool kdebug_is_input_empty(void);
+
 void kdebug_handle_interrupt(void) {
-    static char cmdline[64];
-    static unsigned long cursor = 0;
-    int ch;
-    while ((ch = kdebug_readchar()) > 0) {
-        if (ch == '\r') {
-            printk("\n");
-            cmdline[cursor] = '\0';
-            cursor = 0;
-            (void) kdebug_run(cmdline);
-            DPRINTK("kdebug> ");
-            continue;
-        }
-
-        DPRINTK("%c", ch);
-        cmdline[cursor++] = (char) ch;
-
-        if (cursor > sizeof(cmdline) - 1) {
-            WARN("Too long kernel debugger command.");
-            cursor = 0;
-        }
+    if (!kdebug_is_input_empty() && listener) {
+        notify(listener, NOTIFY_IRQ);
     }
 }
 

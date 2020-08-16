@@ -7,7 +7,7 @@ static char printbuf[PRINT_BUF_SIZE];
 static int head = 0;
 static int tail = 0;
 
-static void flush(void) {
+void printf_flush(void) {
     if (tail < head) {
         klog_write(&printbuf[tail], head - tail);
         tail = head;
@@ -23,7 +23,7 @@ void printchar(char ch) {
     head = (head + 1) % PRINT_BUF_SIZE;
     if ((head < tail && head + 1 == tail) || ch == '\n') {
         // The buffer is full or character is newline. Flush the buffer.
-        flush();
+        printf_flush();
     }
 }
 
