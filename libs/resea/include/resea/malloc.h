@@ -34,6 +34,8 @@ STATIC_ASSERT(sizeof(struct malloc_chunk) == 48);
 void *malloc(size_t size);
 void *realloc(void *ptr, size_t size);
 void free(void *ptr);
+char *strndup(const char *s, size_t n);
+char *strdup(const char *s);
 void malloc_init(void);
 
 #endif

@@ -131,6 +131,16 @@ void free(void *ptr) {
     chunk->magic = MALLOC_FREE;
 }
 
+char *strndup(const char *s, size_t n) {
+    char *new_s = malloc(n + 1);
+    strncpy(new_s, s, n + 1);
+    return new_s;
+}
+
+char *strdup(const char *s) {
+    return strndup(s, strlen(s));
+}
+
 void malloc_init(void) {
     insert(__heap, (size_t) __heap_end - (size_t) __heap);
 }
