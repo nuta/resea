@@ -145,5 +145,6 @@ enum exception_type {
 #include <arch_types.h>
 
 typedef uintmax_t uintptr_t;
+typedef intmax_t ptrdiff_t;
 
 #endif
