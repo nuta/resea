@@ -31,6 +31,8 @@ menu "Servers"
                 tristate "Hello World"
             config BENCHMARK_SERVER
                 tristate "Benchmark"
+            config UTILS_SERVER
+                tristate "Command-line Utilities"
             config TEST_SERVER
                 tristate "Kernel/Userland integrated tests"
         endmenu
