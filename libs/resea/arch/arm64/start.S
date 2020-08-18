@@ -5,14 +5,8 @@ _start:
     ldr  x0, =__stack_end
     mov  sp, x0
 
-    // Initialize the user library.
+    // Initialize the user library and run main().
     bl resea_init
-
-    // Call main().
-    bl main
-
-    // main() has returned. Exit the current task.
-    bl task_exit
 
 .global halt
 halt:

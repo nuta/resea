@@ -25,6 +25,8 @@ SECTIONS {
         __stack_end = .;
     } :data
 
+    __cmdline = 0x02fff000;
+
     . = 0x00300000;
     __zeroed_pages = .;
 

@@ -24,7 +24,8 @@ struct task *task_lookup(task_t tid) {
 }
 
 static void init_task_struct(struct task *task, const char *name,
-    struct bootfs_file *file, void *file_header, struct elf64_ehdr *ehdr) {
+    struct bootfs_file *file, void *file_header, struct elf64_ehdr *ehdr,
+    const char *cmdline) {
     task->in_use = true;
     task->file = file;
     task->file_header = file_header;
@@ -44,11 +45,12 @@ static void init_task_struct(struct task *task, const char *name,
     list_init(&task->ool_sender_queue);
     list_nullify(&task->ool_sender_next);
     strncpy(task->name, name, sizeof(task->name));
+    strncpy(task->cmdline, cmdline, sizeof(task->cmdline));
     strncpy(task->waiting_for, "", sizeof(task->waiting_for));
     list_init(&task->page_areas);
 }
 
-task_t task_spawn(struct bootfs_file *file) {
+task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     TRACE("launching %s...", file->name);
 
     // Look for an unused task ID.
@@ -79,7 +81,7 @@ task_t task_spawn(struct bootfs_file *file) {
         task_create(task->tid, file->name, ehdr->e_entry, task_self(), TASK_IO);
     ASSERT_OK(err);
 
-    init_task_struct(task, file->name, file, file_header, ehdr);
+    init_task_struct(task, file->name, file, file_header, ehdr, cmdline);
     return task->tid;
 }
 
@@ -136,6 +138,6 @@ void task_init(void) {
     }
 
     // Initialize a task struct for myself.
-    init_task_struct(&tasks[INIT_TASK - 1], "vm", NULL, NULL, NULL);
+    init_task_struct(&tasks[INIT_TASK - 1], "vm", NULL, NULL, NULL, "");
     list_init(&services);
 }

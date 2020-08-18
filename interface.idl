@@ -14,7 +14,7 @@ rpc nop(value: int) -> (value: int);
 rpc nop_with_ool(data: bytes) -> (data: bytes);
 rpc serve(name: str) -> ();
 rpc lookup(name: str) -> (task: task);
-rpc launch_task(name: str) -> (task: task);
+rpc launch_task(name_and_cmdline: str) -> (task: task);
 rpc alloc_pages(num_pages: size, paddr: paddr) -> (vaddr: vaddr, paddr: paddr);
 
 namespace ool {

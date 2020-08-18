@@ -11,6 +11,7 @@ struct task {
     bool in_use;
     task_t tid;
     char name[32];
+    char cmdline[512];
     struct bootfs_file *file;
     void *file_header;
     struct elf64_ehdr *ehdr;
@@ -34,7 +35,7 @@ struct service {
     task_t task;
 };
 
-task_t task_spawn(struct bootfs_file *file);
+task_t task_spawn(struct bootfs_file *file, const char *cmdline);
 struct task *task_lookup(task_t tid);
 void task_kill(struct task *task);
 void service_register(struct task *task, const char *name);

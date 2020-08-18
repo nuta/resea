@@ -23,6 +23,8 @@ SECTIONS {
         *(.rodata.*);
     } :text
 
+    __cmdline = 0x02fff000;
+
     . = 0x03000000;
     .data : ALIGN(0x1000) {
         *(.data);

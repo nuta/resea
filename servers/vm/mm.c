@@ -8,6 +8,7 @@
 #include "pages.h"
 #include "bootfs.h"
 
+extern char __cmdline[];
 extern char __zeroed_pages[];
 extern char __zeroed_pages_end[];
 extern char __free_vaddr_end[];
@@ -94,6 +95,15 @@ paddr_t pager(struct task *task, vaddr_t vaddr, unsigned fault) {
         WARN("%s: invalid memory access at %p (perhaps segfault?)", task->name,
              vaddr);
         return 0;
+    }
+
+    // The `cmdline` for main().
+    if (vaddr == (vaddr_t) __cmdline) {
+        paddr_t paddr = alloc_pages(task, vaddr, 1);
+        ASSERT_OK(map_page(INIT_TASK, paddr, paddr, MAP_W, false));
+        memset((void *) paddr, 0, PAGE_SIZE);
+        strncpy((void *) paddr, task->cmdline, PAGE_SIZE);
+        return paddr;
     }
 
     LIST_FOR_EACH (area, &task->page_areas, struct page_area, next) {

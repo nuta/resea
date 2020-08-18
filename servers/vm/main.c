@@ -48,7 +48,7 @@ static void spawn_servers() {
             size_t len = strlen(file->name);
             if (!strncmp(file->name, startups, len)
                 && (startups[len] == '\0' || startups[len] == ' ')) {
-                task_spawn(file);
+                task_spawn(file, "");
                 num_launched++;
                 break;
             }
@@ -229,10 +229,20 @@ void main(void) {
                 break;
             }
             case LAUNCH_TASK_MSG: {
-                // Look for the program in the apps directory.
-                char *name = (char *) m.launch_task.name;
+                // "echo hello world!" -> name="echo", cmdline="hello world!"
+                char *name = (char *) m.launch_task.name_and_cmdline;
+                char *cmdline = "";
+                for (int i = 0; name[i] != '\0'; i++) {
+                    if (name[i] == ' ') {
+                        name[i] = '\0';
+                        cmdline = &name[i + 1];
+                        break;
+                    }
+                }
+
+                // Look for the executable in bootfs named `name`.
                 struct bootfs_file *file;
-                for (int i =0; (file = bootfs_open(i)) != NULL; i++) {
+                for (int i = 0; (file = bootfs_open(i)) != NULL; i++) {
                     if (!strcmp(file->name, name)) {
                         break;
                     }
@@ -244,7 +254,7 @@ void main(void) {
                     break;
                 }
 
-                task_spawn(file);
+                task_spawn(file, cmdline);
                 r.type = LAUNCH_TASK_REPLY_MSG;
                 ipc_reply(m.src, &r);
                 break;

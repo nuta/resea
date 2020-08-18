@@ -9,14 +9,8 @@ start:
     // Set RBP to 0 in order to stop backtracing here.
     mov rbp, 0
 
-    // Initialize the user library.
+    // Initialize the user library and run main().
     call resea_init
-
-    // Call main().
-    call main
-
-    // main() has returned. Exit the current task.
-    call task_exit
 
     // Somehow task_exit returned!
 .global halt
