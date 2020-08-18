@@ -70,6 +70,16 @@ char *strchr(const char *s, int c) {
     return (char *) s;
 }
 
+int atoi(const char *s) {
+    int x = 0;
+    while ('0' <= *s && *s <= '9')  {
+        x = (x * 10) + (*s - '0');
+        s++;
+    }
+
+    return x;
+}
+
 int memcmp(const void *p1, const void *p2, size_t len) {
     uint8_t *s1 = (uint8_t *) p1;
     uint8_t *s2 = (uint8_t *) p2;
