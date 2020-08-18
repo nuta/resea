@@ -220,6 +220,7 @@ void tcp_transmit(tcp_sock_t sock) {
     struct device *device = device_lookup(&sock->remote.addr);
     if (!device) {
         // No route.
+        WARN_DBG("no route");
         mbuf_delete(payload);
         return;
     }
