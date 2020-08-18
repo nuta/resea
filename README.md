@@ -14,7 +14,7 @@ See **[Documentation](https://seiya.me/resea)** for more detials.
 
 Features
 --------
-- A **minimalistic and policy-free microkernel** based operating system written entirely from scratch. *Everything is message passing!*
+- A **minimalistic and policy-free microkernel** based operating system written entirely from scratch in C (and less than 5000 LoC). *Everything is message passing!*
 - Supports **x86_64** (with SMP), **64-bit ARM** (Raspberry Pi 3), and **ARMv6-M** (micro:bit).
 - Includes userspace servers like **TCP/IP protocok stack** and **FAT file system driver**.
 - Provides **easy-to-use APIs** and every components are written in **single-threaded event-driven** approarch. It makes really easy to understand how Resea works and debug your code.
