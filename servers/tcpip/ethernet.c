@@ -10,13 +10,18 @@ void ethernet_transmit(struct device *device, enum ether_type type,
                        ipaddr_t *dst, mbuf_t payload) {
     ASSERT(dst->type == IP_TYPE_V4);
 
+
+    ipv4addr_t next_router =
+        (dst->v4 != IPV4_ADDR_BROADCAST && device_dst_is_gateway(device, dst))
+            ? device->gateway.v4 : dst->v4;
+
     macaddr_t dst_macaddr;
-    if (!arp_resolve(&device->arp_table, dst->v4, &dst_macaddr)) {
+    if (!arp_resolve(&device->arp_table, next_router, &dst_macaddr)) {
         // The destination IP address is not found in the ARP table. Enqueue the
         // given payload to send it later and send an ARP request to the IP
         // address.
-        arp_enqueue(&device->arp_table, type, dst->v4, payload);
-        arp_request(device, dst->v4);
+        arp_enqueue(&device->arp_table, type, next_router, payload);
+        arp_request(device, next_router);
         return;
     }
 

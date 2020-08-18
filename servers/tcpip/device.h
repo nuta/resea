@@ -35,6 +35,7 @@ struct device *device_lookup(ipaddr_t *dst);
 device_t device_new(const char *name, transmit_fn_t transmit,
                     link_transmit_fn_t link_transmit, void *arg);
 void device_enable_dhcp(device_t device);
+bool device_dst_is_gateway(device_t device, ipaddr_t *dst);
 void device_set_macaddr(device_t device, macaddr_t *macaddr);
 void device_set_ip_addrs(device_t device, ipaddr_t *ipaddr, ipaddr_t *netmask,
                          ipaddr_t *gateway);

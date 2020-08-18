@@ -27,7 +27,7 @@ struct device *device_lookup(ipaddr_t *dst) {
             continue;
         }
 
-        if (!ipaddr_is_unspecified(&device->gateway)) {
+        if (ipaddr_is_unspecified(&device->gateway)) {
             continue;
         }
 
@@ -35,6 +35,10 @@ struct device *device_lookup(ipaddr_t *dst) {
     }
 
     return NULL;
+}
+
+bool device_dst_is_gateway(device_t device, ipaddr_t *dst) {
+    return !ipaddr_equals_in_netmask(&device->ipaddr, dst, device->netmask);
 }
 
 device_t device_new(const char *name, transmit_fn_t transmit,
