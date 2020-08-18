@@ -3,52 +3,39 @@ Resea
 [![Build Status](https://github.com/nuta/resea/workflows/CI/badge.svg)](https://github.com/nuta/resea/actions?query=workflow%3ACI)
 [![Gitter chat](https://badges.gitter.im/resea/community.png)](https://gitter.im/resea/community)
 
-![screenshot](https://gist.githubusercontent.com/nuta/18bb9fb757bcb547f2432c4fc5197dcf/raw/6faa6cd38b2ad23cfdbfdabff5107f99aead12f9/demo.gif)
+![screenshot](https://gist.githubusercontent.com/nuta/42b36c50df15142ac25c3a5420607f2a/raw/e6c05de775f4649f6ba29638fd3ed8f40ea2f74f/screenshot.png)
 
 Resea *[ríːseə]* is a microkernel-based operating system written from scratch.
 It aims to provide an attractive developer experience and be *hackable*:
 intuitive to understand the whole design, easy to customize the system, and fun
 to extend the functionality.
 
+See **[Documentation](https://seiya.me/resea)** for more detials.
+
 Features
 --------
-- A *pure* microkernel with x86_64 (SMP) and experimental ARMv6-M (micro:bit) support.
-- FAT file system server.
-- TCP/IP server.
-- Text-based user interface.
-- Device drivers for PS/2 keyboard, e1000 network card, etc.
-- Linux ABI emulation (experimental).
+- A **minimalistic and policy-free microkernel** based operating system written entirely from scratch. *Everything is message passing!*
+- Supports **x86_64** (with SMP), **64-bit ARM** (Raspberry Pi 3), and **ARMv6-M** (micro:bit).
+- Includes userspace servers like **TCP/IP protocok stack** and **FAT file system driver**.
+- Provides **easy-to-use APIs** and every components are written in **single-threaded event-driven** approarch. It makes really easy to understand how Resea works and debug your code.
+- Some attractive experimental features like **Linux ABI emulation** and **Rust support**.
 
-Road Map in 2020
-----------------
-- Stabilize APIs.
-- Improve stability and performance.
-- Documentation
-- RISC-V support
-- [Rust](https://www.rust-lang.org/) in userland
-- Developer tools improvements: userland debugger, fuzzer, unit testing, etc.
-- GUI server
+See **[Road Map](https://github.com/nuta/resea/projects/1)** for planned new features and improvements.
 
-Build Instructions
-------------------
+## Quickstart
 ### macOS
 ```
-brew install llvm python qemu bochs i386-elf-grub xorriso
-pip install -r tools/requirements.txt
+brew install llvm python qemu
+pip3 install --user -r tools/requirements.txt
 make menuconfig
-make
-```
-### Ubuntu
-```
-apt install llvm clang lld python3 qemu-system-x86 bochs grub2 xorriso git make
-pip install -r tools/requirements.txt
-make menuconfig
-make
+make run
 ```
 
-How to Run This Project
------------------------
+### Ubuntu
 ```
+apt install llvm clang lld python3 qemu-system make
+pip3 install --user -r tools/requirements.txt
+make menuconfig
 make run
 ```
 
