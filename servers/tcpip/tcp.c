@@ -430,6 +430,7 @@ static void tcp_process(struct tcp_socket *sock, ipaddr_t *src_addr,
 
     if (sock->state == TCP_STATE_CLOSE_WAIT && !mbuf_len(sock->tx_buf)) {
         // No pending TX data. Finish the connection.
+        // FIXME: This transition should be initiated by the application.
         tcp_set_pendings(sock, TCP_PEND_FIN);
         sock->state = TCP_STATE_LAST_ACK;
     }
