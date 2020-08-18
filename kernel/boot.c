@@ -30,7 +30,7 @@ static struct bootelf_header *locate_bootelf_header(void) {
 #if !defined(CONFIG_NOMMU)
 /// Allocates a memory page for the first user task.
 static void *alloc_page(void) {
-    static uint8_t heap[PAGE_SIZE * 3448] __aligned(PAGE_SIZE);
+    static uint8_t heap[PAGE_SIZE * 4448] __aligned(PAGE_SIZE);
     static uint8_t *current = heap;
     if (current >= heap + sizeof(heap)) {
         PANIC("run out of memory for init task");
