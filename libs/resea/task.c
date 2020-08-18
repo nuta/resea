@@ -9,8 +9,9 @@ error_t task_destroy(task_t task) {
     return sys_exec(task, NULL, 0, -1, 0);
 }
 
-void task_exit(void) {
+__noreturn void task_exit(void) {
     sys_exec(0, NULL, 0, 0, 0);
+    for (;;);
 }
 
 task_t task_self(void) {

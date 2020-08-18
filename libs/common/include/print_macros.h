@@ -12,7 +12,7 @@ void printk(const char *fmt, ...);
 void panic_lock(void);
 #else
 void printf(const char *fmt, ...);
-void task_exit(void);
+__noreturn void task_exit(void);
 static inline void panic_lock(void) {}
 #endif
 
