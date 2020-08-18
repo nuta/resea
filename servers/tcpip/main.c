@@ -268,6 +268,16 @@ void main(void) {
                 free((void *) m.tcpip_write.data);
                 break;
             }
+            case TCPIP_CLOSE_MSG: {
+                struct client *c = handle_get(m.src, m.tcpip_close.handle);
+                if (!c) {
+                    ipc_send_err(m.src, ERR_INVALID_ARG);
+                    break;
+                }
+
+                tcp_close(c->sock);
+                break;
+            }
             case TCPIP_REGISTER_DEVICE_MSG:
                 register_device(m.src, &m.tcpip_register_device.macaddr);
                 m.type = TCPIP_REGISTER_DEVICE_REPLY_MSG;
