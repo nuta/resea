@@ -339,6 +339,7 @@ static void tcp_process(struct tcp_socket *sock, ipaddr_t *src_addr,
         case TCP_STATE_ESTABLISHED:
             if (flags & TCP_FIN) {
                 // Passive close. Acknowlege to FIN.
+                tcp_set_pendings(sock, TCP_PEND_ACK);
                 sock->state = TCP_STATE_CLOSE_WAIT;
                 sock->retransmit_at = 0;
                 sock->last_ack++;
@@ -346,9 +347,10 @@ static void tcp_process(struct tcp_socket *sock, ipaddr_t *src_addr,
 
             // Received data. Copy into the receive buffer.
             TRACE("tcp: received %d bytes (seq=%x)", mbuf_len(payload), seq);
-            tcp_set_pendings(sock, TCP_PEND_ACK);
             size_t payload_len = mbuf_len(payload);
             if (payload_len > 0) {
+                tcp_set_pendings(sock, TCP_PEND_ACK);
+
                 if (sock->local_winsize < payload_len) {
                     // The receive buffer is full.
                     stats.tcp_dropped++;
