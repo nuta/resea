@@ -3,7 +3,7 @@
 
 #include <types.h>
 
-static int toupper(int ch) {
+static inline int toupper(int ch) {
     return ('a' <= ch && ch <= 'z') ? ch - 0x20 : ch;
 }
 
