@@ -40,6 +40,32 @@ static int parse(char *cmdline, char **argv, int argv_max) {
     return argc;
 }
 
+static void launch_task(int argc, char **argv) {
+    // Construct a cmdline from argv.
+    size_t len = 0;
+    for (int i = 0; i < argc; i++) {
+        len += strlen(argv[i]) + 1 /* whitespace or '\0' */;
+    }
+
+    char *name_and_cmdline = malloc(len);
+    size_t offset = 0;
+    for (int i = 0; i < argc; i++) {
+        strncpy(&name_and_cmdline[offset], argv[i], len - offset);
+        offset += strlen(argv[i]);
+        name_and_cmdline[offset++] = ' ';
+    }
+    name_and_cmdline[offset - 1] = '\0';
+
+    struct message m;
+    m.type = LAUNCH_TASK_MSG;
+    m.launch_task.name_and_cmdline = name_and_cmdline;
+    error_t err = ipc_call(INIT_TASK, &m);
+    free(name_and_cmdline);
+    if (err != OK) {
+        WARN("failed to launch '%s': %s", argv[0], err2str(err));
+    }
+}
+
 static void run(char *cmdline) {
     int argv_max = 8;
     char **argv = malloc(sizeof(char *) * argv_max);
@@ -55,8 +81,8 @@ static void run(char *cmdline) {
         }
     }
 
-    // The command not found, show the help message...
-    WARN("Unknown shell command '%s'. Try 'help' to show usages.", argv[0]);
+    // No internal commands for `cmdline`. Try launching a task from vm.
+    launch_task(argc, argv);
 }
 
 static void prompt(const char *input) {
