@@ -17,7 +17,14 @@ static void send(handle_t handle, const uint8_t *buf, size_t len) {
 }
 
 static void received(handle_t handle, uint8_t *buf, size_t len) {
-    DBG("%s", buf);
+    char *sep = strstr((char *) buf, "\r\n\r\n");
+    if (!sep) {
+        WARN("failed to find \\r\\n\\r\\n");
+        return;
+    }
+
+    char *body = sep + 4; /* skip \r\n\r\n */
+    DBG("%s", body);
 
     struct message m;
     m.type = TCPIP_CLOSE_MSG;
