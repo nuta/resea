@@ -67,7 +67,6 @@ static void resolve_url(const char *url, uint32_t *ip_addr, uint16_t *port, char
         // The port number is not given.
         *port = 80;
         s = strchr(s, '/');
-        DBG("s = '%s'", s);
         if (*s) {
             *s++ = '\0';
         }
@@ -109,12 +108,10 @@ void http_get(const char *url) {
 
     int buf_len = 1024;
     char *buf = malloc(buf_len);
-    DBG("path = '%s'", path);
     snprintf(buf, buf_len, "GET /%s HTTP/1.0\r\n\r\n", path);
     send(handle, (uint8_t *) buf, strlen(buf));
     free(buf);
 
-    INFO("ready");
     while (1) {
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
