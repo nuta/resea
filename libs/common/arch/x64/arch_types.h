@@ -8,7 +8,6 @@ typedef int64_t intmax_t;
 typedef uint64_t uintmax_t;
 typedef uint64_t paddr_t;
 typedef uint64_t vaddr_t;
-typedef uint64_t uintptr_t;
 
 typedef struct {
     uint64_t fsbase;

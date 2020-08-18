@@ -6,7 +6,6 @@ typedef int32_t intmax_t;
 typedef uint32_t uintmax_t;
 typedef uint32_t paddr_t;
 typedef uint32_t vaddr_t;
-typedef uint32_t uintptr_t;
 
 typedef struct {
 } trap_frame_t;
