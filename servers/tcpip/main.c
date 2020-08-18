@@ -179,6 +179,24 @@ void main(void) {
             case ASYNC_MSG:
                 async_reply(m.src);
                 break;
+            case TCPIP_CONNECT_MSG: {
+                tcp_sock_t sock = tcp_new();
+                ipaddr_t dst_addr;
+                dst_addr.type = IP_TYPE_V4;
+                dst_addr.v4 = m.tcpip_connect.dst_addr;
+                tcp_connect(sock, &dst_addr, m.tcpip_connect.dst_port);
+
+                sock->client = malloc(sizeof(*sock->client));
+                sock->client->sock = sock;
+                sock->client->task = m.src;
+                sock->client->handle = handle_alloc(m.src);
+                handle_set(m.src, sock->client->handle, sock->client);
+
+                m.type = TCPIP_CONNECT_REPLY_MSG;
+                m.tcpip_connect_reply.handle = sock->client->handle;
+                ipc_send_noblock(m.src, &m);
+                break;
+            }
             case TCPIP_LISTEN_MSG: {
                 tcp_sock_t sock = tcp_new();
                 ipaddr_t any_ipaddr;

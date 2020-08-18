@@ -12,6 +12,16 @@
 static struct tcp_socket sockets[TCP_SOCKETS_MAX];
 static list_t active_socks;
 
+static void tcp_set_pendings(struct tcp_socket *sock, uint32_t pendings) {
+    sock->pendings |= pendings;
+}
+
+static uint32_t tcp_clear_pendings(struct tcp_socket *sock) {
+    uint32_t pendings = sock->pendings;
+    sock->pendings = 0;
+    return pendings;
+}
+
 static struct tcp_socket *tcp_lookup_local(endpoint_t *ep) {
     LIST_FOR_EACH (sock, &active_socks, struct tcp_socket, next) {
         if (!ipaddr_is_unspecified(&sock->local.addr)
@@ -118,6 +128,33 @@ void tcp_bind(tcp_sock_t sock, ipaddr_t *addr, port_t port) {
     memcpy(&sock->local, &ep, sizeof(sock->local));
 }
 
+void tcp_connect(tcp_sock_t sock, ipaddr_t *dst_addr, port_t dst_port) {
+    for (port_t port = 1000; port < 20000; port++) {
+        endpoint_t ep;
+        ep.port = port;
+        ep.addr.type = IP_TYPE_V4;
+        ep.addr.v4 = IPV4_ADDR_UNSPECIFIED;
+
+        // Check if there's a socket which is already binded to the port.
+        if (tcp_lookup_local(&ep) != NULL) {
+            continue;
+        }
+
+        memcpy(&sock->local, &ep, sizeof(sock->local));
+        memcpy(&sock->remote.addr, dst_addr, sizeof(sock->remote.addr));
+        sock->remote.port = dst_port;
+
+        sock->state = TCP_STATE_SYN_SENT;
+        tcp_set_pendings(sock, TCP_PEND_SYN);
+
+        list_push_back(&active_socks, &sock->next);
+        return;
+    }
+
+    // FIXME: return an error instead
+    WARN("run out of client tcp ports");
+}
+
 void tcp_listen(tcp_sock_t sock, int backlog) {
     sock->state = TCP_STATE_LISTEN;
     sock->backlog = backlog;
@@ -152,16 +189,6 @@ size_t tcp_read(tcp_sock_t sock, void *buf, size_t buf_len) {
     return read_len;
 }
 
-static void tcp_set_pendings(struct tcp_socket *sock, uint32_t pendings) {
-    sock->pendings |= pendings;
-}
-
-static uint32_t tcp_clear_pendings(struct tcp_socket *sock) {
-    uint32_t pendings = sock->pendings;
-    sock->pendings = 0;
-    return pendings;
-}
-
 void tcp_transmit(tcp_sock_t sock) {
     if (sock->retransmit_at && sys_uptime() < sock->retransmit_at) {
         return;
@@ -187,6 +214,10 @@ void tcp_transmit(tcp_sock_t sock) {
             break;
         default:
             break;
+    }
+
+    if (flags & TCP_PEND_SYN) {
+        ctrl_flags |= TCP_SYN;
     }
 
     if (flags & TCP_PEND_ACK) {
@@ -302,21 +333,35 @@ static void tcp_process(struct tcp_socket *sock, ipaddr_t *src_addr,
         return;
     }
 
-    if (seq != sock->last_ack) {
+    if (sock->state != TCP_STATE_SYN_SENT && seq != sock->last_ack) {
         // Unexpected sequence number.
         stats.tcp_discarded++;
         return;
     }
 
     sock->remote_winsize = ntoh32(header->win_size);
-
-    uint32_t acked_len = ack - sock->next_seqno;
-    if (acked_len > 0) {
-        mbuf_discard(&sock->tx_buf, acked_len);
-        sock->next_seqno += acked_len;
+    if (sock->state == TCP_STATE_ESTABLISHED) {
+        uint32_t acked_len = ack - sock->next_seqno;
+        if (acked_len > 0) {
+            mbuf_discard(&sock->tx_buf, acked_len);
+            sock->next_seqno += acked_len;
+        }
     }
 
     switch (sock->state) {
+        case TCP_STATE_SYN_SENT: {
+            if ((flags & (TCP_SYN | TCP_ACK)) == 0) {
+                // Invalid (unexpected) packet, ignoring...
+                stats.tcp_discarded++;
+                break;
+            }
+
+            sock->next_seqno = ack;
+            sock->last_ack = seq + 1;
+            sock->state = TCP_STATE_ESTABLISHED;
+            sock->retransmit_at = 0;
+            break;
+        }
         case TCP_STATE_SYN_RECVED: {
             if ((flags & TCP_ACK) == 0) {
                 // Invalid (unexpected) packet, ignoring...

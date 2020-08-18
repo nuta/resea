@@ -22,6 +22,7 @@ enum tcp_state {
 enum tcp_pending_flag {
     TCP_PEND_ACK = 1 << 0,
     TCP_PEND_FIN = 1 << 1,
+    TCP_PEND_SYN = 1 << 2,
 };
 
 struct client;
@@ -82,6 +83,7 @@ tcp_sock_t tcp_new(void);
 void tcp_close(tcp_sock_t sock);
 void tcp_bind(tcp_sock_t sock, ipaddr_t *addr, port_t port);
 void tcp_listen(tcp_sock_t sock, int backlog);
+void tcp_connect(tcp_sock_t sock, ipaddr_t *dst_addr, port_t dst_port);
 tcp_sock_t tcp_accept(tcp_sock_t sock);
 void tcp_write(tcp_sock_t sock, const void *data, size_t len);
 size_t tcp_read(tcp_sock_t sock, void *buf, size_t buf_len);
