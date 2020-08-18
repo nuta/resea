@@ -62,6 +62,14 @@ char *strstr(const char *haystack, const char *needle) {
     return NULL;
 }
 
+char *strchr(const char *s, int c) {
+    while (*s != c && *s != '\0') {
+        s++;
+    }
+
+    return (char *) s;
+}
+
 int memcmp(const void *p1, const void *p2, size_t len) {
     uint8_t *s1 = (uint8_t *) p1;
     uint8_t *s2 = (uint8_t *) p2;
