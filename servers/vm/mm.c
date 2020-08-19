@@ -1,8 +1,8 @@
 #include <resea/ipc.h>
 #include <resea/task.h>
 #include <resea/malloc.h>
+#include <elf/elf.h>
 #include <string.h>
-#include <elf.h>
 #include "mm.h"
 #include "task.h"
 #include "pages.h"

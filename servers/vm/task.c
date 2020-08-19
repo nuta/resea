@@ -1,9 +1,9 @@
 #include <resea/malloc.h>
 #include <resea/task.h>
 #include <resea/ipc.h>
+#include <elf/elf.h>
 #include <string.h>
 #include <message.h>
-#include <elf.h>
 #include "task.h"
 #include "bootfs.h"
 
