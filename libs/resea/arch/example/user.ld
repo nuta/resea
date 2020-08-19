@@ -8,6 +8,7 @@ PHDRS {
 }
 
 SECTIONS {
+    __cmdline = 0x10000;
     . = 0x01000000;
 
     .text : ALIGN(0x1000) {
