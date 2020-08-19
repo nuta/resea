@@ -37,7 +37,7 @@ void main(void) {
 
         switch (m.type) {
             case NOTIFICATIONS_MSG:
-                if (m.notifications.data & NOTIFY_ASYNC) {
+                if (m.notifications.data & NOTIFY_IRQ) {
                     on_new_data();
                 }
                 break;
