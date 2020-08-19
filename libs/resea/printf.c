@@ -1,5 +1,4 @@
 #include <resea/printf.h>
-#include <resea/klog.h>
 #include <resea/syscall.h>
 #include <vprintf.h>
 
@@ -9,11 +8,11 @@ static int tail = 0;
 
 void printf_flush(void) {
     if (tail < head) {
-        klog_write(&printbuf[tail], head - tail);
+        sys_print(&printbuf[tail], head - tail);
         tail = head;
     } else if (tail > head) {
-        klog_write(&printbuf[tail], PRINT_BUF_SIZE - tail);
-        klog_write(&printbuf[0], head);
+        sys_print(&printbuf[tail], PRINT_BUF_SIZE - tail);
+        sys_print(&printbuf[0], head);
         tail = head;
     }
 }
