@@ -3,7 +3,6 @@
 #include <resea/async.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <resea/map.h>
 #include <resea/timer.h>
 #include <resea/handle.h>
 #include "device.h"

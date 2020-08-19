@@ -1,13 +1,12 @@
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <resea/map.h>
 #include <resea/async.h>
 #include <string.h>
 #include <vprintf.h>
 #include "webapi.h"
 
-static map_t clients;
+static list_t clients;
 static task_t tcpip_server;
 
 #define INDEX_HTML                                                             \
@@ -110,7 +109,7 @@ malformed:
 void main(void) {
     TRACE("starting...");
     tcpip_server = ipc_lookup("tcpip");
-    clients = map_new();
+    list_init(&clients);
 
     struct message m;
     m.type = TCPIP_LISTEN_MSG;
@@ -128,18 +127,24 @@ void main(void) {
                     ASSERT_OK(async_recv(tcpip_server, &m));
                     switch (m.type) {
                         case TCPIP_RECEIVED_MSG: {
-                            struct client *c =
-                                map_get(clients, (void *) m.tcpip_received.handle);
-                            ASSERT(c);
+                            struct client *client = NULL;
+                            LIST_FOR_EACH (c, &clients, struct client, next) {
+                                if (c->handle == m.tcpip_received.handle) {
+                                    client = c;
+                                    break;
+                                }
+                            }
+
+                            ASSERT(client != NULL);
 
                             m.type = TCPIP_READ_MSG;
-                            m.tcpip_read.handle = c->handle;
+                            m.tcpip_read.handle = client->handle;
                             m.tcpip_read.len = 4096;
                             ASSERT_OK(ipc_call(tcpip_server, &m));
                             uint8_t *buf = (uint8_t *) m.tcpip_read_reply.data;
                             size_t len = m.tcpip_read_reply.data_len;
                             if (buf) {
-                                process(c, buf, len);
+                                process(client, buf, len);
                                 free(buf);
                             }
                             break;
@@ -155,11 +160,16 @@ void main(void) {
                             client->request = NULL;
                             client->request_len = 0;
                             client->done = false;
-                            map_set(clients, (void *) new_handle, client);
+                            list_push_back(&clients, &client->next);
                             break;
                         }
                         case TCPIP_CLOSED_MSG: {
-                            map_remove(clients, (void *) m.tcpip_closed.handle);
+                            LIST_FOR_EACH (c, &clients, struct client, next) {
+                                if (c->handle == m.tcpip_closed.handle) {
+                                    list_remove(&c->next);
+                                    break;
+                                }
+                            }
                             break;
                         }
                     }

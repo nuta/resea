@@ -1,13 +1,11 @@
 #include <resea/printf.h>
 #include <resea/malloc.h>
-#include <resea/map.h>
 #include <resea/handle.h>
 #include <resea/ipc.h>
 #include <string.h>
 #include "fat.h"
 
 static task_t ramdisk_server;
-static map_t clients;
 
 void blk_read(size_t sector, void *buf, size_t num_sectors) {
     struct message m;
@@ -26,7 +24,6 @@ void blk_write(size_t offset, const void *buf, size_t len) {
 
 void main(void) {
     TRACE("starting...");
-    clients = map_new();
 
     ramdisk_server = ipc_lookup("disk");
     ASSERT_OK(ramdisk_server);
