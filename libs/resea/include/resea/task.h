@@ -1,5 +1,5 @@
-#ifndef __IPC_TASK_H__
-#define __IPC_TASK_H__
+#ifndef __RESEA_TASK_H__
+#define __RESEA_TASK_H__
 
 #include <types.h>
 
