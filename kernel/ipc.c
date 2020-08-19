@@ -29,7 +29,7 @@ static void resume_sender(struct task *receiver, task_t src) {
 
 /// Sends and receives a message. Note that `m` is a user pointer if
 /// IPC_KERNEL is not set!
-static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
+static error_t ipc_slowpath(struct task *dst, task_t src, __user struct message *m,
                             unsigned flags) {
     // Send a message.
     if (flags & IPC_SEND) {
@@ -37,9 +37,9 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
         // TODO: Do we still need to handle page faults here?
         struct message tmp_m;
         if (flags & IPC_KERNEL) {
-            memcpy(&tmp_m, m, sizeof(struct message));
+            memcpy(&tmp_m, (const void *) m, sizeof(struct message));
         } else {
-            memcpy_from_user(&tmp_m, (userptr_t) m, sizeof(struct message));
+            memcpy_from_user(&tmp_m, m, sizeof(struct message));
         }
 
         // Check whether the destination (receiver) task is ready for receiving.
@@ -105,9 +105,9 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
 
         // Received a message. Copy it into the receiver buffer.
         if (flags & IPC_KERNEL) {
-            memcpy(m, &tmp_m, sizeof(struct message));
+            memcpy((void *) m, &tmp_m, sizeof(struct message));
         } else {
-            memcpy_to_user((userptr_t) m, &tmp_m, sizeof(struct message));
+            memcpy_to_user(m, &tmp_m, sizeof(struct message));
         }
     }
 
@@ -117,7 +117,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src, struct message *m,
 /// The IPC fastpath: an IPC implementation optimized for the common case.
 ///
 /// Note that `m` is a user pointer if IPC_KERNEL is not set!
-error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
+error_t ipc(struct task *dst, task_t src, __user struct message *m, unsigned flags) {
     if (dst == CURRENT) {
         WARN_DBG("%s: tried to send a message to myself", CURRENT->name);
         return ERR_INVALID_ARG;
@@ -141,7 +141,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
 
     // THe send phase: copy the message and resume the receiver task. Note
     // that this user copy may cause a page fault.
-    memcpy_from_user(&dst->m, (userptr_t) m, sizeof(struct message));
+    memcpy_from_user(&dst->m, m, sizeof(struct message));
     dst->m.src = CURRENT->tid;
     task_resume(dst);
 
@@ -158,7 +158,7 @@ error_t ipc(struct task *dst, task_t src, struct message *m, unsigned flags) {
 
     // This user copy should not cause a page fault since we've filled the
     // page in the user copy above.
-    memcpy_to_user((userptr_t) m, &CURRENT->m, sizeof(struct message));
+    memcpy_to_user(m, &CURRENT->m, sizeof(struct message));
     return OK;
 #else
     return ipc_slowpath(dst, src, m, flags);

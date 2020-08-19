@@ -10,8 +10,8 @@
 
 /// Copies bytes from the userspace. If the user's pointer is invalid, this
 /// function or the page fault handler kills the current task.
-void memcpy_from_user(void *dst, userptr_t src, size_t len) {
-    if (is_kernel_addr_range(src, len)) {
+void memcpy_from_user(void *dst, __user const void *src, size_t len) {
+    if (is_kernel_addr_range((vaddr_t) src, len)) {
         task_exit(EXP_INVALID_MEMORY_ACCESS);
     }
 
@@ -20,8 +20,8 @@ void memcpy_from_user(void *dst, userptr_t src, size_t len) {
 
 /// Copies bytes into the userspace. If the user's pointer is invalid, this
 /// function or the page fault handler kills the current task.
-void memcpy_to_user(userptr_t dst, const void *src, size_t len) {
-    if (is_kernel_addr_range(dst, len)) {
+void memcpy_to_user(__user void *dst, const void *src, size_t len) {
+    if (is_kernel_addr_range((vaddr_t) dst, len)) {
         task_exit(EXP_INVALID_MEMORY_ACCESS);
     }
 
@@ -32,7 +32,7 @@ void memcpy_to_user(userptr_t dst, const void *src, size_t len) {
 // copies `len` bytes and set '\0' to the `len`-th byte. Thus, `dst` needs to
 // have `len + 1` bytes space. In case `len` is zero, caller MUST ensure that
 // `dst` has at least 1-byte space.
-static void strncpy_from_user(char *dst, userptr_t src, size_t len) {
+static void strncpy_from_user(char *dst, __user const char *src, size_t len) {
     memcpy_from_user(dst, src, len);
     dst[len] = '\0';
 }
@@ -45,8 +45,8 @@ static void strncpy_from_user(char *dst, userptr_t src, size_t len) {
 ///    tid > 0 && pager < 0: Deletes a task.
 ///    tid > 0 && pager == 0: ERR_INVALID_ARG
 ///
-static error_t sys_exec(task_t tid, userptr_t name, vaddr_t ip, task_t pager,
-                        unsigned flags) {
+static error_t sys_exec(task_t tid, __user const char *name, vaddr_t ip,
+                        task_t pager, unsigned flags) {
     if (tid < 0) {
         // Return the current task ID.
         return CURRENT->tid;
@@ -97,8 +97,9 @@ static task_t sys_listen(msec_t timeout, int irq) {
     return OK;
 }
 
-/// Send/receive IPC messages and notifications.
-static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
+/// Send/receive IPC messages and notifications. If IPC_NOTIFY is set, `m` is a
+/// notifications value instead of a pointer to a message buffer.
+static error_t sys_ipc(task_t dst, task_t src, __user void *m, unsigned flags) {
     if (flags & IPC_KERNEL) {
         return ERR_INVALID_ARG;
     }
@@ -115,12 +116,12 @@ static error_t sys_ipc(task_t dst, task_t src, userptr_t m, unsigned flags) {
         }
 
         if (flags & IPC_NOTIFY) {
-            notify(dst_task, m);
+            notify(dst_task, (notifications_t) m);
             return OK;
         }
     }
 
-    return ipc(dst_task, src, (struct message *) m, flags);
+    return ipc(dst_task, src, (__user struct message *) m, flags);
 }
 
 static paddr_t resolve_paddr(vaddr_t vaddr) {
@@ -175,7 +176,7 @@ static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
 }
 
 /// Writes log messages into the kernel log buffer.
-static int sys_print(userptr_t buf, size_t buf_len) {
+static int sys_print(__user const char *buf, size_t buf_len) {
     char kbuf[256];
     int remaining = buf_len;
     while (remaining > 0) {
@@ -190,7 +191,8 @@ static int sys_print(userptr_t buf, size_t buf_len) {
     return OK;
 }
 
-static error_t sys_kdebug(userptr_t cmd, size_t cmd_len, userptr_t buf, size_t buf_len) {
+static error_t sys_kdebug(__user const char *cmd, size_t cmd_len,
+                          __user char *buf, size_t buf_len) {
     char cmd_buf[128];
     if (cmd_len >= sizeof(cmd_buf) - 1) {
         return ERR_TOO_LARGE;
@@ -220,10 +222,10 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
     long ret;
     switch (n) {
         case SYS_EXEC:
-            ret = sys_exec(a1, a2, a3, a4, a5);
+            ret = sys_exec(a1, (__user const char *) a2, a3, a4, a5);
             break;
         case SYS_IPC:
-            ret = sys_ipc(a1, a2, a3, a4);
+            ret = sys_ipc(a1, a2, (__user struct message *) a3, a4);
             break;
         case SYS_LISTEN:
             ret = sys_listen(a1, a2);
@@ -232,10 +234,11 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             ret = sys_map(a1, a2, a3, a4, a5);
             break;
         case SYS_PRINT:
-            ret = sys_print(a1, a2);
+            ret = sys_print((__user const char *) a1, a2);
             break;
         case SYS_KDEBUG:
-            ret = sys_kdebug(a1, a2, a3, a4);
+            ret = sys_kdebug((__user const char *) a1, a2, (__user char *)  a3,
+                             a4);
             break;
         default:
             ret = ERR_INVALID_ARG;
