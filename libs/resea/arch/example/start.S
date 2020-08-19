@@ -12,9 +12,6 @@ start:
     // Initialize the user library.
     call resea_init
 
-    // Call main().
-    call main
-
     // main() has returned. Exit the current task.
     call task_exit
 
