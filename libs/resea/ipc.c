@@ -20,6 +20,7 @@ __weak error_t call_pager(struct message *m) {
 #endif
 }
 
+#ifndef CONFIG_NOMMU
 static void ool_recv(vaddr_t ptr, size_t len) {
     struct message m;
     m.type = OOL_RECV_MSG;
@@ -56,6 +57,7 @@ static vaddr_t ool_verify(task_t src, vaddr_t ptr, size_t len) {
     ASSERT(m.type == OOL_VERIFY_REPLY_MSG);
     return m.ool_verify_reply.received_at;
 }
+#endif
 
 static void pre_send(task_t dst, struct message *m) {
 #ifndef CONFIG_NOMMU

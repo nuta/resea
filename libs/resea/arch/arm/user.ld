@@ -10,7 +10,7 @@ PHDRS {
 }
 
 SECTIONS {
-    // TODO: Unsupported in arm port for now.
+    /* TODO: Unsupported in arm port for now. */
     __cmdline = 0;
 
     .text : ALIGN(0x1000) {

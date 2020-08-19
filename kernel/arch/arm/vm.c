@@ -1,6 +1,7 @@
 #include <syscall.h>
 #include <string.h>
 #include <arch.h>
+#include <task.h>
 
 error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
                 unsigned flags) {

@@ -196,7 +196,8 @@ static error_t sys_kdebug(userptr_t cmd, size_t cmd_len, userptr_t buf, size_t b
         return ERR_TOO_LARGE;
     }
 
-    char out_buf[512] = { '\0' };
+    char out_buf[512];
+    out_buf[0] = '\0';
     if (buf_len >= sizeof(out_buf) - 1) {
         return ERR_TOO_LARGE;
     }
