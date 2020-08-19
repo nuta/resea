@@ -11,6 +11,9 @@
 #include "mm.h"
 #include "ool.h"
 
+// for sparse
+error_t call_pager(struct message *m);
+
 error_t call_pager(struct message *m) {
     m->src = INIT_TASK;
     error_t err;
@@ -35,7 +38,7 @@ error_t call_pager(struct message *m) {
     return err;
 }
 
-static void spawn_servers() {
+static void spawn_servers(void) {
     // Launch servers in bootfs.
     int num_launched = 0;
     struct bootfs_file *file;

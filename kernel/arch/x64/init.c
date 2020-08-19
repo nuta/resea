@@ -168,7 +168,7 @@ void mpinit(void) {
     mpmain();
 }
 
-void arch_idle(void) {
+__noreturn void arch_idle(void) {
     task_switch();
     while (true) {
         unlock();

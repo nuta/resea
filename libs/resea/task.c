@@ -1,4 +1,5 @@
 #include <resea/syscall.h>
+#include <resea/task.h>
 
 error_t task_create(task_t tid, const char *name, vaddr_t ip, task_t pager,
                     unsigned flags) {

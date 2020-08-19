@@ -19,7 +19,7 @@ static void receive(const void *payload, size_t len) {
     ASSERT_OK(err);
 }
 
-void transmit(void) {
+static void transmit(void) {
     struct message m;
     ASSERT_OK(async_recv(tcpip_tid, &m));
     ASSERT(m.type == NET_TX_MSG);

@@ -37,7 +37,7 @@ mbuf_t mbuf_new(const void *data, size_t len) {
     return head;
 }
 
-void mbuf_delete_one(mbuf_t mbuf) {
+static void mbuf_delete_one(mbuf_t mbuf) {
     free(mbuf);
 }
 

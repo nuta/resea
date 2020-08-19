@@ -10,6 +10,9 @@ static void *ool_ptr = NULL;
 static const size_t ool_len = CONFIG_OOL_BUFFER_LEN;
 #endif
 
+// for sparse
+error_t call_pager(struct message *m);
+
 __weak error_t call_pager(struct message *m) {
 #ifdef CONFIG_NOMMU
     // We don't use this feature. Discard messages with a warning.

@@ -17,7 +17,7 @@ void printf_flush(void) {
     }
 }
 
-void printchar(char ch) {
+static void printchar(char ch) {
     printbuf[head] = ch;
     head = (head + 1) % PRINT_BUF_SIZE;
     if ((head < tail && head + 1 == tail) || ch == '\n') {
