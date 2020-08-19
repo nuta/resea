@@ -62,7 +62,7 @@ autogen_files := $(BUILD_DIR)/include/config.h $(BUILD_DIR)/include/idl.h
 # $(2): The build dir.
 define visit-subdir
 $(eval obj-y :=)
-$(eval lib-y :=)
+$(eval libs-y :=)
 $(eval build_dir := $(2)/$(1))
 $(eval subdir-y :=)
 $(eval cflags-y :=)
@@ -70,7 +70,7 @@ $(eval global-cflags-y :=)
 $(eval include $(1)/build.mk)
 $(eval build_mks += $(1)/build.mk)
 $(eval objs += $(addprefix $(2)/$(1)/, $(obj-y)))
-$(eval libs += $(lib-y))
+$(eval libs += $(libs-y))
 $(eval cflags += $(cflags-y))
 $(eval CFLAGS += $(global-cflags-y))
 $(eval $(foreach subdir, $(subdir-y), \
