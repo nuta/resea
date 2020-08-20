@@ -17,10 +17,10 @@ paddr_t vm_resolve(struct task *task, vaddr_t vaddr) {
     return vaddr;
 }
 
-void arch_memcpy_from_user(void *dst, userptr_t src, size_t len) {
+void arch_memcpy_from_user(void *dst, __user const void *src, size_t len) {
     memcpy(dst, (void *) src, len);
 }
 
-void arch_memcpy_to_user(userptr_t dst, const void *src, size_t len) {
+void arch_memcpy_to_user(__user void *dst, const void *src, size_t len) {
     memcpy((void *) dst, src, len);
 }
