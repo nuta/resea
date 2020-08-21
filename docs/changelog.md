@@ -1,5 +1,16 @@
 # Change Log
 
+## v0.4.0 (Aug 21, 2020)
+- shell: Use the serial port driver in kernel for the shell access.
+- Support command-line arguments.
+- libs/resea: Add parsing library `<resea/cmdline.h>`.
+- tcpip: Implement TCP active open.
+- Add command-line utilities application named `utils`.
+- Remove `display` and `ps2kbd` device drivers.
+- kernel: Deny kernel memory access from the userspace by default.
+- kernel: Reorganize internal interfaces.
+- Introduce [sparse](https://www.kernel.org/doc/html/v4.12/dev-tools/sparse.html), a static analyzer for C.
+
 ## v0.3.0 (Aug 2, 2020)
 - Reorganized system calls into: `exec`, `ipc`, `listen`, `map`, `print`, and `kdebug`.
 - Removed kernel heap for separation of mechanism and policy. Task data structures
