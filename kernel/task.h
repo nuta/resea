@@ -111,7 +111,7 @@ void arch_enable_irq(unsigned irq);
 void arch_disable_irq(unsigned irq);
 __mustuse error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr,
                           paddr_t kpage, unsigned flags);
-void vm_unlink(struct task *task, vaddr_t vaddr);
+__mustuse error_t vm_unlink(struct task *task, vaddr_t vaddr);
 paddr_t vm_resolve(struct task *task, vaddr_t vaddr);
 
 #endif

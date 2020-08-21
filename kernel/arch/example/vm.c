@@ -7,7 +7,8 @@ error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
     return OK;
 }
 
-void vm_unlink(struct task *task, vaddr_t vaddr) {
+error_t vm_unlink(struct task *task, vaddr_t vaddr) {
+    return OK;
 }
 
 paddr_t vm_resolve(struct task *task, vaddr_t vaddr) {

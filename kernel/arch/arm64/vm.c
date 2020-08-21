@@ -60,17 +60,20 @@ error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
     return OK;
 }
 
-void vm_unlink(struct task *task, vaddr_t vaddr) {
+error_t vm_unlink(struct task *task, vaddr_t vaddr) {
     uint64_t *entry = traverse_page_table(task->arch.page_table, vaddr, 0, 0);
-    if (entry) {
-        *entry = 0;
-        // FIXME: Flush only the affected page.
-        __asm__ __volatile__("dsb ish");
-        __asm__ __volatile__("isb");
-        __asm__ __volatile__("tlbi vmalle1is");
-        __asm__ __volatile__("dsb ish");
-        __asm__ __volatile__("isb");
+    if (!entry) {
+        return ERR_NOT_FOUND;
     }
+
+    *entry = 0;
+    // FIXME: Flush only the affected page.
+    __asm__ __volatile__("dsb ish");
+    __asm__ __volatile__("isb");
+    __asm__ __volatile__("tlbi vmalle1is");
+    __asm__ __volatile__("dsb ish");
+    __asm__ __volatile__("isb");
+    return OK;
 }
 
 paddr_t vm_resolve(struct task *task, vaddr_t vaddr) {
