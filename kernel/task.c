@@ -16,6 +16,16 @@ static list_t runqueue;
 /// IRQ owners.
 static struct task *irq_owners[IRQ_MAX];
 
+#ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
+/// How each memory page is being used:
+///
+///   value < 0   Used for the kernel's internal data structures (page tables).
+///   value = 0   Currently unused.
+///   value > 0   Indicates # of tasks that map the memory page.
+///
+static int page_usages[CONFIG_MAX_MAPPABLE_ADDR / PAGE_SIZE];
+#endif
+
 /// Returns the task struct for the task ID. It returns NULL if the ID is
 /// invalid.
 struct task *task_lookup_unchecked(task_t tid) {
@@ -225,6 +235,80 @@ error_t task_unlisten_irq(unsigned irq) {
     irq_owners[irq] = NULL;
     TRACE("disabled IRQ: vector=%d", irq);
     return OK;
+}
+
+extern char __kernel_image[];
+extern char __kernel_image_end[];
+
+__mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
+                                paddr_t kpage, unsigned flags) {
+    DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
+    DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
+    DEBUG_ASSERT(IS_ALIGNED(kpage, PAGE_SIZE));
+
+    if (is_kernel_addr_range(vaddr, PAGE_SIZE)) {
+        WARN_DBG("vaddr %p points to a kernel memory area", vaddr);
+        return ERR_NOT_ACCEPTABLE;
+    }
+
+#ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
+    if (paddr >= CONFIG_MAX_MAPPABLE_ADDR) {
+        WARN_DBG("paddr %p is beyond CONFIG_MAX_MAPPABLE_ADDR", paddr);
+        return ERR_NOT_ACCEPTABLE;
+    }
+
+    if (kpage >= CONFIG_MAX_MAPPABLE_ADDR) {
+        WARN_DBG("kpage %p is beyond CONFIG_MAX_MAPPABLE_ADDR", kpage);
+        return ERR_NOT_ACCEPTABLE;
+    }
+
+    int *paddr_usage = &page_usages[paddr / PAGE_SIZE];
+    int *kpage_usage = &page_usages[kpage / PAGE_SIZE];
+
+    if (*kpage_usage != 0) {
+        WARN_DBG("kpage %p is in use (usage=%d)", kpage, *kpage_usage);
+        return ERR_IN_USE;
+    }
+
+    if (page_usages[paddr / PAGE_SIZE] < 0) {
+        WARN_DBG("paddr %p is in use as a kernel page (usage=%d)", paddr, *paddr_usage);
+        return ERR_IN_USE;
+    }
+#endif
+
+    error_t err = vm_link(task, vaddr, paddr, kpage, flags);
+
+#ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
+    if (err == ERR_TRY_AGAIN || err == OK) {
+        *kpage_usage += 1;
+        if (err == OK) {
+            *paddr_usage += 1;
+        }
+    }
+#endif
+
+    return err;
+}
+
+error_t task_unmap_page(struct task *task, vaddr_t vaddr) {
+    DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
+
+    paddr_t paddr = vm_resolve(task, vaddr);
+    if (!paddr) {
+        return ERR_NOT_FOUND;
+    }
+
+    error_t err = vm_unlink(task, vaddr);
+
+#ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
+    if (err == OK) {
+        int *paddr_usage = &page_usages[paddr / PAGE_SIZE];
+        DEBUG_ASSERT(*paddr_usage > 0);
+        *paddr_usage -= 1;
+    }
+#endif
+
+    return err;
 }
 
 /// Handles timer interrupts. The timer fires this IRQ every 1/TICK_HZ

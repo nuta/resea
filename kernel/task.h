@@ -88,6 +88,9 @@ void task_resume(struct task *task);
 struct task *task_lookup(task_t tid);
 struct task *task_lookup_unchecked(task_t tid);
 void task_switch(void);
+__mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
+                                paddr_t kpage, unsigned flags);
+__mustuse error_t task_unmap_page(struct task *task, vaddr_t vaddr);
 __mustuse error_t task_listen_irq(struct task *task, unsigned irq);
 __mustuse error_t task_unlisten_irq(unsigned irq);
 void handle_timer_irq(void);

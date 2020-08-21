@@ -46,4 +46,20 @@ menu "Kernel"
     config ABI_EMU
         bool "Enable ABI emulation"
         default n
+
+    menu "Security"
+        config DENY_KERNEL_MEMORY_ACCESS
+            bool "Prevent userspace from accessing kernel memory"
+            default y
+            depends on !NOMMU
+            help
+                This config enables kernel memory protection to prevent corrupting
+                the kernel. If enabled, userspace programs can't map a kernel memory
+                area and page table structures into their address spaces.
+
+        config MAX_MAPPABLE_ADDR
+            hex "The maximum mappable physical memory address from userspace"
+            default 0x100000000
+            depends on DENY_KERNEL_MEMORY_ACCESS
+    endmenu
 endmenu

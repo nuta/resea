@@ -146,9 +146,6 @@ static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
         return ERR_INVALID_ARG;
     }
 
-    // TODO: Check if kpage is mapped in the kernel's address space.
-    // TODO: Deny if the given page is in use for page table.
-
     struct task *task = task_lookup(tid);
     if (!task) {
         return ERR_INVALID_TASK;
@@ -162,11 +159,24 @@ static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
     }
 
     if (flags & MAP_DELETE) {
-        vm_unlink(task, vaddr);
+        error_t err = task_unmap_page(task, vaddr);
+        if (err != OK) {
+            return err;
+        }
     }
 
     if (flags & MAP_UPDATE) {
-        error_t err = vm_link(task, vaddr, paddr, kpage_paddr, flags);
+        if (is_kernel_paddr(paddr)) {
+            WARN_DBG("paddr %p points to a kernel memory area", paddr);
+            return ERR_NOT_ACCEPTABLE;
+        }
+
+        if (is_kernel_paddr(kpage)) {
+            WARN_DBG("kpage %p points to a kernel memory area", kpage);
+            return ERR_NOT_ACCEPTABLE;
+        }
+
+        error_t err = task_map_page(task, vaddr, paddr, kpage_paddr, flags);
         if (err != OK) {
             return err;
         }
