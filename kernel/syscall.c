@@ -151,13 +151,6 @@ static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
         return ERR_INVALID_TASK;
     }
 
-    // Resolve paddrs.
-    paddr_t paddr = resolve_paddr(src);
-    paddr_t kpage_paddr = resolve_paddr(kpage);
-    if (!paddr || !kpage_paddr) {
-        return ERR_NOT_FOUND;
-    }
-
     if (flags & MAP_DELETE) {
         error_t err = task_unmap_page(task, vaddr);
         if (err != OK) {
@@ -166,6 +159,13 @@ static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
     }
 
     if (flags & MAP_UPDATE) {
+        // Resolve paddrs.
+        paddr_t paddr = resolve_paddr(src);
+        paddr_t kpage_paddr = resolve_paddr(kpage);
+        if (!paddr || !kpage_paddr) {
+            return ERR_NOT_FOUND;
+        }
+
         if (is_kernel_paddr(paddr)) {
             WARN_DBG("paddr %p points to a kernel memory area", paddr);
             return ERR_NOT_ACCEPTABLE;

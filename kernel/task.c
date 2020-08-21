@@ -265,7 +265,7 @@ __mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
     int *paddr_usage = &page_usages[paddr / PAGE_SIZE];
     int *kpage_usage = &page_usages[kpage / PAGE_SIZE];
 
-    if (*kpage_usage != 0) {
+    if (*kpage_usage != 0 && *kpage_usage != 1) {
         WARN_DBG("kpage %p is in use (usage=%d)", kpage, *kpage_usage);
         return ERR_IN_USE;
     }
@@ -280,7 +280,7 @@ __mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
 
 #ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
     if (err == ERR_TRY_AGAIN || err == OK) {
-        *kpage_usage += 1;
+        *kpage_usage = -1;
         if (err == OK) {
             *paddr_usage += 1;
         }
