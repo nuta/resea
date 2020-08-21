@@ -40,8 +40,6 @@ static inline bool is_kernel_addr_range(vaddr_t base, size_t len) {
 // Note that these symbols point to *physical* addresses.
 extern char __kernel_image[];
 extern char __kernel_image_end[];
-extern char __kernel_data[];
-extern char __kernel_data_end[];
 
 /// Retuns whether the memory address range [base, base_len) overlaps with the
 /// kernel memory pages.
