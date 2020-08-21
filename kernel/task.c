@@ -270,7 +270,7 @@ __mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
         return ERR_IN_USE;
     }
 
-    if (page_usages[paddr / PAGE_SIZE] < 0) {
+    if (*paddr_usage < 0) {
         WARN_DBG("paddr %p is in use as a kernel page (usage=%d)", paddr, *paddr_usage);
         return ERR_IN_USE;
     }

@@ -131,11 +131,7 @@ static paddr_t resolve_paddr(vaddr_t vaddr) {
         }
         return vaddr;
     } else {
-        paddr_t paddr = vm_resolve(CURRENT, vaddr);
-        if (!paddr) {
-            return 0;
-        }
-        return paddr;
+        return vm_resolve(CURRENT, vaddr);
     }
 }
 
