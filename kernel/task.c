@@ -211,6 +211,7 @@ void task_switch(void) {
     stack_check();
 }
 
+/// Starts receiving notifications by IRQs.
 error_t task_listen_irq(struct task *task, unsigned irq) {
     if (irq >= IRQ_MAX) {
         return ERR_INVALID_ARG;
@@ -226,6 +227,7 @@ error_t task_listen_irq(struct task *task, unsigned irq) {
     return OK;
 }
 
+/// Stops receiving notifications by IRQs.
 error_t task_unlisten_irq(unsigned irq) {
     if (irq >= IRQ_MAX) {
         return ERR_INVALID_ARG;
@@ -237,26 +239,28 @@ error_t task_unlisten_irq(unsigned irq) {
     return OK;
 }
 
-extern char __kernel_image[];
-extern char __kernel_image_end[];
-
+/// Maps a memory page in the task's virtual memory space. `kpage` is a memory
+/// page which provides a memory page for arch-specific page table structures.
 __mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
                                 paddr_t kpage, unsigned flags) {
     DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(kpage, PAGE_SIZE));
 
+    // Prevent corrupting kernel memory.
     if (is_kernel_addr_range(vaddr, PAGE_SIZE)) {
         WARN_DBG("vaddr %p points to a kernel memory area", vaddr);
         return ERR_NOT_ACCEPTABLE;
     }
 
 #ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
+    // Disallow using pages that is not tracked in `page_usages`.
     if (paddr >= CONFIG_MAX_MAPPABLE_ADDR) {
         WARN_DBG("paddr %p is beyond CONFIG_MAX_MAPPABLE_ADDR", paddr);
         return ERR_NOT_ACCEPTABLE;
     }
 
+    // Disallow using pages that is not tracked in `page_usages`.
     if (kpage >= CONFIG_MAX_MAPPABLE_ADDR) {
         WARN_DBG("kpage %p is beyond CONFIG_MAX_MAPPABLE_ADDR", kpage);
         return ERR_NOT_ACCEPTABLE;
@@ -265,23 +269,31 @@ __mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
     int *paddr_usage = &page_usages[paddr / PAGE_SIZE];
     int *kpage_usage = &page_usages[kpage / PAGE_SIZE];
 
+    // Prevent modifying memory contents in `kpage` from the userspace as it
+    // allows mapping the kernel memory.
     if (*kpage_usage != 0 && *kpage_usage != 1) {
         WARN_DBG("kpage %p is in use (usage=%d)", kpage, *kpage_usage);
         return ERR_IN_USE;
     }
 
+    // If the usage is negative, it is being used for a kernel's internal data
+    // structure. Disallow that to prevent accessing the kernel memory.
     if (*paddr_usage < 0) {
         WARN_DBG("paddr %p is in use as a kernel page (usage=%d)", paddr, *paddr_usage);
         return ERR_IN_USE;
     }
 #endif
 
+    // Looks that the mapping is not malicious. Update the page table.
     error_t err = arch_map_page(task, vaddr, paddr, kpage, flags);
 
 #ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
     if (err == ERR_TRY_AGAIN || err == OK) {
+        // The arch spent `kpage` for an its internal data sturcture. Mark it
+        // as an in-kernel page.
         *kpage_usage = -1;
         if (err == OK) {
+            // The paddr has been mapped. Update its reference count.
             *paddr_usage += 1;
         }
     }
@@ -290,6 +302,7 @@ __mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
     return err;
 }
 
+/// Unmaps a memory page from the task's virtual memory space.
 error_t task_unmap_page(struct task *task, vaddr_t vaddr) {
     DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
 
@@ -311,7 +324,7 @@ error_t task_unmap_page(struct task *task, vaddr_t vaddr) {
     return err;
 }
 
-/// Handles timer interrupts. The timer fires this IRQ every 1/TICK_HZ
+/// Handles timer interrupts. The timer fires this handler every 1/TICK_HZ
 /// seconds.
 void handle_timer_irq(void) {
     if (mp_is_bsp()) {
@@ -337,6 +350,7 @@ void handle_timer_irq(void) {
     }
 }
 
+/// Handles interrupts except the timer device used in the kernel.
 void handle_irq(unsigned irq) {
     struct task *owner = irq_owners[irq];
     if (owner) {
@@ -361,6 +375,7 @@ void handle_page_fault(vaddr_t addr, vaddr_t ip, unsigned fault) {
     }
 }
 
+/// Prints the task states. Used for debugging.
 void task_dump(void) {
     const char *states[] = {
         [TASK_UNUSED] = "unused",
