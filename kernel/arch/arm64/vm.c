@@ -37,7 +37,7 @@ static uint64_t *traverse_page_table(uint64_t *table, vaddr_t vaddr,
     return &table[NTH_LEVEL_INDEX(1, vaddr)];
 }
 
-error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
+error_t arch_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
                 unsigned flags) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
@@ -60,7 +60,7 @@ error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
     return OK;
 }
 
-error_t vm_unlink(struct task *task, vaddr_t vaddr) {
+error_t arch_unmap_page(struct task *task, vaddr_t vaddr) {
     uint64_t *entry = traverse_page_table(task->arch.page_table, vaddr, 0, 0);
     if (!entry) {
         return ERR_NOT_FOUND;

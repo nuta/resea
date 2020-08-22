@@ -112,9 +112,9 @@ void arch_task_destroy(struct task *task);
 void arch_task_switch(struct task *prev, struct task *next);
 void arch_enable_irq(unsigned irq);
 void arch_disable_irq(unsigned irq);
-__mustuse error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr,
+__mustuse error_t arch_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
                           paddr_t kpage, unsigned flags);
-__mustuse error_t vm_unlink(struct task *task, vaddr_t vaddr);
+__mustuse error_t arch_unmap_page(struct task *task, vaddr_t vaddr);
 paddr_t vm_resolve(struct task *task, vaddr_t vaddr);
 
 #endif

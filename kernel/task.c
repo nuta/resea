@@ -276,7 +276,7 @@ __mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
     }
 #endif
 
-    error_t err = vm_link(task, vaddr, paddr, kpage, flags);
+    error_t err = arch_map_page(task, vaddr, paddr, kpage, flags);
 
 #ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
     if (err == ERR_TRY_AGAIN || err == OK) {
@@ -298,7 +298,7 @@ error_t task_unmap_page(struct task *task, vaddr_t vaddr) {
         return ERR_NOT_FOUND;
     }
 
-    error_t err = vm_unlink(task, vaddr);
+    error_t err = arch_unmap_page(task, vaddr);
 
 #ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
     if (err == OK) {

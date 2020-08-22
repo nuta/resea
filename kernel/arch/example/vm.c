@@ -2,12 +2,12 @@
 #include <arch.h>
 #include <task.h>
 
-error_t vm_link(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
+error_t arch_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
                 unsigned flags) {
     return OK;
 }
 
-error_t vm_unlink(struct task *task, vaddr_t vaddr) {
+error_t arch_unmap_page(struct task *task, vaddr_t vaddr) {
     return OK;
 }
 
