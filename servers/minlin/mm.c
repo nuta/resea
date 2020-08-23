@@ -1,4 +1,3 @@
-#include <resea/io.h>
 #include <resea/malloc.h>
 #include <resea/task.h>
 #include <string.h>
@@ -19,12 +18,19 @@ struct mchunk *mm_resolve(struct mm *mm, vaddr_t vaddr) {
 
 struct mchunk *mm_alloc_mchunk(struct mm *mm, vaddr_t vaddr, size_t len) {
     DEBUG_ASSERT(IS_ALIGNED(len, PAGE_SIZE));
-    paddr_t paddr;
-    void *buf = (void *) io_alloc_pages(len / PAGE_SIZE, 0, &paddr);
+
+    struct message m;
+    m.type = ALLOC_PAGES_MSG;
+    m.alloc_pages.paddr = 0;
+    m.alloc_pages.num_pages = len / PAGE_SIZE;
+    error_t err = ipc_call(INIT_TASK, &m);
+    ASSERT_OK(err);
+    ASSERT(m.type == ALLOC_PAGES_REPLY_MSG);
+
     struct mchunk *mchunk = malloc(sizeof(*mchunk));
     mchunk->vaddr = vaddr;
-    mchunk->paddr = paddr;
-    mchunk->buf = buf;
+    mchunk->paddr = m.alloc_pages_reply.paddr;
+    mchunk->buf = (void *) m.alloc_pages_reply.vaddr;
     mchunk->len = len;
     list_push_back(&mm->mchunks, &mchunk->next);
     return mchunk;
