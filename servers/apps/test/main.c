@@ -1,6 +1,5 @@
 #include <config.h>
 #include <resea/printf.h>
-#include <resea/io.h>
 #include <resea/syscall.h>
 #include "test.h"
 
