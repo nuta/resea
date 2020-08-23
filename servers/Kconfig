@@ -51,6 +51,7 @@ menu "Servers"
                 tristate "RAM disk driver"
             config E1000_SERVER
                 tristate "e1000 NIC driver"
+                depends on DM_SERVER
         endmenu
 
         config HELLO_FROM_RUST_SERVER

@@ -121,7 +121,7 @@ struct rx_packet {
 };
 
 struct pci_device;
-void e1000_init(struct pci_device *pcidev);
+void e1000_init_for_pci(uint32_t bar0_addr, uint32_t bar0_len);
 void e1000_transmit(const void *pkt, size_t len);
 void e1000_handle_interrupt(void (*receive)(const void *payload, size_t len));
 void e1000_read_macaddr(uint8_t *macaddr);
