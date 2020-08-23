@@ -18,6 +18,8 @@ menu "Servers"
 
         config SHELL_SERVER
             tristate "Shell"
+        config DM_SERVER
+            tristate "Device Management server"
         config TCPIP_SERVER
             tristate "TCP/IP server"
         config WEBAPI_SERVER

@@ -1,0 +1,8 @@
+namespace dm {
+    rpc attach_pci_device(vendor_id: uint16, device_id: uint16)
+        -> (vendor_id: uint16, device_id: uint16, handle: handle);
+    rpc detach_device(handle: handle) -> ();
+    rpc pci_get_config(handle: handle)
+        -> (bar0_addr: uint32, bar0_len: uint32, irq: uint8);
+    rpc pci_enable_bus_master(handle: handle) -> ();
+}
