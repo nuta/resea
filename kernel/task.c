@@ -54,6 +54,12 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
         return ERR_ALREADY_EXISTS;
     }
 
+    unsigned allowed_flags = TASK_IO | TASK_ABI_EMU;
+    if ((flags & ~allowed_flags) != 0) {
+        WARN_DBG("unknown task flags (%x)", flags);
+        return ERR_INVALID_ARG;
+    }
+
 #ifndef CONFIG_ABI_EMU
     if ((flags & TASK_ABI_EMU) != 0) {
         WARN_DBG("ABI emulation is not enabled");
