@@ -225,8 +225,6 @@ static inline void write_apic(paddr_t addr, uint32_t data) {
 #define CPU_NUM_MAX     16
 #define CPUVAR_SIZE_MAX 0x4000  // Don't forget to update kernel.ld as well!
 
-extern char __cpuvar_base[];            // paddr_t
-extern char __cpuvar_end[];             // paddr_t
 extern char __mp_boot_trampoine[];      // paddr_t
 extern char __mp_boot_trampoine_end[];  // paddr_t
 extern char __mp_boot_gdtr[];           // paddr_t

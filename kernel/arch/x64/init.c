@@ -124,6 +124,8 @@ static void apic_init(void) {
     write_apic(APIC_REG_LVT_ERROR, 1 << 16 /* masked */);
 }
 
+static struct cpuvar x64_cpuvars[CPU_NUM_MAX];
+
 static void common_setup(void) {
     STATIC_ASSERT(sizeof(struct cpuvar) <= CPUVAR_SIZE_MAX);
     STATIC_ASSERT(IS_ALIGNED(CPUVAR_SIZE_MAX, PAGE_SIZE));
@@ -135,9 +137,8 @@ static void common_setup(void) {
     asm_xsetbv(0, asm_xgetbv(0) | XCR0_SSE | XCR0_AVX);
 
     // Set RDGSBASE to enable the CPUVAR macro.
-    struct gsbase *gsbase =
-        from_paddr((paddr_t) __cpuvar_base + mp_self() * CPUVAR_SIZE_MAX);
-    asm_wrgsbase((uint64_t) gsbase);
+    ASSERT(mp_self() < CPU_NUM_MAX);
+    asm_wrgsbase((uint64_t) &x64_cpuvars[mp_self()]);
 
     apic_init();
     gdt_init();

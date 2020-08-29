@@ -54,8 +54,6 @@ SECTIONS {
 
         /* CPU variables and boot stacks (paddr_t). */
         . = ALIGN(4096);
-        __cpuvar_base = . - LMA_OFFSET;
-        . += 0x4000 * 16; /* CPUVAR_SIZE_MAX * CPU_NUM_MAX */
         __boot_stack_base = . - LMA_OFFSET;
         . += 0x1000 * 16; /* PAGE_SIZE * CPU_NUM_MAX */
 
