@@ -7,6 +7,8 @@
 
 void kdebug_handle_interrupt(void);
 __mustuse error_t kdebug_run(const char *cmdline, char *buf, size_t len);
+struct task;
+void kdebug_task_destroy(struct task *task);
 void stack_check(void);
 void stack_set_canary(void);
 

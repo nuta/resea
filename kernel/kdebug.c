@@ -24,7 +24,6 @@ error_t kdebug_run(const char *cmdline, char *buf, size_t len) {
     } else if (strcmp(cmdline, "_listeninput") == 0) {
         listener = CURRENT;
         notify(listener, NOTIFY_IRQ);
-        // TODO: Free in task_destroy
     } else if (strcmp(cmdline, "_input") == 0) {
         if (!len) {
             return ERR_TOO_SMALL;
@@ -59,6 +58,12 @@ error_t kdebug_run(const char *cmdline, char *buf, size_t len) {
 void kdebug_handle_interrupt(void) {
     if (!kdebug_is_readable() && listener) {
         notify(listener, NOTIFY_IRQ);
+    }
+}
+
+void kdebug_task_destroy(struct task *task) {
+    if (task == listener) {
+        listener = NULL;
     }
 }
 
