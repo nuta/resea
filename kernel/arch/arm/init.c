@@ -15,6 +15,7 @@ extern char __bss_end[];
 
 void arm_init(void) {
     memset(__bss, 0, (vaddr_t) __bss_end - (vaddr_t) __bss);
+    lock();
     arm_peripherals_init();
     kmain();
 

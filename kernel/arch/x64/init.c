@@ -151,7 +151,11 @@ static void common_setup(void) {
 void init(void);
 void mpinit(void);
 
+extern char __bss[];
+extern char __bss_end[];
+
 void init(void) {
+    memset(__bss, 0, (vaddr_t) __bss_end - (vaddr_t) __bss);
     lock();
     draw_text_screen();
     serial_init();
