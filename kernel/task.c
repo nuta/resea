@@ -54,7 +54,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
         return ERR_ALREADY_EXISTS;
     }
 
-    unsigned allowed_flags = TASK_IO | TASK_ABI_EMU;
+    unsigned allowed_flags = TASK_ALL_CAPS | TASK_ABI_EMU;
     if ((flags & ~allowed_flags) != 0) {
         WARN_DBG("unknown task flags (%x)", flags);
         return ERR_INVALID_ARG;
@@ -84,6 +84,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     task->timeout = 0;
     task->quantum = 0;
     task->ref_count = 0;
+    bitmap_fill(task->caps, sizeof(task->caps), (flags & TASK_ALL_CAPS) != 0);
     strncpy(task->name, name, sizeof(task->name));
     list_init(&task->senders);
     list_nullify(&task->runqueue_next);

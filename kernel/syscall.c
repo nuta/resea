@@ -47,15 +47,20 @@ static void strncpy_from_user(char *dst, __user const char *src, size_t len) {
 ///
 static error_t sys_exec(task_t tid, __user const char *name, vaddr_t ip,
                         task_t pager, unsigned flags) {
-    if (tid < 0) {
-        // Return the current task ID.
-        return CURRENT->tid;
-    }
-
     if (!tid) {
         // Exit the current task.
         task_exit(EXP_GRACE_EXIT);
         UNREACHABLE();
+    }
+
+    // Operations except task_exit() requires the capability.
+    if (!CAPABLE(CURRENT, CAP_TASK)) {
+        return ERR_NOT_PERMITTED;
+    }
+
+    if (tid < 0) {
+        // Return the current task ID.
+        return CURRENT->tid;
     }
 
     struct task *task = task_lookup_unchecked(tid);
@@ -87,6 +92,10 @@ static task_t sys_listen(msec_t timeout, int irq) {
     }
 
     if (irq != 0) {
+        if (!CAPABLE(CURRENT, CAP_IRQ)) {
+            return ERR_NOT_PERMITTED;
+        }
+
         if (irq > 0) {
             return task_listen_irq(CURRENT, irq - 1);
         } else {
@@ -137,6 +146,10 @@ static paddr_t resolve_paddr(vaddr_t vaddr) {
 
 static error_t sys_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
                        unsigned flags) {
+    if (!CAPABLE(CURRENT, CAP_MAP)) {
+        return ERR_NOT_PERMITTED;
+    }
+
     if (!IS_ALIGNED(vaddr, PAGE_SIZE) || !IS_ALIGNED(vaddr, PAGE_SIZE)
         || !IS_ALIGNED(kpage, PAGE_SIZE)) {
         return ERR_INVALID_ARG;
@@ -199,6 +212,10 @@ static int sys_print(__user const char *buf, size_t buf_len) {
 
 static error_t sys_kdebug(__user const char *cmd, size_t cmd_len,
                           __user char *buf, size_t buf_len) {
+    if (!CAPABLE(CURRENT, CAP_KDEBUG)) {
+        return ERR_NOT_PERMITTED;
+    }
+
     char cmd_buf[128];
     if (cmd_len >= sizeof(cmd_buf) - 1) {
         return ERR_TOO_LARGE;

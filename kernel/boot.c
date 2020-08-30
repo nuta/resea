@@ -117,7 +117,7 @@ __noreturn void kmain(void) {
     // Create the first userland task.
     struct task *task = task_lookup_unchecked(INIT_TASK);
     ASSERT(task);
-    error_t err = task_create(task, name, bootelf->entry, NULL, 0);
+    error_t err = task_create(task, name, bootelf->entry, NULL, TASK_ALL_CAPS);
     ASSERT_OK(err);
     map_bootelf(bootelf, task);
 

@@ -6,6 +6,7 @@
 #include <arch.h>
 #include <message.h>
 #include <list.h>
+#include <bitmap.h>
 
 /// The context switching time slice (# of ticks).
 #define TASK_TIME_SLICE ((CONFIG_TASK_TIME_SLICE_MS * TICK_HZ) / 1000)
@@ -29,6 +30,16 @@ STATIC_ASSERT(TASK_TIME_SLICE > 0);
 #define CURRENT (get_cpuvar()->current_task)
 /// The idle task of the current CPU (`struct task *`).
 #define IDLE_TASK (&get_cpuvar()->idle_task)
+
+// Task capabilities.
+#define CAP_TASK    0
+#define CAP_IRQ     1
+#define CAP_IO      2
+#define CAP_MAP     3
+#define CAP_KDEBUG  4
+#define CAP_MAX     4
+
+#define CAPABLE(task, cap) (bitmap_get((task)->caps, sizeof((task)->caps), cap) != 0)
 
 /// The task struct (so-called Task Control Block).
 struct task {
@@ -70,6 +81,8 @@ struct task {
     list_elem_t runqueue_next;
     /// A (intrusive) list element in a sender queue.
     list_elem_t sender_next;
+    /// Capabilities (bitmap).
+    uint8_t caps[BITMAP_SIZE(CAP_MAX)];
 };
 
 /// CPU-local variables.

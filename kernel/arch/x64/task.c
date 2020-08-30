@@ -62,7 +62,7 @@ void arch_task_destroy(struct task *task) {
 
 static void update_tss_iomap(struct task *task) {
     struct tss *tss = &ARCH_CPUVAR->tss;
-    memset(tss->iomap, (task->flags & TASK_IO) ? 0x00 : 0xff, TSS_IOMAP_SIZE);
+    memset(tss->iomap, (CAPABLE(task, CAP_IO)) ? 0x00 : 0xff, TSS_IOMAP_SIZE);
 }
 
 void arch_task_switch(struct task *prev, struct task *next) {

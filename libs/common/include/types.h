@@ -91,8 +91,8 @@ typedef int error_t;
 #define SYS_KDEBUG  7
 
 // Task flags.
-#define TASK_IO      (1 << 0)
-#define TASK_ABI_EMU (1 << 1)
+#define TASK_ALL_CAPS (1 << 0)
+#define TASK_ABI_EMU  (1 << 1)
 
 // Map flags.
 #define MAP_UPDATE (1 << 0)
