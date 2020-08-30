@@ -86,3 +86,14 @@ void handle_free(task_t owner, handle_t handle) {
     list_remove(&e->next);
     free(e);
 }
+
+void handle_free_all(task_t owner, void (*before_free)(void *data)) {
+    for (handle_t handle = 1; handle <= HANDLE_MAX; handle++) {
+        struct handle_entry *e = get_entry(owner, handle);
+        if (e && e->owner == owner) {
+            before_free(e->data);
+            list_remove(&e->next);
+            free(e);
+        }
+    }
+}
