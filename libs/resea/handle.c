@@ -35,27 +35,35 @@ static struct handle_entry *get_entry(task_t owner, handle_t handle) {
 }
 
 handle_t handle_alloc(task_t owner) {
-    for (size_t handle = 1; handle <= HANDLE_MAX; handle++) {
+    // Look for an unused handle ID for the task.
+    handle_t new_handle = 0;
+    for (handle_t handle = 1; handle <= HANDLE_MAX; handle++) {
         if (!get_entry(owner, handle)) {
-            struct handle_entry *e = malloc(sizeof(*e));
-            e->handle = handle;
-            e->owner = owner;
-            e->data = NULL;
-
-            unsigned index = handle % NUM_BUCKETS;
-            list_t *list = handles[index];
-            if (!list) {
-                list = malloc(sizeof(*list));
-                list_init(list);
-                handles[index] = list;
-            }
-
-            list_push_back(list, &e->next);
-            return handle;
+            new_handle = handle;
+            break;
         }
     }
 
-    return ERR_NO_MEMORY;
+    if (!new_handle) {
+        return ERR_NO_MEMORY;
+    }
+
+    // Allocate a bucket if needed.
+    unsigned index = new_handle % NUM_BUCKETS;
+    list_t *list = handles[index];
+    if (!list) {
+        list = malloc(sizeof(*list));
+        list_init(list);
+        handles[index] = list;
+    }
+
+    // Add a handle entry into the bucket.
+    struct handle_entry *e = malloc(sizeof(*e));
+    e->handle = new_handle;
+    e->owner = owner;
+    e->data = NULL;
+    list_push_back(list, &e->next);
+    return new_handle;
 }
 
 void *handle_get(task_t owner, handle_t handle) {
