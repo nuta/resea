@@ -20,7 +20,6 @@ struct client {
 
 static unsigned next_driver_id = 0;
 static list_t drivers;
-static list_t pending_events;
 static msec_t uptime = 0;
 
 static struct driver *get_driver_by_tid(task_t tid) {
@@ -49,44 +48,8 @@ static void transmit(device_t device, mbuf_t pkt) {
     async_send(driver->tid, &m);
 }
 
-static error_t do_process_event(struct event *e) {
-    struct message m;
-    bzero(&m, sizeof(m));
-    switch (e->type) {
-        case TCP_NEW_CLIENT: {
-            tcp_sock_t sock = e->tcp_new_client.listen_sock;
-            m.type = TCPIP_NEW_CLIENT_MSG;
-            m.tcpip_new_client.handle = sock->client->handle;
-            async_send(sock->client->task, &m);
-            break;
-        }
-        case TCP_RECEIVED: {
-            tcp_sock_t sock = e->tcp_received.sock;
-            if (!sock->client) {
-                // Not yet accepted by the owner task.
-                return ERR_NOT_FOUND;
-            }
-
-            m.type = TCPIP_RECEIVED_MSG;
-            m.tcpip_received.handle = sock->client->handle;
-            async_send(sock->client->task, &m);
-            break;
-        }
-    }
-
-    return OK;
-}
-
 static void deferred_work(void) {
     tcp_flush();
-
-    LIST_FOR_EACH (event, &pending_events, struct event, next) {
-        error_t err = do_process_event(event);
-        if (IS_OK(err)) {
-            list_remove(&event->next);
-            free(event);
-        }
-    }
 
     // TODO:
     LIST_FOR_EACH(driver, &drivers, struct driver, next) {
@@ -132,11 +95,28 @@ static void register_device(task_t driver_task, macaddr_t *macaddr) {
 }
 
 void sys_process_event(struct event *e) {
-    error_t err = do_process_event(e);
-    if (IS_ERROR(err)) {
-        struct event *e_buf = malloc(sizeof(*e));
-        memcpy(e_buf, e, sizeof(*e));
-        list_push_back(&pending_events, &e_buf->next);
+    struct message m;
+    bzero(&m, sizeof(m));
+    switch (e->type) {
+        case TCP_NEW_CLIENT: {
+            tcp_sock_t sock = e->tcp_new_client.listen_sock;
+            m.type = TCPIP_NEW_CLIENT_MSG;
+            m.tcpip_new_client.handle = sock->client->handle;
+            async_send(sock->client->task, &m);
+            break;
+        }
+        case TCP_RECEIVED: {
+            tcp_sock_t sock = e->tcp_received.sock;
+            if (!sock->client) {
+                // Not yet accepted by the owner task.
+                break;
+            }
+
+            m.type = TCPIP_RECEIVED_MSG;
+            m.tcpip_received.handle = sock->client->handle;
+            async_send(sock->client->task, &m);
+            break;
+        }
     }
 }
 
@@ -146,7 +126,6 @@ msec_t sys_uptime(void) {
 
 void main(void) {
     TRACE("starting...");
-    list_init(&pending_events);
     list_init(&drivers);
 
     // Initialize the TCP/IP protocol stack.

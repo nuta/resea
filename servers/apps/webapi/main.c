@@ -106,6 +106,30 @@ malformed:
     ipc_call(tcpip_server, &m);
 }
 
+static void tcp_read(handle_t handle) {
+    struct client *client = NULL;
+    LIST_FOR_EACH (c, &clients, struct client, next) {
+        if (c->handle == handle) {
+            client = c;
+            break;
+        }
+    }
+
+    ASSERT(client != NULL);
+    struct message m;
+
+    m.type = TCPIP_READ_MSG;
+    m.tcpip_read.handle = client->handle;
+    m.tcpip_read.len = 4096;
+    ASSERT_OK(ipc_call(tcpip_server, &m));
+    uint8_t *buf = (uint8_t *) m.tcpip_read_reply.data;
+    size_t len = m.tcpip_read_reply.data_len;
+    if (buf) {
+        process(client, buf, len);
+        free(buf);
+    }
+}
+
 void main(void) {
     TRACE("starting...");
     tcpip_server = ipc_lookup("tcpip");
@@ -126,29 +150,9 @@ void main(void) {
                 if (m.notifications.data & NOTIFY_ASYNC) {
                     ASSERT_OK(async_recv(tcpip_server, &m));
                     switch (m.type) {
-                        case TCPIP_RECEIVED_MSG: {
-                            struct client *client = NULL;
-                            LIST_FOR_EACH (c, &clients, struct client, next) {
-                                if (c->handle == m.tcpip_received.handle) {
-                                    client = c;
-                                    break;
-                                }
-                            }
-
-                            ASSERT(client != NULL);
-
-                            m.type = TCPIP_READ_MSG;
-                            m.tcpip_read.handle = client->handle;
-                            m.tcpip_read.len = 4096;
-                            ASSERT_OK(ipc_call(tcpip_server, &m));
-                            uint8_t *buf = (uint8_t *) m.tcpip_read_reply.data;
-                            size_t len = m.tcpip_read_reply.data_len;
-                            if (buf) {
-                                process(client, buf, len);
-                                free(buf);
-                            }
+                        case TCPIP_RECEIVED_MSG:
+                            tcp_read(m.tcpip_received.handle);
                             break;
-                        }
                         case TCPIP_NEW_CLIENT_MSG: {
                             m.type = TCPIP_ACCEPT_MSG;
                             m.tcpip_accept.handle = m.tcpip_new_client.handle;
@@ -161,6 +165,7 @@ void main(void) {
                             client->request_len = 0;
                             client->done = false;
                             list_push_back(&clients, &client->next);
+                            tcp_read(client->handle);
                             break;
                         }
                         case TCPIP_CLOSED_MSG: {
