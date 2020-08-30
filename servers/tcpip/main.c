@@ -139,12 +139,6 @@ void main(void) {
     udp_init();
     dhcp_init();
 
-    struct message m;
-    m.type = TCPIP_WRITE_MSG;
-    m.tcpip_write.data = "Hello!";
-    m.tcpip_write.data_len = 7;
-    ipc_send(INIT_TASK, &m);
-
     error_t err = timer_set(TIMER_INTERVAL);
     ASSERT_OK(err);
     ASSERT_OK(ipc_serve("tcpip"));
