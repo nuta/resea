@@ -1,7 +1,7 @@
 Resea
 =====
 [![Build Status](https://github.com/nuta/resea/workflows/CI/badge.svg)](https://github.com/nuta/resea/actions?query=workflow%3ACI)
-[![Gitter chat](https://badges.gitter.im/resea/community.png)](https://gitter.im/resea/community)
+[![Gitter chat](https://badges.gitter.im/resea/community.svg)](https://gitter.im/resea/community)
 
 ![screenshot](https://gist.githubusercontent.com/nuta/42b36c50df15142ac25c3a5420607f2a/raw/e6c05de775f4649f6ba29638fd3ed8f40ea2f74f/screenshot.png)
 
