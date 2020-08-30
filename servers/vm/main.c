@@ -1,5 +1,6 @@
 #include <list.h>
 #include <resea/ipc.h>
+#include <resea/async.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/task.h>
@@ -95,6 +96,9 @@ void main(void) {
         bzero(&r, sizeof(r));
 
         switch (m.type) {
+            case ASYNC_MSG:
+                async_reply(m.src);
+                break;
             case OOL_RECV_MSG: {
                 task_t src = m.src;
                 error_t err = handle_ool_recv(&m);
@@ -241,6 +245,30 @@ void main(void) {
                 r.type = LAUNCH_TASK_REPLY_MSG;
                 r.launch_task_reply.task = task_or_err;
                 ipc_reply(m.src, &r);
+                break;
+            }
+            case WATCH_TASK_MSG: {
+                struct task *task = task_lookup(m.watch_task.task);
+                if (!task) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                task_watch(caller, task);
+                m.type = WATCH_TASK_REPLY_MSG;
+                ipc_reply(m.src, &m);
+                break;
+            }
+            case UNWATCH_TASK_MSG: {
+                struct task *task = task_lookup(m.unwatch_task.task);
+                if (!task) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                task_unwatch(caller, task);
+                m.type = UNWATCH_TASK_REPLY_MSG;
+                ipc_reply(m.src, &m);
                 break;
             }
             default:

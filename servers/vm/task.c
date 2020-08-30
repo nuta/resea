@@ -1,6 +1,7 @@
 #include <resea/malloc.h>
 #include <resea/task.h>
 #include <resea/ipc.h>
+#include <resea/async.h>
 #include <elf/elf.h>
 #include <string.h>
 #include <message.h>
@@ -48,6 +49,7 @@ static void init_task_struct(struct task *task, const char *name,
     strncpy(task->cmdline, cmdline, sizeof(task->cmdline));
     strncpy(task->waiting_for, "", sizeof(task->waiting_for));
     list_init(&task->page_areas);
+    list_init(&task->watchers);
 }
 
 task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
@@ -115,10 +117,34 @@ task_t task_spawn_by_cmdline(const char *name_with_cmdline) {
 }
 
 void task_kill(struct task *task) {
+    LIST_FOR_EACH (w, &task->watchers, struct task_watcher, next) {
+        struct message m;
+        bzero(&m, sizeof(m));
+        m.type = TASK_EXITED_MSG;
+        m.task_exited.task = task->tid;
+        async_send(w->watcher->tid, &m);
+    }
+
     task_destroy(task->tid);
     task->in_use = false;
     if (task->file_header) {
         free(task->file_header);
+    }
+}
+
+void task_watch(struct task *watcher, struct task *task) {
+    struct task_watcher *w = malloc(sizeof(*w));
+    w->watcher = watcher;
+    list_push_back(&task->watchers, &w->next);
+}
+
+void task_unwatch(struct task *watcher, struct task *task) {
+    LIST_FOR_EACH (w, &task->watchers, struct task_watcher, next) {
+        if (w->watcher == watcher) {
+            list_remove(&w->next);
+            free(w);
+            return;
+        }
     }
 }
 

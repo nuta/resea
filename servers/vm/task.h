@@ -27,6 +27,7 @@ struct task {
     list_elem_t ool_sender_next;
     struct message ool_sender_m;
     char waiting_for[SERVICE_NAME_LEN];
+    list_t watchers;
 };
 
 struct service {
@@ -35,10 +36,17 @@ struct service {
     task_t task;
 };
 
+struct task_watcher {
+    list_elem_t next;
+    struct task *watcher;
+};
+
 task_t task_spawn(struct bootfs_file *file, const char *cmdline);
 task_t task_spawn_by_cmdline(const char *name_with_cmdline);
 struct task *task_lookup(task_t tid);
 void task_kill(struct task *task);
+void task_watch(struct task *watcher, struct task *task);
+void task_unwatch(struct task *watcher, struct task *task);
 void service_register(struct task *task, const char *name);
 task_t service_wait(struct task *task, const char *name);
 void task_init(void);
