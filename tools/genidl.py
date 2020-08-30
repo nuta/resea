@@ -41,7 +41,7 @@ class IDLParser:
             namespace_def: "namespace" NAME "{" stmts "}"
             msg_def: modifiers? NAME "(" fields ")" ["->" "(" fields ")"] ";"
             modifiers: MODIFIER*
-            MODIFIER: "rpc" | "oneway"
+            MODIFIER: "rpc" | "oneway" | "async"
             fields: (field ("," field)*)?
             field: NAME ":" type
             type: NAME ("[" NATINT "]")?
@@ -134,11 +134,14 @@ class IDLParser:
         args_id = next_msg_id
         next_msg_id += 1
 
+        is_oneway = "oneway" in modifiers or "async" in modifiers
         if len(tree.children) > 3:
             rets = self.visit_fields(tree.children[3].children)
             rets_id = next_msg_id
             next_msg_id += 1
         else:
+            if not is_oneway:
+                raise Exception(f"{name}: return values is not specified")
             rets = []
             rets_id = None
 
@@ -146,7 +149,7 @@ class IDLParser:
             "args_id": args_id,
             "rets_id": rets_id,
             "name": name,
-            "oneway": "oneway" in modifiers,
+            "oneway": is_oneway,
             "args": args,
             "rets": rets,
         }
