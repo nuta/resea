@@ -272,7 +272,7 @@ void main(void) {
                 break;
             }
             default:
-                WARN("unknown message type (type=%d)", m.type);
+               discard_unknown_message(&m);
                 // FIXME: Free ool payloads.
         }
     }

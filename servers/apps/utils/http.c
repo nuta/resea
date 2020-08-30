@@ -140,7 +140,7 @@ void http_get(const char *url) {
                 break;
             };
             default:
-                WARN("unknown message type (type=%d)", m.type);
+               discard_unknown_message(&m);
         }
     }
 }

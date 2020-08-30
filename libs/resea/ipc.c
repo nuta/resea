@@ -191,3 +191,16 @@ task_t ipc_lookup(const char *name) {
     ASSERT_OK(m.type == LOOKUP_REPLY_MSG);
     return m.lookup_reply.task;
 }
+
+/// Discards an unknown message.
+void discard_unknown_message(struct message *m) {
+    OOPS("received an unknown message (%s [%d]%s)",
+         msgtype2str(m->type),
+         MSG_ID(m->type),
+         (m->type & MSG_OOL) ? ", ool" : "",
+         (m->type & MSG_STR) ? ", str" : "");
+
+    if (m->type & MSG_OOL) {
+        free(m->ool_ptr);
+    }
+}
