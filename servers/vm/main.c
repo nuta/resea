@@ -232,33 +232,14 @@ void main(void) {
                 break;
             }
             case LAUNCH_TASK_MSG: {
-                // "echo hello world!" -> name="echo", cmdline="hello world!"
-                char *name = (char *) m.launch_task.name_and_cmdline;
-                char *cmdline = "";
-                for (int i = 0; name[i] != '\0'; i++) {
-                    if (name[i] == ' ') {
-                        name[i] = '\0';
-                        cmdline = &name[i + 1];
-                        break;
-                    }
-                }
-
-                // Look for the executable in bootfs named `name`.
-                struct bootfs_file *file;
-                for (int i = 0; (file = bootfs_open(i)) != NULL; i++) {
-                    if (!strcmp(file->name, name)) {
-                        break;
-                    }
-                }
-
-                free(name);
-                if (!file) {
-                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                task_t task_or_err = task_spawn_by_cmdline(m.launch_task.name_and_cmdline);
+                if (IS_ERROR(task_or_err)) {
+                    ipc_reply_err(m.src, task_or_err);
                     break;
                 }
 
-                task_spawn(file, cmdline);
                 r.type = LAUNCH_TASK_REPLY_MSG;
+                r.launch_task_reply.task = task_or_err;
                 ipc_reply(m.src, &r);
                 break;
             }

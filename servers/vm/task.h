@@ -36,6 +36,7 @@ struct service {
 };
 
 task_t task_spawn(struct bootfs_file *file, const char *cmdline);
+task_t task_spawn_by_cmdline(const char *name_with_cmdline);
 struct task *task_lookup(task_t tid);
 void task_kill(struct task *task);
 void service_register(struct task *task, const char *name);

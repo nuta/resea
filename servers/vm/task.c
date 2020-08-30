@@ -85,6 +85,35 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     return task->tid;
 }
 
+task_t task_spawn_by_cmdline(const char *name_with_cmdline) {
+    char *name = strdup(name_with_cmdline);
+
+    // "echo hello world!" -> name="echo", cmdline="hello world!"
+    char *cmdline = "";
+    for (int i = 0; name[i] != '\0'; i++) {
+        if (name[i] == ' ') {
+            name[i] = '\0';
+            cmdline = &name[i + 1];
+            break;
+        }
+    }
+
+    // Look for the executable in bootfs named `name`.
+    struct bootfs_file *file;
+    for (int i = 0; (file = bootfs_open(i)) != NULL; i++) {
+        if (!strcmp(file->name, name)) {
+            break;
+        }
+    }
+
+    if (!file) {
+        return ERR_NOT_FOUND;
+    }
+
+    free(name);
+    return task_spawn(file, cmdline);
+}
+
 void task_kill(struct task *task) {
     task_destroy(task->tid);
     task->in_use = false;
