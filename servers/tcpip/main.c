@@ -124,6 +124,11 @@ msec_t sys_uptime(void) {
     return uptime;
 }
 
+static void free_handle(void *data) {
+    struct client *c = data;
+    tcp_close(c->sock);
+}
+
 void main(void) {
     TRACE("starting...");
     list_init(&drivers);
@@ -153,6 +158,19 @@ void main(void) {
                     ASSERT_OK(err);
                     uptime += TIMER_INTERVAL;
                 }
+
+                if ((m.notifications.data & NOTIFY_ASYNC) != 0) {
+                    struct message m;
+                    async_recv(INIT_TASK, &m);
+                    switch (m.type) {
+                        case TASK_EXITED_MSG:
+                            handle_free_all(m.task_exited.task, free_handle);
+                            break;
+                        default:
+                            WARN("unknown message type (type=%d)", m.type);
+                    }
+                }
+
                 break;
             case ASYNC_MSG:
                 async_reply(m.src);
