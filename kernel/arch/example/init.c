@@ -1,5 +1,6 @@
 #include <types.h>
 #include <boot.h>
+#include <task.h>
 #include <printk.h>
 #include <string.h>
 
