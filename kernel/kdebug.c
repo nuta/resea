@@ -19,7 +19,9 @@ error_t kdebug_run(const char *cmdline, char *buf, size_t len) {
     } else if (strcmp(cmdline, "ps") == 0) {
         task_dump();
     } else if (strcmp(cmdline, "q") == 0) {
+#ifdef CONFIG_SEMIHOSTING
         arch_semihosting_halt();
+#endif
         PANIC("halted by the kdebug");
     } else if (strcmp(cmdline, "_listeninput") == 0) {
         listener = CURRENT;

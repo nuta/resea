@@ -1,6 +1,10 @@
 menu "Kernel"
     source "kernel/arch/*/Kconfig"
 
+    config SEMIHOSTING
+        bool "Use semihosting features (e.g. QEMU)"
+        default y
+
     config TRACE_IPC
         bool "Trace message passing"
         default n
