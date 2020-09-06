@@ -2,6 +2,7 @@
 #include <boot.h>
 #include <task.h>
 #include <printk.h>
+#include <string.h>
 #include "asm.h"
 #include "peripherals.h"
 
@@ -18,16 +19,22 @@ void arch_idle(void) {
     }
 }
 
+extern char __bss[];
+extern char __bss_end[];
+
 void arm64_init(void) {
     // TODO: disable unused exception table vectors
     // TODO: smp
     // TODO: kdebug
     // TODO: improve tlb flushing
-
     ARM64_MSR(vbar_el1, &exception_vector);
 
     // We no longer need to access the lower addresses.
     ARM64_MSR(ttbr0_el1, 0ull);
+
+    bzero(get_cpuvar(), sizeof(struct cpuvar));
+    bzero(__bss, (vaddr_t) __bss_end - (vaddr_t) __bss);
+    lock();
 
     arm64_peripherals_init();
     kmain();
