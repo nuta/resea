@@ -1,6 +1,8 @@
+#include <config.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
+#include <string.h>
 #define NUM_ITERS 128
 
 #ifdef __x86_64__
@@ -9,6 +11,14 @@ static inline cycles_t cycle_counter(void) {
     uint32_t eax, edx;
     __asm__ __volatile__("rdtscp" : "=a"(eax), "=d"(edx) :: "%ecx");
     return (((cycles_t) edx) << 32) | eax;
+}
+
+#elif __aarch64__
+typedef uint64_t cycles_t;
+static inline cycles_t cycle_counter(void) {
+    uint64_t value;
+    __asm__ __volatile__("mrs %0, pmccntr_el0" : "=r" (value));
+    return value;
 }
 #else
 #    error "unsupported arch"
@@ -24,11 +34,40 @@ static void print_stats(const char *name, cycles_t *iters, size_t num_iters) {
 
     avg /= NUM_ITERS;
     INFO("%s: avg=%d, min=%d, max=%d", name, avg, min, max);
+    METRIC(name, min);
 }
 
 void main(void) {
     cycles_t iters[NUM_ITERS];
     INFO("starting IPC benchmark...");
+
+    for (int i = 0; i < NUM_ITERS; i++) {
+        cycles_t start = cycle_counter();
+        iters[i] = cycle_counter() - start;
+    }
+    print_stats("reading cycle counter", iters, NUM_ITERS);
+
+    uint8_t tmp1[512], tmp2[512];
+    for (int i = 0; i < NUM_ITERS; i++) {
+        cycles_t start = cycle_counter();
+        memcpy(tmp1, tmp2, 8);
+        iters[i] = cycle_counter() - start;
+    }
+    print_stats("memcpy (8-bytes)", iters, NUM_ITERS);
+
+    for (int i = 0; i < NUM_ITERS; i++) {
+        cycles_t start = cycle_counter();
+        memcpy(tmp1, tmp2, 64);
+        iters[i] = cycle_counter() - start;
+    }
+    print_stats("memcpy (64-bytes)", iters, NUM_ITERS);
+
+    for (int i = 0; i < NUM_ITERS; i++) {
+        cycles_t start = cycle_counter();
+        memcpy(tmp1, tmp2, 512);
+        iters[i] = cycle_counter() - start;
+    }
+    print_stats("memcpy (512-bytes)", iters, NUM_ITERS);
 
     //
     //  IPC round-trip benchmark
@@ -39,7 +78,7 @@ void main(void) {
         ipc_call(INIT_TASK, &m);
         iters[i] = cycle_counter() - start;
     }
-    print_stats("IPC round-trip", iters, NUM_ITERS);
+    print_stats("IPC round-trip (simple)", iters, NUM_ITERS);
 
     //
     //  IPC round-trip benchmark (with small ool payload)
