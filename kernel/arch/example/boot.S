@@ -5,7 +5,7 @@
 // The entry point jumped from the bootloader.
 .global boot
 boot:
-    call x64_init
+    call example_init
 
 halt:
     cli

@@ -29,6 +29,7 @@ SECTIONS {
         __bss = .;
         *(.bss);
         *(.bss.*);
+        __bss_end = .;
         __kernel_image_end = . - LMA_OFFSET; /* paddr_t */
     } > ram AT > lma_ram
 
