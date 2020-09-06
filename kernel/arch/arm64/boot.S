@@ -1,16 +1,15 @@
 .section ".boot", "ax"
 .global boot
 boot:
-    ldr  x0, =0x30d00800 /* Lttile Endian, MMU disabled, I/D-cache disabled */
+    ldr  x0, =0x30d00800 // Lttile Endian, MMU disabled, I/D-cache disabled
     msr  sctlr_el1, x0
-    ldr  x0, =0x80000000 /* EL1 is AArch64. */
+    ldr  x0, =0x80000000 // EL1 is AArch64.
     msr  hcr_el2, x0
-    ldr  x0, =0x00000431 /* EL2 is AArch64, EL0-1 are secure state. */
-    msr  scr_el3, x0
-    ldr  x0, =0x000001c5 /* Switch to EL1h, exceptions are masked. */
-    msr  spsr_el3, x0
+    ldr  x0, =0x000001c5 // Switch to EL1h, exceptions are masked.
+    msr  spsr_el2, x0
+
     adr  x0, el1_mode
-    msr  elr_el3, x0
+    msr  elr_el2, x0
     eret
 
 el1_mode:
@@ -112,7 +111,7 @@ enable_mmu:
     ldr  x1, =0xffff000000000000
     orr  x1, x0, x1
 
-    ldr  x0, =0x30d00801 /* Lttile Endian, MMU enabled, FIXME: I/D-cache disabled (just for now) */
+    ldr  x0, =0x30d00801 // Lttile Endian, MMU enabled, FIXME: I/D-cache disabled (just for now)
     dsb ish
     isb
     msr  sctlr_el1, x0
