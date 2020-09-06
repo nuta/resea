@@ -45,6 +45,10 @@
 // https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2836/QA7_rev3.4.pdf
 #define CORE0_TIMER_IRQCNTL 0x40000040
 
+// Watchdog timer values.
+#define PM_PASSWORD        0x5a000000
+#define PM_WDOG_FULL_RESET 0x00000020
+
 static inline uint32_t mmio_read(vaddr_t paddr) {
     return *((volatile uint32_t *) from_paddr(paddr));
 }

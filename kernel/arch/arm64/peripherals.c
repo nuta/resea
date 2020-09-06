@@ -88,6 +88,13 @@ void arch_printchar(char ch) {
     mmio_write(UART0_DR, ch);
 }
 
+#ifdef CONFIG_FORCE_REBOOT_BY_WATCHDOG
+static void watchdog_init(void) {
+	mmio_write(PM_WDOG, PM_PASSWORD | CONFIG_WATCHDOG_TIMEOUT << 16);
+	mmio_write(PM_RSTC, PM_PASSWORD | PM_WDOG_FULL_RESET);
+}
+#endif
+
 void arm64_timer_reload(void) {
     uint64_t hz = ARM64_MRS(cntfrq_el0);
     ASSERT(hz >= 1000);
@@ -103,6 +110,9 @@ static void timer_init(void) {
 
 void arm64_peripherals_init(void) {
     uart_init();
+#ifdef CONFIG_FORCE_REBOOT_BY_WATCHDOG
+    watchdog_init();
+#endif
     timer_init();
 }
 
