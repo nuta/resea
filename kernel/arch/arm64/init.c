@@ -37,6 +37,13 @@ void arm64_init(void) {
     lock();
 
     arm64_peripherals_init();
+
+    // Initialize the performance counter for benchmarking.
+    ARM64_MSR(pmcr_el0, 0b1ull);           // Reset counters.
+    ARM64_MSR(pmcr_el0, 0b11ull);          // Enable counters.
+    ARM64_MSR(pmcntenset_el0, 1ull << 31); // Enable the counter register.
+    ARM64_MSR(pmuserenr_el0, 0b11ull);     // Enable user access to the counters.
+
     kmain();
 
     PANIC("kmain returned");
