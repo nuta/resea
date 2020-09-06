@@ -17,7 +17,6 @@ void mp_reschedule(void) {
     // Do nothing: we don't support multiprocessors.
 }
 
-
 void lock(void) {
     // TODO:
 }
