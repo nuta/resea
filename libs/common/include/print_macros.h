@@ -56,6 +56,12 @@ const char *__program_name(void);
     } while (0)
 
 
+#define METRIC(key, value)                                                     \
+    do {                                                                       \
+        printf("{\"type\":\"metric\",\"key\":\"%s\",\"value\":%lld}\n",        \
+               name, value);                                                   \
+    } while (0)
+
 #define HEXDUMP(ptr, len)                                                      \
     do {                                                                       \
         uint8_t *__ptr = (uint8_t *) (ptr);                                    \
