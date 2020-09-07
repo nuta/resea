@@ -2,6 +2,7 @@
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
+#include <resea/syscall.h>
 #include <string.h>
 #define NUM_ITERS 128
 
@@ -68,6 +69,13 @@ void main(void) {
         iters[i] = cycle_counter() - start;
     }
     print_stats("memcpy (512-bytes)", iters, NUM_ITERS);
+
+    for (int i = 0; i < NUM_ITERS; i++) {
+        cycles_t start = cycle_counter();
+        syscall(SYS_NOP, 0, 0, 0, 0, 0);
+        iters[i] = cycle_counter() - start;
+    }
+    print_stats("nop syscall", iters, NUM_ITERS);
 
     //
     //  IPC round-trip benchmark
