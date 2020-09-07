@@ -89,6 +89,7 @@ typedef int error_t;
 #define SYS_MAP     4
 #define SYS_PRINT   6
 #define SYS_KDEBUG  7
+#define SYS_NOP     8
 
 // Task flags.
 #define TASK_ALL_CAPS (1 << 0)

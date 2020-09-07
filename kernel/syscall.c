@@ -263,6 +263,8 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             ret = sys_kdebug((__user const char *) a1, a2, (__user char *)  a3,
                              a4);
             break;
+        case SYS_NOP:
+            ret = OK;
         default:
             ret = ERR_INVALID_ARG;
     }
