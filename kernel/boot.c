@@ -44,10 +44,9 @@ static void *alloc_page(void) {
 
 static error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
                         unsigned flags) {
-    flags |= MAP_UPDATE;
     while (true) {
         paddr_t kpage = into_paddr(alloc_page());
-        error_t err = task_map_page(task, vaddr, paddr, kpage, flags);
+        error_t err = task_map_page(task, vaddr, paddr, kpage, MAP_W);
         if (err != ERR_TRY_AGAIN) {
             return err;
         }

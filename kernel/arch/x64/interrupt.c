@@ -120,9 +120,7 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
                 }
             } else if (vec >= VECTOR_IRQ_BASE) {
                 int irq = vec - VECTOR_IRQ_BASE;
-                if (irq == SERIAL_IRQ) {
-                    kdebug_handle_interrupt();
-                } else if (irq == TIMER_IRQ) {
+                if (irq == TIMER_IRQ) {
                     handle_timer_irq();
                 } else {
                     handle_irq(irq);

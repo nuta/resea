@@ -8,11 +8,11 @@ static int tail = 0;
 
 void printf_flush(void) {
     if (tail < head) {
-        sys_print(&printbuf[tail], head - tail);
+        sys_console_write(&printbuf[tail], head - tail);
         tail = head;
     } else if (tail > head) {
-        sys_print(&printbuf[tail], PRINT_BUF_SIZE - tail);
-        sys_print(&printbuf[0], head);
+        sys_console_write(&printbuf[tail], PRINT_BUF_SIZE - tail);
+        sys_console_write(&printbuf[0], head);
         tail = head;
     }
 }

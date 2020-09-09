@@ -147,7 +147,7 @@ void ipc_reply_err(task_t dst, error_t error) {
 }
 
 error_t ipc_notify(task_t dst, notifications_t notifications) {
-    return sys_ipc(dst, 0, (void *) (uintptr_t) notifications, IPC_NOTIFY);
+    return sys_notify(dst, notifications);
 }
 
 error_t ipc_recv(task_t src, struct message *m) {

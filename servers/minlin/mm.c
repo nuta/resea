@@ -129,7 +129,10 @@ static error_t map_page(struct proc *proc, vaddr_t vaddr, vaddr_t paddr,
     ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
-    flags |= overwrite ? (MAP_DELETE | MAP_UPDATE) : MAP_UPDATE;
+    if (overwrite) {
+        task_unmap(proc->task, vaddr);
+    }
+
     while (true) {
         struct mchunk *m = mm_alloc_mchunk(&proc->mm, vaddr, PAGE_SIZE);
         x += *((uint8_t *) paddr); // Handle page faults in advance. FIXME: remove me

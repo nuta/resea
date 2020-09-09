@@ -10,5 +10,6 @@ __noreturn void task_exit(void);
 task_t task_self(void);
 error_t task_map(task_t task, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
                  unsigned flags);
+error_t task_unmap(task_t task, vaddr_t vaddr);
 
 #endif

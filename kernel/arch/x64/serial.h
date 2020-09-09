@@ -2,7 +2,6 @@
 #define __X64_PRINTCHAR_H__
 
 #define IOPORT_SERIAL 0x3f8
-#define SERIAL_IRQ    4
 #define RBR           0
 #define DLL           0
 #define DLH           1

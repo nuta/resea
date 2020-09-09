@@ -4,8 +4,6 @@
 #include "printk.h"
 #include "ipc.h"
 
-static struct task *listener = NULL;
-
 error_t kdebug_run(const char *cmdline, char *buf, size_t len) {
     if (strlen(cmdline) == 0) {
         // An empty command. Just ignore it.
@@ -23,25 +21,6 @@ error_t kdebug_run(const char *cmdline, char *buf, size_t len) {
         arch_semihosting_halt();
 #endif
         PANIC("halted by the kdebug");
-    } else if (strcmp(cmdline, "_listeninput") == 0) {
-        listener = CURRENT;
-        notify(listener, NOTIFY_IRQ);
-    } else if (strcmp(cmdline, "_input") == 0) {
-        if (!len) {
-            return ERR_TOO_SMALL;
-        }
-
-        size_t i = 0;
-        for (; i < len - 1; i++) {
-            char ch;
-            if ((ch = kdebug_readchar()) <= 0) {
-                break;
-            }
-
-            buf[i] = ch;
-        }
-
-        buf[i] = '\0';
     } else if (strcmp(cmdline, "_log") == 0) {
         if (!len) {
             return ERR_TOO_SMALL;
@@ -55,18 +34,6 @@ error_t kdebug_run(const char *cmdline, char *buf, size_t len) {
     }
 
     return OK;
-}
-
-void kdebug_handle_interrupt(void) {
-    if (!kdebug_is_readable() && listener) {
-        notify(listener, NOTIFY_IRQ);
-    }
-}
-
-void kdebug_task_destroy(struct task *task) {
-    if (task == listener) {
-        listener = NULL;
-    }
 }
 
 static uint32_t *get_canary_ptr(void) {

@@ -126,7 +126,6 @@ error_t task_destroy(struct task *task) {
     list_remove(&task->runqueue_next);
     list_remove(&task->sender_next);
     arch_task_destroy(task);
-    kdebug_task_destroy(task);
     task->state = TASK_UNUSED;
 
     if (task->pager) {

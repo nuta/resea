@@ -83,22 +83,29 @@ typedef int error_t;
 #define ERR_END            (-17)
 
 // System call numbers.
-#define SYS_EXEC    1
-#define SYS_IPC     2
-#define SYS_LISTEN  3
-#define SYS_MAP     4
-#define SYS_PRINT   6
-#define SYS_KDEBUG  7
-#define SYS_NOP     8
+#define SYS_NOP           1
+#define SYS_KDEBUG        2
+#define SYS_IPC           3
+#define SYS_NOTIFY        4
+#define SYS_TIMER_SET     5
+#define SYS_CONSOLE_WRITE 6
+#define SYS_CONSOLE_READ  7
+#define SYS_TASK_CREATE   8
+#define SYS_TASK_DESTROY  9
+#define SYS_TASK_EXIT     10
+#define SYS_TASK_SELF     11
+// 12 is reserved for SYS_TASK_SCHEDULE
+#define SYS_VM_MAP        13
+#define SYS_VM_UNMAP      14
+#define SYS_IRQ_ACQUIRE   15
+#define SYS_IRQ_RELEASE   16
 
 // Task flags.
 #define TASK_ALL_CAPS (1 << 0)
 #define TASK_ABI_EMU  (1 << 1)
 
 // Map flags.
-#define MAP_UPDATE (1 << 0)
-#define MAP_DELETE (1 << 1)
-#define MAP_W      (1 << 2)
+#define MAP_W      (1 << 1)
 
 // IPC source task IDs.
 #define IPC_ANY  0  /* So-called "open receive". */
@@ -109,8 +116,7 @@ typedef int error_t;
 #define IPC_RECV    (1 << 1)
 #define IPC_CALL    (IPC_SEND | IPC_RECV)
 #define IPC_NOBLOCK (1 << 2)
-#define IPC_NOTIFY  (1 << 3)
-#define IPC_KERNEL  (1 << 4) /* Internally used by kernel. */
+#define IPC_KERNEL  (1 << 3) /* Internally used by kernel. */
 
 // Flags in the message type (m->type).
 #define MSG_STR  (1 << 30)

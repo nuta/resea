@@ -1,6 +1,7 @@
 #include <resea/ipc.h>
 #include <resea/syscall.h>
 #include <resea/printf.h>
+#include <driver/irq.h>
 #include "fs.h"
 #include "tty.h"
 
@@ -13,7 +14,7 @@ static struct inode *tty_inode;
 
 void on_new_data(void) {
     char buf[256];
-    OOPS_OK(sys_kdebug("_input", 6, buf, sizeof(buf)));
+    OOPS_OK(sys_console_read(buf, sizeof(buf)));
     for (size_t i = 0; i < sizeof(buf) && buf[i] != '\0'; i++) {
         queue[wp++ % QUEUE_LEN] = buf[i];
         printf("%c", buf[i]);
@@ -53,7 +54,7 @@ static int acquire(struct file *file) {
         return 0;
     }
 
-    OOPS_OK(sys_kdebug("_listeninput", 12, "", 0));
+    ASSERT_OK(irq_acquire(CONSOLE_IRQ));
     tty_inode = file->inode;
     inited = true;
     return 0;

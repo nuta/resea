@@ -2,6 +2,7 @@
 #include <resea/printf.h>
 #include <resea/malloc.h>
 #include <resea/syscall.h>
+#include <driver/irq.h>
 #include <string.h>
 #include "commands.h"
 
@@ -95,7 +96,7 @@ static void read_input(void) {
     static char cmdline[512];
     static int cmdline_index = 0;
 
-    OOPS_OK(kdebug_with_buf("_input", buf, sizeof(buf)));
+    OOPS_OK(sys_console_read(buf, sizeof(buf)));
     for (size_t i = 0; i < sizeof(buf) && buf[i] != '\0'; i++) {
         PRINTF("%c", buf[i]);
         switch (buf[i]) {
@@ -134,7 +135,7 @@ static void read_input(void) {
 void main(void) {
     TRACE("starting...");
 
-    OOPS_OK(kdebug("_listeninput"));
+    ASSERT_OK(irq_acquire(CONSOLE_IRQ));
 
     // The mainloop: receive and handle messages.
     prompt("");
