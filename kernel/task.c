@@ -11,8 +11,9 @@
 
 /// All tasks.
 static struct task tasks[CONFIG_NUM_TASKS];
-/// A queue of runnable tasks excluding currently running tasks.
-static list_t runqueue;
+/// A queue of runnable tasks excluding currently running tasks. Lower index
+/// means higher priority.
+static list_t runqueues[TASK_PRIORITY_MAX];
 /// IRQ owners.
 static struct task *irq_owners[IRQ_MAX];
 
@@ -25,6 +26,10 @@ static struct task *irq_owners[IRQ_MAX];
 ///
 static int page_usages[CONFIG_MAX_MAPPABLE_ADDR / PAGE_SIZE];
 #endif
+
+static void enqueue_task(struct task *task) {
+    list_push_back(&runqueues[task->priority], &task->runqueue_next);
+}
 
 /// Returns the task struct for the task ID. It returns NULL if the ID is
 /// invalid.
@@ -83,6 +88,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     task->src = IPC_DENY;
     task->timeout = 0;
     task->quantum = 0;
+    task->priority = TASK_PRIORITY_MAX - 1;
     task->ref_count = 0;
     bitmap_fill(task->caps, sizeof(task->caps), (flags & TASK_ALL_CAPS) != 0);
     strncpy(task->name, name, sizeof(task->name));
@@ -95,7 +101,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     }
 
     // Append the newly created task into the runqueue.
-    if (task != IDLE_TASK) {
+    if (task != IDLE_TASK && ((flags & TASK_SCHED) == 0)) {
         task_resume(task);
     }
 
@@ -183,19 +189,43 @@ void task_block(struct task *task) {
 void task_resume(struct task *task) {
     DEBUG_ASSERT(task->state == TASK_BLOCKED);
     task->state = TASK_RUNNABLE;
-    list_push_back(&runqueue, &task->runqueue_next);
+    enqueue_task(task);
     mp_reschedule();
+}
+
+/// Updates the scheduling policy for the task.
+error_t task_schedule(struct task *task, int priority) {
+    if (priority >= TASK_PRIORITY_MAX) {
+        return ERR_INVALID_ARG;
+    }
+
+    task->priority = priority;
+    if (task->state == TASK_RUNNABLE) {
+        list_remove(&task->runqueue_next);
+        enqueue_task(task);
+    }
+
+    return OK;
 }
 
 /// Picks the next task to run.
 static struct task *scheduler(struct task *current) {
     if (current != IDLE_TASK && current->state == TASK_RUNNABLE) {
         // The current task is still runnable. Enqueue into the runqueue.
-        list_push_back(&runqueue, &current->runqueue_next);
+        enqueue_task(current);
     }
 
-    struct task *next = LIST_POP_FRONT(&runqueue, struct task, runqueue_next);
-    return (next) ? next : IDLE_TASK;
+    // Look for the task with the highest priority. Tasks with the same priority
+    // is scheduled in round-robin fashion.
+    for (int i = 0; i < TASK_PRIORITY_MAX; i++) {
+        struct task *next =
+            LIST_POP_FRONT(&runqueues[i], struct task, runqueue_next);
+        if (next) {
+            return next;
+        }
+    }
+
+    return IDLE_TASK;
 }
 
 /// Do a context switch: save the current register state on the stack and
@@ -352,7 +382,7 @@ void handle_timer_irq(void) {
     // Switch task if the current task has spend its time slice.
     DEBUG_ASSERT(CURRENT == IDLE_TASK || CURRENT->quantum > 0);
     CURRENT->quantum--;
-    if (!CURRENT->quantum || (CURRENT == IDLE_TASK && !list_is_empty(&runqueue))) {
+    if (!CURRENT->quantum || CURRENT == IDLE_TASK) {
         task_switch();
     }
 }
@@ -409,7 +439,10 @@ void task_dump(void) {
 
 /// Initializes the task subsystem.
 void task_init(void) {
-    list_init(&runqueue);
+    for (int i = 0; i < TASK_PRIORITY_MAX; i++) {
+        list_init(&runqueues[i]);
+    }
+
     for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
         tasks[i].state = TASK_UNUSED;
         tasks[i].tid = i + 1;

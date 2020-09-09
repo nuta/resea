@@ -11,5 +11,6 @@ task_t task_self(void);
 error_t task_map(task_t task, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
                  unsigned flags);
 error_t task_unmap(task_t task, vaddr_t vaddr);
+error_t task_schedule(task_t task, int priority);
 
 #endif

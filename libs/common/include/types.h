@@ -94,7 +94,7 @@ typedef int error_t;
 #define SYS_TASK_DESTROY  9
 #define SYS_TASK_EXIT     10
 #define SYS_TASK_SELF     11
-// 12 is reserved for SYS_TASK_SCHEDULE
+#define SYS_TASK_SCHEDULE 12
 #define SYS_VM_MAP        13
 #define SYS_VM_UNMAP      14
 #define SYS_IRQ_ACQUIRE   15
@@ -103,6 +103,7 @@ typedef int error_t;
 // Task flags.
 #define TASK_ALL_CAPS (1 << 0)
 #define TASK_ABI_EMU  (1 << 1)
+#define TASK_SCHED    (1 << 2)
 
 // Map flags.
 #define MAP_W      (1 << 1)

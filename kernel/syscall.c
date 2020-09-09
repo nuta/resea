@@ -84,6 +84,20 @@ static task_t sys_task_self(void) {
     return CURRENT->tid;
 }
 
+/// Updates the scheduling policy for the task.
+static error_t sys_task_schedule(task_t tid, int priority) {
+    if (!CAPABLE(CURRENT, CAP_TASK)) {
+        return ERR_NOT_PERMITTED;
+    }
+
+    struct task *task = task_lookup_unchecked(tid);
+    if (!task || task == CURRENT) {
+        return ERR_INVALID_TASK;
+    }
+
+    return task_schedule(task, priority);
+}
+
 /// Send/receive IPC messages.
 static error_t sys_ipc(task_t dst, task_t src, __user struct message *m,
                        unsigned flags) {
@@ -306,6 +320,9 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             break;
         case SYS_TASK_SELF:
             ret = sys_task_self();
+            break;
+        case SYS_TASK_SCHEDULE:
+            ret = sys_task_schedule(a1, a2);
             break;
         case SYS_VM_MAP:
             ret = sys_vm_map(a1, a2, a3, a4, a5);

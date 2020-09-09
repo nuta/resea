@@ -27,3 +27,7 @@ error_t task_map(task_t task, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
 error_t task_unmap(task_t task, vaddr_t vaddr) {
     return sys_vm_unmap(task, vaddr);
 }
+
+error_t task_schedule(task_t task, int priority) {
+    return sys_task_schedule(task, priority);
+}

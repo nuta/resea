@@ -23,6 +23,9 @@ STATIC_ASSERT(TASK_TIME_SLICE > 0);
 /// The task is waiting for a receiver/sender task in IPC.
 #define TASK_BLOCKED 2
 
+#define TASK_PRIORITY_MAX 8
+STATIC_ASSERT(TASK_PRIORITY_MAX > 0);
+
 // struct arch_cpuvar *
 #define ARCH_CPUVAR (&get_cpuvar()->arch)
 
@@ -62,6 +65,11 @@ struct task {
     /// The remaining time slice in ticks. If this value reaches 0, the kernel
     /// switches into the next task (so-called preemptive context switching).
     unsigned quantum;
+    /// The task priority. The lower value means higher priority. The scheduler
+    /// always picks the runnable task with the highest priority. If there're
+    /// multiple runnable tasks with the same highest priority, the kernel
+    /// schedules in round-robin fashion.
+    int priority;
     /// The message buffer.
     struct message m;
     /// The acceptable sender task ID. If it's IPC_ANY, the task accepts
@@ -98,6 +106,7 @@ __mustuse error_t task_destroy(struct task *task);
 __noreturn void task_exit(enum exception_type exp);
 void task_block(struct task *task);
 void task_resume(struct task *task);
+error_t task_schedule(struct task *task, int priority);
 struct task *task_lookup(task_t tid);
 struct task *task_lookup_unchecked(task_t tid);
 void task_switch(void);

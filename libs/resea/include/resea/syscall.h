@@ -35,6 +35,10 @@ static inline task_t sys_task_self(void) {
     return syscall(SYS_TASK_SELF, 0, 0, 0, 0, 0);
 }
 
+static inline error_t sys_task_schedule(task_t task, int priority) {
+    return syscall(SYS_TASK_SCHEDULE, task, priority, 0, 0, 0);
+}
+
 static inline error_t sys_vm_map(task_t task, vaddr_t vaddr, vaddr_t src,
                                  vaddr_t kpage, unsigned flags) {
     return syscall(SYS_VM_MAP, task, vaddr, src, kpage, flags);
