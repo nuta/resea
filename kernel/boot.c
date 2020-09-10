@@ -46,7 +46,7 @@ static error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
                         unsigned flags) {
     while (true) {
         paddr_t kpage = into_paddr(alloc_page());
-        error_t err = task_map_page(task, vaddr, paddr, kpage, MAP_W);
+        error_t err = vm_map(task, vaddr, paddr, kpage, MAP_W);
         if (err != ERR_TRY_AGAIN) {
             return err;
         }

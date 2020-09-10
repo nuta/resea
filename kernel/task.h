@@ -110,9 +110,9 @@ error_t task_schedule(struct task *task, int priority);
 struct task *task_lookup(task_t tid);
 struct task *task_lookup_unchecked(task_t tid);
 void task_switch(void);
-__mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
+__mustuse error_t vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
                                 paddr_t kpage, unsigned flags);
-__mustuse error_t task_unmap_page(struct task *task, vaddr_t vaddr);
+__mustuse error_t vm_unmap(struct task *task, vaddr_t vaddr);
 __mustuse error_t task_listen_irq(struct task *task, unsigned irq);
 __mustuse error_t task_unlisten_irq(unsigned irq);
 void handle_timer_irq(void);
@@ -134,9 +134,9 @@ void arch_task_destroy(struct task *task);
 void arch_task_switch(struct task *prev, struct task *next);
 void arch_enable_irq(unsigned irq);
 void arch_disable_irq(unsigned irq);
-__mustuse error_t arch_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
+__mustuse error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
                           paddr_t kpage, unsigned flags);
-__mustuse error_t arch_unmap_page(struct task *task, vaddr_t vaddr);
+__mustuse error_t arch_vm_unmap(struct task *task, vaddr_t vaddr);
 paddr_t vm_resolve(struct task *task, vaddr_t vaddr);
 
 #endif

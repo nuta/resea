@@ -278,7 +278,7 @@ error_t task_unlisten_irq(unsigned irq) {
 
 /// Maps a memory page in the task's virtual memory space. `kpage` is a memory
 /// page which provides a memory page for arch-specific page table structures.
-__mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
+__mustuse error_t vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
                                 paddr_t kpage, unsigned flags) {
     DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
@@ -322,7 +322,7 @@ __mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
 #endif
 
     // Looks that the mapping is not malicious. Update the page table.
-    error_t err = arch_map_page(task, vaddr, paddr, kpage, flags);
+    error_t err = arch_vm_map(task, vaddr, paddr, kpage, flags);
 
 #ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
     if (err == ERR_TRY_AGAIN || err == OK) {
@@ -340,7 +340,7 @@ __mustuse error_t task_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
 }
 
 /// Unmaps a memory page from the task's virtual memory space.
-error_t task_unmap_page(struct task *task, vaddr_t vaddr) {
+error_t vm_unmap(struct task *task, vaddr_t vaddr) {
     DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
 
     paddr_t paddr = vm_resolve(task, vaddr);
@@ -348,7 +348,7 @@ error_t task_unmap_page(struct task *task, vaddr_t vaddr) {
         return ERR_NOT_FOUND;
     }
 
-    error_t err = arch_unmap_page(task, vaddr);
+    error_t err = arch_vm_unmap(task, vaddr);
 
 #ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
     if (err == OK) {

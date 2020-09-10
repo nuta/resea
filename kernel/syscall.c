@@ -202,7 +202,7 @@ static error_t sys_vm_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
         return ERR_INVALID_TASK;
     }
 
-    return task_map_page(task, vaddr, paddr, kpage_paddr, flags);
+    return vm_map(task, vaddr, paddr, kpage_paddr, flags);
 }
 
 static error_t sys_vm_unmap(task_t tid, vaddr_t vaddr) {
@@ -219,7 +219,7 @@ static error_t sys_vm_unmap(task_t tid, vaddr_t vaddr) {
         return ERR_INVALID_TASK;
     }
 
-    return task_unmap_page(task, vaddr);
+    return vm_unmap(task, vaddr);
 }
 
 /// Writes log messages into the arch's console (typically a serial port) and

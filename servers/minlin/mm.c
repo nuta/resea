@@ -130,14 +130,14 @@ static error_t map_page(struct proc *proc, vaddr_t vaddr, vaddr_t paddr,
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
     if (overwrite) {
-        task_unmap(proc->task, vaddr);
+        vm_unmap(proc->task, vaddr);
     }
 
     while (true) {
         struct mchunk *m = mm_alloc_mchunk(&proc->mm, vaddr, PAGE_SIZE);
         x += *((uint8_t *) paddr); // Handle page faults in advance. FIXME: remove me
         x += *((uint8_t *) m->buf); // Handle page faults in advance. FIXME: remove me
-        error_t err = task_map(proc->task, vaddr, paddr, (vaddr_t) m->buf, flags);
+        error_t err = vm_map(proc->task, vaddr, paddr, (vaddr_t) m->buf, flags);
         switch (err) {
             case ERR_TRY_AGAIN:
                 continue;

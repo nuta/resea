@@ -3,13 +3,13 @@
 #include <arch.h>
 #include <task.h>
 
-error_t arch_map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
+error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
                 unsigned flags) {
     // Do nothing: we don't support virtual memory.
     return OK;
 }
 
-error_t arch_unmap_page(struct task *task, vaddr_t vaddr) {
+error_t arch_vm_unmap(struct task *task, vaddr_t vaddr) {
     // Do nothing: we don't support virtual memory.
     return OK;
 }
