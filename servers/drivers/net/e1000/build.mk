@@ -1,3 +1,3 @@
 name := e1000
-obj-y := main.o e1000.o
+objs-y := main.o e1000.o
 libs-y := driver

@@ -1,3 +1,3 @@
 name := elf
-obj-y += dummy.o
+objs-y += dummy.o
 subdir-y +=

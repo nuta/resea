@@ -5,7 +5,7 @@ Add `build.mk` in the server's directory. Replace `<name>` with appropriate name
 ```mk
 # build.mk
 name := <name>
-obj-y += main.o
+objs-y += main.o
 ```
 
 YOu also need to add a config in `servers/Kconfig`:

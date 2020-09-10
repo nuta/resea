@@ -1,2 +1,2 @@
 name := hello
-obj-y := main.o
+objs-y := main.o

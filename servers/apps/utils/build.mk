@@ -1,2 +1,2 @@
 name := utils
-obj-y := main.o http.o fs.o
+objs-y := main.o http.o fs.o

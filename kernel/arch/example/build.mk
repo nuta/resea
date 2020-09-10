@@ -1,4 +1,4 @@
-obj-y += boot.o init.o vm.o mp.o task.o peripherals.o interrupt.o
+objs-y += boot.o init.o vm.o mp.o task.o peripherals.o interrupt.o
 
 QEMU  ?= qemu-system-
 

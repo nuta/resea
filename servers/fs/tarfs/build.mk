@@ -1,5 +1,5 @@
 name := tarfs
-obj-y := main.o tarball.o
+objs-y := main.o tarball.o
 
 $(BUILD_DIR)/servers/fs/tarfs/tarball.o:
 	if [ -z "$(TARFS_TAR)"  ]; then echo "TARFS_TAR is not defined. Enable Linux ABI Compability Layer."; exit 1; fi

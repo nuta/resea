@@ -1,5 +1,5 @@
 name := ramdisk
-obj-y := main.o disk.o
+objs-y := main.o disk.o
 
 $(BUILD_DIR)/servers/drivers/blk/ramdisk/disk.o: $(BUILD_DIR)/ramdisk.img
 	$(PROGRESS) "GEN" $@

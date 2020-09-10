@@ -1,2 +1,2 @@
 name := webapi
-obj-y := main.o
+objs-y := main.o

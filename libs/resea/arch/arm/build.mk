@@ -1,1 +1,1 @@
-obj-y += start.o
+objs-y += start.o

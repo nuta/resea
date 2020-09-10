@@ -1,5 +1,5 @@
 name := minlin
-obj-y := main.o proc.o mm.o fs.o tty.o syscall.o waitqueue.o
+objs-y := main.o proc.o mm.o fs.o tty.o syscall.o waitqueue.o
 libs-y := driver
 
 $(BUILD_DIR)/minlin.tar:

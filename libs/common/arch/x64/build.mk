@@ -1,1 +1,1 @@
-obj-y += memcpy.o
+objs-y += memcpy.o
