@@ -21,18 +21,6 @@ run: $(kernel_image)
 	$(PROGRESS) "RUN"
 	$(QEMU) $(QEMUFLAGS) -kernel $(BUILD_DIR)/resea.qemu.elf
 
-# FIXME: Fix "make[1]: warning: -jN forced in submake: disabling jobserver mode."
-.PHONY: autotest
-autotest:
-	$(MAKE) test RUNCHECKFLAGS="--quiet --always-exit-with-zero"
-	echo '==> Watching changes...'
-	watchmedo shell-command \
-		--patterns="*.c;*.h;*.S;*.mk;*.idl;*.ld;*.py;Kconfig;Makefile" \
-		--recursive \
-		--ignore-directories \
-		--command="echo '==> Rebuilding'; $(MAKE) -j4 test RUNCHECKFLAGS='--quiet --always-exit-with-zero' && echo '==> OK!'"
-		.
-
 .PHONY: bochs
 bochs: $(BUILD_DIR)/resea.iso
 	$(PROGRESS) BOCHS $<
