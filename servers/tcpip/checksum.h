@@ -2,7 +2,7 @@
 #define __CHECKSUM_H__
 
 #include <types.h>
-#include "endian.h"
+#include <endian.h>
 #include "mbuf.h"
 
 typedef uint32_t checksum_t;

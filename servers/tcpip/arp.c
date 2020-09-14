@@ -3,7 +3,7 @@
 #include <resea/printf.h>
 #include "arp.h"
 #include "device.h"
-#include "endian.h"
+#include <endian.h>
 #include "sys.h"
 
 static struct arp_entry *arp_lookup(struct arp_table *arp, ipv4addr_t ipaddr) {

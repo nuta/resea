@@ -1,7 +1,7 @@
 #include <resea/printf.h>
 #include "arp.h"
 #include "device.h"
-#include "endian.h"
+#include <endian.h>
 #include "ethernet.h"
 #include "ipv4.h"
 #include "mbuf.h"

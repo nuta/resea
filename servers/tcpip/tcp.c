@@ -3,7 +3,7 @@
 #include <string.h>
 #include "checksum.h"
 #include "device.h"
-#include "endian.h"
+#include <endian.h>
 #include "ipv4.h"
 #include "stats.h"
 #include "sys.h"

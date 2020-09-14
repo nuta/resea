@@ -3,7 +3,7 @@
 #include <resea/printf.h>
 #include <string.h>
 #include "device.h"
-#include "endian.h"
+#include <endian.h>
 #include "ipv4.h"
 #include "udp.h"
 

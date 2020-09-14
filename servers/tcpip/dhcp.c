@@ -2,7 +2,7 @@
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include "dhcp.h"
-#include "endian.h"
+#include <endian.h>
 #include "udp.h"
 
 static udp_sock_t udp_sock;

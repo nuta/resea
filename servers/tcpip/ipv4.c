@@ -1,7 +1,7 @@
 #include <resea/printf.h>
 #include "checksum.h"
 #include "device.h"
-#include "endian.h"
+#include <endian.h>
 #include "ipv4.h"
 #include "tcp.h"
 #include "udp.h"
