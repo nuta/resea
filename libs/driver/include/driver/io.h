@@ -37,6 +37,5 @@ uint16_t io_read16(io_t io, offset_t offset);
 uint32_t io_read32(io_t io, offset_t offset);
 void io_flush_read(io_t io);
 void io_flush_write(io_t io);
-void io_free(io_t io, offset_t offset);
 
 #endif
