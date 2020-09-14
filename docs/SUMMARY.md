@@ -13,6 +13,9 @@
 - [Servers](servers/README.md)
   - [MinLin (Linux ABI Emulation)](servers/minlin.md)
 
+- [Drivers](drivers/README.md)
+  - [virtio-net](drivers/virtio-net.md)
+
 - [Userspace Development](userspace/README.md)
   - [Mainloop](userspace/mainloop.md)
   - [Build Files](userspace/build-files.md)

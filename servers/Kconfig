@@ -52,6 +52,9 @@ menu "Servers"
             config E1000_SERVER
                 tristate "e1000 NIC driver"
                 depends on DM_SERVER
+            config VIRTIO_NET_SERVER
+                tristate "virtio-net NIC driver"
+                depends on DM_SERVER
         endmenu
 
         config HELLO_FROM_RUST_SERVER
