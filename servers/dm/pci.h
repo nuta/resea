@@ -27,6 +27,9 @@ struct pci_device {
 void pci_enable_bus_master(struct pci_device *dev);
 error_t pci_find_device(uint16_t vendor, uint16_t device, int *bus, int *slot);
 void pci_fill_pci_device_struct(struct pci_device *dev, int bus, int slot);
+uint32_t pci_read_config(struct pci_device *dev, unsigned offset, unsigned size);
+void pci_write_config(struct pci_device *dev, unsigned offset, unsigned size,
+                      uint32_t value);
 void pci_init(void);
 
 #endif

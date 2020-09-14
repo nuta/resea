@@ -56,6 +56,36 @@ error_t pci_find_device(uint16_t vendor, uint16_t device, int *bus_out, int *slo
     return ERR_NOT_FOUND;
 }
 
+uint32_t pci_read_config(struct pci_device *dev, unsigned offset, unsigned size) {
+    switch (size) {
+        case 1:
+            return read8(dev->bus, dev->slot, offset);
+        case 2:
+            return read16(dev->bus, dev->slot, offset);
+        case 4:
+            return read32(dev->bus, dev->slot, offset);
+        default:
+            return 0;
+    }
+}
+
+void pci_write_config(struct pci_device *dev, unsigned offset, unsigned size,
+                      uint32_t value) {
+    switch (size) {
+        case 1:
+//            write8(dev->bus, dev->slot, offset, value);
+            NYI();
+            break;
+        case 2:
+//            write16(dev->bus, dev->slot, offset, value);
+            NYI();
+            break;
+        case 4:
+            write32(dev->bus, dev->slot, offset, value);
+            break;
+    }
+}
+
 void pci_fill_pci_device_struct(struct pci_device *dev, int bus, int slot) {
     uint32_t bar0_addr = read32(bus, slot, PCI_CONFIG_BAR0);
 

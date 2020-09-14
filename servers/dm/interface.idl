@@ -4,5 +4,9 @@ namespace dm {
     rpc detach_device(handle: handle) -> ();
     rpc pci_get_config(handle: handle)
         -> (bar0_addr: uint32, bar0_len: uint32, irq: uint8);
+    rpc pci_read_config(handle: handle, offset: uint, size: uint)
+        -> (value: uint32);
+    rpc pci_write_config(handle: handle, offset: uint, size: uint, value: uint32)
+        -> ();
     rpc pci_enable_bus_master(handle: handle) -> ();
 }
