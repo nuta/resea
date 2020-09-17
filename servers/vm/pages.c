@@ -13,7 +13,7 @@ pfn_t paddr2pfn(paddr_t paddr) {
 void pages_incref(pfn_t pfn, size_t num_pages) {
     ASSERT(pfn + num_pages <= PAGES_MAX);
     for (size_t i = 0; i < num_pages; i++) {
-        pages[pfn + i].ref_count = 1;
+        pages[pfn + i].ref_count++;
     }
 }
 
