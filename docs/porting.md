@@ -7,12 +7,13 @@ already familiar with the architecture:
   `libs/common/arch/example`, `kernel/arch/example`, and `libs/common/arch/example`.
 2. Define arch-specific types and build settings in the `common` library.
 3. Implement Hardware Abstraction Layer (HAL) for kernel.
-4. Define arch-specific part in the `resea` library.
+4. Implement arch-specific part in the `resea` library.
 5. Add the architecture in `Kconfig`.
 
 ## Implementing `common` library
-The common library (`libs/common`) is responsible for providing libraries and types (`typedef`) for both kernel and userspace programs. You'll need to implement
-the following files.
+The common library (`libs/common`) is responsible for providing standalone
+libraries (e.g. doubly-linked list) and types for both kernel and userspace programs.
+You'll need to implement the following files.
 
 - `libs/common/arch/<arch-name>/arch.mk`
   - Build options for the arch: `$CFLAGS`, `run` command, etc.
@@ -26,23 +27,22 @@ For portability, the kernel separates the arch-specific layer
 Roughly speaking, you'll need to implement:
 
 - CPU initialization
-- Debugging log output (e.g. serial port)
+- Serial port driver (for `print` functions)
 - Context switching
 - Virtual memory management (updating and switching page tables)
   - Resea Kernel also supports `NOMMU` mode for CPUs that don't implement virtual memory.
 - Interrupt/exception/system call handlers
-- Multi-Processor support *(optional)*
-- Kernel Debugger input driver *(optional)*
 - The linker script for the kernel executable (`kernel/arch/<arch-name>/kernel.ld`)
+- Multi-Processor support *(optional)*
 
 ## Implementing `resea` library
 The `resea` library is the standard library for userspace Resea applications.
 You'll need to implement:
 
 - The `syscall()` function.
-- The entry point of the program: initialize stack pointer, call `resea_init()`,
-  call `main()`, and then exit the program in case `main()` returns.
-- Bootfs support. The kernel starts the first userspace program embedded in
-  the kernel executable as raw binary, not a ELF file. You'll need to handle the
-  case when the program is executed from the beginning of `.bootfs` section.
+- The linker script for userspace programs (`libs/resea/arch/<arch-name>/user.ld`).
+- The entry point of the program: initialize stack pointer and then call `resea_init()`.
+- Bootfs support. Bootfs is a simple file system image (similar to tar file)
+  for Resea. Resea starts the first userspace programs from that file.
+  You need to embed the bootfs header to make room for the bootfs header.
   See `libs/resea/arch/x64/start.S` for a concrete example.
