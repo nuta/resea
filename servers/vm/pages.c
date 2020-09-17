@@ -5,15 +5,8 @@ static struct page pages[PAGES_MAX];
 extern char __straight_mapping[];
 #define PAGES_BASE_ADDR ((paddr_t) __straight_mapping)
 
-bool is_mappable_paddr(paddr_t paddr) {
-    // FIXME: arch-dependent code
-    bool is_user_pages = paddr >= PAGES_BASE_ADDR;
-    bool is_mmio_pages = paddr <= 0x100000;
-    return IS_ALIGNED(paddr, PAGE_SIZE) && (is_user_pages || is_mmio_pages);
-}
-
 pfn_t paddr2pfn(paddr_t paddr) {
-    ASSERT(is_mappable_paddr(paddr));
+    ASSERT(IS_ALIGNED(paddr, PAGE_SIZE) && paddr >= PAGES_BASE_ADDR);
     return paddr / PAGE_SIZE;
 }
 

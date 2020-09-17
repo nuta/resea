@@ -11,7 +11,6 @@ struct page {
     unsigned ref_count;
 };
 
-bool is_mappable_paddr(paddr_t paddr);
 pfn_t paddr2pfn(paddr_t paddr);
 void pages_incref(pfn_t pfn, size_t num_pages);
 paddr_t pages_alloc(size_t num_pages);

@@ -40,12 +40,10 @@ static vaddr_t alloc_virt_pages(struct task *task, size_t num_pages) {
 
 error_t alloc_phy_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
                         size_t num_pages) {
-    if (*paddr && !is_mappable_paddr(*paddr)) {
-        return ERR_INVALID_ARG;
-    }
-
     *vaddr = alloc_virt_pages(task, num_pages);
     if (*paddr) {
+        // TODO: Map the page here and decrement the refcount if the *paddr is
+        // not mappable.
         pages_incref(paddr2pfn(*paddr), num_pages);
     } else {
         *paddr = pages_alloc(num_pages);
