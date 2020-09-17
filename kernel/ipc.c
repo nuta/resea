@@ -33,8 +33,9 @@ static error_t ipc_slowpath(struct task *dst, task_t src, __user struct message 
                             unsigned flags) {
     // Send a message.
     if (flags & IPC_SEND) {
-        // Copy the message into the receiver's buffer.
-        // TODO: Do we still need to handle page faults here?
+        // Copy the message into the receiver's buffer in case the receiver is
+        // the current's pager task and accessing `m` cause the page fault. If
+        // it happens, it leads to a dead lock.
         struct message tmp_m;
         if (flags & IPC_KERNEL) {
             memcpy(&tmp_m, (const void *) m, sizeof(struct message));
@@ -67,6 +68,8 @@ static error_t ipc_slowpath(struct task *dst, task_t src, __user struct message 
 
         // We've gone beyond the point of no return. We must not abort the
         // sending from here: don't return an error or cause a page fault!
+        //
+        // If you need to do so, push CURRENT back into the senders queue.
 
         // Copy the message.
         tmp_m.src = (flags & IPC_KERNEL) ? KERNEL_TASK : CURRENT->tid;
