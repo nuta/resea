@@ -38,6 +38,11 @@ static vaddr_t alloc_virt_pages(struct task *task, size_t num_pages) {
     return vaddr;
 }
 
+void free_page_area(struct page_area *area) {
+    pages_decref(paddr2pfn(area->paddr), area->num_pages);
+    free(area);
+}
+
 error_t alloc_phy_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
                         size_t num_pages) {
     *vaddr = alloc_virt_pages(task, num_pages);
@@ -76,7 +81,7 @@ error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, unsigned flags
     }
 
     while (true) {
-        paddr_t kpage = pages_alloc(1);
+        paddr_t kpage = alloc_pages(task, 0, 1);
         error_t err = vm_map(task->tid, vaddr, paddr, kpage, flags);
         switch (err) {
             case ERR_TRY_AGAIN:

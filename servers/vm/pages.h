@@ -13,6 +13,7 @@ struct page {
 
 pfn_t paddr2pfn(paddr_t paddr);
 void pages_incref(pfn_t pfn, size_t num_pages);
+void pages_decref(pfn_t pfn, size_t num_pages);
 paddr_t pages_alloc(size_t num_pages);
 void pages_init(void);
 

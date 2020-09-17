@@ -6,6 +6,7 @@
 #include <string.h>
 #include <message.h>
 #include "task.h"
+#include "mm.h"
 #include "bootfs.h"
 
 extern char __free_vaddr[];
@@ -123,6 +124,10 @@ void task_kill(struct task *task) {
         m.type = TASK_EXITED_MSG;
         m.task_exited.task = task->tid;
         async_send(w->watcher->tid, &m);
+    }
+
+    LIST_FOR_EACH(pa, &task->page_areas, struct page_area, next) {
+        free_page_area(pa);
     }
 
     task_destroy(task->tid);

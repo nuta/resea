@@ -17,6 +17,13 @@ void pages_incref(pfn_t pfn, size_t num_pages) {
     }
 }
 
+void pages_decref(pfn_t pfn, size_t num_pages) {
+    ASSERT(pfn + num_pages <= PAGES_MAX);
+    for (size_t i = 0; i < num_pages; i++) {
+        pages[pfn + i].ref_count--;
+    }
+}
+
 /// Allocates continuous physical memory pages. It always returns a valid
 /// physical address: when it runs out of memory, it panics.
 paddr_t pages_alloc(size_t num_pages) {

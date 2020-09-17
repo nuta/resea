@@ -14,6 +14,7 @@ struct page_area {
 struct task;
 error_t alloc_phy_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
                         size_t num_pages);
+void free_page_area(struct page_area *area);
 paddr_t vaddr2paddr(struct task *task, vaddr_t vaddr);
 error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, unsigned flags,
                  bool overwrite);
