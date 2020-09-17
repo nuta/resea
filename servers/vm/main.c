@@ -193,7 +193,7 @@ void main(void) {
                 }
 
                 vaddr_t aligned_vaddr = ALIGN_DOWN(m.page_fault.vaddr, PAGE_SIZE);
-                ASSERT_OK(map_page(task->tid, aligned_vaddr, paddr, MAP_W, false));
+                ASSERT_OK(map_page(task, aligned_vaddr, paddr, MAP_W, false));
                 r.type = PAGE_FAULT_REPLY_MSG;
 
                 ipc_reply(task->tid, &r);

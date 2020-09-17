@@ -99,7 +99,7 @@ error_t handle_ool_send(struct message *m) {
         size_t copy_len = MIN(remaining, MIN(PAGE_SIZE - src_off, PAGE_SIZE - dst_off));
 
         void *src_ptr;
-        if (src_task->tid == INIT_TASK) {
+        if (src_task == vm_task) {
             src_ptr = (void *) src_buf;
         } else {
             paddr_t src_paddr = vaddr2paddr(src_task, ALIGN_DOWN(src_buf, PAGE_SIZE));
@@ -108,13 +108,13 @@ error_t handle_ool_send(struct message *m) {
                 return DONT_REPLY;
             }
 
-            ASSERT_OK(map_page(INIT_TASK, (vaddr_t) __src_page, src_paddr,
+            ASSERT_OK(map_page(vm_task, (vaddr_t) __src_page, src_paddr,
                                MAP_W, true));
             src_ptr = &__src_page[src_off];
         }
 
         void *dst_ptr;
-        if (dst_task->tid == INIT_TASK) {
+        if (dst_task == vm_task) {
             dst_ptr = (void *) dst_buf;
         } else {
             paddr_t dst_paddr = vaddr2paddr(dst_task, ALIGN_DOWN(dst_buf, PAGE_SIZE));
@@ -124,7 +124,7 @@ error_t handle_ool_send(struct message *m) {
             }
 
             // Temporarily map the pages into the our address space.
-            ASSERT_OK(map_page(INIT_TASK, (vaddr_t) __dst_page, dst_paddr,
+            ASSERT_OK(map_page(vm_task, (vaddr_t) __dst_page, dst_paddr,
                                MAP_W, true));
             dst_ptr = &__dst_page[dst_off];
         }

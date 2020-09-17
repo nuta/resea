@@ -41,6 +41,8 @@ struct task_watcher {
     struct task *watcher;
 };
 
+extern struct task *vm_task;
+
 task_t task_spawn(struct bootfs_file *file, const char *cmdline);
 task_t task_spawn_by_cmdline(const char *name_with_cmdline);
 struct task *task_lookup(task_t tid);

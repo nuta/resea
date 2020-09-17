@@ -186,6 +186,8 @@ task_t service_wait(struct task *task, const char *name) {
     return ERR_WOULD_BLOCK;
 }
 
+struct task *vm_task = NULL;
+
 void task_init(void) {
     for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
         tasks[i].in_use = false;
@@ -193,6 +195,7 @@ void task_init(void) {
     }
 
     // Initialize a task struct for myself.
-    init_task_struct(&tasks[INIT_TASK - 1], "vm", NULL, NULL, NULL, "");
+    vm_task = &tasks[INIT_TASK - 1];
+    init_task_struct(vm_task, "vm", NULL, NULL, NULL, "");
     list_init(&services);
 }

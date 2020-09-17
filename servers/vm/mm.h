@@ -15,7 +15,7 @@ struct task;
 error_t alloc_phy_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
                         size_t num_pages);
 paddr_t vaddr2paddr(struct task *task, vaddr_t vaddr);
-error_t map_page(task_t tid, vaddr_t vaddr, paddr_t paddr, unsigned flags,
+error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, unsigned flags,
                  bool overwrite);
 paddr_t pager(struct task *task, vaddr_t vaddr, unsigned fault);
 
