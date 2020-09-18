@@ -5,7 +5,7 @@ QEMU  ?= qemu-system-aarch64
 
 CFLAGS += --target=aarch64-none-eabi -mcpu=cortex-a53 -mcmodel=large
 CFLAGS += -mgeneral-regs-only
-LDFLAGS +=
+LDFLAGS += -z max-page-size=4096
 
 QEMUFLAGS += -M raspi3 -serial mon:stdio -semihosting -d guest_errors,unimp
 QEMUFLAGS += $(if $(GUI),,-nographic)
