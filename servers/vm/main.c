@@ -273,7 +273,6 @@ void main(void) {
             }
             default:
                discard_unknown_message(&m);
-                // FIXME: Free ool payloads.
         }
     }
 }
