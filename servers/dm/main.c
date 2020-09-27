@@ -118,7 +118,7 @@ void main(void) {
                 break;
             }
             default:
-                TRACE("unknown message %d", m.type);
+                discard_unknown_message(&m);
         }
     }
 }
