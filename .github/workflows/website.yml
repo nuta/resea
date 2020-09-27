@@ -1,0 +1,28 @@
+name: resea.org
+
+on:
+  push:
+    branches: master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install apt packages
+        run: >
+          sudo apt-get update && sudo apt-get install -y cargo make
+
+      - name: Install mdbook
+        run: cargo install mdbook
+
+      - name: Build documentation
+        run: make website
+
+      - name: Deploy to Netlify
+        uses: netlify/actions/build@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_DIR: build/website

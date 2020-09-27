@@ -161,6 +161,13 @@ defconfig:
 menuconfig:
 	./tools/config.py --menuconfig
 
+.PHONY: website
+website:
+	$(PROGRESS) "GEN" $(BUILD_DIR)/website
+	mkdir -p $(BUILD_DIR)/website
+	cp docs/index.html $(BUILD_DIR)/website/index.html
+	mdbook build -d $(BUILD_DIR)/website/docs
+
 #
 #  Build Rules
 #
