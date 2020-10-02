@@ -6,6 +6,7 @@
 #include <endian.h>
 #include "ipv4.h"
 #include "udp.h"
+#include "checksum.h"
 
 static struct udp_socket sockets[UDP_SOCKETS_MAX];
 static list_t active_socks;
@@ -130,6 +131,36 @@ void udp_transmit(udp_sock_t sock) {
     header.src_port = hton16(sock->local.port);
     header.checksum = 0;
     header.len = hton16(sizeof(header) + mbuf_len(dg->payload));
+
+    // Look for the device to determine the source IP address to compute the
+    // pseudo header checksum.
+    struct device *device = device_lookup(&dg->addr);
+    if (!device) {
+        // No route.
+        WARN_DBG("no route");
+        mbuf_delete(dg->payload);
+        return;
+    }
+
+    // Compute checksum.
+    checksum_t checksum;
+    checksum_init(&checksum);
+    checksum_update_mbuf(&checksum, dg->payload);
+    checksum_update(&checksum, &header, sizeof(header));
+
+    // Compute pseudo header checksum.
+    switch (dg->addr.type) {
+        case IP_TYPE_V4: {
+            size_t total_len = sizeof(header) + mbuf_len(dg->payload);
+            checksum_update_uint32(&checksum, hton32(dg->addr.v4));
+            checksum_update_uint32(&checksum, hton32(device->ipaddr.v4));
+            checksum_update_uint16(&checksum, hton16(total_len));
+            checksum_update_uint16(&checksum, hton16(IPV4_PROTO_UDP));
+            break;
+        }  // case IP_TYPE_V4
+    }
+
+    header.checksum = checksum_finish(&checksum);
     mbuf_t pkt = mbuf_new(&header, sizeof(header));
     mbuf_prepend(dg->payload, pkt);
 
