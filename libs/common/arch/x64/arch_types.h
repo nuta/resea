@@ -3,6 +3,8 @@
 
 #include <config.h>
 
+#define mb()    __asm__ __volatile__("mfence")
+
 #define CONSOLE_IRQ 4
 
 typedef uint64_t size_t;
