@@ -6,6 +6,33 @@
 #include <endian.h>
 #include "sys.h"
 
+static struct arp_entry *alloc_entry(struct arp_table *arp) {
+    struct arp_entry *e = NULL;
+    struct arp_entry *oldest = NULL;
+    msec_t oldest_time = MSEC_MAX;
+    for (int i = 0; i < ARP_ENTRIES_MAX; i++) {
+        if (arp->entries[i].time_accessed < oldest_time) {
+            oldest = &arp->entries[i];
+            oldest_time = oldest->time_accessed;
+        }
+
+        if (!arp->entries[i].in_use) {
+            e = &arp->entries[i];
+            break;
+        }
+    }
+
+    if (!e) {
+        // The ARP table is full. Evict the oldest entry from the ARP table.
+        DEBUG_ASSERT(oldest);
+        e = oldest;
+    }
+
+    e->in_use = true;
+    list_init(&e->queue);
+    return e;
+}
+
 static struct arp_entry *arp_lookup(struct arp_table *arp, ipv4addr_t ipaddr) {
     for (int i = 0; i < ARP_ENTRIES_MAX; i++) {
         struct arp_entry *e = &arp->entries[i];
@@ -59,32 +86,10 @@ void arp_enqueue(struct arp_table *arp, enum ether_type type, ipv4addr_t dst,
     struct arp_entry *e = arp_lookup(arp, dst);
     ASSERT(!e || !e->resolved);
     if (!e) {
-        e = NULL;
-        struct arp_entry *oldest = NULL;
-        msec_t oldest_time = MSEC_MAX;
-        for (int i = 0; i < ARP_ENTRIES_MAX; i++) {
-            if (arp->entries[i].time_accessed < oldest_time) {
-                oldest = &arp->entries[i];
-                oldest_time = oldest->time_accessed;
-            }
-
-            if (!arp->entries[i].in_use) {
-                e = &arp->entries[i];
-                break;
-            }
-        }
-
-        if (!e) {
-            // The ARP table is full. Evict the oldest entry from the ARP table.
-            DEBUG_ASSERT(oldest);
-            e = oldest;
-        }
-
-        e->in_use = true;
+        e = alloc_entry(arp);
         e->resolved = false;
         e->ipaddr = dst;
         e->time_accessed = sys_uptime();
-        list_init(&e->queue);
     }
 
     struct arp_queue_entry *qe = (struct arp_queue_entry *) malloc(sizeof(*qe));
@@ -96,6 +101,29 @@ void arp_enqueue(struct arp_table *arp, enum ether_type type, ipv4addr_t dst,
 
 void arp_request(struct device *device, ipv4addr_t addr) {
     arp_transmit(device, ARP_OP_REQUEST, addr, MACADDR_BROADCAST);
+}
+
+void arp_register_macaddr(struct device *device, ipv4addr_t ipaddr, macaddr_t macaddr) {
+    struct arp_entry *e = arp_lookup(&device->arp_table, ipaddr);
+    if (!e) {
+        e = alloc_entry(&device->arp_table);
+    }
+
+    // We have received a ARP reply to an our ARP request.
+    e->resolved = true;
+    e->ipaddr = ipaddr;
+    e->time_accessed = sys_uptime();
+    memcpy(e->macaddr, macaddr, MACADDR_LEN);
+
+    // Send queued packets destinated to the resolved MAC address.
+    LIST_FOR_EACH (qe, &e->queue, struct arp_queue_entry, next) {
+        device->transmit(device, qe->type,
+                            &(ipaddr_t){.type = IP_TYPE_V4, .v4 = qe->dst},
+                            qe->payload);
+
+        list_remove(&qe->next);
+        free(qe);
+    }
 }
 
 void arp_receive(struct device *device, mbuf_t pkt) {
@@ -119,27 +147,9 @@ void arp_receive(struct device *device, mbuf_t pkt) {
 
             arp_transmit(device, ARP_OP_REPLY, sender_addr, p.sender);
             break;
-        case ARP_OP_REPLY: {
-            struct arp_entry *e = arp_lookup(&device->arp_table, sender_addr);
-            if (!e) {
-                break;
-            }
-
-            // We have received a ARP reply to an our ARP request.
-            e->resolved = true;
-            memcpy(e->macaddr, p.sender, MACADDR_LEN);
-
-            // Send queued packets destinated to the resolved MAC address.
-            LIST_FOR_EACH (qe, &e->queue, struct arp_queue_entry, next) {
-                device->transmit(device, qe->type,
-                                 &(ipaddr_t){.type = IP_TYPE_V4, .v4 = qe->dst},
-                                 qe->payload);
-
-                list_remove(&qe->next);
-                free(qe);
-            }
+        case ARP_OP_REPLY:
+            arp_register_macaddr(device, sender_addr, p.sender);
             break;
-        }  // case ARP_OP_REPLY
     }
 
     mbuf_delete(pkt);
