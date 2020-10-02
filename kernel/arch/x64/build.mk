@@ -11,11 +11,16 @@ QEMUFLAGS += -no-reboot -boot d -device isa-debug-exit -d guest_errors,unimp
 QEMUFLAGS += -netdev user,id=net0,hostfwd=tcp:127.0.0.1:1234-:80
 QEMUFLAGS += -netdev user,id=net1,hostfwd=tcp:127.0.0.1:1235-:80
 QEMUFLAGS += -device e1000,netdev=net0,mac=52:54:00:12:34:56
-QEMUFLAGS += -device virtio-net,netdev=net1,mac=52:54:00:ab:cd:ef,packed=on
 QEMUFLAGS += -object filter-dump,id=fiter0,netdev=net0,file=e1000.pcap
 QEMUFLAGS += -object filter-dump,id=fiter1,netdev=net1,file=virtio.pcap
 QEMUFLAGS += $(if $(SMP), -smp $(SMP))
 QEMUFLAGS += $(if $(GUI),,-nographic)
+
+ifneq ($(VIRTIO_LEGACY),)
+QEMUFLAGS += -device virtio-net,netdev=net1,disable-legacy=off,disable-modern=on
+else
+QEMUFLAGS += -device virtio-net,netdev=net1,packed=on
+endif
 
 .PHONY: run
 run: $(kernel_image)

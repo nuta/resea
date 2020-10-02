@@ -13,14 +13,13 @@
 static task_t tcpip_task;
 static struct virtio_virtq *tx_virtq = NULL;
 static struct virtio_virtq *rx_virtq = NULL;
+static struct virtio_ops *virtio = NULL;
 
 static void read_macaddr(uint8_t *mac) {
-    mac[0] = VIRTIO_DEVICE_CFG_READ8(struct virtio_net_config, mac0);
-    mac[1] = VIRTIO_DEVICE_CFG_READ8(struct virtio_net_config, mac1);
-    mac[2] = VIRTIO_DEVICE_CFG_READ8(struct virtio_net_config, mac2);
-    mac[3] = VIRTIO_DEVICE_CFG_READ8(struct virtio_net_config, mac3);
-    mac[4] = VIRTIO_DEVICE_CFG_READ8(struct virtio_net_config, mac4);
-    mac[5] = VIRTIO_DEVICE_CFG_READ8(struct virtio_net_config, mac5);
+    offset_t base = offsetof(struct virtio_net_config, mac);
+    for (int i = 0; i < 6; i++) {
+        mac[i] = virtio->read_device_config(base + i, sizeof(uint8_t));
+    }
 }
 
 static struct virtio_net_buffer *virtq_net_buffer(struct virtio_virtq *vq,
@@ -30,19 +29,18 @@ static struct virtio_net_buffer *virtq_net_buffer(struct virtio_virtq *vq,
 
 static void receive(const void *payload, size_t len);
 void driver_handle_interrupt(void) {
-    uint8_t status = virtio_read_isr_status();
+    uint8_t status = virtio->read_isr_status();
     if (status & 1) {
-        struct virtq_desc *desc;
-        while ((desc = virtq_pop_desc(rx_virtq)) != NULL) {
-            uint16_t id = from_le16(desc->id);
-            uint32_t len = from_le32(desc->len);
-            struct virtio_net_buffer *buf = virtq_net_buffer(rx_virtq, id);
+        int index;
+        size_t len;
+        while (virtio->virtq_pop_desc(rx_virtq, &index, &len) == OK) {
+            struct virtio_net_buffer *buf = virtq_net_buffer(rx_virtq, index);
             receive((const void *) buf->payload, len - sizeof(buf->header));
             buf->header.num_buffers = 1;
-            virtq_push_desc(rx_virtq, desc);
+            virtio->virtq_push_desc(rx_virtq, index);
         }
 
-        virtq_notify(rx_virtq);
+        virtio->virtq_notify(rx_virtq);
     }
 }
 
@@ -64,8 +62,9 @@ static void transmit(void) {
 
     // Allocate a desc for the transmission.
     size_t len = m.net_tx.payload_len;
-    int index = virtq_alloc(tx_virtq, sizeof(struct virtio_net_header) + len);
+    int index = virtio->virtq_alloc(tx_virtq, sizeof(struct virtio_net_header) + len);
     if (index < 0) {
+        WARN("failed to alloc a desc for TX");
         return;
     }
 
@@ -81,7 +80,7 @@ static void transmit(void) {
     memcpy((uint8_t *) &buf->payload, m.net_tx.payload, len);
 
     // Kick the device.
-    virtq_notify(tx_virtq);
+    virtio->virtq_kick_desc(tx_virtq, index);
     free((void *) m.net_tx.payload);
 }
 
@@ -90,17 +89,20 @@ void main(void) {
 
     // Look for and initialize a virtio-net device.
     uint8_t irq;
-    ASSERT_OK(virtio_pci_init(VIRTIO_DEVICE_NET, &irq));
-    virtio_negotiate_feature(VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS);
-    virtio_init_virtqueues();
+    ASSERT_OK(virtio_find_device(VIRTIO_DEVICE_NET, &virtio, &irq));
+    virtio->negotiate_feature(
+        VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS | VIRTIO_NET_F_MRG_RXBUF);
+
+    virtio->virtq_init(VIRTIO_NET_QUEUE_RX);
+    virtio->virtq_init(VIRTIO_NET_QUEUE_TX);
 
     // Allocate TX buffers.
-    tx_virtq = virtq_get(VIRTIO_NET_QUEUE_TX);
-    virtq_allocate_buffers(tx_virtq, sizeof(struct virtio_net_buffer), false);
+    tx_virtq = virtio->virtq_get(VIRTIO_NET_QUEUE_TX);
+    virtio->virtq_allocate_buffers(tx_virtq, sizeof(struct virtio_net_buffer), false);
 
     // Allocate RX buffers.
-    rx_virtq = virtq_get(VIRTIO_NET_QUEUE_RX);
-    virtq_allocate_buffers(rx_virtq, sizeof(struct virtio_net_buffer), true);
+    rx_virtq = virtio->virtq_get(VIRTIO_NET_QUEUE_RX);
+    virtio->virtq_allocate_buffers(rx_virtq, sizeof(struct virtio_net_buffer), true);
     for (int i = 0; i < rx_virtq->num_descs; i++) {
         struct virtio_net_buffer *buf = virtq_net_buffer(rx_virtq, i);
         buf->header.num_buffers = 1;
@@ -110,7 +112,7 @@ void main(void) {
     ASSERT_OK(irq_acquire(irq));
 
     // Make the device active.
-    virtio_activate();
+    virtio->activate();
 
     uint8_t mac[6];
     read_macaddr((uint8_t *) &mac);
