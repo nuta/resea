@@ -16,7 +16,7 @@ void dhcp_transmit(device_t device, enum dhcp_type type,
     header.hops = 0;
     header.xid = hton32(0x1234abcd);
     header.secs = 0;
-    header.flags = 0;
+    header.flags = hton16(0x8000);
     header.client_ipaddr = 0;
     header.your_ipaddr = 0;
     header.server_ipaddr = 0;
