@@ -20,8 +20,9 @@ enum ip_type {
 };
 
 enum ip_proto_type {
-    IPV4_PROTO_TCP = 0x06,
-    IPV4_PROTO_UDP = 0x11,
+    IPV4_PROTO_ICMP = 0x01,
+    IPV4_PROTO_TCP  = 0x06,
+    IPV4_PROTO_UDP  = 0x11,
 };
 
 enum ether_type {
