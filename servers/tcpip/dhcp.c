@@ -93,9 +93,17 @@ static void dhcp_process(struct device *device, mbuf_t payload) {
             break;
         }
 
+#define CHECK_OPTION_LEN(option_type, option_len, opt_struct)                  \
+    if (option_len != sizeof(opt_struct)) {                                    \
+        WARN_DBG("invalid dhcp option len (%d) for option type %d",            \
+            option_len, option_type);                                          \
+        return;                                                                \
+    }
+
         switch (option_type) {
             case DHCP_OPTION_DHCP_TYPE: {
                 struct dhcp_type_option opt;
+                CHECK_OPTION_LEN(option_type, option_len, opt);
                 if (mbuf_read(&payload, &opt, sizeof(opt)) != sizeof(opt)) {
                     break;
                 }
@@ -105,6 +113,7 @@ static void dhcp_process(struct device *device, mbuf_t payload) {
             }
             case DHCP_OPTION_NETMASK: {
                 struct dhcp_netmask_option opt;
+                CHECK_OPTION_LEN(option_type, option_len, opt);
                 if (mbuf_read(&payload, &opt, sizeof(opt)) != sizeof(opt)) {
                     break;
                 }
@@ -114,6 +123,7 @@ static void dhcp_process(struct device *device, mbuf_t payload) {
             }
             case DHCP_OPTION_ROUTER: {
                 struct dhcp_router_option opt;
+                CHECK_OPTION_LEN(option_type, option_len, opt);
                 if (mbuf_read(&payload, &opt, sizeof(opt)) != sizeof(opt)) {
                     break;
                 }
