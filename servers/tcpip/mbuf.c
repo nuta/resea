@@ -67,7 +67,13 @@ void mbuf_append(mbuf_t mbuf, mbuf_t new_tail) {
 }
 
 void mbuf_append_bytes(mbuf_t mbuf, const void *data, size_t len) {
-    mbuf_append(mbuf, mbuf_new(data, len));
+    size_t remaining = MBUF_MAX_LEN - mbuf->offset_end;
+    if (len <= remaining) {
+        memcpy(&mbuf->data[mbuf->offset_end], data, len);
+        mbuf->offset_end += len;
+    } else {
+        mbuf_append(mbuf, mbuf_new(data, len));
+    }
 }
 
 bool mbuf_is_empty(mbuf_t mbuf) {
