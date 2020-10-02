@@ -186,7 +186,7 @@ void main(void) {
                 ASSERT(m.page_fault.task == task->tid);
 
                 paddr_t paddr =
-                    pager(task, m.page_fault.vaddr, m.page_fault.fault);
+                    pager(task, m.page_fault.vaddr, m.page_fault.ip, m.page_fault.fault);
                 if (!paddr) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;
