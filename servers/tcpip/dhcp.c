@@ -131,6 +131,8 @@ static void dhcp_process(struct device *device, mbuf_t payload) {
                 gateway = ntoh32(opt.router);
                 break;
             }
+            default:
+                mbuf_discard(&payload, option_len);
         }
     }
 
