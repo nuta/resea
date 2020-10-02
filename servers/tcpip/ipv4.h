@@ -2,6 +2,7 @@
 #define __IPV4_H__
 
 #include "mbuf.h"
+#include "device.h"
 #include "tcpip.h"
 
 #define DEFAULT_TTL 32
