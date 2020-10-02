@@ -111,7 +111,6 @@ static int virtq_alloc(struct virtio_virtq *vq, size_t len) {
 /// buffer is input from the device, call `virtq_push_desc` once you've handled
 /// the input.
 static error_t virtq_pop_desc(struct virtio_virtq *vq, int *index, size_t *len) {
-    TRACE("pop: %d %d", vq->legacy.last_used_index, vq->legacy.used->index);
     if (vq->legacy.last_used_index == vq->legacy.used->index) {
         return ERR_EMPTY;
     }
