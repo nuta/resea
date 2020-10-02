@@ -53,8 +53,9 @@ static void deferred_work(void) {
 
     // TODO:
     LIST_FOR_EACH(driver, &drivers, struct driver, next) {
-        if (!driver->device->dhcp_enabled
-            && driver->dhcp_discover_retires < 10
+        if (driver->device->dhcp_enabled
+            && !driver->device->dhcp_leased
+            && driver->dhcp_discover_retires < 3
             && driver->last_dhcp_discover + 200 < sys_uptime()) {
             WARN("retrying DHCP discover...");
             dhcp_transmit(driver->device, DHCP_TYPE_DISCOVER, IPV4_ADDR_UNSPECIFIED);
