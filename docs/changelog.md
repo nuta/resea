@@ -1,5 +1,13 @@
 # Change Log
 
+## v0.5.0 (Oct 3, 2020)
+- Support bare-metal Raspberry Pi 3B+. Resea now boots on *real* Raspberry Pi!
+- Support Google Compute Engine: A HTTP server (`servers/apps/webapi`) on Resea works in the cloud!
+- Add the virtio-net device driver. It supports both modern and legacy devices.
+- tcpip: Support sending ICMP echo request.
+- tcpip: Fix some bugs in the DHCP client.
+- Some other bug fixes and improvements.
+
 ## v0.4.0 (Aug 21, 2020)
 - shell: Use the serial port driver in kernel for the shell access.
 - Support command-line arguments.
