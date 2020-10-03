@@ -10,6 +10,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12'
+
       - name: Install apt packages
         run: >
           sudo apt-get update && sudo apt-get install -y cargo make
@@ -21,8 +25,7 @@ jobs:
         run: make website
 
       - name: Deploy to Netlify
-        uses: netlify/actions/build@master
+        run: npx netlify-cli deploy --prod -d build/website
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_DIR: build/website
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
