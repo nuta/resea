@@ -25,6 +25,7 @@
   - [Service Discovery](userspace/service-discovery.md)
   - [Memory Allocation (malloc)](userspace/malloc.md)
   - [Debugging](userspace/debugging.md)
+  - [Unit Testing](userspace/unit-test.md)
   - [Writing a Library](userspace/writing-a-library.md)
 
 - [Kernel Development](kernel/README.md)

@@ -29,6 +29,15 @@ typedef char bool;
 
 #define PAGE_SIZE 4096
 
+// Supress the following warning which occurs when you're using the macOS's
+// pre-installed clang. We need to use it to run unit tests.
+//
+// <built-in>:356:9: note: previous definition is here
+// #define __weak __attribute__((objc_gc(weak)))
+#ifdef __APPLE__
+#undef __weak
+#endif
+
 typedef __builtin_va_list va_list;
 #define offsetof(type, field)    __builtin_offsetof(type, field)
 #define is_constant(expr)        __builtin_constant_p(expr)
