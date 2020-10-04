@@ -168,6 +168,10 @@ website:
 	cp docs/top_page.html $(BUILD_DIR)/website/index.html
 	mdbook build -d $(BUILD_DIR)/website/docs
 
+.PHONY: book
+book:
+	mdbook serve
+
 #
 #  Build Rules
 #
