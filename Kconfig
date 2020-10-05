@@ -5,9 +5,9 @@ choice
     config ARCH_X64
         bool "x86_64"
     config ARCH_ARM64
-        bool "Raspberry Pi 3 (AArch64)"
+        bool "ARM64 (AArch64)"
     config ARCH_ARM
-        bool "micro:bit (ARM)"
+        bool "ARM"
     config ARCH_EXAMPLE
         bool "Example (a template for porting)"
 endchoice
