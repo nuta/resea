@@ -66,4 +66,5 @@ menu "Servers"
     endmenu
 
     source "servers/*/Kconfig"
+    source "servers/*/*/Kconfig"
 endmenu
