@@ -199,6 +199,7 @@ def c_generator(args, idl):
         str="const char *",
         bytes="const void *",
         char="char",
+        bool="bool",
         int="int",
         task="task_t",
         uint="unsigned",
