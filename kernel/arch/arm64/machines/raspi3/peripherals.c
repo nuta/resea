@@ -1,7 +1,7 @@
 #include <types.h>
 #include <printk.h>
+#include <machine/peripherals.h>
 #include "asm.h"
-#include "peripherals.h"
 
 static inline void delay(unsigned clocks) {
     while (clocks-- > 0) {

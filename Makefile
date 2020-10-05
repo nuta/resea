@@ -40,6 +40,7 @@ endif
 include .config
 
 export ARCH  := $(patsubst "%",%,$(CONFIG_ARCH))
+export MACHINE := $(patsubst "%",%,$(CONFIG_MACHINE))
 boot_task    := $(patsubst "%",%,$(CONFIG_BOOT_TASK))
 kernel_image := $(BUILD_DIR)/resea.elf
 bootfs_bin   := $(BUILD_DIR)/bootfs.bin
@@ -109,6 +110,7 @@ CFLAGS += -Wno-unused-parameter
 CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
 CFLAGS += -I$(BUILD_DIR)/include
+CFLAGS += -Ikernel/arch/$(ARCH)/machines/$(MACHINE)/include
 CFLAGS += -DVERSION='"$(VERSION)"'
 CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/$(boot_task).elf"'
 CFLAGS += -DBOOTFS_PATH='"$(bootfs_bin)"'
@@ -175,12 +177,11 @@ book:
 #
 #  Build Rules
 #
-$(kernel_image): $(kernel_objs) $(BUILD_DIR)/kernel/__name__.o \
-		kernel/arch/$(ARCH)/kernel.ld \
+kernel_ld := kernel/arch/$(ARCH)/$(if $(MACHINE),machines/$(MACHINE)/,)kernel.ld
+$(kernel_image): $(kernel_objs) $(BUILD_DIR)/kernel/__name__.o $(kernel_ld) \
 		tools/nm2symbols.py tools/embed-symbols.py Makefile
 	$(PROGRESS) "LD" $@
-	$(LD) $(LDFLAGS) --script=kernel/arch/$(ARCH)/kernel.ld \
-		-Map $(@:.elf=.map) -o $@.tmp \
+	$(LD) $(LDFLAGS) --script=$(kernel_ld) -Map $(@:.elf=.map) -o $@.tmp \
 		$(kernel_objs) $(BUILD_DIR)/kernel/__name__.o
 	$(PROGRESS) "GEN" $(@:.elf=.symbols)
 	$(NM) $@.tmp | ./tools/nm2symbols.py > $(@:.elf=.symbols)

@@ -3,8 +3,8 @@
 #include <task.h>
 #include <printk.h>
 #include <string.h>
+#include <machine/peripherals.h>
 #include "asm.h"
-#include "peripherals.h"
 
 extern uint8_t exception_vector;
 

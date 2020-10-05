@@ -3,8 +3,8 @@
 #include <task.h>
 #include <syscall.h>
 #include <printk.h>
+#include <machine/peripherals.h>
 #include "asm.h"
-#include "peripherals.h"
 
 // Defined in usercopy.S.
 extern char arm64_usercopy1[];

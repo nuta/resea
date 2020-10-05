@@ -1,0 +1,10 @@
+if MACHINE_RASPI3
+menu "Raspberry Pi 3B+ Machine Support"
+	depends on ARCH_ARM64
+
+    config MACHINE
+        string
+        default "raspi3"
+
+endmenu
+endif

@@ -12,6 +12,14 @@ choice
         bool "Example (a template for porting)"
 endchoice
 
+if ARCH_ARM64
+choice
+    prompt "Target Machine"
+    config MACHINE_RASPI3
+        bool "Raspberry Pi 3B+"
+endchoice
+endif
+
 choice
     prompt "Build mode"
     config BUILD_DEBUG

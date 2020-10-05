@@ -1,5 +1,6 @@
-objs-y += boot.o trap.o init.o vm.o mp.o task.o switch.o peripherals.o interrupt.o
+objs-y += trap.o init.o vm.o mp.o task.o switch.o interrupt.o
 objs-y += usercopy.o
+subdir-y += machines/$(MACHINE)
 
 QEMU  ?= qemu-system-aarch64
 
