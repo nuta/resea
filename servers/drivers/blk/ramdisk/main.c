@@ -42,7 +42,7 @@ void main(void) {
                 }
 
                 memcpy(&__image[offset], m.blk_write.data, len);
-                free(m.blk_write.data);
+                free((void *) m.blk_write.data);
 
                 m.type = BLK_WRITE_REPLY_MSG;
                 ipc_reply(m.src, &m);
