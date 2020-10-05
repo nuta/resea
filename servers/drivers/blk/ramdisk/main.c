@@ -32,6 +32,22 @@ void main(void) {
                 ipc_reply(m.src, &m);
                 break;
             }
+            case BLK_WRITE_MSG: {
+                size_t offset = m.blk_write.sector * SECTOR_SIZE;
+                size_t len = m.blk_write.data_len;
+                if (offset + len > disk_size || offset + len < offset
+                    || !IS_ALIGNED(len, SECTOR_SIZE)) {
+                    ipc_reply_err(m.src, ERR_NOT_ACCEPTABLE);
+                    break;
+                }
+
+                memcpy(&__image[offset], m.blk_write.data, len);
+                free(m.blk_write.data);
+
+                m.type = BLK_WRITE_REPLY_MSG;
+                ipc_reply(m.src, &m);
+                break;
+            }
             default:
                 TRACE("unknown message %d", m.type);
         }
