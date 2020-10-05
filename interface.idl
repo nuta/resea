@@ -46,6 +46,7 @@ namespace fs {
 
 namespace blk {
     rpc read(sector: offset, num_sectors: size) -> (data: bytes);
+    rpc write(sector: offset, data: bytes) -> ();
 }
 
 namespace net {
