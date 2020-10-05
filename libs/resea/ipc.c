@@ -11,9 +11,9 @@ static const size_t ool_len = CONFIG_OOL_BUFFER_LEN;
 #endif
 
 // for sparse
-error_t call_pager(struct message *m);
+error_t ipc_call_pager(struct message *m);
 
-__weak error_t call_pager(struct message *m) {
+__weak error_t ipc_call_pager(struct message *m) {
 #ifdef CONFIG_NOMMU
     // We don't use this feature. Discard messages with a warning.
     WARN("ignoring %s", msgtype2str(m->type));
@@ -29,7 +29,7 @@ static void ool_recv(vaddr_t ptr, size_t len) {
     m.type = OOL_RECV_MSG;
     m.ool_recv.addr = ptr;
     m.ool_recv.len = len;
-    error_t err = call_pager(&m);
+    error_t err = ipc_call_pager(&m);
     ASSERT_OK(err);
     ASSERT(m.type == OOL_RECV_REPLY_MSG);
 }
@@ -40,7 +40,7 @@ static vaddr_t ool_send(task_t dst, vaddr_t ptr, size_t len) {
     m.ool_send.dst = dst;
     m.ool_send.addr = ptr;
     m.ool_send.len = len;
-    error_t err = call_pager(&m);
+    error_t err = ipc_call_pager(&m);
     ASSERT_OK(err);
     ASSERT(m.type == OOL_SEND_REPLY_MSG);
     return m.ool_send_reply.id;
@@ -52,7 +52,7 @@ static vaddr_t ool_verify(task_t src, vaddr_t ptr, size_t len) {
     m.ool_verify.src = src;
     m.ool_verify.id = ptr;
     m.ool_verify.len = len;
-    error_t err = call_pager(&m);
+    error_t err = ipc_call_pager(&m);
     if (err != OK) {
         return 0;
     }
@@ -175,7 +175,7 @@ error_t ipc_serve(const char *name) {
     struct message m;
     m.type = DISCOVERY_SERVE_MSG;
     m.discovery_serve.name = name;
-    return call_pager(&m);
+    return ipc_call_pager(&m);
 }
 
 task_t ipc_lookup(const char *name) {
@@ -183,7 +183,7 @@ task_t ipc_lookup(const char *name) {
     m.type = DISCOVERY_LOOKUP_MSG;
     m.discovery_lookup.name = name;
 
-    error_t err = call_pager(&m);
+    error_t err = ipc_call_pager(&m);
     if (IS_ERROR(err)) {
         return err;
     }

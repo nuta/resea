@@ -13,9 +13,9 @@
 #include "ool.h"
 
 // for sparse
-error_t call_pager(struct message *m);
+error_t ipc_call_pager(struct message *m);
 
-error_t call_pager(struct message *m) {
+error_t ipc_call_pager(struct message *m) {
     m->src = INIT_TASK;
     error_t err;
     switch (m->type) {
@@ -33,7 +33,7 @@ error_t call_pager(struct message *m) {
     }
 
     if (err != OK) {
-        PANIC("call_pager failed (%s)", err2str(err));
+        PANIC("ipc_call_pager failed (%s)", err2str(err));
     }
 
     return err;
