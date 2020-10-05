@@ -1,4 +1,5 @@
-objs-y += boot.o init.o vm.o mp.o task.o switch.o peripherals.o interrupt.o
+objs-y += init.o vm.o mp.o task.o switch.o interrupt.o
+subdir-y += machines/$(MACHINE)
 
 QEMU  ?= qemu-system-arm
 

@@ -20,6 +20,14 @@ choice
 endchoice
 endif
 
+if ARCH_ARM
+choice
+    prompt "Target Machine"
+    config MACHINE_MICROBIT
+        bool "Micro:bit"
+endchoice
+endif
+
 choice
     prompt "Build mode"
     config BUILD_DEBUG

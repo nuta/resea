@@ -1,6 +1,6 @@
 #include <types.h>
 #include <printk.h>
-#include "peripherals.h"
+#include <machine/peripherals.h>
 
 static inline uint32_t mmio_read(vaddr_t addr) {
     return *((volatile uint32_t *) addr);

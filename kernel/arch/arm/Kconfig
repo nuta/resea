@@ -10,3 +10,5 @@ menu "ARM Options"
 	    default y
         select NOMMU
 endmenu
+
+source "kernel/arch/arm/machines/*/Kconfig"

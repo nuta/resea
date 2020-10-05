@@ -3,7 +3,7 @@
 #include <printk.h>
 #include <task.h>
 #include <string.h>
-#include "peripherals.h"
+#include <machine/peripherals.h>
 
 void arch_idle(void) {
     while (true) {
