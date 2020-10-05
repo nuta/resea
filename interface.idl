@@ -41,6 +41,7 @@ namespace fs {
     rpc open(path: str) -> (handle: handle);
     rpc close(handle: handle) -> ();
     rpc read(handle: handle, offset: offset, len: size) -> (data: bytes);
+    rpc write(handle: handle, offset: offset, data: bytes) -> ();
     rpc stat(path: str) -> (size: size);
 }
 
