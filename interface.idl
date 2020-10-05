@@ -1,24 +1,35 @@
 oneway notifications(data: notifications);
+oneway async();
 oneway invalid();
-oneway exception(task: task, exception: exception_type);
-rpc page_fault(task: task, vaddr: vaddr, ip: vaddr, fault: uint) -> ();
 
 enum abi_hook_type {
     INITIAL = 1,
     SYSCALL = 2,
 };
+oneway exception(task: task, exception: exception_type);
+rpc page_fault(task: task, vaddr: vaddr, ip: vaddr, fault: uint) -> ();
 rpc abi_hook(task: task, type: int, frame: trap_frame) -> (frame: trap_frame);
 
-oneway async();
-rpc nop(value: int) -> (value: int);
-rpc nop_with_ool(data: bytes) -> (data: bytes);
-rpc serve(name: str) -> ();
-rpc lookup(name: str) -> (task: task);
-rpc launch_task(name_and_cmdline: str) -> (task: task);
-rpc alloc_pages(num_pages: size, paddr: paddr) -> (vaddr: vaddr, paddr: paddr);
-rpc watch_task(task: task) -> ();
-async task_exited(task: task);
-rpc unwatch_task(task: task) -> ();
+namespace benchmark {
+    rpc nop(value: int) -> (value: int);
+    rpc nop_with_ool(data: bytes) -> (data: bytes);
+}
+
+namespace vm {
+    rpc alloc_pages(num_pages: size, paddr: paddr) -> (vaddr: vaddr, paddr: paddr);
+}
+
+namespace discovery {
+    rpc serve(name: str) -> ();
+    rpc lookup(name: str) -> (task: task);
+}
+
+namespace task {
+    rpc launch(name_and_cmdline: str) -> (task: task);
+    rpc watch(task: task) -> ();
+    rpc unwatch(task: task) -> ();
+    async exited(task: task);
+}
 
 namespace ool {
     rpc recv(addr: vaddr, len: size)-> ();

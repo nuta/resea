@@ -81,7 +81,7 @@ void main(void) {
     //  IPC round-trip benchmark
     //
     for (int i = 0; i < NUM_ITERS; i++) {
-        struct message m = { .type = NOP_MSG };
+        struct message m = { .type = BENCHMARK_NOP_MSG };
         cycles_t start = cycle_counter();
         ipc_call(INIT_TASK, &m);
         iters[i] = cycle_counter() - start;
@@ -98,15 +98,15 @@ void main(void) {
         static char ool_payload[1] = "A";
 
         struct message m;
-        m.type = NOP_WITH_OOL_MSG;
-        m.nop_with_ool.data = ool_payload;
-        m.nop_with_ool.data_len = PAGE_SIZE;
+        m.type = BENCHMARK_NOP_WITH_OOL_MSG;
+        m.benchmark_nop_with_ool.data = ool_payload;
+        m.benchmark_nop_with_ool.data_len = PAGE_SIZE;
 
         cycles_t start = cycle_counter();
         ipc_call(INIT_TASK, &m);
         iters[i] = cycle_counter() - start;
-        ASSERT(m.type == NOP_WITH_OOL_REPLY_MSG);
-        free((void *) m.nop_with_ool_reply.data);
+        ASSERT(m.type == BENCHMARK_NOP_WITH_OOL_REPLY_MSG);
+        free((void *) m.benchmark_nop_with_ool_reply.data);
     }
     print_stats("IPC round-trip (with 1-byte ool)", iters, NUM_ITERS);
 
@@ -120,15 +120,15 @@ void main(void) {
         static char ool_payload[PAGE_SIZE] = "This is a ool payload!";
 
         struct message m;
-        m.type = NOP_WITH_OOL_MSG;
-        m.nop_with_ool.data = ool_payload;
-        m.nop_with_ool.data_len = PAGE_SIZE;
+        m.type = BENCHMARK_NOP_WITH_OOL_MSG;
+        m.benchmark_nop_with_ool.data = ool_payload;
+        m.benchmark_nop_with_ool.data_len = PAGE_SIZE;
 
         cycles_t start = cycle_counter();
         ipc_call(INIT_TASK, &m);
         iters[i] = cycle_counter() - start;
-        ASSERT(m.type == NOP_WITH_OOL_REPLY_MSG);
-        free((void *) m.nop_with_ool_reply.data);
+        ASSERT(m.type == BENCHMARK_NOP_WITH_OOL_REPLY_MSG);
+        free((void *) m.benchmark_nop_with_ool_reply.data);
     }
     print_stats("IPC round-trip (with PAGE_SIZE-sized ool)", iters, NUM_ITERS);
 

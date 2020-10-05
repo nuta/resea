@@ -17,9 +17,9 @@ void main(void) {
         ASSERT_OK(ipc_recv(IPC_ANY, &m));
 
         switch (m.type) {
-            case NOP_MSG:
-                m.type = NOP_REPLY_MSG;
-                m.nop_reply.value = 123456789;
+            case BENCHMARK_NOP_MSG:
+                m.type = BENCHMARK_NOP_REPLY_MSG;
+                m.benchmark_nop_reply.value = 123456789;
                 ipc_reply(m.src, &m);
                 break;
             default:

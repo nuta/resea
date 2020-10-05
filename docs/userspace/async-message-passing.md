@@ -27,7 +27,7 @@ by `async_reply`:
 void somewhere(void) {
     // `async_send` enqueues the message and notifies the destination task with
     // the notification `NOTIFY_ASYNC`.
-    m.type = NOP_MSG;
+    m.type = BENCHMARK_NOP_MSG;
     async_send(dst, &m);
 }
 
@@ -69,7 +69,7 @@ void main(void) {
                     // which task has notified NOTIFY_ASYNC!
                     async_recv(my_server, &m);
                     switch (m.type) {
-                        case NOP_MSG:
+                        case BENCHMARK_NOP_MSG:
                             INFO("received a async message!");
                     }
                 }

@@ -173,23 +173,23 @@ error_t ipc_replyrecv(task_t dst, struct message *m) {
 
 error_t ipc_serve(const char *name) {
     struct message m;
-    m.type = SERVE_MSG;
-    m.serve.name = name;
+    m.type = DISCOVERY_SERVE_MSG;
+    m.discovery_serve.name = name;
     return call_pager(&m);
 }
 
 task_t ipc_lookup(const char *name) {
     struct message m;
-    m.type = LOOKUP_MSG;
-    m.lookup.name = name;
+    m.type = DISCOVERY_LOOKUP_MSG;
+    m.discovery_lookup.name = name;
 
     error_t err = call_pager(&m);
     if (IS_ERROR(err)) {
         return err;
     }
 
-    ASSERT_OK(m.type == LOOKUP_REPLY_MSG);
-    return m.lookup_reply.task;
+    ASSERT_OK(m.type == DISCOVERY_LOOKUP_REPLY_MSG);
+    return m.discovery_lookup_reply.task;
 }
 
 /// Discards an unknown message.

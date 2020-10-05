@@ -141,16 +141,16 @@ void main(void) {
                 }
                 break;
             }
-            case NOP_MSG:
-                r.type = NOP_REPLY_MSG;
-                r.nop_reply.value = m.nop.value * 7;
+            case BENCHMARK_NOP_MSG:
+                r.type = BENCHMARK_NOP_REPLY_MSG;
+                r.benchmark_nop_reply.value = m.benchmark_nop.value * 7;
                 ipc_reply(m.src, &r);
                 break;
-            case NOP_WITH_OOL_MSG:
-                free((void *) m.nop_with_ool.data);
-                r.type = NOP_WITH_OOL_REPLY_MSG;
-                r.nop_with_ool_reply.data = "reply!";
-                r.nop_with_ool_reply.data_len = 7;
+            case BENCHMARK_NOP_WITH_OOL_MSG:
+                free((void *) m.benchmark_nop_with_ool.data);
+                r.type = BENCHMARK_NOP_WITH_OOL_REPLY_MSG;
+                r.benchmark_nop_with_ool_reply.data = "reply!";
+                r.benchmark_nop_with_ool_reply.data_len = 7;
                 ipc_reply(m.src, &r);
                 break;
             case EXCEPTION_MSG: {
@@ -199,75 +199,75 @@ void main(void) {
                 ipc_reply(task->tid, &r);
                 break;
             }
-            case SERVE_MSG: {
-                service_register(caller, m.serve.name);
-                free((void *) m.serve.name);
-                r.type = SERVE_REPLY_MSG;
+            case DISCOVERY_SERVE_MSG: {
+                service_register(caller, m.discovery_serve.name);
+                free((void *) m.discovery_serve.name);
+                r.type = DISCOVERY_SERVE_REPLY_MSG;
                 ipc_reply(m.src, &r);
                 break;
             }
-            case LOOKUP_MSG: {
-                task_t server = service_wait(caller, m.lookup.name);
-                free((void *) m.lookup.name);
+            case DISCOVERY_LOOKUP_MSG: {
+                task_t server = service_wait(caller, m.discovery_lookup.name);
+                free((void *) m.discovery_lookup.name);
                 if (IS_OK(server)) {
-                    r.type = LOOKUP_REPLY_MSG;
-                    r.lookup_reply.task = server;
+                    r.type = DISCOVERY_LOOKUP_REPLY_MSG;
+                    r.discovery_lookup_reply.task = server;
                     ipc_reply(m.src, &r);
                 }
                 break;
             }
-            case ALLOC_PAGES_MSG: {
+            case VM_ALLOC_PAGES_MSG: {
                 struct task *task = task_lookup(m.src);
                 ASSERT(task);
 
                 vaddr_t vaddr;
-                paddr_t paddr = m.alloc_pages.paddr;
+                paddr_t paddr = m.vm_alloc_pages.paddr;
                 error_t err =
-                    alloc_phy_pages(task, &vaddr, &paddr, m.alloc_pages.num_pages);
+                    alloc_phy_pages(task, &vaddr, &paddr, m.vm_alloc_pages.num_pages);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
                 }
 
-                r.type = ALLOC_PAGES_REPLY_MSG;
-                r.alloc_pages_reply.vaddr = vaddr;
-                r.alloc_pages_reply.paddr = paddr;
+                r.type = VM_ALLOC_PAGES_REPLY_MSG;
+                r.vm_alloc_pages_reply.vaddr = vaddr;
+                r.vm_alloc_pages_reply.paddr = paddr;
                 ipc_reply(m.src, &r);
                 break;
             }
-            case LAUNCH_TASK_MSG: {
-                task_t task_or_err = task_spawn_by_cmdline(m.launch_task.name_and_cmdline);
+            case TASK_LAUNCH_MSG: {
+                task_t task_or_err = task_spawn_by_cmdline(m.task_launch.name_and_cmdline);
                 if (IS_ERROR(task_or_err)) {
                     ipc_reply_err(m.src, task_or_err);
                     break;
                 }
 
-                r.type = LAUNCH_TASK_REPLY_MSG;
-                r.launch_task_reply.task = task_or_err;
+                r.type = TASK_LAUNCH_REPLY_MSG;
+                r.task_launch_reply.task = task_or_err;
                 ipc_reply(m.src, &r);
                 break;
             }
-            case WATCH_TASK_MSG: {
-                struct task *task = task_lookup(m.watch_task.task);
+            case TASK_WATCH_MSG: {
+                struct task *task = task_lookup(m.task_watch.task);
                 if (!task) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;
                 }
 
                 task_watch(caller, task);
-                m.type = WATCH_TASK_REPLY_MSG;
+                m.type = TASK_WATCH_REPLY_MSG;
                 ipc_reply(m.src, &m);
                 break;
             }
-            case UNWATCH_TASK_MSG: {
-                struct task *task = task_lookup(m.unwatch_task.task);
+            case TASK_UNWATCH_MSG: {
+                struct task *task = task_lookup(m.task_unwatch.task);
                 if (!task) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;
                 }
 
                 task_unwatch(caller, task);
-                m.type = UNWATCH_TASK_REPLY_MSG;
+                m.type = TASK_UNWATCH_REPLY_MSG;
                 ipc_reply(m.src, &m);
                 break;
             }

@@ -168,8 +168,8 @@ void service_register(struct task *task, const char *name) {
             struct message m;
             bzero(&m, sizeof(m));
 
-            m.type = LOOKUP_REPLY_MSG;
-            m.lookup_reply.task = service->task;
+            m.type = DISCOVERY_LOOKUP_REPLY_MSG;
+            m.discovery_lookup_reply.task = service->task;
             ipc_reply(task->tid, &m);
 
             // The task no longer wait for the service. Clear the field.

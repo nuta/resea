@@ -6,18 +6,18 @@
 /// Allocates a DMA area which is accessible from the DMA controller.
 dma_t dma_alloc(size_t len, unsigned flags) {
     struct message m;
-    m.type = ALLOC_PAGES_MSG;
-    m.alloc_pages.paddr = 0;
-    m.alloc_pages.num_pages = ALIGN_UP(len, PAGE_SIZE) / PAGE_SIZE;
+    m.type = VM_ALLOC_PAGES_MSG;
+    m.vm_alloc_pages.paddr = 0;
+    m.vm_alloc_pages.num_pages = ALIGN_UP(len, PAGE_SIZE) / PAGE_SIZE;
     error_t err = ipc_call(INIT_TASK, &m);
     ASSERT_OK(err);
-    ASSERT(m.type == ALLOC_PAGES_REPLY_MSG);
+    ASSERT(m.type == VM_ALLOC_PAGES_REPLY_MSG);
 
     struct dma *dma = malloc(sizeof(*dma));
-    dma->vaddr = m.alloc_pages_reply.vaddr;
+    dma->vaddr = m.vm_alloc_pages_reply.vaddr;
 
     // Use paddr for the device address for now.
-    dma->daddr = m.alloc_pages_reply.paddr;
+    dma->daddr = m.vm_alloc_pages_reply.paddr;
     return dma;
 }
 

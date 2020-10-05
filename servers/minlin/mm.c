@@ -20,17 +20,17 @@ struct mchunk *mm_alloc_mchunk(struct mm *mm, vaddr_t vaddr, size_t len) {
     DEBUG_ASSERT(IS_ALIGNED(len, PAGE_SIZE));
 
     struct message m;
-    m.type = ALLOC_PAGES_MSG;
-    m.alloc_pages.paddr = 0;
-    m.alloc_pages.num_pages = len / PAGE_SIZE;
+    m.type = VM_ALLOC_PAGES_MSG;
+    m.vm_alloc_pages.paddr = 0;
+    m.vm_alloc_pages.num_pages = len / PAGE_SIZE;
     error_t err = ipc_call(INIT_TASK, &m);
     ASSERT_OK(err);
-    ASSERT(m.type == ALLOC_PAGES_REPLY_MSG);
+    ASSERT(m.type == VM_ALLOC_PAGES_REPLY_MSG);
 
     struct mchunk *mchunk = malloc(sizeof(*mchunk));
     mchunk->vaddr = vaddr;
-    mchunk->paddr = m.alloc_pages_reply.paddr;
-    mchunk->buf = (void *) m.alloc_pages_reply.vaddr;
+    mchunk->paddr = m.vm_alloc_pages_reply.paddr;
+    mchunk->buf = (void *) m.vm_alloc_pages_reply.vaddr;
     mchunk->len = len;
     list_push_back(&mm->mchunks, &mchunk->next);
     return mchunk;

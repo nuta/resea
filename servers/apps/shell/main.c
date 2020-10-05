@@ -58,8 +58,8 @@ static void launch_task(int argc, char **argv) {
     name_and_cmdline[offset - 1] = '\0';
 
     struct message m;
-    m.type = LAUNCH_TASK_MSG;
-    m.launch_task.name_and_cmdline = name_and_cmdline;
+    m.type = TASK_LAUNCH_MSG;
+    m.task_launch.name_and_cmdline = name_and_cmdline;
     error_t err = ipc_call(INIT_TASK, &m);
     free(name_and_cmdline);
     if (err != OK) {

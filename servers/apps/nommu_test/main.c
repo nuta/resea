@@ -10,7 +10,7 @@
 static void task_b(void) {
     INFO("starting task B...");
     struct message m;
-    m.type = NOP_MSG;
+    m.type = BENCHMARK_NOP_MSG;
     m.nop.value = 123;
     ipc_reply(TASK_A_TID, &m);
     ipc_recv(TASK_A_TID, &m);
@@ -44,10 +44,10 @@ void main(void) {
                 TRACE("task A");
                 timer_set(1000);
                 break;
-            case NOP_MSG:
+            case BENCHMARK_NOP_MSG:
                 ASSERT(m.src == TASK_B_TID);
                 ASSERT(m.nop.value == 123);
-                m.type = NOP_MSG;
+                m.type = BENCHMARK_NOP_MSG;
                 m.nop.value = 456;
                 ipc_reply(m.src, &m);
                 break;
