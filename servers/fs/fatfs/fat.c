@@ -49,6 +49,7 @@ error_t fat_probe(struct fat *fs,
         return ERR_NOT_ACCEPTABLE;
     } else if (total_data_clus < 65525) {
         type = FAT16;
+        fs->sectors_per_fat = bpb.sectors_per_fat16;
     } else {
         // FAT32 is not supported for now.
         return ERR_NOT_ACCEPTABLE;
@@ -153,6 +154,39 @@ static offset_t get_next_cluster(struct fat *fs, cluster_t cluster) {
     }
 }
 
+static offset_t alloc_cluster(struct fat *fs) {
+    size_t fat_ent_size, entries_per_sector;
+    switch (fs->type) {
+        case FAT16:
+            fat_ent_size = 2;
+            entries_per_sector = SECTOR_SIZE / sizeof(uint16_t);
+            break;
+    }
+
+    // Look for an unused cluster in the FAT table.
+    for (size_t i = 0; i < fs->sectors_per_fat; i++) {
+        __aligned(4) uint8_t buf[SECTOR_SIZE];
+
+        fs->blk_read(fs->fat_lba + i, &buf, 1);
+        switch (fs->type) {
+            case FAT16: {
+                uint16_t *table = (uint16_t *) buf;
+                size_t entries_per_sector = sizeof(buf) / sizeof(*table);
+                for (size_t j = 0; j < entries_per_sector; j++) {
+                    if (*table == 0) {
+                        DBG("alloc = %d", i * entries_per_sector + j);
+                        return i * entries_per_sector + j;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    // TODO: Return an error instead.
+    PANIC("run out of free clusters");
+}
+
 static void open_root_dir(struct fat *fs, struct fat_dir *dir) {
     offset_t lba;
     switch (fs->type) {
@@ -223,6 +257,27 @@ error_t fat_open(struct fat *fs, struct fat_file *file, const char *path) {
     return OK;
 }
 
+error_t fat_truncate(struct fat *fs, struct fat_file *file, offset_t offset) {
+    // TODO:
+    OOPS("NYI");
+    return OK;
+}
+
+error_t fat_create(struct fat *fs, struct fat_file *file, const char *path, bool exist_ok) {
+    if (fat_open(fs, file, path) == OK) {
+        // The file already exists.
+        if (!exist_ok) {
+            return ERR_ALREADY_EXISTS;
+        }
+
+        return fat_truncate(fs, file, 0);
+    }
+
+    // The file does not exist. Create a new dir entry.
+    NYI();
+    return OK;
+}
+
 int fat_read(struct fat *fs, struct fat_file *file, offset_t off, void *buf,
              size_t len) {
     if (off + len < file->size && off + len < off) {
@@ -266,6 +321,56 @@ int fat_read(struct fat *fs, struct fat_file *file, offset_t off, void *buf,
         current = get_next_cluster(fs, current);
         if (is_end_of_cluster(fs, current)) {
             return len - remaining;
+        }
+
+        ASSERT(is_valid_cluster(fs, current));
+    }
+}
+
+int fat_write(struct fat *fs, struct fat_file *file, offset_t off,
+              const void *buf, size_t len) {
+    if (off + len < file->size && off + len < off) {
+        return ERR_TOO_LARGE;
+    }
+
+    // Traverse the FAT table until the target cluster.
+    cluster_t current = file->cluster;
+    size_t nth_cluster = off / (fs->sectors_per_cluster * SECTOR_SIZE);
+    while (nth_cluster > 0) {
+        current = get_next_cluster(fs, current);
+        if (is_end_of_cluster(fs, current)) {
+            current = alloc_cluster(fs);
+        }
+
+        ASSERT(is_valid_cluster(fs, current));
+        nth_cluster--;
+    }
+
+    offset_t off_in_cluster = off % (fs->sectors_per_cluster * SECTOR_SIZE);
+    const uint8_t *p = buf;
+    size_t remaining = len;
+    while (true) {
+        offset_t sector_offset = off_in_cluster / SECTOR_SIZE;
+        for (offset_t i = sector_offset; i < fs->sectors_per_cluster; i++) {
+            // Use a temporary buffer to support unaligned read operations.
+            size_t copy_len = MIN(file->size, MIN(remaining, SECTOR_SIZE));
+            uint8_t buf[SECTOR_SIZE];
+            fs->blk_read(cluster2lba(fs, current) + i, buf, 1);
+            memcpy(&buf[off_in_cluster], p, copy_len);
+            fs->blk_write(cluster2lba(fs, current) + i, buf, 1);
+
+            if (remaining <= SECTOR_SIZE) {
+                return copy_len;
+            }
+
+            p += copy_len;
+            remaining -= copy_len;
+        }
+
+        off_in_cluster = 0;
+        current = get_next_cluster(fs, current);
+        if (is_end_of_cluster(fs, current)) {
+            current = alloc_cluster(fs);
         }
 
         ASSERT(is_valid_cluster(fs, current));

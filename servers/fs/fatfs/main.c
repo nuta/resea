@@ -18,8 +18,15 @@ void blk_read(size_t sector, void *buf, size_t num_sectors) {
     memcpy(buf, m.blk_read_reply.data, m.blk_read_reply.data_len);
 }
 
-void blk_write(size_t offset, const void *buf, size_t len) {
-    PANIC("NYI");
+void blk_write(size_t sector, const void *buf, size_t num_sectors) {
+    struct message m;
+    m.type = BLK_WRITE_MSG;
+    m.blk_write.sector = sector;
+    m.blk_write.data = buf;
+    m.blk_write.data_len = num_sectors * SECTOR_SIZE;
+    error_t err = ipc_call(ramdisk_server, &m);
+    ASSERT(IS_OK(err));
+    ASSERT(m.type == BLK_WRITE_REPLY_MSG);
 }
 
 void main(void) {
@@ -71,6 +78,23 @@ void main(void) {
                 ipc_reply(m.src, &m);
                 break;
             }
+            case FS_CREATE_MSG: {
+                struct fat_file *file = malloc(sizeof(*file));
+                error_t err = fat_create(&fs, file, m.fs_create.path, m.fs_create.exist_ok);
+                if (IS_ERROR(err)) {
+                    free(file);
+                    ipc_reply_err(m.src, err);
+                    break;
+                }
+
+                handle_t handle = handle_alloc(m.src);
+                handle_set(m.src, handle, file);
+
+                m.type = FS_CREATE_REPLY_MSG;
+                m.fs_create_reply.handle = handle;
+                ipc_reply(m.src, &m);
+                break;
+            }
             case FS_READ_MSG: {
                 struct fat_file *file = handle_get(m.src, m.fs_read.handle);
                 if (!file) {
@@ -92,6 +116,24 @@ void main(void) {
                 m.fs_read_reply.data_len = len_or_err;
                 ipc_reply(m.src, &m);
                 free(buf);
+                break;
+            }
+            case FS_WRITE_MSG: {
+                struct fat_file *file = handle_get(m.src, m.fs_write.handle);
+                if (!file) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                error_t err = fat_write(
+                    &fs, file, m.fs_write.offset, m.fs_write.data, m.fs_write.data_len);
+                if (IS_ERROR(err)) {
+                    ipc_reply_err(m.src, err);
+                    break;
+                }
+
+                m.type = FS_WRITE_REPLY_MSG;
+                ipc_reply(m.src, &m);
                 break;
             }
             default:
