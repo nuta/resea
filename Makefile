@@ -128,14 +128,14 @@ CFLAGS += -fsanitize=undefined
 RUSTFLAGS += -C debug_assertions=no
 endif
 
-CFLAGS += $(if $(OPT_LEVEL_0), -O0)
-CFLAGS += $(if $(OPT_LEVEL_2), -O2)
-CFLAGS += $(if $(OPT_LEVEL_3), -O3)
-CFLAGS += $(if $(OPT_LEVEL_S), -Os)
-RUSTFLAGS += $(if $(OPT_LEVEL_0), -C opt-level=0)
-RUSTFLAGS += $(if $(OPT_LEVEL_2), -C opt-level=2)
-RUSTFLAGS += $(if $(OPT_LEVEL_3), -C opt-level=3)
-RUSTFLAGS += $(if $(OPT_LEVEL_S), -C opt-level=s)
+CFLAGS += $(if $(CONFIG_OPT_LEVEL_0), -O0)
+CFLAGS += $(if $(CONFIG_OPT_LEVEL_2), -O2)
+CFLAGS += $(if $(CONFIG_OPT_LEVEL_3), -O3)
+CFLAGS += $(if $(CONFIG_OPT_LEVEL_S), -Os)
+RUSTFLAGS += $(if $(CONFIG_OPT_LEVEL_0), -C opt-level=0)
+RUSTFLAGS += $(if $(CONFIG_OPT_LEVEL_2), -C opt-level=2)
+RUSTFLAGS += $(if $(CONFIG_OPT_LEVEL_3), -C opt-level=3)
+RUSTFLAGS += $(if $(CONFIG_OPT_LEVEL_S), -C opt-level=s)
 
 # Disable sparse(1), a C source code analyzer if $(C) is not set.
 ifeq ($(C),)
