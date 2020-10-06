@@ -10,11 +10,11 @@ void ipc_test(void) {
     // A IPC call.
     for (int i = 0; i < 10; i++) {
         m.type = BENCHMARK_NOP_MSG;
-        m.nop.value = i;
+        m.benchmark_nop.value = i;
         err = ipc_call(INIT_TASK, &m);
         TEST_ASSERT(err == OK);
         TEST_ASSERT(m.type == BENCHMARK_NOP_REPLY_MSG);
-        TEST_ASSERT(m.nop.value == i * 7);
+        TEST_ASSERT(m.benchmark_nop.value == i * 7);
     }
 
     // A ool IPC call.
