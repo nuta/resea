@@ -37,6 +37,19 @@ choice
 endchoice
 
 menu "Common Setup (kernel and userland)"
+    choice
+        prompt "Compiler optimization level"
+        default OPT_LEVEL_2
+        config OPT_LEVEL_0
+            bool "-O0"
+        config OPT_LEVEL_2
+            bool "-O2"
+        config OPT_LEVEL_3
+            bool "-O3"
+        config OPT_LEVEL_S
+            bool "-Os"
+    endchoice
+
     config NUM_SYMBOLS
         int "The (maximum) number of symbols"
         range 0 4096
