@@ -21,7 +21,7 @@ ifeq ($(V),)
 endif
 
 # Determine if we need to load ".config".
-non_config_targets := defconfig menuconfig website book clean
+non_config_targets := defconfig olddefconfig menuconfig website book clean
 load_config := y
 ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
 load_config :=
@@ -158,6 +158,11 @@ clean:
 defconfig:
 	$(PROGRESS) "CONFIG"
 	./tools/config.py --defconfig
+
+.PHONY: olddefconfig
+olddefconfig:
+	$(PROGRESS) "CONFIG"
+	./tools/config.py --olddefconfig
 
 .PHONY: menuconfig
 menuconfig:

@@ -17,16 +17,24 @@ def genconfig(config_file, outfile):
     kconf.load_config()
     kconf.write_autoconf(outfile, "#pragma once\n")
 
+def olddefconfig(config_file):
+    kconf = kconfiglib.Kconfig("Kconfig")
+    kconf.load_config(filename=config_file)
+    kconf.write_config(filename=config_file)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--menuconfig", action="store_true")
     parser.add_argument("--defconfig", action="store_true")
+    parser.add_argument("--olddefconfig", action="store_true")
     parser.add_argument("--genconfig", metavar="OUTFILE")
     parser.add_argument("--config-file", default=".config")
     args = parser.parse_args()
 
     if args.defconfig:
         defconfig(args.config_file)
+    if args.olddefconfig:
+        olddefconfig(args.config_file)
     if args.menuconfig:
         sys.argv = sys.argv[:1]
         menuconfig._main()
