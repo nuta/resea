@@ -12,7 +12,7 @@ For more details, see [IPC API](../userspace/ipc).
 Synchronous IPC is good for performance and for the separation of mechanism
 and policy. Survey L4 microkernels if you're interested in.
 
-TODO: Add references.
+Futhermore, syncronous IPC siginificantly simplifies the complexity of a multi-server OS like Resea and makes easy to debug your code.
 
 ## Message
 
@@ -21,5 +21,6 @@ A message is fixed sized and consists of the following fields:
 - The type of message (e.g. `FS_READ_MSG`).
 - The sender task ID.
 - The fixed-sized payload (less than 256 bytes, depends on arch).
+- The [*out-of-line* payload](../userspace/ool) for large data.
 
 We use our own [Interface Definition Language](../userspace/idl/) to generate message definitions.
