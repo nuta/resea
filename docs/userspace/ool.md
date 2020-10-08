@@ -79,7 +79,28 @@ if (m.type == FS_READ_REPLY_MSG) {
 A memory buffer for received OoL payload is dynamically allocated by `malloc`. **Don't forget to `free`!**
 
 ## How It Works
-TODO:
+```
++--------+  3. ool.send  +------+  2. ool.recv  +----------+
+| sender |  -----------> |  vm  | <------------ | receiver |
+|  task  |               |      |               |   task   |
+|        |               |      |  4. copy OoL  |          |
+|        |               |      | ------------> |          |
+|        |               |      |               |          |
+|        |               |      | 5. send msg   |          |
+|        | -----------------------------------> |          |
+|        |               |      |               |          |
+|        |               |      | 6. ool.verify |          |
+|        |               |      | <------------ |          |
++--------+               +------+               +----------+
+```
+
+1. For messages with a ool payload, IPC stub generator adds `MSG_OOL` to the message type field (i.e. `(m.type & MSG_OOL) != 0` is true).
+2. In `ipc_recv` API, the receiver task sends a `ool.recv` message to tell the location of the OoL receive buffer (allocated by `malloc`) to the vm server.
+3. When a sender task `ipc_send` API, if `MSG_OOL` bit is set, it calls `ool.send` to the vm server before sending the message.
+4. The vm server looks for an unsed OoL buffer in the desitnation task, copies the OoL payload into the buffer, and returns the pointer to buffer in the receiver's address space.
+5. The sender tasks overwrites the OoL field with the receiver's pointer and sends the message.
+6. Once receiver task received a message with OoL, it calls vm's `ool.verify` to check if the received pointer and the length is valid.
+7. `ipc_recv` returns.
 
 ### Why not Implement OoL in Kernel?
 In fact, OoL is initially implemented in the kernel and is removed later because it turned out that page fault handling makes the kernel complicated.
