@@ -1,4 +1,4 @@
-menu "Userland"
+menu "Standard Library"
 
 config OOL_BUFFER_LEN
     int "The length of a ool buffer."

@@ -65,6 +65,4 @@ menu "Servers"
             tristate "Example server (template)"
     endmenu
 
-    source "servers/*/Kconfig"
-    source "servers/*/*/Kconfig"
 endmenu

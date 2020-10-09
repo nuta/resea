@@ -58,4 +58,4 @@ endmenu
 
 source "kernel/Kconfig"
 source "libs/resea/Kconfig"
-source "servers/Kconfig"
+source "$(BUILD_DIR)/Kconfig.autogen"

@@ -164,17 +164,17 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 .PHONY: defconfig
-defconfig:
+defconfig: $(BUILD_DIR)/Kconfig.autogen
 	$(PROGRESS) "CONFIG"
 	./tools/config.py --defconfig
 
 .PHONY: olddefconfig
-olddefconfig:
+olddefconfig: $(BUILD_DIR)/Kconfig.autogen
 	$(PROGRESS) "CONFIG"
 	./tools/config.py --olddefconfig
 
 .PHONY: menuconfig
-menuconfig:
+menuconfig: $(BUILD_DIR)/Kconfig.autogen
 	./tools/config.py --menuconfig
 
 .PHONY: website
@@ -247,6 +247,11 @@ $(BUILD_DIR)/%.o: %.S Makefile $(autogen_files)
 #
 #  Auto-generated files.
 #
+$(BUILD_DIR)/Kconfig.autogen: tools/genkconfig.py \
+	$(wildcard servers/*/build.mk servers/*/*/build.mk  servers/*/*/*/build.mk)
+	$(PROGRESS) "GEN" $@
+	./tools/genkconfig.py -o $@
+
 $(BUILD_DIR)/include/config.h: .config tools/config.py
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)

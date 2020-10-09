@@ -1,5 +1,5 @@
 menu "Kernel"
-    source "kernel/arch/*/Kconfig"
+    source "kernel/arch/x64/Kconfig"
 
     config SEMIHOSTING
         bool "Use semihosting features (e.g. QEMU)"

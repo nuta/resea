@@ -11,4 +11,4 @@ menu "ARM Options"
         select NOMMU
 endmenu
 
-source "kernel/arch/arm/machines/*/Kconfig"
+source "kernel/arch/arm/machines/microbit/Kconfig"

@@ -1,28 +1,29 @@
 # Build Files
 
-Add `build.mk` in the server's directory. Replace `<name>` with appropriate name.
+Add `build.mk` in the server's directory:
 
 ```mk
 # build.mk
-name := <name>
+
+# The server name. It must satisfy /[a-zA-Z_][a-zA-Z0-9_]*/
+name := ps2_keyboard
+# Object files.
 objs-y += main.o
+# Library dependencies.
+libs-y += driver
 ```
 
-YOu also need to add a config in `servers/Kconfig`:
+If you'd like to add build configuration, add `Kconfig` file to the directory:
 
 ```
-# servers/Kconfig
+menu "ps2_keyboard - PS/2 Keyboard Driver"
+    # PS2_KEYBOARD_SERVER is set if this `ps2_keyboard` is enabled in the config.
+	depends on PS2_KEYBOARD_SERVER
 
-config <name>_SERVER
-    tristate "<description>"
+    config PRINT_PERIODICALLY
+        bool "Print a message every second"
+endmenu
 ```
 
 See [Kconfig Language](https://www.kernel.org/doc/html/latest/kbuild/kconfig-language.html)
 for details.
-
-If you're familiar with Linux kernel development, you may notice that this example
-uses `tristate`.
-
-The `M` state is usually used for kernel modules, however, in Resea,
-it builds and embeds the server into the OS image but it's not automatically started
-(you need to start it from the shell).

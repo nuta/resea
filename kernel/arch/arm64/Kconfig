@@ -23,4 +23,4 @@ menu "ARM64 Options"
         default 10
 endmenu
 
-source "kernel/arch/arm64/machines/*/Kconfig"
+source "kernel/arch/arm64/machines/raspi3/Kconfig"
