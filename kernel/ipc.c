@@ -16,9 +16,24 @@ static void resume_sender(struct task *receiver, task_t src) {
             task_resume(sender);
             list_remove(&sender->sender_next);
 
-            // If src == IPC_ANY, allow only `sender` to send a message since
-            // in the send phase in ipc_slowpath(), `sener` won't recheck
-            // whether the `receiver` is ready for receiving from `sender`.
+            // If src == IPC_ANY, allow only `sender` to send a message. Let's
+            // consider the following situation to understand why:
+            //
+            //     [Sender A]              [Receiver C]              [Sender B]
+            //         .                        |                        |
+            // in C's sender queue              |                        |
+            //         .                        |                        |
+            //         .        Resume          |                        |
+            //         + <--------------------- |                        |
+            //         .                        .    Try sending (X)     |
+            //         .                        + <--------------------- |
+            //         .                        |                        |
+            //         V                        |                        |
+            //         |                        |                        |
+            //
+            // When (X) occurrs, the receiver should not accept the message
+            // from B since C has already resumed A as the next sender.
+            //
             receiver->src = sender->tid;
             return;
         }
