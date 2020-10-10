@@ -364,6 +364,7 @@ error_t vm_unmap(struct task *task, vaddr_t vaddr) {
 /// Handles timer interrupts. The timer fires this handler every 1/TICK_HZ
 /// seconds.
 void handle_timer_irq(void) {
+    bool resumed_by_timeout = false;
     if (mp_is_bsp()) {
         // Handle task timeouts.
         for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
@@ -375,6 +376,7 @@ void handle_timer_irq(void) {
             task->timeout--;
             if (!task->timeout) {
                 notify(task, NOTIFY_TIMER);
+                resumed_by_timeout = true;
             }
         }
     }
@@ -382,7 +384,7 @@ void handle_timer_irq(void) {
     // Switch task if the current task has spend its time slice.
     DEBUG_ASSERT(CURRENT == IDLE_TASK || CURRENT->quantum > 0);
     CURRENT->quantum--;
-    if (!CURRENT->quantum || CURRENT == IDLE_TASK) {
+    if (!CURRENT->quantum || (CURRENT == IDLE_TASK && resumed_by_timeout)) {
         task_switch();
     }
 }
