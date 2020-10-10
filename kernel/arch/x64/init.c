@@ -103,15 +103,48 @@ static void syscall_init(void) {
 }
 
 static void calibrate_apic_timer(void) {
-    // TODO: Calibrate the timer automatically.
-    write_apic(APIC_REG_TIMER_INITCNT, CONFIG_LAPIC_TIMER_1MS_COUNT);
+    static uint32_t calibrated_count = 0;
+
+    // Use PIT to determine the frequency of APIC timer. On some real machines
+    // like my laptop this calibration does not work properly :/
+    if (!calibrated_count) {
+        uint16_t pit_count = PIT_HZ / TICK_HZ;
+
+        // Disable ch #2 and the speaker output (PIT #2 is connected to the
+        // speaker).
+        asm_out8(KBC_PORT_B, 0x00);
+
+        // Select ch #2.
+        asm_out8(PIT_CMD, 0xb2 /* ch #2, oneshot */);
+        asm_out8(PIT_CH2, pit_count & 0xff);
+        asm_out8(PIT_CH2, pit_count >> 8);
+
+        // Reset ch #2 to start counting.
+        asm_out8(KBC_PORT_B, 0x01);
+
+        // Reset the counter in APIC timer.
+        write_apic(APIC_REG_TIMER_INITCNT, 0xffffffff);
+        uint32_t start = read_apic(APIC_REG_TIMER_CURRENT);
+
+        // Wait for the PIT (it should take at least 1/TICK_HZ seconds).
+        while ((asm_in8(KBC_PORT_B) & KBC_B_OUT2_STATUS) != 0) {}
+
+        // Compute the calibrated count.
+        uint32_t end = read_apic(APIC_REG_TIMER_CURRENT);
+        calibrated_count = start - end;
+    }
+
+    // Calibrate the APIC timer interval to fire the timer interrupt every
+    // 1/TICK_HZ seconds.
+    // DBG("calibrated_count = %x", calibrated_count);PANIC("");
+    // write_apic(APIC_REG_TIMER_CURRENT, calibrated_count);
+    write_apic(APIC_REG_TIMER_INITCNT, calibrated_count);
 }
 
 static void apic_timer_init(void) {
-    write_apic(APIC_REG_TIMER_INITCNT, 0xffffffff);
-    write_apic(APIC_REG_LVT_TIMER, (VECTOR_IRQ_BASE + TIMER_IRQ) | 0x20000);
     write_apic(APIC_REG_TIMER_DIV, APIC_TIMER_DIV);
     calibrate_apic_timer();
+    write_apic(APIC_REG_LVT_TIMER, (VECTOR_IRQ_BASE + TIMER_IRQ) | 0x20000);
 }
 
 static void apic_init(void) {
