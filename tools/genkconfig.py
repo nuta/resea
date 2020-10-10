@@ -60,7 +60,7 @@ choice
 {%- endfor %}
 endchoice
 
-menu "Servers"
+menu "Servers and Applications"
     comment "<*>: autostarted / <M>: manually started from shell"
 
 {%- for server in servers %}
