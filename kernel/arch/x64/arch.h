@@ -48,6 +48,14 @@ static inline bool is_kernel_paddr(paddr_t paddr) {
         && paddr <= (paddr_t) __kernel_image_end;
 }
 
+/// Checks if the address satisfies the "canonical form" defined in the Intel
+/// SDM.
+static inline bool is_canonical_addr(vaddr_t addr) {
+    uint64_t mask = 0xffff800000000000ull;
+    uint64_t upper = addr & mask;
+    return !upper || upper == mask;
+}
+
 static inline int mp_self(void) {
     return *((volatile uint32_t *) from_paddr(0xfee00020)) >> 24;
 }

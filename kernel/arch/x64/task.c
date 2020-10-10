@@ -12,6 +12,11 @@ static uint8_t syscall_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(STACK_SIZE
 static uint8_t xsave_areas[CONFIG_NUM_TASKS][4096] __aligned(4096);
 
 error_t arch_task_create(struct task *task, vaddr_t ip) {
+    if (!is_canonical_addr(ip)) {
+        WARN_DBG("ip=%p is not canonical form address!", ip);
+        return ERR_INVALID_ARG;
+    }
+
     void *kstack = (void *) kernel_stacks[task->tid];
     void *syscall_stack_bottom = (void *) syscall_stacks[task->tid];
     void *xsave = (void *) xsave_areas[task->tid];
