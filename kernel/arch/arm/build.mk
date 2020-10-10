@@ -1,5 +1,5 @@
 objs-y += init.o vm.o mp.o task.o switch.o interrupt.o
-subdir-y += machines/$(MACHINE)
+subdirs-y += machines/$(MACHINE)
 
 QEMU  ?= qemu-system-arm
 

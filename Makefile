@@ -66,7 +66,7 @@ define visit-subdir
 $(eval objs-y :=)
 $(eval libs-y :=)
 $(eval build_dir := $(2)/$(1))
-$(eval subdir-y :=)
+$(eval subdirs-y :=)
 $(eval cflags-y :=)
 $(eval global-cflags-y :=)
 $(eval include $(1)/build.mk)
@@ -75,7 +75,7 @@ $(eval objs += $(addprefix $(2)/$(1)/, $(objs-y)))
 $(eval libs += $(libs-y))
 $(eval cflags += $(cflags-y))
 $(eval CFLAGS += $(global-cflags-y))
-$(eval $(foreach subdir, $(subdir-y), \
+$(eval $(foreach subdir, $(subdirs-y), \
 	$(eval $(call visit-subdir,$(1)/$(subdir),$(2)))))
 endef
 
