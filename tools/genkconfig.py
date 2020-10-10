@@ -30,6 +30,13 @@ endchoice
 
 menu "Servers"
     comment "<*>: autostarted / <M>: manually started from shell"
+
+{%- for server in servers %}
+{%- if server.boot_task %}
+source "{{ server.kconfig_path }}"
+{%- endif %}
+{%- endfor %}
+
 {%- for section_name,servers in server_sections.items() %}
 {%- if section_name %}
     menu "{{ section_name }}"

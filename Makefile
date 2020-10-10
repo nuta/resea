@@ -41,7 +41,8 @@ include .config
 
 export ARCH  := $(patsubst "%",%,$(CONFIG_ARCH))
 export MACHINE := $(patsubst "%",%,$(CONFIG_MACHINE))
-boot_task    := $(patsubst "%",%,$(CONFIG_BOOT_TASK))
+boot_task_name := $(patsubst "%",%,$(CONFIG_BOOT_TASK))
+boot_elf     := $(BUILD_DIR)/$(boot_task_name).elf
 kernel_image := $(BUILD_DIR)/resea.elf
 bootfs_bin   := $(BUILD_DIR)/bootfs.bin
 builtin_libs := common resea unittest
@@ -112,7 +113,7 @@ CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
 CFLAGS += -I$(BUILD_DIR)/include
 CFLAGS += -Ikernel/arch/$(ARCH)/machines/$(MACHINE)/include
 CFLAGS += -DVERSION='"$(VERSION)"'
-CFLAGS += -DBOOTELF_PATH='"$(BUILD_DIR)/$(boot_task).elf"'
+CFLAGS += -DBOOTELF_PATH='"$(boot_elf)"'
 CFLAGS += -DBOOTFS_PATH='"$(bootfs_bin)"'
 CFLAGS += -DAUTOSTARTS='"$(autostarts)"'
 
@@ -215,7 +216,7 @@ $(BUILD_DIR)/kernel/%.o: %.c Makefile $(autogen_files)
 	$(SPARSE) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL $<
 
 
-$(BUILD_DIR)/kernel/%.o: %.S Makefile $(BUILD_DIR)/$(boot_task).elf $(autogen_files)
+$(BUILD_DIR)/kernel/%.o: %.S Makefile $(boot_elf) $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
@@ -250,9 +251,10 @@ $(BUILD_DIR)/%.o: %.S Makefile $(autogen_files)
 $(BUILD_DIR)/Kconfig.autogen: tools/genkconfig.py \
 	$(wildcard servers/*/build.mk servers/*/*/build.mk  servers/*/*/*/build.mk)
 	$(PROGRESS) "GEN" $@
+	mkdir -p $(@D)
 	./tools/genkconfig.py -o $@
 
-$(BUILD_DIR)/include/config.h: .config tools/config.py
+$(BUILD_DIR)/include/config.h: .config $(BUILD_DIR)/Kconfig.autogen tools/config.py
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
 	./tools/config.py --genconfig $@
@@ -317,7 +319,7 @@ $(eval $(objs): CFLAGS += $(cflags))
 $(foreach lib, $(all_libs),
 	$(eval $(objs): CFLAGS += -Ilibs/$(lib)/include))
 endef
-$(foreach server, $(boot_task) $(servers), \
+$(foreach server, $(boot_task_name) $(servers), \
 	$(eval $(call server-build-rule,$(server))))
 
 %/__name__.c:
