@@ -392,6 +392,9 @@ void handle_irq(unsigned irq) {
     struct task *owner = irq_owners[irq];
     if (owner) {
         notify(owner, NOTIFY_IRQ);
+        if (CURRENT == IDLE_TASK) {
+            task_switch();
+        }
     }
 }
 
