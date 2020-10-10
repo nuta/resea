@@ -51,6 +51,7 @@ endif
 
 choice
     prompt "Initial task"
+    default BOOT_TASK_VM
 {%- for server in servers %}
 {%- if server.boot_task %}
     config BOOT_TASK_{{ server.name | upper }}
