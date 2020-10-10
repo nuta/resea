@@ -19,6 +19,37 @@ config MODULES
 	default y
 
 choice
+    prompt "Target CPU architecture"
+{%- for arch in archs %}
+    config ARCH_{{ arch.name | upper }}
+        bool "{{ arch.name }}"
+{%- endfor %}
+endchoice
+
+# A hidden config entry to extract the selected arch name in Makefile.
+{%- for arch in archs %}
+config ARCH
+    string
+    default "{{ arch.name }}"
+    depends on ARCH_{{ arch.name | upper }}
+{%- endfor %}
+
+# Machines
+{%- for arch in archs %}
+{%- if arch.machines | length > 0 %}
+if ARCH_{{ arch.name | upper }}
+choice
+    prompt "Target Machine"
+{%- for machine in arch.machines %}
+    config MACHINE_{{ machine.name | upper }}
+        bool "{{ machine.name }}"
+{%- endfor %}
+endchoice
+endif
+{%- endif %}
+{%- endfor %}
+
+choice
     prompt "Initial task"
 {%- for server in servers %}
 {%- if server.boot_task %}
@@ -86,6 +117,20 @@ def main():
         section_name = section_mappings[section_dir]
         server_sections.setdefault(section_name, [])
         server_sections[section_name].append(d)
+
+    archs = []
+    for arch_dir in glob("kernel/arch/*"):
+        arch_dir = Path(arch_dir)
+        if arch_dir.is_dir():
+            machines = []
+            for machine_dir in glob((arch_dir / "machines" / "*").as_posix()):
+                machine_dir = Path(machine_dir)
+                if machine_dir.is_dir():
+                    machines.append({ "name": machine_dir.name })
+            archs.append({
+                "name": arch_dir.name,
+                "machines": machines,
+            })
 
     with open(args.outfile, "w") as f:
         f.write(jinja2.Template(TMPL).render(**locals()))

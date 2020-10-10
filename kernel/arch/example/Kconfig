@@ -1,10 +1,6 @@
 menu "Example Options"
 	depends on ARCH_EXAMPLE
 
-    config ARCH
-        string "The architecture name"
-        default "example"
-
     config ARCH_DEFAULTS
     	bool "Default confgurations for example arch."
 	    default y

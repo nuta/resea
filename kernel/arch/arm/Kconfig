@@ -1,10 +1,6 @@
 menu "ARM Options"
 	depends on ARCH_ARM
 
-    config ARCH
-        string
-    	default "arm"
-
     config ARCH_DEFAULTS
     	bool
 	    default y

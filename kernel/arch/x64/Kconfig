@@ -1,7 +1,3 @@
 menu "x64 Options"
 	depends on ARCH_X64
-
-    config ARCH
-        string
-    	default "x64"
 endmenu
