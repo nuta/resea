@@ -381,7 +381,7 @@ static inline uint64_t asm_xgetbv(uint32_t xcr) {
 }
 
 static inline void asm_xsetbv(uint32_t xcr, uint64_t value) {
-    __asm__ __volatile__("xsetbv" :: "a"(value), "c"(xcr));
+    __asm__ __volatile__("xsetbv" :: "a"(value), "d"(value >> 32), "c"(xcr));
 }
 
 // clang-format on
