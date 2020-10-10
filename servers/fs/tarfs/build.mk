@@ -1,4 +1,5 @@
 name := tarfs
+description := A pseudo file system driver
 objs-y := main.o tarball.o
 
 $(BUILD_DIR)/servers/fs/tarfs/tarball.o:

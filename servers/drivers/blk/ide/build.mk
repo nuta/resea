@@ -1,4 +1,5 @@
 name := ide
+description := IDE hard-disk driver
 objs-y := main.o disk.o
 libs-y := driver
 

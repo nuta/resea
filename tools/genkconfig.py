@@ -55,7 +55,7 @@ choice
 {%- for server in servers %}
 {%- if server.boot_task %}
     config BOOT_TASK_{{ server.name | upper }}
-        bool "{{ server.name }}"
+        bool "{{ server.name }} - {{ server.description }}"
 {%- endif %}
 {%- endfor %}
 endchoice
@@ -76,7 +76,7 @@ source "{{ server.kconfig_path }}"
     {%- for server in servers %}
         {%- if not server.boot_task %}
             config {{ server.name | upper }}_SERVER
-                tristate "{{ server.name }}"
+                tristate "{{ server.name }} - {{ server.description }}"
             {%- if server.kconfig_path %}
             source "{{ server.kconfig_path }}"
             {%- endif %}

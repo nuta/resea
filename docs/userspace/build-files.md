@@ -7,6 +7,8 @@ Add `build.mk` in the server's directory:
 
 # The server name. It must satisfy /[a-zA-Z_][a-zA-Z0-9_]*/
 name := ps2_keyboard
+# A short description.
+description := PS/2 Keyboard Driver
 # Object files.
 objs-y += main.o
 # Library dependencies.

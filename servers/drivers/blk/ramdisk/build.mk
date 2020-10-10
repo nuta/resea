@@ -1,4 +1,5 @@
 name := ramdisk
+description := An ephemeral and pseudo block device driver
 objs-y := main.o disk.o
 
 $(BUILD_DIR)/servers/drivers/blk/ramdisk/disk.o: $(BUILD_DIR)/ramdisk.img
