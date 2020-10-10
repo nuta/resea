@@ -51,13 +51,14 @@ static error_t parse_ipaddr(const char *str, uint32_t *ip_addr) {
     return OK;
 }
 
-static void resolve_url(const char *url, uint32_t *ip_addr, uint16_t *port, char **path) {
+static error_t resolve_url(const char *url, uint32_t *ip_addr, uint16_t *port, char **path) {
     char *s_orig = strdup(url);
     char *s = s_orig;
     if (strstr(s, "http://") == s) {
         s += 7; // strlen("http://")
     } else {
-        PANIC("the url must start with http://");
+        WARN_DBG("the url must start with http://");
+        return ERR_INVALID_ARG;
     }
 
     // `s` now points to the beginning of hostname or IP address.
@@ -79,16 +80,19 @@ static void resolve_url(const char *url, uint32_t *ip_addr, uint16_t *port, char
     }
 
     if (!isdigit(*host)) {
-        PANIC("resolving a domain name is not yet implemented");
+        WARN_DBG("resolving a domain name is not yet implemented");
+        return ERR_INVALID_ARG;
     }
 
     // `s` now points to the path next to the first slash.
     if (parse_ipaddr(host, ip_addr) != OK) {
-        PANIC("failed to parse an ip address: '%s'", host);
+        WARN_DBG("failed to parse an ip address: '%s'", host);
+        return ERR_INVALID_ARG;
     }
 
     *path = s;
     free(s_orig);
+    return OK;
 }
 
 void http_get(const char *url) {
@@ -97,7 +101,9 @@ void http_get(const char *url) {
     uint32_t ip_addr;
     uint16_t port;
     char *path;
-    resolve_url(url, &ip_addr, &port, &path);
+    if (resolve_url(url, &ip_addr, &port, &path) != OK) {
+        return;
+    }
 
     struct message m;
     m.type = TCPIP_CONNECT_MSG;
