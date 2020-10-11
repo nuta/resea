@@ -5,9 +5,10 @@ A TCP/IP server (`tcpip`) implements popular internet protocols.
 - IPv4
 - TCP
 - UDP
-- DHCP
+- DHCP client
 - ARP
 - ICMP (Echo Request only)
+- DNS client
 
 ## Source Location
 [servers/tcpip](https://github.com/nuta/resea/tree/master/servers/tcpip)

@@ -7,6 +7,7 @@
 #include <resea/handle.h>
 #include "device.h"
 #include "dhcp.h"
+#include "dns.h"
 #include "main.h"
 #include "sys.h"
 #include "tcp.h"
@@ -18,8 +19,16 @@ struct client {
     tcp_sock_t sock;
 };
 
+struct dns_request {
+    list_elem_t next;
+    uint16_t id;
+    task_t task;
+};
+
 static unsigned next_driver_id = 0;
 static list_t drivers;
+static list_t dns_requests;
+static uint16_t next_dns_query_id = 1;
 static msec_t uptime = 0;
 
 static struct driver *get_driver_by_tid(task_t tid) {
@@ -118,6 +127,16 @@ void sys_process_event(struct event *e) {
             async_send(sock->client->task, &m);
             break;
         }
+        case DNS_GOT_ANSWER: {
+            LIST_FOR_EACH (req, &dns_requests, struct dns_request, next) {
+                if (e->dns_got_answer.id == req->id) {
+                    m.type = TCPIP_DNS_RESOLVE_REPLY_MSG;
+                    m.tcpip_dns_resolve_reply.addr = e->dns_got_answer.addr;
+                    ipc_reply(req->task, &m);
+                    list_remove(&req->next);
+                }
+            }
+        }
     }
 }
 
@@ -133,12 +152,14 @@ static void free_handle(void *data) {
 void main(void) {
     TRACE("starting...");
     list_init(&drivers);
+    list_init(&dns_requests);
 
     // Initialize the TCP/IP protocol stack.
     device_init();
     tcp_init();
     udp_init();
     dhcp_init();
+    dns_init();
 
     error_t err = timer_set(TIMER_INTERVAL);
     ASSERT_OK(err);
@@ -280,6 +301,15 @@ void main(void) {
                 m.type = TCPIP_REGISTER_DEVICE_REPLY_MSG;
                 ipc_reply(m.src, &m);
                 break;
+            case TCPIP_DNS_RESOLVE_MSG: {
+                struct dns_request *req = malloc(sizeof(*req));
+                req->id = next_dns_query_id++;
+                req->task = m.src;
+                list_push_back(&dns_requests, &req->next);
+                dns_query(req->id, m.tcpip_dns_resolve.hostname);
+                free((void *) m.tcpip_dns_resolve.hostname);
+                break;
+            }
             case NET_RX_MSG: {
                 struct driver *driver = get_driver_by_tid(m.src);
                 if (!driver) {
@@ -289,6 +319,7 @@ void main(void) {
                 ethernet_receive(driver->device, m.net_rx.payload, m.net_rx.payload_len);
                 free((void *) m.net_rx.payload);
                 dhcp_receive();
+                dns_receive();
                 break;
             }
             default:

@@ -28,5 +28,6 @@ size_t mbuf_read(mbuf_t *mbuf, void *buf, size_t buf_len);
 mbuf_t mbuf_peek(mbuf_t mbuf, size_t len);
 size_t mbuf_discard(mbuf_t *mbuf, size_t len);
 void mbuf_truncate(mbuf_t mbuf, size_t len);
+mbuf_t mbuf_clone(mbuf_t mbuf);
 
 #endif

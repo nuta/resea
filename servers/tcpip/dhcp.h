@@ -12,6 +12,7 @@
 enum dhcp_option {
     DHCP_OPTION_NETMASK = 1,
     DHCP_OPTION_ROUTER = 3,
+    DHCP_OPTION_DNS = 6,
     DHCP_OPTION_REQUESTED_ADDR = 50,
     DHCP_OPTION_DHCP_TYPE = 53,
     DHCP_OPTION_PARAM_LIST = 55,
@@ -53,6 +54,10 @@ struct dhcp_netmask_option {
 
 struct dhcp_router_option {
     uint32_t router;
+} __packed;
+
+struct dhcp_dns_option {
+    uint32_t dns;
 } __packed;
 
 #define DHCP_PARMAS_MAX 2

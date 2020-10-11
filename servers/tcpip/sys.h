@@ -8,6 +8,7 @@
 enum event_type {
     TCP_NEW_CLIENT,
     TCP_RECEIVED,
+    DNS_GOT_ANSWER,
 };
 
 struct event {
@@ -20,6 +21,10 @@ struct event {
         struct {
             tcp_sock_t sock;
         } tcp_received;
+        struct {
+            uint16_t id;
+            ipv4addr_t addr;
+        } dns_got_answer;
     };
 };
 

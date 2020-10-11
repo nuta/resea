@@ -190,3 +190,21 @@ void mbuf_truncate(mbuf_t mbuf, size_t len) {
         mbuf = mbuf->next;
     }
 }
+
+mbuf_t mbuf_clone(mbuf_t mbuf) {
+    mbuf_t head = mbuf_alloc();
+    mbuf_t clone = head;
+    while (true) {
+        memcpy(clone->data, mbuf->data, sizeof(mbuf->data));
+        clone->offset = mbuf->offset;
+        clone->offset_end = mbuf->offset_end;
+        mbuf = mbuf->next;
+        if (!mbuf) {
+            break;
+        }
+
+        clone = mbuf_alloc();
+    }
+
+    return head;
+}
