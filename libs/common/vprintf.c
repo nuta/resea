@@ -30,13 +30,13 @@ static void print_uint(struct vprintf_context *ctx, uintmax_t n, int base,
 
 ///  The vprintf implementation.
 ///
-///  %c  - An ASCII character.
-///  %s  - An NUL-terminated ASCII string.
-///  %d  - An signed integer (in decimal).
-///  %u  - An unsigned integer (in decimal).
-///  %x  - A hexadecimal integer.
-///  %p  - An pointer value.
-///  %pI - An IPv4 address (uint32_t).
+///  %c   - An ASCII character.
+///  %s   - An NUL-terminated ASCII string.
+///  %d   - An signed integer (in decimal).
+///  %u   - An unsigned integer (in decimal).
+///  %x   - A hexadecimal integer.
+///  %p   - An pointer value.
+///  %pI4 - An IPv4 address (uint32_t).
 void vprintf_with_context(struct vprintf_context *ctx, const char *fmt, va_list vargs) {
     while (*fmt) {
         if (*fmt != '%') {
