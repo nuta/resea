@@ -382,7 +382,7 @@ void handle_timer_irq(void) {
     }
 
     // Switch task if the current task has spend its time slice.
-    DEBUG_ASSERT(CURRENT == IDLE_TASK || CURRENT->quantum > 0);
+    DEBUG_ASSERT(CURRENT == IDLE_TASK || CURRENT->quantum >= 0);
     CURRENT->quantum--;
     if (CURRENT->quantum < 0 || (CURRENT == IDLE_TASK && resumed_by_timeout)) {
         task_switch();
