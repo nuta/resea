@@ -20,7 +20,7 @@ SECTIONS {
     } > bootelf
 
     .stack :{
-        . += 1024;
+        . += 2048;
         __boot_stack_top = .;
     } > ram
 
