@@ -33,7 +33,12 @@ static void init_stack(struct task *task, vaddr_t pc) {
 }
 
 error_t arch_task_create(struct task *task, vaddr_t pc) {
-    task->arch.stack_bottom = kernel_stacks[task->tid];
+    if (task->tid == 0) {
+        // Idle tasks.
+        return OK;
+    }
+
+    task->arch.stack_bottom = kernel_stacks[task->tid - 1];
     init_stack(task, pc);
     return OK;
 }
