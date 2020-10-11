@@ -39,5 +39,5 @@ TEST("1 + 1 equals to 2") {
 
 ## How to Run Tests
 ```
-$ make -j8 -f libs/unittest/unittest.mk TARGET=servers/apps/test
+$ make unittest TARGET=servers/apps/test
 ```

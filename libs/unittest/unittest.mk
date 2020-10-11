@@ -1,4 +1,3 @@
-TARGET    ?= servers/apps/test
 BUILD_DIR ?= build
 
 # The default build target.

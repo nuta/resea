@@ -160,6 +160,14 @@ test: $(kernel_image)
 	$(PROGRESS) "TEST"
 	./tools/run-and-check.py $(RUNCHECKFLAGS) "$(EXPECTED)" -- $(MAKE) run
 
+unittest:
+	if [ "$(TARGET)" = "" ]; then \
+		echo "*** TARGET is not set"; \
+		echo "*** Example: make unittest TARGET=servers/apps/test"; \
+		exit 1; \
+	fi
+	$(MAKE) -f libs/unittest/unittest.mk test
+
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)
