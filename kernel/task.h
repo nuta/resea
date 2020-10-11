@@ -64,7 +64,7 @@ struct task {
     struct task *pager;
     /// The remaining time slice in ticks. If this value reaches 0, the kernel
     /// switches into the next task (so-called preemptive context switching).
-    unsigned quantum;
+    int quantum;
     /// The task priority. The lower value means higher priority. The scheduler
     /// always picks the runnable task with the highest priority. If there're
     /// multiple runnable tasks with the same highest priority, the kernel
