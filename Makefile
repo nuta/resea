@@ -21,7 +21,7 @@ ifeq ($(V),)
 endif
 
 # Determine if we need to load ".config".
-non_config_targets := defconfig olddefconfig menuconfig website book clean
+non_config_targets := defconfig olddefconfig menuconfig website book clean unittest
 load_config := y
 ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
 load_config :=
