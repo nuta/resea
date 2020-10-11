@@ -4,6 +4,7 @@
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/task.h>
+#include <resea/timer.h>
 #include <string.h>
 #include "elf.h"
 #include "bootfs.h"
@@ -79,6 +80,8 @@ void main(void) {
     task_init();
     spawn_servers();
 
+    timer_set(5000);
+
     // The mainloop: receive and handle messages.
     INFO("ready");
     while (true) {
@@ -96,6 +99,11 @@ void main(void) {
         bzero(&r, sizeof(r));
 
         switch (m.type) {
+            case NOTIFICATIONS_MSG:
+                if (m.notifications.data & NOTIFY_TIMER) {
+                    service_warn_deadlocked_tasks();
+                }
+                break;
             case ASYNC_MSG:
                 async_reply(m.src);
                 break;

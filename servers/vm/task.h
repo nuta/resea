@@ -51,6 +51,7 @@ void task_watch(struct task *watcher, struct task *task);
 void task_unwatch(struct task *watcher, struct task *task);
 void service_register(struct task *task, const char *name);
 task_t service_wait(struct task *task, const char *name);
+void service_warn_deadlocked_tasks(void);
 void task_init(void);
 
 #endif

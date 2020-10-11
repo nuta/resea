@@ -191,6 +191,19 @@ task_t service_wait(struct task *task, const char *name) {
     return ERR_WOULD_BLOCK;
 }
 
+void service_warn_deadlocked_tasks(void) {
+    for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
+        struct task *task = &tasks[i];
+        if (strlen(task->waiting_for) > 0) {
+            WARN(
+                "%s still waiting for a missing service '%s', "
+                "did you forgot to enable a server in the build config?",
+                task->name, task->waiting_for
+            );
+        }
+    }
+}
+
 struct task *vm_task = NULL;
 
 void task_init(void) {
