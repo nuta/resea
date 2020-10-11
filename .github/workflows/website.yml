@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
 
@@ -14,12 +14,9 @@ jobs:
         with:
           node-version: '12'
 
-      - name: Install apt packages
-        run: >
-          sudo apt-get update && sudo apt-get install -y cargo make
 
       - name: Install mdbook
-        run: cargo install mdbook
+        run: brew install mdbook
 
       - name: Build documentation
         run: make website
