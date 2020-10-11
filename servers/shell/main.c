@@ -108,6 +108,10 @@ static void read_input(void) {
                 cmdline_index = 0;
                 prompt("");
                 break;
+            // Escape sequence.
+            case 0x1b:
+                // TODO: Parse and handle the escape sequence.
+                break;
             // Backspace.
             case 0x7f:
                 if (cmdline_index > 0) {
