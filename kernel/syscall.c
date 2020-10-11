@@ -225,7 +225,13 @@ static error_t sys_vm_unmap(task_t tid, vaddr_t vaddr) {
 /// Writes log messages into the arch's console (typically a serial port) and
 /// the kernel log buffer.
 static error_t sys_console_write(__user const char *buf, size_t buf_len) {
-    char kbuf[256];
+    if (buf_len > 1024) {
+        WARN_DBG("console_write: too long buffer length");
+        DBG("%p %p", buf, buf_len);
+        return ERR_TOO_LARGE;
+    }
+
+    char kbuf[512];
     int remaining = buf_len;
     while (remaining > 0) {
         int copy_len = MIN(remaining, (int) sizeof(kbuf));
