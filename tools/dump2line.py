@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import subprocess
-import fileinput
+import sys
 import re
 
 def main():
@@ -12,7 +12,7 @@ def main():
         help="The executable.")
     args = parser.parse_args()
 
-    for line in fileinput.input():
+    for line in sys.stdin.readlines():
         m = re.match(r"^([0-9a-f]+):", line)
         if m:
             _, addrs = line.split(": ")
