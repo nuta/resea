@@ -8,10 +8,9 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
-      os: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
 
