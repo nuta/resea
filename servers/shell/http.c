@@ -79,17 +79,20 @@ static error_t resolve_url(const char *url, uint32_t *ip_addr, uint16_t *port, c
         *port = atoi(port_str);
     }
 
-    if (!isdigit(*host)) {
-        WARN_DBG("resolving a domain name is not yet implemented");
-        return ERR_INVALID_ARG;
+    if (isdigit(*host)) {
+        if (parse_ipaddr(host, ip_addr) != OK) {
+            WARN_DBG("failed to parse an ip address: '%s'", host);
+            return ERR_INVALID_ARG;
+        }
+    } else {
+        struct message m;
+        m.type = TCPIP_DNS_RESOLVE_MSG;
+        m.tcpip_dns_resolve.hostname = host;
+        ASSERT_OK(ipc_call(tcpip_server, &m));
+        *ip_addr = m.tcpip_dns_resolve_reply.addr;
     }
 
     // `s` now points to the path next to the first slash.
-    if (parse_ipaddr(host, ip_addr) != OK) {
-        WARN_DBG("failed to parse an ip address: '%s'", host);
-        return ERR_INVALID_ARG;
-    }
-
     *path = s;
     free(s_orig);
     return OK;
