@@ -54,3 +54,4 @@
 - [Build System](build-system.md)
 - [Boot FS](bootfs.md)
 - [Changelog](changelog.md)
+- [Conding Style Guides](coding-styles.md)
