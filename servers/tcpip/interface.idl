@@ -1,12 +1,12 @@
 namespace tcpip {
-    rpc register_device(macaddr: u8[6]) -> ();
-    rpc connect(dst_addr: u32, dst_port: u16) -> (handle: handle);
-    rpc listen(port: u16, backlog: int) -> (handle: handle);
+    rpc register_device(macaddr: uint8[6]) -> ();
+    rpc connect(dst_addr: uint32, dst_port: uint16) -> (handle: handle);
+    rpc listen(port: uint16, backlog: int) -> (handle: handle);
     rpc close(handle: handle) -> ();
     rpc write(handle: handle, data: bytes) -> ();
     rpc read(handle: handle, len: size) -> (data: bytes);
     rpc accept(handle: handle) -> (new_handle: handle);
-    rpc dns_resolve(hostname: str) -> (addr: u32);
+    rpc dns_resolve(hostname: str) -> (addr: uint32);
     oneway closed(handle: handle);
     oneway received(handle: handle);
     oneway new_client(handle: handle);

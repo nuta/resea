@@ -28,7 +28,7 @@ namespace task {
     rpc launch(name_and_cmdline: str) -> (task: task);
     rpc watch(task: task) -> ();
     rpc unwatch(task: task) -> ();
-    async exited(task: task);
+    async oneway exited(task: task);
 }
 
 namespace ool {

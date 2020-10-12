@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
+import sys
 import argparse
 import jinja2
 from glob import glob
 from lark import Lark
+from lark.exceptions import LarkError
+from colorama import Fore, Back, Style
+
+class ParseError(Exception):
+    def __init__(self, message, hint=None):
+        self.message = message
+        self.hint = hint
 
 next_msg_id = 1
 class IDLParser:
@@ -11,6 +19,8 @@ class IDLParser:
         self.typedefs = []
         self.consts = []
         self.enums = []
+        self.message_context = None
+        self.namespace_contexts = [None]
 
     def parse(self, path):
         parser = Lark("""
@@ -39,9 +49,10 @@ class IDLParser:
             enum_item: NAME "=" CONST
             include_stmt: "include" PATH ";"
             namespace_def: "namespace" NAME "{" stmts "}"
-            msg_def: modifiers? NAME "(" fields ")" ["->" "(" fields ")"] ";"
+            msg_def: modifiers? MSG_TYPE NAME "(" fields ")" ["->" "(" fields ")"] ";"
             modifiers: MODIFIER*
-            MODIFIER: "rpc" | "oneway" | "async"
+            MSG_TYPE: "rpc" | "oneway"
+            MODIFIER: "async"
             fields: (field ("," field)*)?
             field: NAME ":" type
             type: NAME ("[" NATINT "]")?
@@ -58,12 +69,26 @@ class IDLParser:
             "enums": self.enums,
         }
 
+    def current_ctx(self):
+        ns_name = self.namespace_contexts[-1]
+        if ns_name is None:
+            ctx = "(root)"
+        else:
+            ctx = ns_name
+
+        if self.message_context is not None:
+            ctx += f".{self.message_context}"
+
+        return ctx
+
     def visit_stmt(self, namespace, tree):
         assert tree.data == "stmt"
         if tree.children[0].data == "namespace_def":
             name = tree.children[0].children[0].value
+            self.namespace_contexts.append(name)
             for stmt in tree.children[0].children[1].children:
                 self.visit_stmt(name, stmt)
+            self.namespace_contexts.pop()
         elif tree.children[0].data == "msg_def":
             msg_def = self.visit_msg_def(tree.children[0])
             msg_def["namespace"] = namespace
@@ -128,20 +153,27 @@ class IDLParser:
     def visit_msg_def(self, tree):
         global next_msg_id
         assert tree.data == "msg_def"
+        name = tree.children[2].value
+        self.message_context = name
+
         modifiers = list(map(lambda x: x.value, tree.children[0].children))
-        name = tree.children[1].value
-        args = self.visit_fields(tree.children[2].children)
+        msg_type = tree.children[1].value
+        name = tree.children[2].value
+        args = self.visit_fields(tree.children[3].children)
         args_id = next_msg_id
         next_msg_id += 1
 
-        is_oneway = "oneway" in modifiers or "async" in modifiers
-        if len(tree.children) > 3:
-            rets = self.visit_fields(tree.children[3].children)
+        is_oneway = "oneway" == msg_type or "async" in modifiers
+        if len(tree.children) > 4:
+            rets = self.visit_fields(tree.children[4].children)
             rets_id = next_msg_id
             next_msg_id += 1
         else:
             if not is_oneway:
-                raise Exception(f"{name}: return values is not specified")
+                raise ParseError(
+                    f"{self.current_ctx()}: return values is not specified",
+                    "Add '-> ()' or consider defining it as 'oneway' message"
+                )
             rets = []
             rets_id = None
 
@@ -150,10 +182,12 @@ class IDLParser:
             "rets_id": rets_id,
             "name": name,
             "oneway": is_oneway,
+            "msg_type": msg_type,
             "args": args,
             "rets": rets,
         }
 
+        self.message_context = None
         return msg_def
 
     def visit_fields(self, trees):
@@ -163,7 +197,10 @@ class IDLParser:
             field = self.visit_field(tree)
             if self.is_ool_field_type(field["type"]["name"]):
                 if ool_field:
-                    raise Exception(f"{name}: multiple ool fields are not allowed: {ool_field['name']}, {field['name']}")
+                    raise ParseError(
+                        f"{self.current_ctx()}: Multiple ool fields (bytes or str) are not allowed: "
+                            f"{ool_field['name']}, {field['name']}",
+                    )
                 ool_field = field
                 ool_field["is_str"] = field["type"]["name"] == "str"
             else:
@@ -196,22 +233,28 @@ class IDLParser:
 def c_generator(args, idl):
     user_types = {}
     builtins = dict(
-        str="const char *",
-        bytes="const void *",
+        str="char *",
+        bytes="void *",
         char="char",
         bool="bool",
         int="int",
         task="task_t",
         uint="unsigned",
-        i8="int8_t",
-        i16="int16_t",
-        i32="int32_t",
-        i64="int64_t",
-        u8="uint8_t",
-        u16="uint16_t",
-        u32="uint32_t",
-        u64="uint64_t",
+        int8="int8_t",
+        int16="int16_t",
+        int32="int32_t",
+        int64="int64_t",
+        uint8="uint8_t",
+        uint16="uint16_t",
+        uint32="uint32_t",
+        uint64="uint64_t",
         size="size_t",
+        offset="offset_t",
+        notifications="notifications_t",
+        vaddr="vaddr_t",
+        paddr="paddr_t",
+        trap_frame="trap_frame_t",
+        handle="handle_t",
         exception_type="enum exception_type",
     )
 
@@ -233,7 +276,12 @@ def c_generator(args, idl):
             else:
                 assert False # unreachable
         else:
-            return builtins.get(type_["name"], f"{type_['name']}_t")
+            resolved_type = builtins.get(type_["name"])
+            if resolved_type is None:
+                raise ParseError(
+                    f"Uknown data type: '{type_['name']}'"
+                )
+            return resolved_type
 
     def field_def(field, ns):
         type_ = field["type"]
@@ -312,9 +360,9 @@ enum {{ e | enum_name }} {{ "{" }}
 struct {{ msg | msg_name }}_fields {{ "{" }}
 {%- if msg.args.ool %}
     {%- if msg.args.ool.is_str %}
-    const char *{{ msg.args.ool.name }};
+    char *{{ msg.args.ool.name }};
     {% else %}
-    const void *{{ msg.args.ool.name }};
+    void *{{ msg.args.ool.name }};
     {% endif %}
     size_t {{ msg.args.ool.name }}_len;
 {% endif %}
@@ -327,9 +375,9 @@ struct {{ msg | msg_name }}_fields {{ "{" }}
 struct {{ msg | msg_name }}_reply_fields {{ "{" }}
 {%- if msg.rets.ool %}
     {%- if msg.rets.ool.is_str %}
-    const char *{{ msg.rets.ool.name }};
+    char *{{ msg.rets.ool.name }};
     {% else %}
-    const void *{{ msg.rets.ool.name }};
+    void *{{ msg.rets.ool.name }};
     {% endif %}
     size_t {{ msg.rets.ool.name }}_len;
 {% endif %}
@@ -400,9 +448,17 @@ def main():
         help="The output directory.")
     args = parser.parse_args()
 
-    idl = IDLParser().parse(args.idl)
-    if args.lang == "c":
-        c_generator(args, idl)
+    try:
+        idl = IDLParser().parse(args.idl)
+        if args.lang == "c":
+            c_generator(args, idl)
+    except ParseError as e:
+        print(f"genidl: {Fore.RED}{Style.BRIGHT}error:{Fore.RESET} {e.message}{Style.RESET_ALL}")
+        if e.hint is not None:
+            print(f"{Fore.YELLOW}{Style.BRIGHT}    | Hint:{Fore.RESET} {e.hint}{Style.RESET_ALL}")
+        sys.exit(1)
+    except LarkError as e:
+        print(f"genidl: {Style.BRIGHT}{Fore.RED}error:{Fore.RESET} {e}{Style.RESET_ALL}")
 
 if __name__ == "__main__":
     main()
