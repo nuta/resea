@@ -11,7 +11,7 @@ static void send(handle_t handle, const uint8_t *buf, size_t len) {
     struct message m;
     m.type = TCPIP_WRITE_MSG;
     m.tcpip_write.handle = handle;
-    m.tcpip_write.data = buf;
+    m.tcpip_write.data = (void *) buf;
     m.tcpip_write.data_len = len;
     ASSERT_OK(ipc_call(tcpip_server, &m));
 }

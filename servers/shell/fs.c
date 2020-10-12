@@ -58,7 +58,7 @@ void fs_write(const char *path, const uint8_t *buf, size_t len) {
     m.type = FS_WRITE_MSG;
     m.fs_write.handle = handle;
     m.fs_write.offset = 0;
-    m.fs_write.data = buf;
+    m.fs_write.data = (void *) buf;
     m.fs_write.data_len = len;
     err = ipc_call(fs_server, &m);
     if (IS_ERROR(err)) {
