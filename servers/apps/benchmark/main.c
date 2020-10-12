@@ -106,7 +106,7 @@ void main(void) {
         ipc_call(INIT_TASK, &m);
         iters[i] = cycle_counter() - start;
         ASSERT(m.type == BENCHMARK_NOP_WITH_OOL_REPLY_MSG);
-        free((void *) m.benchmark_nop_with_ool_reply.data);
+        free(m.benchmark_nop_with_ool_reply.data);
     }
     print_stats("IPC round-trip (with 1-byte ool)", iters, NUM_ITERS);
 
@@ -128,7 +128,7 @@ void main(void) {
         ipc_call(INIT_TASK, &m);
         iters[i] = cycle_counter() - start;
         ASSERT(m.type == BENCHMARK_NOP_WITH_OOL_REPLY_MSG);
-        free((void *) m.benchmark_nop_with_ool_reply.data);
+        free(m.benchmark_nop_with_ool_reply.data);
     }
     print_stats("IPC round-trip (with PAGE_SIZE-sized ool)", iters, NUM_ITERS);
 

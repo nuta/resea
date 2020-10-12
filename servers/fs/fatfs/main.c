@@ -22,7 +22,7 @@ void blk_write(size_t sector, const void *buf, size_t num_sectors) {
     struct message m;
     m.type = BLK_WRITE_MSG;
     m.blk_write.sector = sector;
-    m.blk_write.data = buf;
+    m.blk_write.data = (void *) buf;
     m.blk_write.data_len = num_sectors * SECTOR_SIZE;
     error_t err = ipc_call(ramdisk_server, &m);
     ASSERT(IS_OK(err));

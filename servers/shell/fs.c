@@ -35,7 +35,7 @@ void fs_read(const char *path) {
         }
 
         DBG("%s", m.fs_read_reply.data);
-        free((void *) m.fs_read_reply.data);
+        free(m.fs_read_reply.data);
         offset += PAGE_SIZE;
     }
 }

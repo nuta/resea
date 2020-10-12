@@ -155,7 +155,7 @@ void main(void) {
                 ipc_reply(m.src, &r);
                 break;
             case BENCHMARK_NOP_WITH_OOL_MSG:
-                free((void *) m.benchmark_nop_with_ool.data);
+                free(m.benchmark_nop_with_ool.data);
                 r.type = BENCHMARK_NOP_WITH_OOL_REPLY_MSG;
                 r.benchmark_nop_with_ool_reply.data = "reply!";
                 r.benchmark_nop_with_ool_reply.data_len = 7;
@@ -209,14 +209,14 @@ void main(void) {
             }
             case DISCOVERY_SERVE_MSG: {
                 service_register(caller, m.discovery_serve.name);
-                free((void *) m.discovery_serve.name);
+                free(m.discovery_serve.name);
                 r.type = DISCOVERY_SERVE_REPLY_MSG;
                 ipc_reply(m.src, &r);
                 break;
             }
             case DISCOVERY_LOOKUP_MSG: {
                 task_t server = service_wait(caller, m.discovery_lookup.name);
-                free((void *) m.discovery_lookup.name);
+                free(m.discovery_lookup.name);
                 if (IS_OK(server)) {
                     r.type = DISCOVERY_LOOKUP_REPLY_MSG;
                     r.discovery_lookup_reply.task = server;

@@ -23,7 +23,7 @@ static void transmit(void) {
     ASSERT_OK(async_recv(tcpip_tid, &m));
     ASSERT(m.type == NET_TX_MSG);
     e1000_transmit(m.net_tx.payload, m.net_tx.payload_len);
-    free((void *) m.net_tx.payload);
+    free(m.net_tx.payload);
 }
 
 void main(void) {

@@ -283,7 +283,7 @@ void main(void) {
 
                 tcp_write(c->sock, m.tcpip_write.data, m.tcpip_write.data_len);
                 ipc_send_err(m.src, OK);
-                free((void *) m.tcpip_write.data);
+                free(m.tcpip_write.data);
                 break;
             }
             case TCPIP_CLOSE_MSG: {
@@ -307,7 +307,7 @@ void main(void) {
                 req->task = m.src;
                 list_push_back(&dns_requests, &req->next);
                 dns_query(req->id, m.tcpip_dns_resolve.hostname);
-                free((void *) m.tcpip_dns_resolve.hostname);
+                free(m.tcpip_dns_resolve.hostname);
                 break;
             }
             case NET_RX_MSG: {
@@ -317,7 +317,7 @@ void main(void) {
                 }
 
                 ethernet_receive(driver->device, m.net_rx.payload, m.net_rx.payload_len);
-                free((void *) m.net_rx.payload);
+                free(m.net_rx.payload);
                 dhcp_receive();
                 dns_receive();
                 break;

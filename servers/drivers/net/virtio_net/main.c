@@ -81,7 +81,7 @@ static void transmit(void) {
 
     // Kick the device.
     virtio->virtq_kick_desc(tx_virtq, index);
-    free((void *) m.net_tx.payload);
+    free(m.net_tx.payload);
 }
 
 void main(void) {

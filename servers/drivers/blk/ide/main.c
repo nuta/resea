@@ -83,7 +83,7 @@ void main(void) {
             }
             case BLK_WRITE_MSG: {
                 error_t err = ide_write(m.blk_write.sector, m.blk_write.data, m.blk_write.data_len);
-                free((void *) m.blk_write.data);
+                free(m.blk_write.data);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;

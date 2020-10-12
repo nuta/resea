@@ -123,7 +123,7 @@ void main(void) {
         switch (m.type) {
             case FS_OPEN_MSG: {
                 struct file *file = open(m.fs_open.path);
-                free((void *) m.fs_open.path);
+                free(m.fs_open.path);
                 if (!file) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;
@@ -138,7 +138,7 @@ void main(void) {
             }
             case FS_STAT_MSG: {
                 struct file *file = open(m.fs_stat.path);
-                free((void *) m.fs_stat.path);
+                free(m.fs_stat.path);
                 if (!file) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;

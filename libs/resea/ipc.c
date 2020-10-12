@@ -174,14 +174,14 @@ error_t ipc_replyrecv(task_t dst, struct message *m) {
 error_t ipc_serve(const char *name) {
     struct message m;
     m.type = DISCOVERY_SERVE_MSG;
-    m.discovery_serve.name = name;
+    m.discovery_serve.name = (char *) name;
     return ipc_call_pager(&m);
 }
 
 task_t ipc_lookup(const char *name) {
     struct message m;
     m.type = DISCOVERY_LOOKUP_MSG;
-    m.discovery_lookup.name = name;
+    m.discovery_lookup.name = (char *) name;
 
     error_t err = ipc_call_pager(&m);
     if (IS_ERROR(err)) {

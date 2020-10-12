@@ -90,7 +90,7 @@ static ssize_t driver_read(struct file *file, uint8_t *buf, size_t len) {
 
     ASSERT(m.type == FS_READ_REPLY_MSG);
     memcpy(buf, m.fs_read_reply.data, m.fs_read_reply.data_len);
-    free((void *) m.fs_read_reply.data);
+    free(m.fs_read_reply.data);
     file->pos += m.fs_read_reply.data_len;
     return m.fs_read_reply.data_len;
 }
