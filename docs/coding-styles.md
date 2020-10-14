@@ -1,4 +1,4 @@
-# Conding Style Guides
+# Coding Style Guides
 Please follow this style guide for consistency. Because a well-written coding
 style is boring to read, we are not strict with the coding styles.
 
