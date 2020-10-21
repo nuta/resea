@@ -43,6 +43,7 @@ static struct malloc_chunk *my_insert(void *ptr, size_t len) {
     }
     *chunk = new_chunk;
 
+    DBG("Inserted chunk of capacity %d", new_chunk->capacity);
     return new_chunk;
 }
 
@@ -54,6 +55,7 @@ static struct malloc_chunk *my_split(struct malloc_chunk *chunk, size_t len) {
         &chunk->data[chunk->capacity + MALLOC_REDZONE_LEN - new_chunk_len];
     chunk->capacity -= new_chunk_len;
 
+    DBG("%d", MALLOC_FRAME_LEN);
     ASSERT(len > MALLOC_FRAME_LEN);
 
     struct malloc_chunk *new_chunk = new_chunk_ptr;
@@ -86,6 +88,7 @@ void *my_malloc(size_t size) {
     if (!size) {
         size = 1;
     }
+    DBG("Inside malloc");
 
     // Align up to 16-bytes boundary. If the size is less than 16 (including
     // size == 0), allocate 16 bytes.
@@ -111,6 +114,7 @@ void *my_malloc(size_t size) {
                    MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
 
             chunks[chunk_num] = allocated->next;
+            DBG("Allocated chunk of fixed sze");
             return allocated->data;
         }
 
@@ -142,9 +146,11 @@ void *my_malloc(size_t size) {
 
         struct malloc_chunk *allocated = NULL;
         if (chunk->capacity > size + MALLOC_FRAME_LEN) {
+            DBG("Splitting a large chunk");
             allocated = my_split(chunk, size);
         } else if (chunk->capacity >= size) {
             allocated = chunk;
+            DBG("Taking a chunk from last list");
             // Remove chunk from the linked list
             prev->next = chunk->next;
         }
@@ -222,4 +228,5 @@ char *my_strdup(const char *s) {
 
 void my_malloc_init(void) {
     my_insert(__heap, (size_t) __heap_end - (size_t) __heap);
+    DBG("%d", (size_t) __heap_end - (size_t) __heap);
 }
