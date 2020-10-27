@@ -43,7 +43,7 @@ static struct malloc_chunk *my_insert(void *ptr, size_t len) {
     }
     *chunk = new_chunk;
 
-    DBG("Inserted chunk of capacity %d", new_chunk->capacity);
+    DBG("Inserted chunk of capacity %d to the last list", new_chunk->capacity);
     return new_chunk;
 }
 
@@ -55,15 +55,16 @@ static struct malloc_chunk *my_split(struct malloc_chunk *chunk, size_t len) {
         &chunk->data[chunk->capacity + MALLOC_REDZONE_LEN - new_chunk_len];
     chunk->capacity -= new_chunk_len;
 
-    DBG("%d", MALLOC_FRAME_LEN);
-    ASSERT(len > MALLOC_FRAME_LEN);
+    // DBG("%d", MALLOC_FRAME_LEN);
+    ASSERT(new_chunk_len > MALLOC_FRAME_LEN);
 
     struct malloc_chunk *new_chunk = new_chunk_ptr;
     new_chunk->magic = MALLOC_FREE;
-    new_chunk->capacity = len - MALLOC_FRAME_LEN;
+    new_chunk->capacity = len;
     new_chunk->size = 0;
     new_chunk->next = NULL;
 
+    DBG("Going out of split");
     return new_chunk;
     // return insert(new_chunk, new_chunk_len);
 }
@@ -88,11 +89,12 @@ void *my_malloc(size_t size) {
     if (!size) {
         size = 1;
     }
+
     DBG("Inside malloc");
 
     // Align up to 16-bytes boundary. If the size is less than 16 (including
     // size == 0), allocate 16 bytes.
-    // size = ALIGN_UP(size, 16);
+    size = ALIGN_UP(size, 16);
 
     size_t chunk_num = my_get_chunk_number_from_size(size);
 
@@ -114,7 +116,7 @@ void *my_malloc(size_t size) {
                    MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
 
             chunks[chunk_num] = allocated->next;
-            DBG("Allocated chunk of fixed sze");
+            DBG("Allocated chunk of fixed size");
             return allocated->data;
         }
 
@@ -152,16 +154,22 @@ void *my_malloc(size_t size) {
             allocated = chunk;
             DBG("Taking a chunk from last list");
             // Remove chunk from the linked list
-            prev->next = chunk->next;
+            if (prev) {  // If it was not at the head of the list
+                prev->next = chunk->next;
+            } else {  // If it was at the head of the list
+                chunks[NUM_CHUNKS - 1] = chunks[NUM_CHUNKS - 1]->next;
+            }
         }
 
         if (allocated) {
+            DBG("Yes allocated");
             allocated->magic = MALLOC_IN_USE;
             allocated->size = size;
             memset(allocated->underflow_redzone, MALLOC_REDZONE_UNDFLOW_MARKER,
                    MALLOC_REDZONE_LEN);
             memset(&allocated->data[allocated->capacity],
                    MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
+            DBG("Survived memset");
             allocated->next = NULL;
             return allocated->data;
         }
