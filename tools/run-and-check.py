@@ -42,12 +42,12 @@ def main():
         timed_out = False
 
     stdout = scrub_stdout(p.stdout.read().decode("utf-8", "backslashreplace"))
-    if timed_out:
+    if args.expected not in stdout:
         print(stdout)
-        error("timed out")
-    elif args.expected not in stdout:
-        print(stdout)
-        error(f"'{args.expected}' is not in stdout")
+        if timed_out:
+            error("timed out")
+        else:
+            error(f"'{args.expected}' is not in stdout")
     else:
         if not args.quiet:
             print(stdout)

@@ -79,4 +79,4 @@ jobs:
 
       - name: Test
         run: |
-          EXPECTED="${{ matrix.EXPECTED }}" make -j2 test
+          EXPECTED="${{ matrix.EXPECTED }}" make -j2 test RUNCHECKFLAGS="--timeout 60"
