@@ -12,12 +12,18 @@ def scrub_stdout(stdout):
         .replace("\x1b\x63", "") \
         .replace("\x1b[2J", "").strip()
 
+def error(message):
+    print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: {message}{Style.RESET_ALL}")
+    sys.exit(1)
+
+def success(message):
+    print(f"{Fore.GREEN}{Style.BRIGHT}run-and-check.py: {message}{Style.RESET_ALL}")
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run a command and check its output contains an expected string.")
     parser.add_argument("--timeout", type=int, default=16)
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("--always-exit-with-zero", action="store_true")
     parser.add_argument("expected", help="The expected string in the output.")
     parser.add_argument("argv", nargs="+", help="The command.")
     args = parser.parse_args()
@@ -31,20 +37,21 @@ def main():
         p.wait(args.timeout)
     except subprocess.TimeoutExpired as e:
         os.killpg(os.getpgid(p.pid), signal.SIGTERM)
-        print(f"{Fore.YELLOW}{Style.BRIGHT}run-and-check.py: timed out:{Style.RESET_ALL}")
+        timed_out = True
+    else:
+        timed_out = False
 
     stdout = scrub_stdout(p.stdout.read().decode("utf-8", "backslashreplace"))
-    if args.expected not in stdout:
+    if timed_out:
         print(stdout)
-        print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: " +
-            f"'{args.expected}' is not in stdout:{Style.RESET_ALL}")
-
-        if not args.always_exit_with_zero:
-            sys.exit(1)
+        error("timed out")
+    elif args.expected not in stdout:
+        print(stdout)
+        error(f"'{args.expected}' is not in stdout")
     else:
         if not args.quiet:
             print(stdout)
-            print(f"{Fore.GREEN}{Style.BRIGHT}run-and-check.py: OK{Style.RESET_ALL}")
+            success("OK")
 
 if __name__ == "__main__":
     main()
