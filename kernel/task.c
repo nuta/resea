@@ -17,16 +17,6 @@ static list_t runqueues[TASK_PRIORITY_MAX];
 /// IRQ owners.
 static struct task *irq_owners[IRQ_MAX];
 
-#ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
-/// How each memory page is being used:
-///
-///   value < 0   Used for the kernel's internal data structures (page tables).
-///   value = 0   Currently unused.
-///   value > 0   Indicates # of tasks that map the memory page.
-///
-static int page_usages[CONFIG_MAX_MAPPABLE_ADDR / PAGE_SIZE];
-#endif
-
 static void enqueue_task(struct task *task) {
     list_push_back(&runqueues[task->priority], &task->runqueue_next);
 }
@@ -278,6 +268,9 @@ error_t task_unlisten_irq(unsigned irq) {
 
 /// Maps a memory page in the task's virtual memory space. `kpage` is a memory
 /// page which provides a memory page for arch-specific page table structures.
+///
+/// Please note that this is the most DANGEROUS operation in system calls. A user
+/// task can map the whole physical memory space including the kernel data area.
 __mustuse error_t vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
                                 paddr_t kpage, unsigned flags) {
     DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
@@ -290,53 +283,8 @@ __mustuse error_t vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
         return ERR_NOT_ACCEPTABLE;
     }
 
-#ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
-    // Disallow using pages that is not tracked in `page_usages`.
-    if (paddr >= CONFIG_MAX_MAPPABLE_ADDR) {
-        WARN_DBG("paddr %p is beyond CONFIG_MAX_MAPPABLE_ADDR", paddr);
-        return ERR_NOT_ACCEPTABLE;
-    }
-
-    // Disallow using pages that is not tracked in `page_usages`.
-    if (kpage >= CONFIG_MAX_MAPPABLE_ADDR) {
-        WARN_DBG("kpage %p is beyond CONFIG_MAX_MAPPABLE_ADDR", kpage);
-        return ERR_NOT_ACCEPTABLE;
-    }
-
-    int *paddr_usage = &page_usages[paddr / PAGE_SIZE];
-    int *kpage_usage = &page_usages[kpage / PAGE_SIZE];
-
-    // Prevent modifying memory contents in `kpage` from the userspace as it
-    // allows mapping the kernel memory.
-    if (*kpage_usage != 0 && *kpage_usage != 1) {
-        WARN_DBG("kpage %p is in use (usage=%d)", kpage, *kpage_usage);
-        return ERR_IN_USE;
-    }
-
-    // If the usage is negative, it is being used for a kernel's internal data
-    // structure. Disallow that to prevent accessing the kernel memory.
-    if (*paddr_usage < 0) {
-        WARN_DBG("paddr %p is in use as a kernel page (usage=%d)", paddr, *paddr_usage);
-        return ERR_IN_USE;
-    }
-#endif
-
     // Looks that the mapping is not malicious. Update the page table.
-    error_t err = arch_vm_map(task, vaddr, paddr, kpage, flags);
-
-#ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
-    if (err == ERR_TRY_AGAIN || err == OK) {
-        // The arch spent `kpage` for an its internal data sturcture. Mark it
-        // as an in-kernel page.
-        *kpage_usage = -1;
-        if (err == OK) {
-            // The paddr has been mapped. Update its reference count.
-            *paddr_usage += 1;
-        }
-    }
-#endif
-
-    return err;
+    return arch_vm_map(task, vaddr, paddr, kpage, flags);
 }
 
 /// Unmaps a memory page from the task's virtual memory space.
@@ -348,17 +296,7 @@ error_t vm_unmap(struct task *task, vaddr_t vaddr) {
         return ERR_NOT_FOUND;
     }
 
-    error_t err = arch_vm_unmap(task, vaddr);
-
-#ifdef CONFIG_DENY_KERNEL_MEMORY_ACCESS
-    if (err == OK) {
-        int *paddr_usage = &page_usages[paddr / PAGE_SIZE];
-        DEBUG_ASSERT(*paddr_usage > 0);
-        *paddr_usage -= 1;
-    }
-#endif
-
-    return err;
+    return arch_vm_unmap(task, vaddr);
 }
 
 /// Handles timer interrupts. The timer fires this handler every 1/TICK_HZ
