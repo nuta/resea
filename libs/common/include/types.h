@@ -10,9 +10,22 @@ typedef unsigned short uint16_t;
 typedef unsigned uint32_t;
 typedef unsigned long long uint64_t;
 
+#ifdef __LP64__
+typedef int64_t intmax_t;
+typedef uint64_t uintmax_t;
+#else
+typedef int32_t intmax_t;
+typedef uint32_t uintmax_t;
+#endif
+
+typedef uintmax_t size_t;
+typedef uintmax_t paddr_t;
+typedef uintmax_t vaddr_t;
+typedef uintmax_t uintptr_t;
+typedef intmax_t ptrdiff_t;
+typedef uintmax_t offset_t;
 typedef int task_t;
 typedef long handle_t;
-
 typedef long msec_t;
 #define MSEC_MAX 0xffffffff
 
@@ -160,8 +173,5 @@ enum exception_type {
 #define INIT_TASK 1
 
 #include <arch_types.h>
-
-typedef uintmax_t uintptr_t;
-typedef intmax_t ptrdiff_t;
 
 #endif
