@@ -26,7 +26,7 @@ endif
 run: $(kernel_image)
 	cp $(kernel_image) $(BUILD_DIR)/resea.qemu.elf
 	./tools/make-bootable-on-qemu.py $(BUILD_DIR)/resea.qemu.elf
-	$(PROGRESS) "RUN"
+	$(PROGRESS) "RUN" $<
 	$(QEMU) $(QEMUFLAGS) -kernel $(BUILD_DIR)/resea.qemu.elf
 
 .PHONY: bochs

@@ -157,7 +157,7 @@ lint: $(BUILD_DIR)/compile_commands.json
 EXPECTED ?= Passed all tests
 .PHONY: test
 test: $(kernel_image)
-	$(PROGRESS) "TEST"
+	$(PROGRESS) "TEST" 'EXPECTED="$(EXPECTED)"'
 	./tools/run-and-check.py $(RUNCHECKFLAGS) "$(EXPECTED)" -- $(MAKE) run
 
 unittest:
