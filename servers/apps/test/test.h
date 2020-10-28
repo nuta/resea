@@ -1,5 +1,6 @@
 #ifndef __TEST_H__
 #define __TEST_H__
+// #include <print_macros.h>
 
 extern int failed;
 
@@ -11,9 +12,8 @@ extern int failed;
         }                                                                      \
     } while (0)
 
-
 void ipc_test(void);
 void libcommon_test(void);
 void libresea_test(void);
-
+void malloc_test(void);
 #endif
