@@ -1,5 +1,14 @@
 # Change Log
 
+## v0.6.0 (Oct 30, 2020)
+- Add [unit testing framework](https://resea.org/docs/userspace/unit-test.html) (experimental).
+- Add the ATA (PIO mode) disk driver (`servers/drivers/blk/ide`).
+- fatfs: Support writing into a file.
+- tcpip: Implement the DNS client.
+- kernel: Isolate machine-specific code.
+- kernel/x64: Mitigate the CPU high usage caused by timer interrupts.
+- Reorganize and refactor IDL definitions.
+
 ## v0.5.0 (Oct 3, 2020)
 - Support bare-metal Raspberry Pi 3B+. Resea now boots on *real* Raspberry Pi!
 - Support Google Compute Engine: A HTTP server (`servers/apps/webapi`) on Resea works in the cloud!
