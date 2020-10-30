@@ -1,17 +1,8 @@
 #ifndef __ARCH_TYPES_H__
 #define __ARCH_TYPES_H__
 
-#include <config.h>
-
 #define mb()    __asm__ __volatile__("mfence")
-
 #define CONSOLE_IRQ 4
-
-typedef uint64_t size_t;
-typedef int64_t intmax_t;
-typedef uint64_t uintmax_t;
-typedef uint64_t paddr_t;
-typedef uint64_t vaddr_t;
 
 typedef struct {
     uint64_t fsbase;
