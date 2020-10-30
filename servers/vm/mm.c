@@ -80,6 +80,8 @@ error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, unsigned flags
         vm_unmap(task->tid, vaddr);
     }
 
+    // Calls vm_map multiple times because the kernel needs multiple memory
+    // pages (kpage) for multi-level page table structures.
     while (true) {
         paddr_t kpage = alloc_pages(task, 0, 1);
         error_t err = vm_map(task->tid, vaddr, paddr, kpage, flags);
