@@ -1,8 +1,6 @@
 #ifndef __ARCH_TYPES_H__
 #define __ARCH_TYPES_H__
 
-#include <config.h>
-
 #define mb()    __asm__ __volatile__("mfence")
 #define CONSOLE_IRQ 4
 
