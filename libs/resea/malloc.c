@@ -43,7 +43,6 @@ static struct malloc_chunk *insert(void *ptr, size_t len) {
     }
     *chunk = new_chunk;
 
-    DBG("Inserted chunk of capacity %d to the last list", new_chunk->capacity);
     return new_chunk;
 }
 
@@ -55,7 +54,6 @@ static struct malloc_chunk *split(struct malloc_chunk *chunk, size_t len) {
         &chunk->data[chunk->capacity + MALLOC_REDZONE_LEN - new_chunk_len];
     chunk->capacity -= new_chunk_len;
 
-    // DBG("%d", MALLOC_FRAME_LEN);
     ASSERT(new_chunk_len > MALLOC_FRAME_LEN);
 
     struct malloc_chunk *new_chunk = new_chunk_ptr;
@@ -64,9 +62,7 @@ static struct malloc_chunk *split(struct malloc_chunk *chunk, size_t len) {
     new_chunk->size = 0;
     new_chunk->next = NULL;
 
-    // DBG("Going out of split");
     return new_chunk;
-    // return insert(new_chunk, new_chunk_len);
 }
 
 size_t get_chunk_number_from_size(size_t size) {
@@ -90,8 +86,6 @@ void *malloc(size_t size) {
         size = 1;
     }
 
-    DBG("Requested %d bytes", size);
-
     // Align up to 16-bytes boundary. If the size is less than 16 (including
     // size == 0), allocate 16 bytes.
     size = ALIGN_UP(size, 16);
@@ -100,13 +94,9 @@ void *malloc(size_t size) {
 
     if (chunk_num < NUM_CHUNKS - 1) {
         // Check the list corresponding to that size for a free chunk
-        // for (struct malloc_chunk *chunk = chunks[chunk_num]; chunk;
-        //      chunk = chunk->next) {
         if (chunks[chunk_num] != NULL) {
             struct malloc_chunk *allocated = chunks[chunk_num];
             ASSERT(allocated->magic == MALLOC_FREE);
-
-            // struct malloc_chunk *allocated = chunk;
 
             allocated->magic = MALLOC_IN_USE;
             allocated->size = size;
@@ -116,43 +106,19 @@ void *malloc(size_t size) {
                    MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
 
             chunks[chunk_num] = allocated->next;
-            DBG("Allocated existing chunk of %d size", size);
             return allocated->data;
         }
-
-        // if (chunk->capacity > size + MALLOC_FRAME_LEN) {
-        //     allocated = split(chunk, size);
-        // } else if (chunk->capacity >= size) {
-        //     allocated = chunk;
-        // }
-
-        // if (allocated) {
-        //     allocated->magic = MALLOC_IN_USE;
-        //     allocated->size = size;
-        //     memset(allocated->underflow_redzone,
-        //     MALLOC_REDZONE_UNDFLOW_MARKER,
-        //            MALLOC_REDZONE_LEN);
-        //     memset(&allocated->data[allocated->capacity],
-        //            MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
-        //     return allocated->data;
-        // }
-        // }
     }
     struct malloc_chunk *prev = NULL;
     for (struct malloc_chunk *chunk = chunks[NUM_CHUNKS - 1]; chunk;
          chunk = chunk->next) {
         ASSERT(chunk->magic == MALLOC_FREE);
-        // if (chunk->magic != MALLOC_FREE) {
-        //     continue;
-        // }
 
         struct malloc_chunk *allocated = NULL;
         if (chunk->capacity > size + MALLOC_FRAME_LEN) {
-            DBG("Splitting a large chunk");
             allocated = split(chunk, 1 << chunk_num);
         } else if (chunk->capacity >= size) {
             allocated = chunk;
-            DBG("Taking a chunk from last list");
             // Remove chunk from the linked list
             if (prev) {  // If it was not at the head of the list
                 prev->next = chunk->next;
@@ -162,14 +128,12 @@ void *malloc(size_t size) {
         }
 
         if (allocated) {
-            // DBG("Yes allocated");
             allocated->magic = MALLOC_IN_USE;
             allocated->size = size;
             memset(allocated->underflow_redzone, MALLOC_REDZONE_UNDFLOW_MARKER,
                    MALLOC_REDZONE_LEN);
             memset(&allocated->data[allocated->capacity],
                    MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
-            DBG("Allocated %d", allocated->capacity);
             allocated->next = NULL;
             return allocated->data;
         }
@@ -193,7 +157,6 @@ void free(void *ptr) {
         return;
     }
     struct malloc_chunk *chunk = get_chunk_from_ptr(ptr);
-    DBG("Free %d", chunk->capacity);
     if (chunk->magic == MALLOC_FREE) {
         PANIC("double-free bug!");
     }
@@ -211,7 +174,6 @@ void *realloc(void *ptr, size_t size) {
         return malloc(size);
     }
 
-    DBG("Realloc request");
     struct malloc_chunk *chunk = get_chunk_from_ptr(ptr);
     if (chunk->capacity <= size) {
         // There's enough room. Keep using the current chunk.
@@ -237,5 +199,4 @@ char *strdup(const char *s) {
 
 void malloc_init(void) {
     insert(__heap, (size_t) __heap_end - (size_t) __heap);
-    DBG("%d", (size_t) __heap_end - (size_t) __heap);
 }
