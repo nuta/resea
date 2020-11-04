@@ -1,6 +1,6 @@
 #ifndef __TEST_H__
 #define __TEST_H__
-// #include <print_macros.h>
+#include <print_macros.h>
 
 extern int failed;
 
