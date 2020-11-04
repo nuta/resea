@@ -65,7 +65,7 @@ static struct malloc_chunk *split(struct malloc_chunk *chunk, size_t len) {
     return new_chunk;
 }
 
-size_t get_chunk_number_from_size(size_t size) {
+size_t get_chunk_index_from_size(size_t size) {
     // If requested size is less or equal to the size of second largest chunk
     // (the last fixed chunk)
     for (size_t i = 0; i < NUM_CHUNKS; i++) {
@@ -87,7 +87,7 @@ void *malloc(size_t size) {
     // size == 0), allocate 16 bytes.
     size = ALIGN_UP(size, 16);
 
-    size_t chunk_num = get_chunk_number_from_size(size);
+    size_t chunk_num = get_chunk_index_from_size(size);
 
     if (chunk_num < NUM_CHUNKS - 1) {
         // Check the list corresponding to that size for a free chunk
@@ -161,7 +161,7 @@ void free(void *ptr) {
     }
 
     chunk->magic = MALLOC_FREE;
-    size_t chunk_num = get_chunk_number_from_size(chunk->capacity);
+    size_t chunk_num = get_chunk_index_from_size(chunk->capacity);
 
     struct malloc_chunk *head = chunks[chunk_num];
     chunk->next = head;
