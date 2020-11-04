@@ -1,5 +1,5 @@
 #include <list.h>
-#include <resea/mymalloc.h>
+#include <resea/malloc.h>
 #include <resea/printf.h>
 #include <string.h>
 
