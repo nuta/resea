@@ -8,8 +8,6 @@ void malloc_test(void) {
     malloc_init();
     void *ptr[NUM_PTRS];
     memset(ptr, 0, sizeof(ptr));
-    TEST_ASSERT(
-        1 != 2);  // Sample test just to see if this test function is called
     int sz = 1;
 
     for (size_t i = 0; i < NUM_PTRS - 1; i++) {

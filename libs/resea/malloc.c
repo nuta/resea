@@ -73,9 +73,6 @@ size_t get_chunk_number_from_size(size_t size) {
             return i;
         }
     }
-    // if (size <= 1 << (NUM_CHUNKS - 2)) {
-    //     return ceil(log2(size));
-    // }
 
     // Return index of the last, dynamic-sized chunk
     return NUM_CHUNKS - 1;
@@ -109,6 +106,7 @@ void *malloc(size_t size) {
             return allocated->data;
         }
     }
+
     struct malloc_chunk *prev = NULL;
     for (struct malloc_chunk *chunk = chunks[NUM_CHUNKS - 1]; chunk;
          chunk = chunk->next) {
@@ -139,6 +137,7 @@ void *malloc(size_t size) {
         }
         prev = chunk;
     }
+
     PANIC("out of memory");
 }
 
