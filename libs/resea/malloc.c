@@ -3,11 +3,11 @@
 #include <resea/printf.h>
 #include <string.h>
 
-#define NUM_CHUNKS 16
+#define NUM_BINS 16
 extern char __heap[];
 extern char __heap_end[];
 
-static struct malloc_chunk *chunks[NUM_CHUNKS];
+static struct malloc_chunk *bins[NUM_BINS];
 
 static void check_buffer_overflow(struct malloc_chunk *chunk) {
     if (chunk->magic == MALLOC_FREE) {
@@ -36,7 +36,7 @@ static struct malloc_chunk *insert(void *ptr, size_t len) {
     new_chunk->next = NULL;
 
     // Append the new chunk into the linked list.
-    struct malloc_chunk **chunk = &chunks[NUM_CHUNKS - 1];
+    struct malloc_chunk **chunk = &bins[NUM_BINS - 1];
     while (*chunk != NULL) {
         check_buffer_overflow(*chunk);
         chunk = &(*chunk)->next;
@@ -68,14 +68,14 @@ static struct malloc_chunk *split(struct malloc_chunk *chunk, size_t len) {
 size_t get_chunk_index_from_size(size_t size) {
     // If requested size is less or equal to the size of second largest chunk
     // (the last fixed chunk)
-    for (size_t i = 0; i < NUM_CHUNKS; i++) {
+    for (size_t i = 0; i < NUM_BINS; i++) {
         if (size <= 1 << i) {
             return i;
         }
     }
 
     // Return index of the last, dynamic-sized chunk
-    return NUM_CHUNKS - 1;
+    return NUM_BINS - 1;
 }
 
 void *malloc(size_t size) {
@@ -89,10 +89,10 @@ void *malloc(size_t size) {
 
     size_t chunk_num = get_chunk_index_from_size(size);
 
-    if (chunk_num < NUM_CHUNKS - 1) {
+    if (chunk_num < NUM_BINS - 1) {
         // Check the list corresponding to that size for a free chunk
-        if (chunks[chunk_num] != NULL) {
-            struct malloc_chunk *allocated = chunks[chunk_num];
+        if (bins[chunk_num] != NULL) {
+            struct malloc_chunk *allocated = bins[chunk_num];
             ASSERT(allocated->magic == MALLOC_FREE);
 
             allocated->magic = MALLOC_IN_USE;
@@ -102,13 +102,13 @@ void *malloc(size_t size) {
             memset(&allocated->data[allocated->capacity],
                    MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
 
-            chunks[chunk_num] = allocated->next;
+            bins[chunk_num] = allocated->next;
             return allocated->data;
         }
     }
 
     struct malloc_chunk *prev = NULL;
-    for (struct malloc_chunk *chunk = chunks[NUM_CHUNKS - 1]; chunk;
+    for (struct malloc_chunk *chunk = bins[NUM_BINS - 1]; chunk;
          chunk = chunk->next) {
         ASSERT(chunk->magic == MALLOC_FREE);
 
@@ -121,7 +121,7 @@ void *malloc(size_t size) {
             if (prev) {  // If it was not at the head of the list
                 prev->next = chunk->next;
             } else {  // If it was at the head of the list
-                chunks[NUM_CHUNKS - 1] = chunks[NUM_CHUNKS - 1]->next;
+                bins[NUM_BINS - 1] = bins[NUM_BINS - 1]->next;
             }
         }
 
@@ -163,9 +163,9 @@ void free(void *ptr) {
     chunk->magic = MALLOC_FREE;
     size_t chunk_num = get_chunk_index_from_size(chunk->capacity);
 
-    struct malloc_chunk *head = chunks[chunk_num];
+    struct malloc_chunk *head = bins[chunk_num];
     chunk->next = head;
-    chunks[chunk_num] = chunk;
+    bins[chunk_num] = chunk;
 }
 
 void *realloc(void *ptr, size_t size) {
