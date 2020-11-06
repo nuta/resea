@@ -47,6 +47,7 @@ static struct malloc_chunk *insert(void *ptr, size_t len) {
 }
 
 static struct malloc_chunk *split(struct malloc_chunk *chunk, size_t len) {
+    DBG("Inside split for %d", len);
     size_t new_chunk_len = MALLOC_FRAME_LEN + len;
     ASSERT(chunk->capacity >= new_chunk_len);
 
@@ -62,37 +63,40 @@ static struct malloc_chunk *split(struct malloc_chunk *chunk, size_t len) {
     new_chunk->size = 0;
     new_chunk->next = NULL;
 
+    // DBG("Splitting done");
     return new_chunk;
 }
 
-size_t get_chunk_index_from_size(size_t size) {
+int get_bin_id_from_size(size_t size) {
     // If requested size is less or equal to the size of second largest chunk
     // (the last fixed chunk)
-    for (size_t i = 0; i < NUM_BINS; i++) {
+    for (size_t i = 0; i < NUM_BINS - 1; i++) {
         if (size <= 1 << i) {
             return i;
         }
     }
 
-    // Return index of the last, dynamic-sized chunk
-    return NUM_BINS - 1;
+    // Return -1 indicating the last, dynamic-sized chunk
+    return -1;
 }
 
 void *malloc(size_t size) {
+    // DBG("Inside malloc");
     if (!size) {
         size = 1;
     }
-
     // Align up to 16-bytes boundary. If the size is less than 16 (including
     // size == 0), allocate 16 bytes.
     size = ALIGN_UP(size, 16);
 
-    size_t chunk_num = get_chunk_index_from_size(size);
+    int bin_id = get_bin_id_from_size(size);
+    DBG("%d %d", size, bin_id);
 
-    if (chunk_num < NUM_BINS - 1) {
+    if (bin_id != -1) {
         // Check the list corresponding to that size for a free chunk
-        if (bins[chunk_num] != NULL) {
-            struct malloc_chunk *allocated = bins[chunk_num];
+        if (bins[bin_id] != NULL) {
+            DBG("Giving existing chunk");
+            struct malloc_chunk *allocated = bins[bin_id];
             ASSERT(allocated->magic == MALLOC_FREE);
 
             allocated->magic = MALLOC_IN_USE;
@@ -102,11 +106,12 @@ void *malloc(size_t size) {
             memset(&allocated->data[allocated->capacity],
                    MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
 
-            bins[chunk_num] = allocated->next;
+            bins[bin_id] = allocated->next;
             return allocated->data;
         }
     }
 
+    // bin_id = (bin_id < 0) ? NUM_BINS - 1 : bin_id;
     struct malloc_chunk *prev = NULL;
     for (struct malloc_chunk *chunk = bins[NUM_BINS - 1]; chunk;
          chunk = chunk->next) {
@@ -114,7 +119,9 @@ void *malloc(size_t size) {
 
         struct malloc_chunk *allocated = NULL;
         if (chunk->capacity > size + MALLOC_FRAME_LEN) {
-            allocated = split(chunk, 1 << chunk_num);
+            // DBG("%d", ((int) size + 7) & (-8));
+            DBG("Splitting large chunk");
+            allocated = split(chunk, bin_id < 0 ? size : (1 << bin_id));
         } else if (chunk->capacity >= size) {
             allocated = chunk;
             // Remove chunk from the linked list
@@ -133,6 +140,7 @@ void *malloc(size_t size) {
             memset(&allocated->data[allocated->capacity],
                    MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
             allocated->next = NULL;
+            // DBG("Returning from malloc");
             return allocated->data;
         }
         prev = chunk;
@@ -161,11 +169,24 @@ void free(void *ptr) {
     }
 
     chunk->magic = MALLOC_FREE;
-    size_t chunk_num = get_chunk_index_from_size(chunk->capacity);
 
-    struct malloc_chunk *head = bins[chunk_num];
-    chunk->next = head;
-    bins[chunk_num] = chunk;
+    int bin_id = get_bin_id_from_size(chunk->capacity);
+    bin_id = bin_id < 0 ? NUM_BINS - 1 : bin_id;
+    DBG("Free to: %d", bin_id);
+
+    struct malloc_chunk *head = bins[bin_id];
+    if (head) {
+        chunk->next = head;
+    }
+    bins[bin_id] = chunk;
+    // if (bin_id != -1) {
+    //     head = bins[bin_id];
+    //     bins[bin_id] = chunk;
+    // } else {
+    //     head = bins[NUM_BINS - 1];
+    //     bins[NUM_BINS - 1] = chunk;
+    // }
+    // chunk->next = head;
 }
 
 void *realloc(void *ptr, size_t size) {

@@ -18,6 +18,8 @@ void malloc_test(void) {
 
     // Chunk corresponding to largest bin
     ptr[NUM_PTRS - 1] = malloc((1 << 15) + 8);
+    TEST_ASSERT(ptr[NUM_PTRS - 1] != NULL);
+
     for (size_t i = 0; i < NUM_PTRS - 1; i++) {
         memset(ptr[i], 0xaa, sz << i);
         free(ptr[i]);
