@@ -5,7 +5,7 @@
 #define NUM_PTRS 16
 
 void malloc_test(void) {
-    malloc_init();
+    // malloc_init();
     void *ptr[NUM_PTRS];
     memset(ptr, 0, sizeof(ptr));
     int sz = 1;
@@ -21,7 +21,7 @@ void malloc_test(void) {
     TEST_ASSERT(ptr[NUM_PTRS - 1] != NULL);
 
     for (size_t i = 0; i < NUM_PTRS - 1; i++) {
-        memset(ptr[i], 0xaa, sz << i);
+        memset(ptr[i], 0xaa, (sz << i) > 16 ? sz << i : 16);
         free(ptr[i]);
     }
     memset(ptr[NUM_PTRS - 1], 0xaa, (1 << 15) + 8);
@@ -35,7 +35,7 @@ void malloc_test(void) {
     ptr[NUM_PTRS - 1] = malloc((1 << 15) + 8);
 
     for (size_t i = 0; i < NUM_PTRS - 1; i++) {
-        memset(ptr[i], 0xaa, sz << i);
+        memset(ptr[i], 0xaa, (sz << i) > 16 ? sz << i : 16);
         free(ptr[i]);
     }
     memset(ptr[NUM_PTRS - 1], 0xaa, (1 << 15) + 8);
