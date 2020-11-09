@@ -93,24 +93,22 @@ void *malloc(size_t size) {
     int bin_idx = get_bin_idx_from_size(size);
     DBG("%d %d", size, bin_idx);
 
-    if (bin_idx != -1) {
+    if (bin_idx != -1 && bins[bin_idx] != NULL) {
         // Check the list corresponding to that size for a free chunk
-        if (bins[bin_idx] != NULL) {
-            DBG("Giving existing chunk");
-            struct malloc_chunk *allocated = bins[bin_idx];
-            ASSERT(allocated->magic == MALLOC_FREE);
+        DBG("Giving existing chunk");
+        struct malloc_chunk *allocated = bins[bin_idx];
+        ASSERT(allocated->magic == MALLOC_FREE);
 
-            allocated->magic = MALLOC_IN_USE;
-            allocated->size = size;
-            memset(allocated->underflow_redzone, MALLOC_REDZONE_UNDFLOW_MARKER,
-                   MALLOC_REDZONE_LEN);
-            memset(&allocated->data[allocated->capacity],
-                   MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
+        allocated->magic = MALLOC_IN_USE;
+        allocated->size = size;
+        memset(allocated->underflow_redzone, MALLOC_REDZONE_UNDFLOW_MARKER,
+                MALLOC_REDZONE_LEN);
+        memset(&allocated->data[allocated->capacity],
+                MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
 
-            bins[bin_idx] = allocated->next;
-            allocated->next = NULL;
-            return allocated->data;
-        }
+        bins[bin_idx] = allocated->next;
+        allocated->next = NULL;
+        return allocated->data;
     }
 
     // bin_idx = (bin_idx < 0) ? NUM_BINS - 1 : bin_idx;
