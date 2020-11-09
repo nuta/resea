@@ -47,7 +47,7 @@ static struct malloc_chunk *insert(void *ptr, size_t len) {
 }
 
 static struct malloc_chunk *split(struct malloc_chunk *chunk, size_t len) {
-    DBG("Inside split for %d", len);
+    // DBG("Inside split for %d", len);
     size_t new_chunk_len = MALLOC_FRAME_LEN + len;
     ASSERT(chunk->capacity >= new_chunk_len);
 
@@ -91,11 +91,11 @@ void *malloc(size_t size) {
     size = ALIGN_UP(size, 16);
 
     int bin_idx = get_bin_idx_from_size(size);
-    DBG("%d %d", size, bin_idx);
+    // DBG("%d %d", size, bin_idx);
 
     if (bin_idx != -1 && bins[bin_idx] != NULL) {
         // Check the list corresponding to that size for a free chunk
-        DBG("Giving existing chunk");
+        // DBG("Giving existing chunk");
         struct malloc_chunk *allocated = bins[bin_idx];
         ASSERT(allocated->magic == MALLOC_FREE);
 
@@ -120,7 +120,7 @@ void *malloc(size_t size) {
         struct malloc_chunk *allocated = NULL;
         if (chunk->capacity > size + MALLOC_FRAME_LEN) {
             // DBG("%d", ((int) size + 7) & (-8));
-            DBG("Splitting large chunk");
+            // DBG("Splitting large chunk");
             allocated = split(chunk, bin_idx < 0 ? size : (1 << bin_idx));
         } else if (chunk->capacity >= size) {
             allocated = chunk;
@@ -174,7 +174,7 @@ void free(void *ptr) {
 
     int bin_idx = get_bin_idx_from_size(chunk->capacity);
     bin_idx = bin_idx < 0 ? NUM_BINS - 1 : bin_idx;
-    DBG("Free to: %d", bin_idx);
+    // DBG("Free to: %d", bin_idx);
 
     struct malloc_chunk *head = bins[bin_idx];
     if (head) {
