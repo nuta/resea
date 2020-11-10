@@ -56,4 +56,8 @@ namespace net {
     oneway tx(payload: bytes);
 }
 
+namespace time {
+    rpc read(format: str) -> (currenttime: str);
+}
+
 include "servers/*/interface.idl";
