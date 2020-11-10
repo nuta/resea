@@ -57,7 +57,7 @@ namespace net {
 }
 
 namespace time {
-    rpc read(format: str) -> (currenttime: str);
+    rpc readrtc(format: str) -> (currenttime: str);
 }
 
 include "servers/*/interface.idl";
