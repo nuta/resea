@@ -8,10 +8,10 @@
 
 static io_t rtc_io;
 
-int is_update_in_progress(void) {
+bool is_update_in_progress(void) {
 	io_write8(rtc_io, 0, 10);
-    char RTC_UIP_FLAG = io_read8(rtc_io, 1);
-	return RTC_UIP_FLAG & 0x80;
+    uint8_t status = io_read8(rtc_io, 1);
+	return status & 0x80;
 }
 
 uint8_t read_cmos_register(int reg_index) {
@@ -37,10 +37,10 @@ void read_datetime(uint8_t* year, uint8_t* month, uint8_t* day, uint8_t* hour, u
     *year = read_cmos_register(0x09);
 
     uint8_t status_b = read_cmos_register(0x0B);
-    bool use_BCD = !(status_b & 0x04);
+    bool use_bcd = !(status_b & 0x04);
     bool use_twelve_hours = !(status_b & 0x02);
 
-    if(use_BCD) {
+    if(use_bcd) {
         *second = bcd_to_binary(*second);
         *minute = bcd_to_binary(*minute);
         *hour = bcd_to_binary(*hour & 0x7F);
