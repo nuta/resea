@@ -27,10 +27,11 @@
   - [Tar File System](fs/tarfs.md)
 
 - [Device Drivers](drivers/README.md)
-  - [virtio-net](drivers/virtio-net.md)
-  - [e1000](drivers/e1000.md)
-  - [ide](drivers/ide.md)
-  - [ramdisk](drivers/ramdisk.md)
+  - [Virtio-net](drivers/virtio-net.md)
+  - [Intel e1000 Network Card](drivers/e1000.md)
+  - [IDE Hard Disk](drivers/ide.md)
+  - [RAM Disk](drivers/ramdisk.md)
+  - [Intel HD Audo](drivers/hdaudio.md)
 
 - [Userspace Development](userspace/README.md)
   - [Mainloop](userspace/mainloop.md)
