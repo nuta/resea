@@ -23,35 +23,37 @@ uint8_t bcd_to_binary(uint8_t bcd) {
     return (bcd & 0x0F) + ((bcd >> 4) * 10);
 }
 
-void read_datetime(uint8_t* year, uint8_t* month, uint8_t* day, uint8_t* hour, uint8_t* minute, uint8_t* second, uint8_t* day_of_week) {
+void read_datetime(struct datetime *datetime) {
 
     // Wait until rtc is not updating
     while (is_update_in_progress());
 
-    *second = read_cmos_register(0x00);
-    *minute = read_cmos_register(0x02);
-    *hour = read_cmos_register(0x04);
-    *day_of_week = read_cmos_register(0x06);
-    *day = read_cmos_register(0x07);
-    *month = read_cmos_register(0x08);
-    *year = read_cmos_register(0x09);
+    datetime->second = read_cmos_register(0x00);
+    datetime->minute = read_cmos_register(0x02);
+    datetime->hour = read_cmos_register(0x04);
+    datetime->day_of_week = read_cmos_register(0x06);
+    datetime->day = read_cmos_register(0x07);
+    datetime->month = read_cmos_register(0x08);
+    datetime->year = read_cmos_register(0x09);
 
     uint8_t status_b = read_cmos_register(0x0B);
     bool use_bcd = !(status_b & 0x04);
     bool use_twelve_hours = !(status_b & 0x02);
 
     if(use_bcd) {
-        *second = bcd_to_binary(*second);
-        *minute = bcd_to_binary(*minute);
-        *hour = bcd_to_binary(*hour & 0x7F);
-        *day_of_week = bcd_to_binary(*day_of_week);
-        *day = bcd_to_binary(*day);
-        *month = bcd_to_binary(*month);
-        *year = bcd_to_binary(*year);
+        datetime->second = bcd_to_binary(datetime->second);
+        datetime->minute = bcd_to_binary(datetime->minute);
+        datetime->hour = bcd_to_binary(datetime->hour & 0x7F);
+        datetime->day_of_week = bcd_to_binary(datetime->day_of_week);
+        datetime->day = bcd_to_binary(datetime->day);
+        datetime->month = bcd_to_binary(datetime->month);
+        datetime->year = bcd_to_binary(datetime->year);
     }
 
-    if(use_twelve_hours && (*hour & 0x80)) {
-        *hour =(((*hour & 0x7F) + 12) % 24);
+    datetime->year += 2000;
+
+    if(use_twelve_hours && (datetime->hour & 0x80)) {
+        datetime->hour =(((datetime->hour & 0x7F) + 12) % 24);
     }
 }
 
@@ -69,17 +71,23 @@ void main(void) {
 
         switch (m.type) {
             case RTC_READ_MSG: {
-                char *format = m.rtc_read.format;
-                DBG("Received format -> %s", format);
-
-                uint8_t year, month, day, hour, minute, second, day_of_week;
-                read_datetime(&year, &month, &day, &hour, &minute, &second, &day_of_week);
+                struct datetime datetime;
+                read_datetime(&datetime);
 
                 m.type = RTC_READ_REPLY_MSG;
                 int buf_size = 1024;
                 char *buf = malloc(buf_size);
-                snprintf(buf, buf_size, "%d %d/%d/%d %d:%d:%d", day_of_week, day, month, year, hour, minute, second);
-                m.rtc_read_reply.currenttime = buf;
+                snprintf(buf, buf_size, "%d %d/%d/%d %d:%d:%d",
+                         datetime.day_of_week, datetime.day, datetime.month,
+                         datetime.year, datetime.hour, datetime.minute,
+                         datetime.second);
+                m.rtc_read_reply.year = datetime.year;
+                m.rtc_read_reply.month = datetime.month;
+                m.rtc_read_reply.day = datetime.day;
+                m.rtc_read_reply.day_of_week = datetime.day_of_week;
+                m.rtc_read_reply.hour = datetime.hour;
+                m.rtc_read_reply.minute = datetime.minute;
+                m.rtc_read_reply.second = datetime.second;
                 ipc_reply(m.src, &m);
                 break;
             }
