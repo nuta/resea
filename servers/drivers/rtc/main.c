@@ -68,18 +68,18 @@ void main(void) {
         ASSERT_OK(err);
 
         switch (m.type) {
-            case TIME_READRTC_MSG: {
-                char *format = m.time_readrtc.format;
+            case RTC_READ_MSG: {
+                char *format = m.rtc_read.format;
                 DBG("Received format -> %s", format);
 
                 uint8_t year, month, day, hour, minute, second, day_of_week;
                 read_datetime(&year, &month, &day, &hour, &minute, &second, &day_of_week);
 
-                m.type = TIME_READRTC_REPLY_MSG;
+                m.type = RTC_READ_REPLY_MSG;
                 int buf_size = 1024;
                 char *buf = malloc(buf_size);
                 snprintf(buf, buf_size, "%d %d/%d/%d %d:%d:%d", day_of_week, day, month, year, hour, minute, second);
-                m.time_readrtc_reply.currenttime = buf;
+                m.rtc_read_reply.currenttime = buf;
                 ipc_reply(m.src, &m);
                 break;
             }
