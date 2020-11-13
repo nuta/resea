@@ -13,9 +13,12 @@ QEMUFLAGS += -netdev user,id=net1,hostfwd=tcp:127.0.0.1:1235-:80
 QEMUFLAGS += -device e1000,netdev=net0,mac=52:54:00:12:34:56
 QEMUFLAGS += -object filter-dump,id=fiter0,netdev=net0,file=e1000.pcap
 QEMUFLAGS += -object filter-dump,id=fiter1,netdev=net1,file=virtio.pcap
-QEMUFLAGS += -device intel-hda,debug=3 -device hda-duplex,debug=3
 QEMUFLAGS += $(if $(SMP), -smp $(SMP))
 QEMUFLAGS += $(if $(GUI),,-nographic)
+
+ifneq ($(HD_AUDIO),)
+QEMUFLAGS += -device intel-hda,debug=3 -device hda-duplex,debug=3
+endif
 
 ifneq ($(VIRTIO_LEGACY),)
 QEMUFLAGS += -device virtio-net,netdev=net1,disable-legacy=off,disable-modern=on
