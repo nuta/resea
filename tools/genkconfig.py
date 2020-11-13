@@ -18,48 +18,6 @@ config MODULES
 	option modules
 	default y
 
-choice
-    prompt "Target CPU architecture"
-{%- for arch in archs %}
-    config ARCH_{{ arch.name | upper }}
-        bool "{{ arch.name }}"
-{%- endfor %}
-endchoice
-
-# A hidden config entry to extract the selected arch name in Makefile.
-{%- for arch in archs %}
-config ARCH
-    string
-    default "{{ arch.name }}"
-    depends on ARCH_{{ arch.name | upper }}
-{%- endfor %}
-
-# Machines
-{%- for arch in archs %}
-{%- if arch.machines | length > 0 %}
-if ARCH_{{ arch.name | upper }}
-choice
-    prompt "Target Machine"
-{%- for machine in arch.machines %}
-    config MACHINE_{{ machine.name | upper }}
-        bool "{{ machine.name }}"
-{%- endfor %}
-endchoice
-endif
-{%- endif %}
-{%- endfor %}
-
-choice
-    prompt "Initial task"
-    default BOOT_TASK_VM
-{%- for server in servers %}
-{%- if server.boot_task %}
-    config BOOT_TASK_{{ server.name | upper }}
-        bool "{{ server.name }} - {{ server.description }}"
-{%- endif %}
-{%- endfor %}
-endchoice
-
 menu "Servers and Applications"
     comment "<*>: autostarted / <M>: manually started from shell"
 
@@ -88,6 +46,48 @@ source "{{ server.kconfig_path }}"
 {%- endfor %}
 endmenu
 
+
+choice
+    prompt "Target CPU architecture"
+{%- for arch in archs %}
+    config ARCH_{{ arch.name | upper }}
+        bool "{{ arch.name }}"
+{%- endfor %}
+endchoice
+
+# A hidden config entry to extract the selected arch name in Makefile.
+{%- for arch in archs %}
+config ARCH
+    string
+    default "{{ arch.name }}"
+    depends on ARCH_{{ arch.name | upper }}
+{%- endfor %}
+
+choice
+    prompt "Initial task"
+    default BOOT_TASK_VM
+{%- for server in servers %}
+{%- if server.boot_task %}
+    config BOOT_TASK_{{ server.name | upper }}
+        bool "{{ server.name }} - {{ server.description }}"
+{%- endif %}
+{%- endfor %}
+endchoice
+
+# Machines
+{%- for arch in archs %}
+{%- if arch.machines | length > 0 %}
+if ARCH_{{ arch.name | upper }}
+choice
+    prompt "Target Machine"
+{%- for machine in arch.machines %}
+    config MACHINE_{{ machine.name | upper }}
+        bool "{{ machine.name }}"
+{%- endfor %}
+endchoice
+endif
+{%- endif %}
+{%- endfor %}
 """
 
 def main():
