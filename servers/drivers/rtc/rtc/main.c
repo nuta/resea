@@ -75,12 +75,6 @@ void main(void) {
                 read_datetime(&datetime);
 
                 m.type = RTC_READ_REPLY_MSG;
-                int buf_size = 1024;
-                char *buf = malloc(buf_size);
-                snprintf(buf, buf_size, "%d %d/%d/%d %d:%d:%d",
-                         datetime.day_of_week, datetime.day, datetime.month,
-                         datetime.year, datetime.hour, datetime.minute,
-                         datetime.second);
                 m.rtc_read_reply.year = datetime.year;
                 m.rtc_read_reply.month = datetime.month;
                 m.rtc_read_reply.day = datetime.day;
