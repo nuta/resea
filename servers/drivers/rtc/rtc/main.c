@@ -58,7 +58,7 @@ void read_datetime(struct datetime *datetime) {
 }
 
 void main(void) {
-    rtc_io = io_alloc_port(RTC_PORT_IDX, 0x10, IO_ALLOC_NORMAL);
+    rtc_io = io_alloc_port(RTC_PORT_IDX, 0x02, IO_ALLOC_NORMAL);
 
     ASSERT_OK(ipc_serve("rtc"));
 
