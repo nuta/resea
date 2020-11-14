@@ -101,6 +101,7 @@ def main():
         "servers/apps": "Applications",
         "servers/drivers/blk": "Block Drivers",
         "servers/drivers/net": "Network Drivers",
+        "servers/drivers/rtc": "Real Time Clock Drivers",
         "servers/experimental": "Experimental Apps/Servers/Drivers",
     }
 

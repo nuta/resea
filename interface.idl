@@ -56,4 +56,8 @@ namespace net {
     oneway tx(payload: bytes);
 }
 
+namespace rtc {
+    rpc read() -> (year: uint32, month: uint8, day: uint8, day_of_week: uint8, hour: uint8, minute: uint8, second: uint8);
+}
+
 include "servers/*/interface.idl";
