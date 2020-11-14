@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import argparse
 import re
+import jinja2
 from glob import glob
 from pathlib import Path
 
-import jinja2
 
 # If you're familiar with Linux kernel development, you may notice that this
 # config generates `tristate` for each server.
@@ -97,7 +97,6 @@ def main():
 
     section_mappings = {
         "servers": None,
-        "servers/drivers": None,
         "servers/fs": "File Systems",
         "servers/apps": "Applications",
         "servers/drivers/blk": "Block Drivers",
