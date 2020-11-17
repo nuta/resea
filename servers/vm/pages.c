@@ -7,7 +7,7 @@ extern char __straight_mapping[];
 
 pfn_t paddr2pfn(paddr_t paddr) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE) && paddr >= PAGES_BASE_ADDR);
-    return paddr / PAGE_SIZE;
+    return (paddr - PAGES_BASE_ADDR) / PAGE_SIZE;
 }
 
 void pages_incref(pfn_t pfn, size_t num_pages) {
