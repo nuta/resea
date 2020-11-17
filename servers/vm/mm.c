@@ -41,6 +41,7 @@ static vaddr_t alloc_virt_pages(struct task *task, size_t num_pages) {
 
 void free_page_area(struct page_area *area) {
     pages_decref(paddr2pfn(area->paddr), area->num_pages);
+    list_remove(&area->next);
     free(area);
 }
 
