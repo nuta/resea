@@ -19,5 +19,6 @@ paddr_t vaddr2paddr(struct task *task, vaddr_t vaddr);
 error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, unsigned flags,
                  bool overwrite);
 paddr_t pager(struct task *task, vaddr_t vaddr, vaddr_t ip, unsigned fault);
+void mm_init(void);
 
 #endif

@@ -78,6 +78,7 @@ void main(void) {
     bootfs_init();
     pages_init();
     task_init();
+    mm_init();
     spawn_servers();
 
     timer_set(5000);
