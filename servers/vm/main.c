@@ -246,6 +246,7 @@ void main(void) {
             }
             case TASK_LAUNCH_MSG: {
                 task_t task_or_err = task_spawn_by_cmdline(m.task_launch.name_and_cmdline);
+                free(m.task_launch.name_and_cmdline);
                 if (IS_ERROR(task_or_err)) {
                     ipc_reply_err(m.src, task_or_err);
                     break;
