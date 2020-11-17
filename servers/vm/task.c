@@ -124,10 +124,18 @@ void task_kill(struct task *task) {
         m.type = TASK_EXITED_MSG;
         m.task_exited.task = task->tid;
         async_send(w->watcher->tid, &m);
+        free(w);
     }
 
     LIST_FOR_EACH(pa, &task->page_areas, struct page_area, next) {
         free_page_area(pa);
+    }
+
+    LIST_FOR_EACH (service, &services, struct service, next) {
+        if (service->task == task->tid) {
+            list_remove(&service->next);
+            free(service);
+        }
     }
 
     task_destroy(task->tid);

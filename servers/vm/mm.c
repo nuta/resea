@@ -45,6 +45,18 @@ void free_page_area(struct page_area *area) {
     free(area);
 }
 
+static void free_pages(struct task *task, paddr_t paddr) {
+    LIST_FOR_EACH(area, &task->page_areas, struct page_area, next) {
+        if (area->paddr == paddr) {
+            free_page_area(area);
+            return;
+        }
+    }
+
+    WARN("failed to free paddr=%p in %s (double free?)", paddr, task->name);
+}
+
+
 error_t alloc_phy_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
                         size_t num_pages) {
     *vaddr = alloc_virt_pages(task, num_pages);
@@ -91,6 +103,7 @@ error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, unsigned flags
             case ERR_TRY_AGAIN:
                 continue;
             default:
+                free_pages(task, kpage);
                 return err;
         }
     }
