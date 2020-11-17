@@ -20,6 +20,7 @@
   - [Shell](apps/shell.md)
   - [Benchmark](apps/benchmark.md)
   - [Integrated Tests](apps/test.md)
+  - [Memory Leak Tests](apps/memory-leak-test.md)
   - [Web API Server](apps/webapi.md)
 
 - [File System Drivers](fs/README.md)
