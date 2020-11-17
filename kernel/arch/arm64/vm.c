@@ -18,13 +18,10 @@ static uint64_t *traverse_page_table(uint64_t *table, vaddr_t vaddr,
                 return NULL;
             }
 
-            if (!kpage) {
-                return NULL;
-            }
-
             memset(from_paddr(kpage), 0, PAGE_SIZE);
             table[index] = kpage;
             kpage = 0;
+            return NULL;
         }
 
         // Update attributes if given.

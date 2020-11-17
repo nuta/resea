@@ -18,14 +18,11 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
                 return NULL;
             }
 
-            /* The PDPT, PD or PT is not allocated. */
-            if (!kpage) {
-                return NULL;
-            }
-
+            // The PDPT, PD or PT is not allocated.
             memset(from_paddr(kpage), 0, PAGE_SIZE);
             table[index] = kpage;
             kpage = 0;
+            return NULL;
         }
 
         // Update attributes if given.
