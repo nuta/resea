@@ -11,6 +11,8 @@ struct page {
     unsigned ref_count;
 };
 
+extern size_t num_unused_pages;
+
 pfn_t paddr2pfn(paddr_t paddr);
 void pages_incref(pfn_t pfn, size_t num_pages);
 void pages_decref(pfn_t pfn, size_t num_pages);

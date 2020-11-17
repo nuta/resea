@@ -1,6 +1,7 @@
 #include <resea/printf.h>
 #include "pages.h"
 
+size_t num_unused_pages = 0;
 static struct page pages[PAGES_MAX];
 extern char __straight_mapping[];
 #define PAGES_BASE_ADDR ((paddr_t) __straight_mapping)
@@ -13,6 +14,10 @@ pfn_t paddr2pfn(paddr_t paddr) {
 void pages_incref(pfn_t pfn, size_t num_pages) {
     ASSERT(pfn + num_pages <= PAGES_MAX);
     for (size_t i = 0; i < num_pages; i++) {
+        if (!pages[pfn + i].ref_count) {
+            num_unused_pages--;
+        }
+
         pages[pfn + i].ref_count++;
     }
 }
@@ -20,7 +25,12 @@ void pages_incref(pfn_t pfn, size_t num_pages) {
 void pages_decref(pfn_t pfn, size_t num_pages) {
     ASSERT(pfn + num_pages <= PAGES_MAX);
     for (size_t i = 0; i < num_pages; i++) {
+        ASSERT(pages[pfn + i].ref_count > 0);
         pages[pfn + i].ref_count--;
+
+        if (!pages[pfn + i].ref_count) {
+            num_unused_pages++;
+        }
     }
 }
 
@@ -52,5 +62,6 @@ paddr_t pages_alloc(size_t num_pages) {
 void pages_init(void) {
     for (pfn_t i = 0; i < PAGES_MAX; i++) {
         pages[i].ref_count = 0;
+        num_unused_pages++;
     }
 }
