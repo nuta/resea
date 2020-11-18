@@ -265,8 +265,8 @@ void main(void) {
                 }
 
                 task_watch(caller, task);
-                m.type = TASK_WATCH_REPLY_MSG;
-                ipc_reply(m.src, &m);
+                r.type = TASK_WATCH_REPLY_MSG;
+                ipc_reply(m.src, &r);
                 break;
             }
             case TASK_UNWATCH_MSG: {
@@ -277,8 +277,8 @@ void main(void) {
                 }
 
                 task_unwatch(caller, task);
-                m.type = TASK_UNWATCH_REPLY_MSG;
-                ipc_reply(m.src, &m);
+                r.type = TASK_UNWATCH_REPLY_MSG;
+                ipc_reply(m.src, &r);
                 break;
             }
             default:
