@@ -3,6 +3,7 @@
 #include <driver/io.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
+#include <resea/datetime.h>
 #include <string.h>
 #include "rtc.h"
 

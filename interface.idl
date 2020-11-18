@@ -113,4 +113,8 @@ namespace rtc {
     rpc read() -> (year: uint32, month: uint8, day: uint8, day_of_week: uint8, hour: uint8, minute: uint8, second: uint8);
 }
 
+namespace time {
+    rpc gettimeofday() -> (unixtime: uint64);
+}
+
 include "servers/*/interface.idl";
