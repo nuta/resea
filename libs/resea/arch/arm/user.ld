@@ -39,5 +39,6 @@ SECTIONS {
 
     /DISCARD/ :{
         *(.ARM.exidx)
+        *(.ARM.extab)
     }
 }
