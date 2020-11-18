@@ -1,5 +1,5 @@
-#ifndef __DATETIME_H__
-#define __DATETIME_H__
+#ifndef __RESEA_DATETIME_H__
+#define __RESEA_DATETIME_H__
 
 struct datetime {
     uint32_t year;
