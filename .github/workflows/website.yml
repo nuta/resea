@@ -14,9 +14,11 @@ jobs:
         with:
           node-version: '12'
 
+      - name: Install Homebrew packages
+        run: brew install mdbook python3
 
-      - name: Install mdbook
-        run: brew install mdbook
+      - name: Install pip packages
+        run: pip3 install --user -r tools/requirements.txt
 
       - name: Build documentation
         run: make website

@@ -192,6 +192,7 @@ website:
 	mkdir -p $(BUILD_DIR)/website
 	cp docs/top_page.html $(BUILD_DIR)/website/index.html
 	mdbook build -d $(BUILD_DIR)/website/docs
+	./tools/genidl.py --lang html --idl interface.idl -o $(BUILD_DIR)/website/interfaces.html
 
 .PHONY: book
 book:
