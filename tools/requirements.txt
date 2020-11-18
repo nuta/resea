@@ -3,3 +3,4 @@ lark-parser
 jinja2
 colorama
 pyelftools
+Markdown
