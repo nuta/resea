@@ -65,7 +65,7 @@ static struct malloc_chunk *split(struct malloc_chunk *chunk, size_t len) {
     return new_chunk;
 }
 
-int get_bin_idx_from_size(size_t size) {
+static int get_bin_idx_from_size(size_t size) {
     // If requested size is less or equal to the size of second largest chunk
     // (the last fixed chunk).
     for (size_t i = 0; i < NUM_BINS - 1; i++) {

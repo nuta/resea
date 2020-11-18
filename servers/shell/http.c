@@ -1,3 +1,4 @@
+#include "http.h"
 #include <resea/ipc.h>
 #include <resea/async.h>
 #include <resea/malloc.h>

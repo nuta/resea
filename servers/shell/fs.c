@@ -1,3 +1,4 @@
+#include "fs.h"
 #include <resea/ipc.h>
 #include <resea/printf.h>
 #include <resea/malloc.h>
