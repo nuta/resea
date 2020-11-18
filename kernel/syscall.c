@@ -187,6 +187,9 @@ static error_t sys_vm_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
         return ERR_NOT_FOUND;
     }
 
+    // Please note that these paddr checks are added for debugging purpose, not
+    // security: the user is able to access the kernel memory space by modifying
+    // the page table directly.
     if (is_kernel_paddr(paddr)) {
         WARN_DBG("paddr %p points to a kernel memory area", paddr);
         return ERR_NOT_ACCEPTABLE;
