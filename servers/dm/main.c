@@ -1,4 +1,5 @@
 #include <resea/ipc.h>
+#include <resea/async.h>
 #include <resea/handle.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
@@ -23,6 +24,26 @@ void main(void) {
         ASSERT_OK(ipc_recv(IPC_ANY, &m));
 
         switch (m.type) {
+            case NOTIFICATIONS_MSG: {
+                if (m.notifications.data & NOTIFY_ASYNC) {
+                    async_recv(INIT_TASK, &m);
+                    switch (m.type) {
+                        case TASK_EXITED_MSG: {
+                            LIST_FOR_EACH (dev, &devices, struct device, next) {
+                                if (dev->task == m.task_exited.task) {
+                                    list_remove(&dev->next);
+                                    free(dev);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            discard_unknown_message(&m);
+                    }
+                }
+
+                break;
+            }
             case DM_ATTACH_PCI_DEVICE_MSG: {
                 error_t err;
                 int bus, slot;
@@ -40,15 +61,20 @@ void main(void) {
                 struct device *dev = malloc(sizeof(*dev));
                 dev->bus_type = BUS_TYPE_PCI;
                 dev->handle = handle_alloc(m.src);
+                dev->task = m.src;
                 pci_fill_pci_device_struct(&dev->pci, bus, slot);
                 handle_set(m.src, dev->handle, dev);
                 list_push_back(&devices, &dev->next);
+
+                m.type = TASK_WATCH_MSG;
+                m.task_watch.task = dev->task;
+                ASSERT_OK(ipc_call(INIT_TASK, &m));
 
                 m.type = DM_ATTACH_PCI_DEVICE_REPLY_MSG;
                 m.dm_attach_pci_device_reply.handle = dev->handle;
                 m.dm_attach_pci_device_reply.vendor_id = dev->pci.vendor;
                 m.dm_attach_pci_device_reply.device_id = dev->pci.device;
-                ipc_reply(m.src, &m);
+                ipc_reply(dev->task, &m);
                 break;
             }
             case DM_DETACH_DEVICE_MSG: {

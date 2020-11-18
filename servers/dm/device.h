@@ -11,6 +11,7 @@ enum bus_type {
 
 struct device {
     list_elem_t next;
+    task_t task;
     handle_t handle;
     enum bus_type bus_type;
     union {
