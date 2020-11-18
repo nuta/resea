@@ -24,7 +24,7 @@ void main(void) {
     TRACE("starting...");
     struct datetime datetime;
     init_datetime(&datetime);
-    timeofday = gettimestamp(datetime);
+    timeofday = datetime_to_timestamp(&datetime);
 
     ASSERT_OK(ipc_serve("datetime"));
 
@@ -50,7 +50,7 @@ void main(void) {
                 break;
             }
             default:
-                TRACE("unknown message %d", m.type);
+                discard_unknown_message(&m);
         }
     }
 }

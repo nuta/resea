@@ -2,19 +2,19 @@
 #include <resea/printf.h>
 #include <resea/datetime.h>
 
-bool is_leap_year(uint32_t year) {
+static bool is_leap_year(uint32_t year) {
     return (year) % 4 == 0
            && ((year) % 100 != 0 || (year) % 400 == 0);
 }
 
-uint64_t gettimestamp(struct datetime datetime) {
+uint64_t datetime_to_timestamp(struct datetime *datetime) {
     uint64_t seconds_since_epoch;
     uint32_t year;
     const uint8_t days_in_month[] = {31, 28, 31, 30, 31, 30,
                                      31, 31, 30, 31, 30, 31};
 
     // Convert years to no. of years since 1970.
-    year = datetime.year - 1970;
+    year = datetime->year - 1970;
 
     seconds_since_epoch = year * (365 * 86400);
     for (uint32_t i = 0; i < year; i++) {
@@ -23,7 +23,7 @@ uint64_t gettimestamp(struct datetime datetime) {
         }
     }
 
-    for (uint32_t i = 1; i < datetime.month; i++) {
+    for (uint32_t i = 1; i < datetime->month; i++) {
         if (is_leap_year(year+1970) && i == 2) {
             seconds_since_epoch += (86400 * 29);
         } else {
@@ -31,10 +31,10 @@ uint64_t gettimestamp(struct datetime datetime) {
         }
     }
 
-    seconds_since_epoch += ((datetime.day - 1) * 86400);
-    seconds_since_epoch += (datetime.hour * 3600);
-    seconds_since_epoch += (datetime.minute * 60);
-    seconds_since_epoch += datetime.second;
+    seconds_since_epoch += ((datetime->day - 1) * 86400);
+    seconds_since_epoch += (datetime->hour * 3600);
+    seconds_since_epoch += (datetime->minute * 60);
+    seconds_since_epoch += datetime->second;
 
     return seconds_since_epoch;
 }

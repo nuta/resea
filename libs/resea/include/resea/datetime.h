@@ -11,8 +11,7 @@ struct datetime {
     uint8_t second;
 };
 
-bool is_leap_year(uint32_t year);
-uint64_t gettimestamp(struct datetime datetime);
+uint64_t datetime_to_timestamp(struct datetime *datetime);
 void timestamp_to_datetime(uint64_t epoch, struct datetime *datetime);
 
 #endif
