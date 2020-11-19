@@ -436,8 +436,7 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
 {%- endfor %}
 
 #define IDL_MESSAGE_FIELDS \\
-{%- for msg in msgs %} \\
-    /// {{  msg.doc | newlines_to_whitespaces }}  \\
+{%- for msg in msgs %}
     struct {{ msg | msg_name }}_fields {{ msg | msg_name }}; \\
 {%- if not msg.oneway %}
     struct {{ msg | msg_name }}_reply_fields {{ msg | msg_name }}_reply; \\
