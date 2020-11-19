@@ -3,8 +3,8 @@
 #include <resea/datetime.h>
 
 static bool is_leap_year(uint32_t year) {
-    return (year) % 4 == 0
-           && ((year) % 100 != 0 || (year) % 400 == 0);
+    return (((year % 4 == 0) && (year % 100 != 0)) ||
+        (year % 400 == 0));
 }
 
 uint64_t datetime_to_timestamp(struct datetime *datetime) {
@@ -52,12 +52,12 @@ void timestamp_to_datetime(uint64_t epoch, struct datetime *datetime) {
     epoch /= 24;
     datetime->day_of_week = ((epoch + 4) % 7) + 1;
 
-    year = 0;
+    year = 1970;
     day = 0;
     while((day += (is_leap_year(year) ? 366 : 365)) <= epoch) {
         year++;
     }
-    datetime->year = year + 1970;
+    datetime->year = year;
 
     day -= is_leap_year(year) ? 366 : 365;
     epoch -= day;
