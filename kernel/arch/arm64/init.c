@@ -59,6 +59,7 @@ void arm64_init(void) {
     bzero(__bss, (vaddr_t) __bss_end - (vaddr_t) __bss);
 
     arm64_peripherals_init();
+    lock();
 
     // Initialize the performance counter for benchmarking.
     ARM64_MSR(pmcr_el0, 0b1ull);           // Reset counters.
