@@ -157,9 +157,6 @@ static error_t sys_irq_release(int irq) {
 
 static paddr_t resolve_paddr(vaddr_t vaddr) {
     if (CURRENT->tid == INIT_TASK) {
-        if (is_kernel_paddr(vaddr)) {
-            return 0;
-        }
         return vaddr;
     } else {
         return vm_resolve(CURRENT, vaddr);
@@ -172,7 +169,7 @@ static error_t sys_vm_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
         return ERR_NOT_PERMITTED;
     }
 
-    if (!IS_ALIGNED(vaddr, PAGE_SIZE) || !IS_ALIGNED(vaddr, PAGE_SIZE)
+    if (!IS_ALIGNED(vaddr, PAGE_SIZE) || !IS_ALIGNED(src, PAGE_SIZE)
         || !IS_ALIGNED(kpage, PAGE_SIZE)) {
         return ERR_INVALID_ARG;
     }
