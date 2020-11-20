@@ -134,5 +134,8 @@ __noreturn void mpmain(void) {
 
     // Start context switching and enable interrupts...
     INFO("Booted CPU #%d", mp_self());
+    if (!mp_is_bsp()) {
+        PANIC("TODO: Support context switching in SMP");
+    }
     arch_idle();
 }

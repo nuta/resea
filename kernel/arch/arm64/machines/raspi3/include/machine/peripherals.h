@@ -43,7 +43,7 @@
 #define MBOX_EMPTY   0x40000000
 
 // https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2836/QA7_rev3.4.pdf
-#define CORE0_TIMER_IRQCNTL 0x40000040
+#define TIMER_IRQCNTL(cpu) (0x40000040 + (cpu) * 4)
 
 // Watchdog timer values.
 #define PM_PASSWORD        0x5a000000

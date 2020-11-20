@@ -11,16 +11,33 @@ extern uint8_t exception_vector;
 void arch_idle(void) {
     task_switch();
 
-    // Enable IRQ.
-    __asm__ __volatile__("msr daifclr, #2");
-
     while (true) {
+        unlock();
+        // Enable IRQ.
+        __asm__ __volatile__("msr daifclr, #2");
         __asm__ __volatile__("wfi");
+        // Disable IRQ.
+        __asm__ __volatile__("msr daifset, #2");
+        lock();
     }
 }
 
 extern char __bss[];
 extern char __bss_end[];
+
+__noreturn void mpinit(void) {
+    while (true) {
+        __asm__ __volatile__("msr daifset, #2");
+        __asm__ __volatile__("wfe");
+    }
+
+    mpmain();
+
+    PANIC("mpmain returned");
+    for (;;) {
+        halt();
+    }
+}
 
 void arm64_init(void) {
     // TODO: disable unused exception table vectors
@@ -29,12 +46,17 @@ void arm64_init(void) {
     // TODO: improve tlb flushing
     ARM64_MSR(vbar_el1, &exception_vector);
 
+    if (!mp_is_bsp()) {
+        lock();
+        mpinit();
+        UNREACHABLE();
+    }
+
     // We no longer need to access the lower addresses.
     ARM64_MSR(ttbr0_el1, 0ull);
 
     bzero(get_cpuvar(), sizeof(struct cpuvar));
     bzero(__bss, (vaddr_t) __bss_end - (vaddr_t) __bss);
-    lock();
 
     arm64_peripherals_init();
 

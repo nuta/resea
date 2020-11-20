@@ -17,19 +17,19 @@ el1_mode:
     mrs  x1, mpidr_el1
     and  x1, x1, #3
 
-    // FIXME:
+    // Set the per-cpu stack pointer.
     ldr  x2, =__boot_stack_base
-    ldr  x3, #0x1000
+    ldr  x3, =0x1000
     add  x2, x2, #0x1000
-    madd x3, x3, x1, x2 // x3 = x2 + x3 * x1
-    mov  sp, x3
+    madd x4, x3, x1, x2 // x3 = x3 * x1 + x2 = PAGE_SIZE * cpu_id + x2
+    mov  sp, x4
     cbz x1, bsp_boot
 
 ap_boot:
-    b halt
+    b enable_mmu
 
 bsp_boot:
-    // Construct the kernel paging table (i.e. TTBR1).
+    // Construct the kernel paging table.
     //
     //   offsets         |    Table
     //  -------------------------------

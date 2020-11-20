@@ -105,7 +105,7 @@ void arm64_timer_reload(void) {
 static void timer_init(void) {
     arm64_timer_reload();
     ARM64_MSR(cntv_ctl_el0, 1ull);
-    mmio_write(CORE0_TIMER_IRQCNTL, 1 << 3 /* Enable nCNTVIRQ IRQ */);
+    mmio_write(TIMER_IRQCNTL(mp_self()), 1 << 3 /* Enable nCNTVIRQ IRQ */);
 }
 
 void arm64_peripherals_init(void) {
