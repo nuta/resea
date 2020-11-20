@@ -61,6 +61,9 @@ void arm64_init(void) {
     arm64_peripherals_init();
     lock();
 
+    // Enable d-cache and i-cache.
+    ARM64_MSR(sctlr_el1, ARM64_MRS(sctlr_el1) | (1 << 2) | (1 << 12));
+
     // Initialize the performance counter for benchmarking.
     ARM64_MSR(pmcr_el0, 0b1ull);           // Reset counters.
     ARM64_MSR(pmcr_el0, 0b11ull);          // Enable counters.
