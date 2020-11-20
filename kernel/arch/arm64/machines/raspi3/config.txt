@@ -1,0 +1,7 @@
+# /boot/config.txt for Raspberry Pi 3
+arm_64bit=1
+program_usb_boot_mode=1
+enable_uart=1
+dtparam=spi=on
+dtparam=i2c_arm=on
+disable_commandline_tags=1
