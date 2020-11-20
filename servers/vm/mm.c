@@ -56,13 +56,40 @@ static void free_pages(struct task *task, paddr_t paddr) {
     WARN("failed to free paddr=%p in %s (double free?)", paddr, task->name);
 }
 
+static bool is_mappable_paddr_range(paddr_t paddr, size_t num_pages) {
+    paddr_t paddr_end = paddr + num_pages * PAGE_SIZE;
+    return
+        paddr >= PAGES_BASE_ADDR
+        && paddr_end >= PAGES_BASE_ADDR
+        && paddr_end < PAGES_BASE_ADDR_END
+        && paddr < paddr_end // No wrapping around.
+        ;
+}
 
 error_t alloc_phy_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
                         size_t num_pages) {
     *vaddr = alloc_virt_pages(task, num_pages);
     if (*paddr) {
-        // TODO: Map the page here and decrement the refcount if the *paddr is
-        // not mappable.
+        if (!IS_ALIGNED(*paddr, PAGE_SIZE)) {
+            WARN_DBG("%s: unaligned paddr %p", __func__, *paddr);
+            return ERR_INVALID_ARG;
+        }
+
+        if (!is_mappable_paddr_range(*paddr, num_pages)) {
+            WARN_DBG("%s: invalid paddr %p", __func__, *paddr);
+            return ERR_NOT_ACCEPTABLE;
+        }
+
+        // Map the specified physical memory address.
+        DBG("*paddr = %p", *paddr);
+        for (size_t i = 0; i< num_pages; i++) {
+            offset_t off = i * PAGE_SIZE;
+            error_t err = map_page(task, *vaddr + off, *paddr + off, MAP_W, false);
+            if (err != OK) {
+                return err;
+            }
+        }
+
         pages_incref(paddr2pfn(*paddr), num_pages);
     } else {
         *paddr = pages_alloc(num_pages);

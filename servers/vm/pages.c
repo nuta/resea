@@ -3,8 +3,6 @@
 
 size_t num_unused_pages = 0;
 static struct page pages[PAGES_MAX];
-extern char __straight_mapping[];
-#define PAGES_BASE_ADDR ((paddr_t) __straight_mapping)
 
 pfn_t paddr2pfn(paddr_t paddr) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE) && paddr >= PAGES_BASE_ADDR);
