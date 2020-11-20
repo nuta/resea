@@ -5,18 +5,6 @@ menu "ARM64 Options"
         bool "Trace exceptions (including system calls)"
         default n
 
-    config FORCE_REBOOT_BY_WATCHDOG
-        bool "Enable watchdog timer to reboot the system periodically"
-        default n
-        help
-            This feature is pretty useful for my baremetal testing environment
-            on Raspberry Pi.
-
-    config WATCHDOG_TIMEOUT
-        int "The timeout value for the watchdog timer (in seconds)"
-        depends on FORCE_REBOOT_BY_WATCHDOG
-        range 1 10
-        default 10
 endmenu
 
 source "kernel/arch/arm64/machines/raspi3/Kconfig"
