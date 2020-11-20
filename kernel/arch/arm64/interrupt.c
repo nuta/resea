@@ -30,16 +30,16 @@ void arm64_handle_exception(void) {
         // Instruction Abort in userspace (page fault).
         case 0x20:
 #ifdef CONFIG_TRACE_EXCEPTION
-            TRACE("Instruction Abort: task=%s, far=%p, elr=%p",
-                  CURRENT->name, far, elr);
+            TRACE("Instruction Abort: task=%s, far=%p, elr=%p, esr=%p",
+                  CURRENT->name, far, elr, esr);
 #endif
             handle_page_fault(far, elr, EXP_PF_USER | EXP_PF_WRITE /* FIXME: */);
             break;
         // Data abort in userspace (page fault).
         case 0x24:
 #ifdef CONFIG_TRACE_EXCEPTION
-            TRACE("Data Abort: task=%s, far=%p, elr=%p",
-                  CURRENT->name, far, elr);
+            TRACE("Data Abort: task=%s, far=%p, elr=%p, esr=%p",
+                  CURRENT->name, far, elr, esr);
 #endif
             handle_page_fault(far, elr, EXP_PF_USER | EXP_PF_WRITE /* FIXME: */);
             break;
