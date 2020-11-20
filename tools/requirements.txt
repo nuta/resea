@@ -4,3 +4,7 @@ jinja2
 colorama
 pyelftools
 Markdown
+numpy
+pandas
+matplotlib
+seaborn
