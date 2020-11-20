@@ -130,6 +130,11 @@ error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr, unsigned flags
             case ERR_TRY_AGAIN:
                 continue;
             default:
+                if (err != OK) {
+                    WARN_DBG("%s: failed to map a page: %s (paddr=%p, vaddr=%p, kpage=%p)",
+                        task->name, err2str(err), paddr, vaddr, kpage
+                    );
+                }
                 free_pages(task, kpage);
                 return err;
         }
