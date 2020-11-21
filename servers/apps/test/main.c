@@ -16,6 +16,7 @@ void main(void) {
     libcommon_test();
     libresea_test();
     malloc_test();
+    datetime_test();
 
     if (failed) {
         WARN("Failed %d tests", failed);
