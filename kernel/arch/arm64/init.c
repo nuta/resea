@@ -68,6 +68,9 @@ void arm64_init(void) {
     ARM64_MSR(pmcr_el0, 0b1ull);           // Reset counters.
     ARM64_MSR(pmcr_el0, 0b11ull);          // Enable counters.
 
+    // QEMU does not support performance counters available in the real Raspberry
+    // Pi 3B+.
+#ifndef CONFIG_SEMIHOSTING
     int num_perf_counters = (ARM64_MRS(pmcr_el0) >> 11) & 0b11111;
     ASSERT(num_perf_counters >= 5);
 
@@ -82,7 +85,7 @@ void arm64_init(void) {
     ARM64_MSR(pmevtyper2_el0, 0x13ull);
     ARM64_MSR(pmevtyper3_el0, 0x0aull);
     ARM64_MSR(pmevtyper4_el0, 0x05ull);
-
+#endif
 
     ARM64_MSR(pmcntenset_el0, 0x8000001full); // Enable the cycle and 5 event counters.
     ARM64_MSR(pmuserenr_el0, 0b11ull);     // Enable user access to the counters.
