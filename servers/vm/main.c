@@ -150,6 +150,18 @@ void main(void) {
                 }
                 break;
             }
+            case BENCHMARK_NOP_MSG:
+                r.type = BENCHMARK_NOP_REPLY_MSG;
+                r.benchmark_nop_reply.value = m.benchmark_nop.value * 7;
+                ipc_reply(m.src, &r);
+                break;
+            case BENCHMARK_NOP_WITH_OOL_MSG:
+                free(m.benchmark_nop_with_ool.data);
+                r.type = BENCHMARK_NOP_WITH_OOL_REPLY_MSG;
+                r.benchmark_nop_with_ool_reply.data = "reply!";
+                r.benchmark_nop_with_ool_reply.data_len = 7;
+                ipc_reply(m.src, &r);
+                break;
             case EXCEPTION_MSG: {
                 if (m.src != KERNEL_TASK) {
                     WARN("forged exception message from #%d, ignoring...",
