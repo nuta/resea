@@ -1,5 +1,16 @@
 # Change Log
 
+## v0.7.0 (Nov 22, 2020)
+- Add the datetime server with UNIX timestamp support (by @PrayagS)
+- Add the x64-based system's RTC device driver (by @PrayagS)
+- Mitigate malloc heap fragmentation (by @yashrajkakkad)
+- Add Intel HD Audio device driver
+- vm: Fix memory leaks
+- genidl: Support `--lang html`
+- raspi3: Initial (incomplete) support for multiprocessors
+- raspi3: Enable memory cache
+- benchmark: Some improvements for arm64
+
 ## v0.6.0 (Oct 30, 2020)
 - Add [unit testing framework](https://resea.org/docs/userspace/unit-test.html) (experimental).
 - Add the ATA (PIO mode) disk driver (`servers/drivers/blk/ide`).

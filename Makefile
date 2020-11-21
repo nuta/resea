@@ -1,6 +1,6 @@
 # Default values for build system.
 export V         ?=
-export VERSION   ?= v0.6.0
+export VERSION   ?= v0.7.0
 export BUILD_DIR ?= build
 ifeq ($(shell uname), Darwin)
 LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
