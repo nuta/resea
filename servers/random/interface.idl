@@ -1,0 +1,4 @@
+namespace random {
+    rpc get_random()
+        -> (random_number : uint32);
+}
