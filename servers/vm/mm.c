@@ -81,7 +81,6 @@ error_t alloc_phy_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
         }
 
         // Map the specified physical memory address.
-        DBG("*paddr = %p", *paddr);
         for (size_t i = 0; i< num_pages; i++) {
             offset_t off = i * PAGE_SIZE;
             error_t err = map_page(task, *vaddr + off, *paddr + off, MAP_W, false);
