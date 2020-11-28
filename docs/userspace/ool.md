@@ -9,8 +9,8 @@ OoL supports the following payload types:
 
 | Type    | Description       |
 |---------|-------------------|
-| `bytes` | an arbitrary data |
-| `str`   | a string terminated with `\0` |
+| `bytes` | Arbitrary data. |
+| `str`   | A string terminated with `\0`. |
 
 ## Caveats
 - It's slow for now since it needs some IPC calls with `vm`.
@@ -37,7 +37,7 @@ In the `fs` interface definition shown above, as you can see, some methods use O
 To send a `bytes`, set a pointer to data and the length of data:
 
 ```c
-static void reply_file_contents(task_t client, uint8_t *data, size_t len) {
+static void read_file_contents(task_t client, uint8_t *data, size_t len) {
     struct message m;
     m.type = FS_READ_REPLY_MSG;
     m.fs_read_reply.data = data;
@@ -45,7 +45,6 @@ static void reply_file_contents(task_t client, uint8_t *data, size_t len) {
     ipc_call(client, &m);
 }
 ```
-
 
 To send a `str`, set a pointer to a *null-terminated* ASCII string to as `str` payload. The IPC library computes the length of the OoL payload by `strlen` and transparently copies it into the destination task (fs server):
 
