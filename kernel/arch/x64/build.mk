@@ -8,11 +8,6 @@ CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 
 QEMUFLAGS += -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
 QEMUFLAGS += -no-reboot -boot d -device isa-debug-exit -d guest_errors,unimp
-QEMUFLAGS += -netdev user,id=net0,hostfwd=tcp:127.0.0.1:1234-:80
-QEMUFLAGS += -netdev user,id=net1,hostfwd=tcp:127.0.0.1:1235-:80
-QEMUFLAGS += -device e1000,netdev=net0,mac=52:54:00:12:34:56
-QEMUFLAGS += -object filter-dump,id=fiter0,netdev=net0,file=e1000.pcap
-QEMUFLAGS += -object filter-dump,id=fiter1,netdev=net1,file=virtio.pcap
 QEMUFLAGS += $(if $(SMP), -smp $(SMP))
 QEMUFLAGS += $(if $(GUI),,-nographic)
 
@@ -20,10 +15,20 @@ ifneq ($(HD_AUDIO),)
 QEMUFLAGS += -device intel-hda,debug=3 -device hda-duplex,debug=3
 endif
 
+ifneq ($(E1000),)
+QEMUFLAGS += -netdev user,id=net0,hostfwd=tcp:127.0.0.1:1234-:80
+QEMUFLAGS += -object filter-dump,id=fiter0,netdev=net0,file=e1000.pcap
+QEMUFLAGS += -device e1000,netdev=net0,mac=52:54:00:12:34:56
+endif
+
+ifneq ($(VIRTIO_NET),)
 ifneq ($(VIRTIO_LEGACY),)
 QEMUFLAGS += -device virtio-net,netdev=net1,disable-legacy=off,disable-modern=on
 else
 QEMUFLAGS += -device virtio-net,netdev=net1,packed=on
+endif
+QEMUFLAGS += -object filter-dump,id=fiter1,netdev=net1,file=virtio.pcap
+QEMUFLAGS += -netdev user,id=net1,hostfwd=tcp:127.0.0.1:1234-:80
 endif
 
 .PHONY: run
