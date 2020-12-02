@@ -29,15 +29,19 @@ def main():
     symbols = {}
     for line in open(args.symbols_file).read().strip().split("\n"):
         cols = line.split(" ", 1)
-        addr = int(cols[0], 16)
+        try:
+            addr = int(cols[0], 16)
+        except ValueError:
+            continue
         name = cols[1]
         symbols[addr] = name
 
     symbols = sorted(symbols.items(), key=lambda s: s[0])
     if len(symbols) > num_symbols:
-        sys.exit(
+        print(
             f"too many symbols: max={num_symbols}, actual={len(symbols)} " \
             + "(hint: increase NUM_SYMBOLS config)")
+        symbols = symbols[:num_symbols]
 
     # Build a symbol table.
     symbol_table = struct.pack("<4sIQ", SYMBOL_TABLE_MAGIC, len(symbols), 0)
