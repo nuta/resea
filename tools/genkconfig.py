@@ -113,7 +113,10 @@ def main():
         kconfig_path = Path(path).parent / "Kconfig"
         if kconfig_path.exists():
             d["kconfig_path"] = kconfig_path
-        section_dir = str(Path(path).parent.parent)
+        server_dir = Path(path).parent
+        if any([(d / "build.mk").exists() for d in server_dir.parents]):
+            continue
+        section_dir = str(server_dir.parent)
         if section_dir not in section_mappings:
             raise Exception(f"please update `section_mappings' for {path}")
         servers.append(d)

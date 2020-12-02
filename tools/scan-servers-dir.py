@@ -26,7 +26,11 @@ def main():
     for (server_dir, dirs, files) in os.walk("servers"):
         if "build.mk" not in files:
             continue
+
         server_dir = Path(server_dir)
+        if any([(d / "build.mk").exists() for d in server_dir.parents]):
+            continue
+
         server_dir_lint(server_dir)
         servers[server_dir.stem] = server_dir
 
