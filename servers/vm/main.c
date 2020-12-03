@@ -12,6 +12,7 @@
 #include "task.h"
 #include "mm.h"
 #include "ool.h"
+#include "shm.h"
 
 // for sparse
 error_t ipc_call_pager(struct message *m);
@@ -279,6 +280,43 @@ void main(void) {
                 task_unwatch(caller, task);
                 r.type = TASK_UNWATCH_REPLY_MSG;
                 ipc_reply(m.src, &r);
+                break;
+            }
+            case SHM_CREATE_MSG: {
+                struct task *task = task_lookup(m.src);
+                ASSERT(task);
+                paddr_t paddr;
+                vaddr_t vaddr;
+                error_t err =
+                    alloc_phy_pages(task, &vaddr, &paddr, m.shm_create.size);
+                if (err != OK) {
+                    ipc_reply_err(m.src, err);
+                    break;
+                }
+                int shm_id = shm_create(m.shm_create.size, paddr);
+                m.type = SHM_CREATE_REPLY_MSG;
+                m.shm_create_reply.shm_id = shm_id;
+                ipc_reply(m.src, &m);
+                break;
+            }
+            case SHM_MAP_MSG: {
+                struct task *task = task_lookup(m.src);
+                struct shm_t *shm = shm_stat(m.shm_map.shm_id);
+                vaddr_t vaddr = alloc_virt_pages(task, shm->len);
+
+                error_t err = map_page(task, vaddr, shm->paddr, 0, 1);
+                if (err != OK) {
+                    ipc_reply_err(m.src, err);
+                    break;
+                }
+                m.type = SHM_MAP_REPLY_MSG;
+                m.shm_map_reply.vaddr = vaddr;
+                ipc_reply(m.src, &m);
+                break;
+            }
+            case SHM_CLOSE_MSG: {
+                shm_close(m.shm_close.shm_id);
+                // error handling
                 break;
             }
             default:

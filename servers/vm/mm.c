@@ -25,7 +25,7 @@ static paddr_t alloc_pages(struct task *task, vaddr_t vaddr, size_t num_pages) {
 
 /// Allocates a virtual address space by so-called the bump pointer allocation
 /// algorithm.
-static vaddr_t alloc_virt_pages(struct task *task, size_t num_pages) {
+vaddr_t alloc_virt_pages(struct task *task, size_t num_pages) {
     vaddr_t vaddr = task->free_vaddr;
     size_t size = num_pages * PAGE_SIZE;
 
