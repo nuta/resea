@@ -17,7 +17,6 @@ void main(void) {
     libresea_test();
     malloc_test();
     datetime_test();
-    INFO("starting shm tests .....");
     shm_test();
 
     if (failed) {

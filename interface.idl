@@ -118,7 +118,7 @@ namespace time {
 }
 namespace shm {
     rpc create(size : size) ->  (shm_id : int);
-    rpc map(shm_id : int)   ->  (vaddr : vaddr);
+    rpc map(shm_id : int, flag:int)   ->  (vaddr : vaddr);
     rpc close(shm_id : int) ->  ();
 } 
 namespace shm_test {

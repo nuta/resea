@@ -7,7 +7,7 @@
 
 int main() {
     ASSERT_OK(ipc_serve("shm_test_server"));
-    INFO("starting shm_test server");
+    
     struct message m;
     error_t err;
 
@@ -23,6 +23,7 @@ int main() {
     bzero(&m, sizeof(m));
     m.type = SHM_MAP_MSG;
     m.shm_map.shm_id = shm_id;
+    m.shm_map.flag = 1;
     err = ipc_call(INIT_TASK, &m);
     ASSERT_OK(err);
     vaddr_t vaddr = m.shm_map_reply.vaddr;

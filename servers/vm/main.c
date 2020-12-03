@@ -283,28 +283,39 @@ void main(void) {
                 break;
             }
             case SHM_CREATE_MSG: {
+                // check if slot is available
+                int slot = shm_check_available();
+                if (slot < 0) {
+                    ipc_reply_err(m.src, ERR_UNAVAILABLE);
+                }
                 struct task *task = task_lookup(m.src);
                 ASSERT(task);
+                // allocate paddr 
                 paddr_t paddr;
                 vaddr_t vaddr;
-                error_t err =
-                    alloc_phy_pages(task, &vaddr, &paddr, m.shm_create.size);
+                error_t err = alloc_phy_pages(task, &vaddr, &paddr, m.shm_create.size);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
                 }
-                int shm_id = shm_create(m.shm_create.size, paddr);
+                int shm_id = shm_create(m.shm_create.size, paddr,slot);
                 m.type = SHM_CREATE_REPLY_MSG;
                 m.shm_create_reply.shm_id = shm_id;
                 ipc_reply(m.src, &m);
                 break;
             }
             case SHM_MAP_MSG: {
-                struct task *task = task_lookup(m.src);
-                struct shm_t *shm = shm_stat(m.shm_map.shm_id);
-                vaddr_t vaddr = alloc_virt_pages(task, shm->len);
 
-                error_t err = map_page(task, vaddr, shm->paddr, 0, 1);
+                struct shm_t *shm = shm_stat(m.shm_map.shm_id);
+                if (shm == NULL) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+                struct task *task = task_lookup(m.src);
+                
+                vaddr_t vaddr = alloc_virt_pages(task, shm->len);
+                int flag = (m.shm_map.flag)?MAP_W:0;
+                error_t err = map_page(task, vaddr, shm->paddr,flag , true);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
@@ -316,7 +327,8 @@ void main(void) {
             }
             case SHM_CLOSE_MSG: {
                 shm_close(m.shm_close.shm_id);
-                // error handling
+                m.type = SHM_CLOSE_REPLY_MSG;
+                ipc_reply(m.src, &m);
                 break;
             }
             default:
