@@ -41,7 +41,7 @@ make run
 
 Community
 ---------
-If you have any questions, feel free to talk to us on [Gitter](https://gitter.im/resea/community).
+If you have any questions, feel free to talk to us on [Gitter](https://gitter.im/resea/community) or [IRC](https://kiwiirc.com/client/irc.freenode.net/resea).
 
 Contributing
 ------------
