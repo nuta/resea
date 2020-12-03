@@ -121,5 +121,7 @@ namespace shm {
     rpc map(shm_id : int)   ->  (vaddr : vaddr);
     rpc close(shm_id : int) ->  ();
 } 
-
+namespace shm_test {
+    rpc read()  ->  (shm_id : int);
+}
 include "servers/*/interface.idl";

@@ -1,19 +1,32 @@
-
 #include <resea/ipc.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
+#include <resea/task.h>
+#include <string.h>
 #include "test.h"
+
 void shm_test(void) {
     struct message m;
-    int err;
-    m.type = SHM_CREATE_MSG;
-    m.shm_create.size = 2;
+    error_t err;
+    task_t shm_test = ipc_lookup("shm_test_server");
+    INFO("shm_test_server : %d", shm_test);
 
-    err = ipc_call(INIT_TASK, &m);
-    int shm_id = m.shm_create_reply.shm_id;
-    TEST_ASSERT(shm_id > -1);
+    // request read
+    m.type = SHM_TEST_READ_MSG;
+    err = ipc_call(shm_test, &m);
+    ASSERT_OK(err);
+    int shm_id = m.shm_test_read_reply.shm_id;
 
+    // map shm
+    bzero(&m, sizeof(m));
     m.type = SHM_MAP_MSG;
     m.shm_map.shm_id = shm_id;
     err = ipc_call(INIT_TASK, &m);
-    //INFO("vaddr = %d", m.shm_map_reply.vaddr);
-    TEST_ASSERT(m.shm_map_reply.vaddr);
+    ASSERT_OK(err);
+    vaddr_t vaddr = m.shm_map_reply.vaddr;
+
+    // read from vaddr
+    char buf[32];
+    memcpy(buf, (void *) vaddr, sizeof(buf));
+    INFO("read :%s", buf);
 }
