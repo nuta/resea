@@ -21,7 +21,7 @@ ifeq ($(V),)
 endif
 
 # Determine if we need to load ".config".
-non_config_targets := defconfig olddefconfig menuconfig website book clean unittest
+non_config_targets := defconfig olddefconfig menuconfig mergeconfig website book clean unittest
 load_config := y
 ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
 load_config :=
@@ -181,6 +181,11 @@ defconfig: $(BUILD_DIR)/Kconfig.autogen
 olddefconfig: $(BUILD_DIR)/Kconfig.autogen
 	$(PROGRESS) "CONFIG"
 	./tools/config.py --olddefconfig
+
+.PHONY: mergeconfig
+mergeconfig: $(BUILD_DIR)/Kconfig.autogen
+	$(PROGRESS) "CONFIG"
+	./tools/merge-config.py --outfile=.config $(CONFIG_FILES)
 
 .PHONY: menuconfig
 menuconfig: $(BUILD_DIR)/Kconfig.autogen

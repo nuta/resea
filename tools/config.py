@@ -9,7 +9,8 @@ def defconfig(config_file):
     if os.path.exists(config_file):
         os.remove(config_file)
     kconf = kconfiglib.Kconfig("Kconfig")
-    kconf.load_config(filename=config_file)
+    if os.path.exists(config_file):
+        kconf.load_config(filename=config_file)
     kconf.write_config(filename=config_file)
 
 def genconfig(config_file, outfile):
