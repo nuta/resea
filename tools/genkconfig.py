@@ -49,6 +49,7 @@ endmenu
 
 choice
     prompt "Target CPU architecture"
+        default ARCH_X64
 {%- for arch in archs %}
     config ARCH_{{ arch.name | upper }}
         bool "{{ arch.name }}"
