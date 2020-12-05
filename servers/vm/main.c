@@ -1,18 +1,18 @@
 #include <list.h>
-#include <resea/ipc.h>
 #include <resea/async.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/task.h>
 #include <resea/timer.h>
 #include <string.h>
-#include "elf.h"
 #include "bootfs.h"
-#include "pages.h"
-#include "task.h"
+#include "elf.h"
 #include "mm.h"
 #include "ool.h"
+#include "pages.h"
 #include "shm.h"
+#include "task.h"
 
 // for sparse
 error_t ipc_call_pager(struct message *m);
@@ -45,7 +45,7 @@ static void spawn_servers(void) {
     // Launch servers in bootfs.
     int num_launched = 0;
     struct bootfs_file *file;
-    for (int i =0; (file = bootfs_open(i)) != NULL; i++) {
+    for (int i = 0; (file = bootfs_open(i)) != NULL; i++) {
         // Autostart server names (separated by whitespace).
         char *startups = AUTOSTARTS;
 
@@ -195,14 +195,15 @@ void main(void) {
                 ASSERT(task);
                 ASSERT(m.page_fault.task == task->tid);
 
-                paddr_t paddr =
-                    pager(task, m.page_fault.vaddr, m.page_fault.ip, m.page_fault.fault);
+                paddr_t paddr = pager(task, m.page_fault.vaddr, m.page_fault.ip,
+                                      m.page_fault.fault);
                 if (!paddr) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;
                 }
 
-                vaddr_t aligned_vaddr = ALIGN_DOWN(m.page_fault.vaddr, PAGE_SIZE);
+                vaddr_t aligned_vaddr =
+                    ALIGN_DOWN(m.page_fault.vaddr, PAGE_SIZE);
                 ASSERT_OK(map_page(task, aligned_vaddr, paddr, MAP_W, false));
                 r.type = PAGE_FAULT_REPLY_MSG;
 
@@ -232,8 +233,8 @@ void main(void) {
 
                 vaddr_t vaddr;
                 paddr_t paddr = m.vm_alloc_pages.paddr;
-                error_t err =
-                    alloc_phy_pages(task, &vaddr, &paddr, m.vm_alloc_pages.num_pages);
+                error_t err = alloc_phy_pages(task, &vaddr, &paddr,
+                                              m.vm_alloc_pages.num_pages);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
@@ -246,7 +247,8 @@ void main(void) {
                 break;
             }
             case TASK_LAUNCH_MSG: {
-                task_t task_or_err = task_spawn_by_cmdline(m.task_launch.name_and_cmdline);
+                task_t task_or_err =
+                    task_spawn_by_cmdline(m.task_launch.name_and_cmdline);
                 free(m.task_launch.name_and_cmdline);
                 if (IS_ERROR(task_or_err)) {
                     ipc_reply_err(m.src, task_or_err);
@@ -290,32 +292,32 @@ void main(void) {
                 }
                 struct task *task = task_lookup(m.src);
                 ASSERT(task);
-                // allocate paddr 
+                // allocate paddr
                 paddr_t paddr;
                 vaddr_t vaddr;
-                error_t err = alloc_phy_pages(task, &vaddr, &paddr, m.shm_create.size);
+                error_t err =
+                    alloc_phy_pages(task, &vaddr, &paddr, m.shm_create.size);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
                 }
-                int shm_id = shm_create(m.shm_create.size, paddr,slot);
+                int shm_id = shm_create(m.shm_create.size, paddr, slot);
                 m.type = SHM_CREATE_REPLY_MSG;
                 m.shm_create_reply.shm_id = shm_id;
                 ipc_reply(m.src, &m);
                 break;
             }
             case SHM_MAP_MSG: {
-
-                struct shm_t *shm = shm_stat(m.shm_map.shm_id);
+                struct shm *shm = shm_lookup(m.shm_map.shm_id);
                 if (shm == NULL) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;
                 }
                 struct task *task = task_lookup(m.src);
-                
+
                 vaddr_t vaddr = alloc_virt_pages(task, shm->len);
-                int flag = (m.shm_map.flag)?MAP_W:0;
-                error_t err = map_page(task, vaddr, shm->paddr,flag , true);
+                int flag = (m.shm_map.writable) ? MAP_W : 0;
+                error_t err = map_page(task, vaddr, shm->paddr, flag, true);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
@@ -332,7 +334,7 @@ void main(void) {
                 break;
             }
             default:
-               discard_unknown_message(&m);
+                discard_unknown_message(&m);
         }
     }
 }
