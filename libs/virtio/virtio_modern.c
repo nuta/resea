@@ -180,16 +180,26 @@ static void activate(void) {
 }
 
 /// Allocates a descriptor for the ouput to the device (e.g. TX virtqueue in
-/// virtio-net).
-static int virtq_alloc(struct virtio_virtq *vq, size_t len) {
+/// virtio-net). If `prev_desc` is set, it checks if it's the previously
+/// allocated decriptor to ensure that they forms a descriptor chain.
+static int virtq_alloc(struct virtio_virtq *vq, size_t len, uint16_t flags,
+                       int prev_desc) {
     int index = vq->modern.next_avail;
     struct virtq_packed_desc *desc = &vq->modern.descs[index];
+
+    ASSERT(
+        (prev_desc != VIRTQ_ALLOC_NO_PREV
+        || prev_desc != ((index == 0) ? vq->num_descs - 1 : index - 1))
+        && "(prev_desc + 1) == (next_desc) does not hold"
+    );
 
     if (!is_desc_free(vq, desc)) {
         return -1;
     }
 
-    uint16_t flags =
+    flags &= ~(1 << VIRTQ_DESC_F_AVAIL_SHIFT);
+    flags &= ~(1 << VIRTQ_DESC_F_USED_SHIFT);
+    flags |=
         (vq->modern.avail_wrap_counter << VIRTQ_DESC_F_AVAIL_SHIFT)
         | (!vq->modern.avail_wrap_counter << VIRTQ_DESC_F_USED_SHIFT);
 
@@ -206,7 +216,7 @@ static int virtq_alloc(struct virtio_virtq *vq, size_t len) {
     return index;
 }
 
-/// Returns the next descriptor which is already used by the device. If the
+/// Returns the next descriptor which is already filled by the device. If the
 /// buffer is input from the device, call `virtq_push_desc` once you've handled
 /// the input.
 static error_t virtq_pop_desc(struct virtio_virtq *vq, int *index, size_t *len) {

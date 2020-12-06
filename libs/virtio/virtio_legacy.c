@@ -92,15 +92,21 @@ static void activate(void) {
 }
 
 /// Allocates a descriptor for the ouput to the device (e.g. TX virtqueue in
-/// virtio-net).
-static int virtq_alloc(struct virtio_virtq *vq, size_t len) {
+/// virtio-net). If `VIRTQ_DESC_F_NEXT` is set in `flags`, it allocates the next
+/// descriptor (i.e. constructs a descriptor chain). If `prev_desc` is set, it
+/// reuses the previously allocated descriptor.
+static int virtq_alloc(struct virtio_virtq *vq, size_t len, uint16_t flags,
+                       int prev_desc) {
     int desc_index = vq->legacy.next_avail_index % vq->num_descs;
     struct virtq_desc *desc = &vq->legacy.descs[desc_index];
 
     // TODO: FIXME: Check if the descriptor is available.
 
+    // TODO: Use `descs[prev->desc]->next` if prev_desc != VIRTQ_ALLOC_NO_PREV.
+    ASSERT(prev_desc == VIRTQ_ALLOC_NO_PREV && "not yet implemented");
+
     desc->len = into_le32(len);
-    desc->flags = 0;
+    desc->flags = flags;
     desc->next = 0; // TODO:
 
     vq->legacy.next_avail_index++;

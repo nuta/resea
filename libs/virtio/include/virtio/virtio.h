@@ -48,6 +48,8 @@ struct virtio_virtq {
     };
 };
 
+#define VIRTQ_ALLOC_NO_PREV -1
+
 struct virtio_ops {
     uint64_t (*read_device_features)(void);
     void (*negotiate_feature)(uint64_t features);
@@ -57,8 +59,10 @@ struct virtio_ops {
     void (*virtq_init)(unsigned index);
     struct virtio_virtq *(*virtq_get)(unsigned index);
     uint16_t (*virtq_size)(void);
-    void (*virtq_allocate_buffers)(struct virtio_virtq *vq, size_t buffer_size, bool writable);
-    int (*virtq_alloc)(struct virtio_virtq *vq, size_t len);
+    void (*virtq_allocate_buffers)(struct virtio_virtq *vq, size_t buffer_size,
+                                   bool writable_from_device);
+    int (*virtq_alloc)(struct virtio_virtq *vq, size_t len, uint16_t flags,
+                       int prev_desc);
     error_t (*virtq_pop_desc)(struct virtio_virtq *vq, int *index, size_t *size);
     void (*virtq_push_desc)(struct virtio_virtq *vq, int index);
     void (*virtq_kick_desc)(struct virtio_virtq *vq, int index);

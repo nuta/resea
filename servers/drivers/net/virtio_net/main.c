@@ -62,7 +62,9 @@ static void transmit(void) {
 
     // Allocate a desc for the transmission.
     size_t len = m.net_tx.payload_len;
-    int index = virtio->virtq_alloc(tx_virtq, sizeof(struct virtio_net_header) + len);
+    int index = virtio->virtq_alloc(tx_virtq,
+                                    sizeof(struct virtio_net_header) + len,
+                                    0, VIRTQ_ALLOC_NO_PREV);
     if (index < 0) {
         WARN("failed to alloc a desc for TX");
         return;
