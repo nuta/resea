@@ -1,4 +1,5 @@
 objs-y += task.o vm.o serial.o boot.o init.o interrupt.o trap.o mp.o
+objs-$(CONFIG_X64_PRINTK_IN_SCREEN) += screen.o
 
 QEMU  ?= qemu-system-x86_64
 BOCHS ?= bochs
