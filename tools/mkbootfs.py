@@ -8,7 +8,7 @@ VERSION = 1
 PAGE_SIZE = 4096
 JUMP_CODE_SIZE = 16
 FILE_ENTRY_SIZE = 64
-BOOTFS_MAX_SIZE = 8 *1024 * 1024
+BOOTFS_MAX_SIZE = 16 * 1024 * 1024
 
 def align_up(value, align):
     return (value + align - 1) & ~(align - 1)
