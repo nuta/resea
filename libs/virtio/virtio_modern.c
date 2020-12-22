@@ -6,7 +6,6 @@
 #include <string.h>
 #include <driver/io.h>
 #include <virtio/virtio.h>
-#include "virtio_modern.h"
 
 /// The maximum number of virtqueues.
 #define NUM_VIRTQS_MAX 8

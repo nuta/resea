@@ -6,7 +6,6 @@
 #include <string.h>
 #include <driver/io.h>
 #include <virtio/virtio.h>
-#include "virtio_legacy.h"
 
 /// The maximum number of virtqueues.
 #define NUM_VIRTQS_MAX 8
@@ -16,26 +15,26 @@ static struct virtio_virtq virtqs[NUM_VIRTQS_MAX];
 static io_t bar0_io = NULL;
 
 static uint8_t read_device_status(void) {
-    return io_read8(bar0_io, REG_DEVICE_STATUS);
+    return io_read8(bar0_io, VIRTIO_REG_DEVICE_STATUS);
 }
 
 static void write_device_status(uint8_t value) {
-    io_write8(bar0_io, REG_DEVICE_STATUS, value);
+    io_write8(bar0_io, VIRTIO_REG_DEVICE_STATUS, value);
 }
 
 static uint64_t read_device_features(void) {
-    return io_read32(bar0_io, REG_DEVICE_FEATS);
+    return io_read32(bar0_io, VIRTIO_REG_DEVICE_FEATS);
 }
 
 /// Reads the ISR status and de-assert an interrupt
 /// ("4.1.4.5 ISR status capability").
 static uint8_t read_isr_status(void) {
-    return io_read8(bar0_io, REG_ISR_STATUS);
+    return io_read8(bar0_io, VIRTIO_REG_ISR_STATUS);
 }
 
 /// Returns the number of descriptors in total in the queue.
 static uint16_t virtq_num_descs(void) {
-    return io_read16(bar0_io, REG_NUM_DESCS);
+    return io_read16(bar0_io, VIRTIO_REG_NUM_DESCS);
 }
 
 /// Returns the `index`-th virtqueue.
@@ -46,12 +45,12 @@ static struct virtio_virtq *virtq_get(unsigned index) {
 /// Notifies the device that the queue contains a descriptor it needs to process.
 static void virtq_notify(struct virtio_virtq *vq) {
     mb();
-    io_write16(bar0_io, REG_QUEUE_NOTIFY, vq->index);
+    io_write16(bar0_io, VIRTIO_REG_QUEUE_NOTIFY, vq->index);
 }
 
 /// Selects the current virtqueue in the common config.
 static void virtq_select(unsigned index) {
-    io_write16(bar0_io, REG_QUEUE_SELECT, index);
+    io_write16(bar0_io, VIRTIO_REG_QUEUE_SELECT, index);
 }
 
 /// Initializes a virtqueue.
@@ -84,7 +83,7 @@ static void virtq_init(unsigned index) {
 
     paddr_t paddr = dma_daddr(virtq_dma);
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
-    io_write32(bar0_io, REG_QUEUE_ADDR, paddr / PAGE_SIZE);
+    io_write32(bar0_io, VIRTIO_REG_QUEUE_ADDR_PFN, paddr / PAGE_SIZE);
 }
 
 static void activate(void) {
@@ -169,7 +168,7 @@ static void virtq_allocate_buffers(struct virtio_virtq *vq, size_t buffer_size,
 static void negotiate_feature(uint64_t features) {
     // Abort if the device does not support features we need.
     ASSERT((read_device_features() & features) == features);
-    io_write32(bar0_io, REG_DRIVER_FEATS, features);
+    io_write32(bar0_io, VIRTIO_REG_DRIVER_FEATS, features);
     write_device_status(read_device_status() | VIRTIO_STATUS_FEAT_OK);
     ASSERT((read_device_status() & VIRTIO_STATUS_FEAT_OK) != 0);
 }
@@ -185,7 +184,7 @@ static uint32_t pci_config_read(handle_t device, unsigned offset, unsigned size)
 }
 
 static uint64_t read_device_config(offset_t offset, size_t size) {
-    return io_read8(bar0_io, REG_DEVICE_CONFIG_BASE + offset);
+    return io_read8(bar0_io, VIRTIO_REG_DEVICE_CONFIG_BASE + offset);
 }
 
 struct virtio_ops virtio_legacy_ops = {

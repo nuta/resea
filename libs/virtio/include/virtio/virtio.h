@@ -28,6 +28,7 @@
 #define VIRTQ_DESC_F_USED_SHIFT   15
 #define VIRTQ_DESC_F_AVAIL        (1 << VIRTQ_DESC_F_AVAIL_SHIFT)
 #define VIRTQ_DESC_F_USED         (1 << VIRTQ_DESC_F_USED_SHIFT)
+#define VIRTQ_AVAIL_F_NO_INTERRUPT  1
 
 /// A virtqueue.
 struct virtio_virtq {
