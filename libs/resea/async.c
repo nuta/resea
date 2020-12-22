@@ -58,3 +58,12 @@ error_t async_reply(task_t dst) {
     return (sent) ? OK : ERR_NOT_FOUND;
 }
 
+bool async_is_empty(task_t dst) {
+    LIST_FOR_EACH (am, get_queue(dst), struct async_message, next) {
+        if (am->dst == dst) {
+            return false;
+        }
+    }
+
+    return true;
+}
