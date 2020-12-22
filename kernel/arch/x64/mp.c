@@ -48,14 +48,14 @@ static void read_mp_table(void) {
 
     struct mp_float_ptr *mpfltptr = look_for_floatptr_table(0xf0000, 0x100000);
     if (mpfltptr == NULL) {
-        PANIC("MP table not found");
+        WARN("MP table not found");
         return;
     }
 
     mptblhdr = (struct mp_table_header *) from_paddr(
         (paddr_t) mpfltptr->mptable_header_addr);
     if (mptblhdr->signature != MP_MPTABLE_SIGNATURE) {
-        PANIC("invalid MP table");
+        WARN("invalid MP table");
         return;
     }
 
@@ -84,7 +84,8 @@ static void read_mp_table(void) {
                 size = sizeof(struct mp_localint_assign_entry);
                 break;
             default:
-                PANIC("unknown mp table entry: %d", type);
+                WARN("unknown mp table entry: %d", type);
+                return;
         }
 
         entry_ptr = (void *) ((paddr_t) entry_ptr + (paddr_t) size);

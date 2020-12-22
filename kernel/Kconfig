@@ -52,4 +52,9 @@ menu "Kernel"
     config ABI_EMU
         bool "Enable ABI emulation"
         default n
+
+    config HYPERVISOR
+        bool "Hypervisor support"
+        depends on ARCH_X64
+        default n
 endmenu

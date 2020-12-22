@@ -21,6 +21,7 @@ typedef uint32_t uintmax_t;
 typedef uintmax_t size_t;
 typedef uintmax_t paddr_t;
 typedef uintmax_t vaddr_t;
+typedef uintmax_t gpaddr_t;
 typedef uintmax_t uintptr_t;
 typedef intmax_t ptrdiff_t;
 typedef uintmax_t offset_t;
@@ -134,6 +135,7 @@ typedef int error_t;
 #define TASK_ALL_CAPS (1 << 0)
 #define TASK_ABI_EMU  (1 << 1)
 #define TASK_SCHED    (1 << 2)
+#define TASK_HV       (1 << 3)
 
 // Map flags.
 #define MAP_W      (1 << 1)
@@ -172,6 +174,9 @@ enum exception_type {
     EXP_INVALID_MEMORY_ACCESS,
     EXP_INVALID_OP,
     EXP_ABORTED_KERNEL_IPC,
+    EXP_HV_UNIMPLEMENTED,
+    EXP_HV_CRASHED,
+    EXP_HV_INVALID_STATE,
 };
 
 /// The kernel sends messages (e.g. EXCEPTION_MSG and PAGE_FAULT_MSG) as this

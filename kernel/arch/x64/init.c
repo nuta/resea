@@ -4,6 +4,7 @@
 #include <task.h>
 #include <kdebug.h>
 #include <string.h>
+#include "hv.h"
 #include "serial.h"
 #include "task.h"
 #include "trap.h"
@@ -162,7 +163,7 @@ static void common_setup(void) {
     STATIC_ASSERT(IS_ALIGNED(CPUVAR_SIZE_MAX, PAGE_SIZE));
 
     // Enable some CPU features.
-    asm_write_cr0((asm_read_cr0() | CR0_MP) & (~CR0_EM) & (~CR0_TS));
+    asm_write_cr0((asm_read_cr0() | CR0_MP | CR0_NX) & (~CR0_EM) & (~CR0_TS));
     asm_write_cr4(asm_read_cr4() | CR4_FSGSBASE | CR4_OSXSAVE | CR4_OSFXSR
                   | CR4_OSXMMEXCPT);
     asm_xsetbv(0, asm_xgetbv(0) | XCR0_SSE | XCR0_AVX);
@@ -177,6 +178,9 @@ static void common_setup(void) {
     idt_init();
     apic_timer_init();
     syscall_init();
+#ifdef CONFIG_HYPERVISOR
+    x64_hv_init();
+#endif
 }
 
 // Add declarations to make sparse happy.
@@ -189,7 +193,9 @@ extern char __bss_end[];
 void init(void) {
     memset(__bss, 0, (vaddr_t) __bss_end - (vaddr_t) __bss);
     lock();
+#ifndef CONFIG_X64_PRINTK_IN_SCREEN
     draw_text_screen();
+#endif
     serial_init();
     pic_init();
     common_setup();

@@ -82,6 +82,34 @@ syscall_entry:
     swapgs
     sysretq
 
+#ifdef CONFIG_HYPERVISOR
+.global x64_vmexit_enty
+x64_vmexit_enty:
+    // RSP is automatically set through VMCS_HOST_RSP.
+    push r15
+    push r14
+    push r13
+    push r12
+    push r11
+    push r10
+    push r9
+    push r8
+    push rbp
+    push rsi
+    push rdi
+    push rdx
+    push rcx
+    push rbx
+    push rax
+
+    mov rdi, rsp
+    mov rbp, 0
+    call x64_handle_vmexit
+
+    // Unreachable.
+    ud2
+#endif
+
 #ifdef CONFIG_ABI_EMU
 abi_emu_entry:
     push gs:[GS_RSP3] // User RSP.
@@ -309,11 +337,21 @@ userland_entry:
     pop rcx
     mov [rsp + 24], rcx // RSP in a IRET frame
     mov rcx, [rsp + 0]
-
     jmp 2f
-1:
 #endif
 
+#ifdef CONFIG_HYPERVISOR
+    test byte ptr gs:[GS_HV], 1
+    jz 1f
+
+    // Launch a VM using Intel VT.
+    call x64_hv_start_guest
+
+    // Unrechable here!
+    ud2
+#endif
+
+1:
     call unlock
 
     // Sanitize registers to prevent information leak.

@@ -49,15 +49,29 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
         return ERR_ALREADY_EXISTS;
     }
 
-    unsigned allowed_flags = TASK_ALL_CAPS | TASK_ABI_EMU;
+    unsigned allowed_flags = TASK_ALL_CAPS | TASK_ABI_EMU | TASK_HV;
     if ((flags & ~allowed_flags) != 0) {
         WARN_DBG("unknown task flags (%x)", flags);
         return ERR_INVALID_ARG;
     }
 
+#if defined(CONFIG_ABI_EMU) || defined(CONFIG_HYPERVISOR)
+    if ((flags & (TASK_ABI_EMU | TASK_HV)) == (TASK_ABI_EMU | TASK_HV)) {
+        WARN_DBG("TASK_ABI_EMU and TASK_HV are exclusive", flags);
+        return ERR_INVALID_ARG;
+    }
+#endif
+
 #ifndef CONFIG_ABI_EMU
     if ((flags & TASK_ABI_EMU) != 0) {
         WARN_DBG("ABI emulation is not enabled");
+        return ERR_UNAVAILABLE;
+    }
+#endif
+
+#ifndef CONFIG_HYPERVISOR
+    if ((flags & TASK_HV) != 0) {
+        WARN_DBG("hypervisor support is not enabled");
         return ERR_UNAVAILABLE;
     }
 #endif

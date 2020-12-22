@@ -15,6 +15,7 @@
   - [Device Manager (dm)](servers/dm.md)
   - [TCP/IP Protocol Stack](servers/tcpip.md)
   - [Linux ABI Emulation (MinLin)](servers/minlin.md)
+  - [Hiardware-Assisted Hypervisor (hv)](servers/hv.md)
 
 - [Apps](apps/README.md)
   - [Shell](apps/shell.md)

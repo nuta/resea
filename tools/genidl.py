@@ -292,7 +292,9 @@ def c_generator(args, idl):
         notifications="notifications_t",
         vaddr="vaddr_t",
         paddr="paddr_t",
+        gpaddr="gpaddr_t",
         trap_frame="trap_frame_t",
+        hv_frame="hv_frame_t",
         handle="handle_t",
         exception_type="enum exception_type",
     )
