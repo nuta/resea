@@ -110,6 +110,10 @@ static error_t ipc_slowpath(struct task *dst, task_t src, __user struct message 
             tmp_m.notifications.data = CURRENT->notifications;
             CURRENT->notifications = 0;
         } else {
+            if ((flags & IPC_NOBLOCK) != 0) {
+                return ERR_WOULD_BLOCK;
+            }
+
             // Resume a sender task and sleep until a sender task resumes this
             // task...
             resume_sender(CURRENT, src);
