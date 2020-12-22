@@ -136,8 +136,6 @@ static void calibrate_apic_timer(void) {
 
     // Calibrate the APIC timer interval to fire the timer interrupt every
     // 1/TICK_HZ seconds.
-    // DBG("calibrated_count = %x", calibrated_count);PANIC("");
-    // write_apic(APIC_REG_TIMER_CURRENT, calibrated_count);
     write_apic(APIC_REG_TIMER_INITCNT, calibrated_count);
 }
 
