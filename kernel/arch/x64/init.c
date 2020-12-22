@@ -8,6 +8,7 @@
 #include "task.h"
 #include "trap.h"
 
+#ifndef CONFIG_X64_PRINTK_IN_SCREEN
 static void draw_text_screen(void) {
     const char *message = "Resea " VERSION " - Talk with me over the serial port :)";
     uint16_t *vram = from_paddr(0xb8000);
@@ -24,6 +25,7 @@ static void draw_text_screen(void) {
         vram[i] = message[i] | (0x1f << 8);
     }
 }
+#endif
 
 static void gdt_init(void) {
     uint64_t tss_addr = (uint64_t) &ARCH_CPUVAR->tss;
