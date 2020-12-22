@@ -42,10 +42,9 @@ static void gdt_init(void) {
     gdt->tss_high = tss_addr >> 32;
 
     // Update GDTR
-    struct gdtr gdtr;
-    gdtr.laddr = (uint64_t) gdt;
-    gdtr.len = sizeof(*gdt) - 1;
-    asm_lgdt((uint64_t) &gdtr);
+    ARCH_CPUVAR->gdtr.laddr = (uint64_t) gdt;
+    ARCH_CPUVAR->gdtr.len = sizeof(*gdt) - 1;
+    asm_lgdt((uint64_t) &ARCH_CPUVAR->gdtr);
 }
 
 static void idt_init(void) {
@@ -63,10 +62,9 @@ static void idt_init(void) {
         idt->descs[i].reserved = 0;
     }
 
-    struct idtr idtr;
-    idtr.laddr = (uint64_t) idt;
-    idtr.len = sizeof(*idt) - 1;
-    asm_lidt((uint64_t) &idtr);
+    ARCH_CPUVAR->idtr.laddr = (uint64_t) idt;
+    ARCH_CPUVAR->idtr.len = sizeof(*idt) - 1;
+    asm_lidt((uint64_t) &ARCH_CPUVAR->idtr);
 }
 
 // Disables PIC. We use IO APIC instead.
