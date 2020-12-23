@@ -30,15 +30,6 @@ menu "Kernel"
         range 4 64
         default 16
 
-    config ONESHOT_HEAP_SIZE
-        int "The size of oneshot heap in # of pages"
-        default 4096
-        depends on !NOMMU
-        help
-            This config specifies the size of statically allocated heap used
-            for allocating pages for the init task. Increase the value if you
-            got "run out of memory" panic on boot.
-
     config TASK_TIME_SLICE_MS
         int "The context switching time slice in milliseconds."
         range 5 200

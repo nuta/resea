@@ -4,6 +4,7 @@
 #include <printk.h>
 #include <string.h>
 #include <machine/peripherals.h>
+#include <bootinfo.h>
 #include "asm.h"
 
 extern uint8_t exception_vector;
@@ -38,6 +39,8 @@ __noreturn void mpinit(void) {
         halt();
     }
 }
+
+static struct bootinfo bootinfo;
 
 void arm64_init(void) {
     // TODO: disable unused exception table vectors
@@ -90,7 +93,11 @@ void arm64_init(void) {
     ARM64_MSR(pmcntenset_el0, 0x8000001full); // Enable the cycle and 5 event counters.
     ARM64_MSR(pmuserenr_el0, 0b11ull);     // Enable user access to the counters.
 
-    kmain();
+    // FIXME: machine-specific
+    bootinfo.memmap[0].base = (vaddr_t) __kernel_image_end;
+    bootinfo.memmap[0].len = 128 * 1024 * 1024; // 128MiB
+    bootinfo.memmap[0].type = BOOTINFO_MEMMAP_TYPE_AVAILABLE;
+    kmain(&bootinfo);
 
     PANIC("kmain returned");
     for (;;) {

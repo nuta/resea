@@ -190,22 +190,32 @@ extern char __bss[];
 extern char __bss_end[];
 
 static void fill_bootinfo(struct multiboot_info *multiboot_info) {
-    bzero(&bootinfo, sizeof(bootinfo));
-
     offset_t off = 0;
     for (int i = 0; i < NUM_BOOTINFO_MEMMAP_MAX; i++) {
         if (off >= multiboot_info->mmap_len) {
             break;
         }
 
+        struct bootinfo_memmap_entry *m = &bootinfo.memmap[i];
         struct multiboot_mmap_entry *e =
             from_paddr(multiboot_info->mmap_addr + off);
-        bootinfo.memmap[i].base = e->base;
-        bootinfo.memmap[i].len = e->len;
-        bootinfo.memmap[i].type =
+        m->base = e->base;
+        m->len = e->len;
+        m->type =
             (e->type == 1)
                 ? BOOTINFO_MEMMAP_TYPE_AVAILABLE
                 : BOOTINFO_MEMMAP_TYPE_RESERVED;
+
+        if (m->base + m->len <= (vaddr_t) __kernel_image_end) {
+            m->base = BOOTINFO_MEMMAP_TYPE_RESERVED;
+            m->base = 0;
+            m->len = 0;
+        } else {
+            if (m->base < (vaddr_t) __kernel_image_end) {
+                m->base = (vaddr_t) __kernel_image_end;
+                m->len -= (vaddr_t) __kernel_image_end - m->base;
+            }
+        }
 
         off += e->entry_size + sizeof(uint32_t);
     }

@@ -3,6 +3,7 @@
 #include <printk.h>
 #include <task.h>
 #include <string.h>
+#include <bootinfo.h>
 #include <machine/peripherals.h>
 
 void arch_idle(void) {
@@ -11,6 +12,7 @@ void arch_idle(void) {
     }
 }
 
+static struct bootinfo bootinfo;
 extern char __bss[];
 extern char __bss_end[];
 
@@ -18,7 +20,8 @@ void arm_init(void) {
     memset(__bss, 0, (vaddr_t) __bss_end - (vaddr_t) __bss);
     lock();
     arm_peripherals_init();
-    kmain();
+
+    kmain(&bootinfo);
 
     PANIC("kmain returned");
     for (;;) {
