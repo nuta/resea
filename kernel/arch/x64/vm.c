@@ -21,7 +21,6 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
             // The PDPT, PD or PT is not allocated.
             memset(from_paddr(kpage), 0, PAGE_SIZE);
             table[index] = kpage;
-            kpage = 0;
             return NULL;
         }
 
