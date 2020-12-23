@@ -1,5 +1,6 @@
 #include <config.h>
 #include <string.h>
+#include <bootinfo.h>
 #include "boot.h"
 #include "kdebug.h"
 #include "printk.h"
@@ -57,10 +58,14 @@ static error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
 // Maps ELF segments in the boot ELF into virtual memory.
 static void map_bootelf(struct bootelf_header *header, struct task *task) {
     TRACE("boot ELF: entry=%p", header->entry);
-    for (unsigned i = 0; i < header->num_mappings; i++) {
+    for (unsigned i = 0; i < BOOTELF_NUM_MAPPINGS_MAX; i++) {
         struct bootelf_mapping *m = &header->mappings[i];
         vaddr_t vaddr = m->vaddr;
         paddr_t paddr = into_paddr(&__bootelf[m->offset]);
+
+        if (!m->vaddr) {
+            continue;
+        }
 
         TRACE("boot ELF: %p -> %p (%dKiB%s)",
               vaddr,
@@ -103,15 +108,19 @@ static void map_bootelf(struct bootelf_header *header, struct task *task) {
 }
 
 /// Initializes the kernel and starts the first task.
-__noreturn void kmain(void) {
+__noreturn void kmain(struct bootinfo *bootinfo) {
     printf("\nBooting Resea " VERSION "...\n");
     task_init();
     mp_start();
 
+    // Look for the boot elf header.
     char name[CONFIG_TASK_NAME_LEN];
     struct bootelf_header *bootelf = locate_bootelf_header();
     strncpy(name, (const char *) bootelf->name,
             MIN(sizeof(name), sizeof(bootelf->name)));
+
+    // Copy the bootinfo struct to the boot elf header.
+    memcpy(&bootelf->bootinfo, bootinfo, sizeof(*bootinfo));
 
     // Create the first userland task.
     struct task *task = task_lookup_unchecked(INIT_TASK);

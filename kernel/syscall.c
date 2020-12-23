@@ -227,7 +227,6 @@ static error_t sys_vm_unmap(task_t tid, vaddr_t vaddr) {
 static error_t sys_console_write(__user const char *buf, size_t buf_len) {
     if (buf_len > 1024) {
         WARN_DBG("console_write: too long buffer length");
-        DBG("%p %p", buf, buf_len);
         return ERR_TOO_LARGE;
     }
 

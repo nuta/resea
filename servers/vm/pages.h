@@ -2,6 +2,7 @@
 #define __ALLOC_PAGE_H__
 
 #include <types.h>
+#include <list.h>
 
 /// Page Frame Number.
 typedef unsigned pfn_t;
@@ -9,6 +10,12 @@ typedef unsigned pfn_t;
 
 struct page {
     unsigned ref_count;
+};
+
+struct available_ram_region {
+    list_elem_t next;
+    paddr_t base;
+    size_t num_pages;
 };
 
 extern char __straight_mapping[];

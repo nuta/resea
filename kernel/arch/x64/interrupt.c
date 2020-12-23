@@ -136,10 +136,9 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
     }
 }
 
-uintmax_t x64_handle_syscall(uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,
-                             uintmax_t arg4, uintmax_t arg5, uintmax_t type) {
+long x64_handle_syscall(long n, long a1, long a2, long a3, long a4, long a5) {
     lock();
-    uint64_t ret = handle_syscall(arg1, arg2, arg3, arg4, arg5, type);
+    long ret = handle_syscall(n, a1, a2, a3, a4, a5);
     unlock();
     return ret;
 }

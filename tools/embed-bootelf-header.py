@@ -4,6 +4,7 @@ import struct
 from elftools.elf.elffile import ELFFile
 
 PAGE_SIZE = 0x1000 # FIXME: This could be other values.
+BOOTELF_NUM_MAPPINGS_MAX = 8
 BOOTELF_PRE_MAGIC = b"00BOOT\xe1\xff"
 BOOTELF_MAGIC = b"11BOOT\xe1\xff"
 
@@ -14,19 +15,17 @@ def main():
     args = parser.parse_args()
 
     elf = ELFFile(open(args.elf_file, "r+b"))
-    assert elf.num_segments() < 6
+    assert elf.num_segments() <= BOOTELF_NUM_MAPPINGS_MAX
 
     # struct bootelf_header {
-    # #define BOOTELF_MAGIC "\xaa\xbbBOOT\xe1\xff"
-    #     uint8_t magic[8];
-    #     uint8_t name[16];
-    #     uint64_t entry;
-    #     uint8_t num_mappings;
-    #     uint8_t padding[7];
-    #     struct bootelf_mapping mappings[];
+    #    uint8_t magic[8];
+    #    uint8_t name[16];
+    #    uint64_t entry;
+    #    struct bootelf_mapping mappings[BOOTELF_NUM_MAPPINGS_MAX];
+    #    struct bootinfo bootinfo;
     # } __packed;
-    header = struct.pack("8s16sQB7x", BOOTELF_MAGIC, args.name.encode("ascii"),
-                         elf.header.e_entry, elf.num_segments())
+    header = struct.pack("8s16sQ", BOOTELF_MAGIC, args.name.encode("ascii"),
+                         elf.header.e_entry)
 
     for segment in elf.iter_segments():
         assert segment.header.p_vaddr > 0

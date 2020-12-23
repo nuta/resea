@@ -4,10 +4,12 @@
 #include <task.h>
 #include <kdebug.h>
 #include <string.h>
+#include <bootinfo.h>
 #include "hv.h"
 #include "serial.h"
 #include "task.h"
 #include "trap.h"
+#include "multiboot.h"
 
 #ifndef CONFIG_X64_PRINTK_IN_SCREEN
 static void draw_text_screen(void) {
@@ -183,14 +185,33 @@ static void common_setup(void) {
 #endif
 }
 
-// Add declarations to make sparse happy.
-void init(void);
-void mpinit(void);
-
+static struct bootinfo bootinfo;
 extern char __bss[];
 extern char __bss_end[];
 
-void init(void) {
+static void fill_bootinfo(struct multiboot_info *multiboot_info) {
+    bzero(&bootinfo, sizeof(bootinfo));
+
+    offset_t off = 0;
+    for (int i = 0; i < NUM_BOOTINFO_MEMMAP_MAX; i++) {
+        if (off >= multiboot_info->mmap_len) {
+            break;
+        }
+
+        struct multiboot_mmap_entry *e =
+            from_paddr(multiboot_info->mmap_addr + off);
+        bootinfo.memmap[i].base = e->base;
+        bootinfo.memmap[i].len = e->len;
+        bootinfo.memmap[i].type =
+            (e->type == 1)
+                ? BOOTINFO_MEMMAP_TYPE_AVAILABLE
+                : BOOTINFO_MEMMAP_TYPE_RESERVED;
+
+        off += e->entry_size + sizeof(uint32_t);
+    }
+}
+
+void init(struct multiboot_info *multiboot_info) {
     memset(__bss, 0, (vaddr_t) __bss_end - (vaddr_t) __bss);
     lock();
 #ifndef CONFIG_X64_PRINTK_IN_SCREEN
@@ -200,7 +221,8 @@ void init(void) {
     pic_init();
     common_setup();
     serial_enable_interrupt();
-    kmain();
+    fill_bootinfo(multiboot_info);
+    kmain(&bootinfo);
 }
 
 void mpinit(void) {
