@@ -26,7 +26,10 @@ error_t arch_task_create(struct task *task, vaddr_t ip) {
     task->arch.xsave = xsave;
     task->arch.gsbase = 0;
     task->arch.fsbase = 0;
+
+#ifdef CONFIG_HYPERVISOR
     task->arch.vmx.launched = false;
+#endif
 
     // Initialize the page table.
     task->arch.pml4 = into_paddr(pml4_tables[task->tid]);
@@ -86,8 +89,12 @@ void arch_task_switch(struct task *prev, struct task *next) {
     asm_write_cr3(next->arch.pml4);
     // Enable ABI emulation if needed.
     ARCH_CPUVAR->abi_emu = (next->flags & TASK_ABI_EMU) ? 1 : 0;
-    // Execute VMLAUNCH instead of switching into the task if needed.
+
+#ifdef CONFIG_HYPERVISOR
+    // Execute VMLAUNCH instead of switching into the task.
     ARCH_CPUVAR->hv = (((next->flags & TASK_HV) != 0) && !next->arch.vmx.launched) ? 1 : 0;
+#endif
+
     // Update the kernel stack for syscall and interrupt/exception handlers.
     ARCH_CPUVAR->rsp0 = next->arch.syscall_stack;
     ARCH_CPUVAR->tss.rsp0 = next->arch.interrupt_stack;
