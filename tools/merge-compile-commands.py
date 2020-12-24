@@ -13,7 +13,8 @@ def main():
 
     db = "["
     for file in args.json_files:
-        db += open(file).read()
+        if not file.endswith("compile_commands.json"):
+            db += open(file).read()
     db = db.rstrip("\n,")
     db += "]\n"
 
