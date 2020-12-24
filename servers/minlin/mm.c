@@ -243,6 +243,6 @@ error_t handle_page_fault(struct proc *proc, vaddr_t vaddr, unsigned fault) {
     }
 
     vaddr_t aligned_vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
-    ASSERT_OK(map_page(proc, aligned_vaddr, target, MAP_W /* TODO: */, false));
+    ASSERT_OK(map_page(proc, aligned_vaddr, target, MAP_TYPE_READWRITE /* TODO: */, false));
     return OK;
 }

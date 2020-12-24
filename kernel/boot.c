@@ -55,7 +55,7 @@ static error_t map_page(struct bootinfo *bootinfo, struct task *task,
     while (true) {
         paddr_t kpage =
             unused_kpage ? unused_kpage : into_paddr(alloc_page(bootinfo));
-        error_t err = vm_map(task, vaddr, paddr, kpage, MAP_W);
+        error_t err = vm_map(task, vaddr, paddr, kpage, MAP_TYPE_READWRITE);
         // TODO: Free the unused `kpage`.
         if (err == ERR_TRY_AGAIN) {
             unused_kpage = 0;
@@ -105,13 +105,13 @@ static void map_bootelf(struct bootinfo *bootinfo, struct bootelf_header *header
                 void *page = alloc_page(bootinfo);
                 ASSERT(page);
                 memset(page, 0, PAGE_SIZE);
-                error_t err = map_page(bootinfo, task, vaddr, into_paddr(page), MAP_W);
+                error_t err = map_page(bootinfo, task, vaddr, into_paddr(page), MAP_TYPE_READWRITE);
                 ASSERT_OK(err);
                 vaddr += PAGE_SIZE;
             }
         } else {
             for (size_t j = 0; j < m->num_pages; j++) {
-                error_t err = map_page(bootinfo, task, vaddr, paddr, MAP_W);
+                error_t err = map_page(bootinfo, task, vaddr, paddr, MAP_TYPE_READWRITE);
                 ASSERT_OK(err);
                 vaddr += PAGE_SIZE;
                 paddr += PAGE_SIZE;

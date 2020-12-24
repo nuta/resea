@@ -83,7 +83,7 @@ error_t alloc_phy_pages(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
         // Map the specified physical memory address.
         for (size_t i = 0; i< num_pages; i++) {
             offset_t off = i * PAGE_SIZE;
-            error_t err = map_page(task, *vaddr + off, *paddr + off, MAP_W, false);
+            error_t err = map_page(task, *vaddr + off, *paddr + off, MAP_TYPE_READWRITE, false);
             if (err != OK) {
                 return err;
             }
@@ -160,7 +160,7 @@ paddr_t pager(struct task *task, vaddr_t vaddr, vaddr_t ip, unsigned fault) {
     // The `cmdline` for main().
     if (vaddr == (vaddr_t) __cmdline) {
         paddr_t paddr = alloc_pages(task, vaddr, 1);
-        ASSERT_OK(map_page(vm_task, tmp_page, paddr, MAP_W, false));
+        ASSERT_OK(map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false));
         memset((void *) tmp_page, 0, PAGE_SIZE);
         strncpy((void *) tmp_page, task->cmdline, PAGE_SIZE);
         return paddr;
@@ -179,7 +179,7 @@ paddr_t pager(struct task *task, vaddr_t vaddr, vaddr_t ip, unsigned fault) {
     if (zeroed_pages_start <= vaddr && vaddr < zeroed_pages_end) {
         // The accessed page is zeroed one (.bss section, stack, or heap).
         paddr_t paddr = alloc_pages(task, vaddr, 1);
-        ASSERT_OK(map_page(vm_task, tmp_page, paddr, MAP_W, false));
+        ASSERT_OK(map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false));
         memset((void *) tmp_page, 0, PAGE_SIZE);
         return paddr;
     }
@@ -204,7 +204,7 @@ paddr_t pager(struct task *task, vaddr_t vaddr, vaddr_t ip, unsigned fault) {
         if (phdr) {
             // Allocate a page and fill it with the file data.
             paddr_t paddr = alloc_pages(task, vaddr, 1);
-            ASSERT_OK(map_page(vm_task, tmp_page, paddr, MAP_W, false));
+            ASSERT_OK(map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false));
             size_t offset_in_segment = (vaddr - phdr->p_vaddr) + phdr->p_offset;
             read_file(task->file, offset_in_segment, (void *) tmp_page, PAGE_SIZE);
             return paddr;

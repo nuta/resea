@@ -138,7 +138,10 @@ typedef int error_t;
 #define TASK_HV       (1 << 3)
 
 // Map flags.
-#define MAP_W      (1 << 1)
+// TODO: Support No-Execute bit
+#define MAP_TYPE(flags) ((flags) & 0b11)
+#define MAP_TYPE_READONLY  (0b01 << 0)
+#define MAP_TYPE_READWRITE (0b10 << 0)
 
 // IPC source task IDs.
 #define IPC_ANY  0  /* So-called "open receive". */
