@@ -90,11 +90,28 @@ static void add_mapping(struct guest *guest, gpaddr_t base, size_t len,
     list_push_back(&guest->mappings, &m->next);
 }
 
+task_t alloc_task(void) {
+    struct message m;
+    m.type = TASK_ALLOC_MSG;
+    m.task_alloc.pager = task_self();
+    error_t err = ipc_call(INIT_TASK, &m);
+    if (err != OK) {
+        return err;
+    }
+
+    return m.task_alloc_reply.task;
+}
+
 error_t guest_create(uint8_t *elf, size_t elf_len) {
+    task_t tid = alloc_task();
+    if (IS_ERROR(tid)) {
+        return tid;
+    }
+
     struct guest *guest = malloc(sizeof(*guest));
     list_init(&guest->mappings);
     list_init(&guest->page_areas);
-    guest->task = 5; // FIXME:
+    guest->task = tid;
     guest->halted = false;
     guest->pending_irq_bitmap = 0;
 
