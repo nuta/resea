@@ -100,7 +100,7 @@ task_t alloc_task(void) {
     struct message m;
     m.type = TASK_ALLOC_MSG;
     m.task_alloc.pager = task_self();
-    error_t err = ipc_call(INIT_TASK, &m);
+    error_t err = ipc_call(VM_TASK, &m);
     if (err != OK) {
         return err;
     }

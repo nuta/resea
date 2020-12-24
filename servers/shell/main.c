@@ -60,7 +60,7 @@ static void launch_task(int argc, char **argv) {
     struct message m;
     m.type = TASK_LAUNCH_MSG;
     m.task_launch.name_and_cmdline = name_and_cmdline;
-    error_t err = ipc_call(INIT_TASK, &m);
+    error_t err = ipc_call(VM_TASK, &m);
     free(name_and_cmdline);
     if (err != OK) {
         WARN("failed to launch '%s': %s", argv[0], err2str(err));

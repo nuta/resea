@@ -19,7 +19,7 @@ task_t alloc_task(void) {
     struct message m;
     m.type = TASK_ALLOC_MSG;
     m.task_alloc.pager = task_self();
-    ASSERT_OK(ipc_call(INIT_TASK, &m));
+    ASSERT_OK(ipc_call(VM_TASK, &m));
     return m.task_alloc_reply.task;
 }
 

@@ -26,7 +26,7 @@ void main(void) {
         switch (m.type) {
             case NOTIFICATIONS_MSG: {
                 if (m.notifications.data & NOTIFY_ASYNC) {
-                    async_recv(INIT_TASK, &m);
+                    async_recv(VM_TASK, &m);
                     switch (m.type) {
                         case TASK_EXITED_MSG: {
                             LIST_FOR_EACH (dev, &devices, struct device, next) {
@@ -68,7 +68,7 @@ void main(void) {
 
                 m.type = TASK_WATCH_MSG;
                 m.task_watch.task = dev->task;
-                ASSERT_OK(ipc_call(INIT_TASK, &m));
+                ASSERT_OK(ipc_call(VM_TASK, &m));
 
                 m.type = DM_ATTACH_PCI_DEVICE_REPLY_MSG;
                 m.dm_attach_pci_device_reply.handle = dev->handle;

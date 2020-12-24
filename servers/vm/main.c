@@ -17,7 +17,7 @@
 error_t ipc_call_pager(struct message *m);
 
 error_t ipc_call_pager(struct message *m) {
-    m->src = INIT_TASK;
+    m->src = VM_TASK;
     error_t err;
     switch (m->type) {
         case OOL_RECV_MSG:

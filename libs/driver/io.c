@@ -19,7 +19,7 @@ io_t io_alloc_memory_fixed(paddr_t paddr, size_t len, unsigned flags) {
     m.type = VM_ALLOC_PAGES_MSG;
     m.vm_alloc_pages.paddr = paddr;
     m.vm_alloc_pages.num_pages = ALIGN_UP(len, PAGE_SIZE) / PAGE_SIZE;
-    error_t err = ipc_call(INIT_TASK, &m);
+    error_t err = ipc_call(VM_TASK, &m);
     ASSERT_OK(err);
     ASSERT(m.type == VM_ALLOC_PAGES_REPLY_MSG);
 

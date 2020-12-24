@@ -183,7 +183,7 @@ void main(void) {
 
                 if ((m.notifications.data & NOTIFY_ASYNC) != 0) {
                     struct message m;
-                    async_recv(INIT_TASK, &m);
+                    async_recv(VM_TASK, &m);
                     switch (m.type) {
                         case TASK_EXITED_MSG:
                             handle_free_all(m.task_exited.task, free_handle);

@@ -188,6 +188,8 @@ enum exception_type {
 #define KERNEL_TASK 0
 /// The initial task ID.
 #define INIT_TASK 1
+/// The vm server's task ID.
+#define VM_TASK INIT_TASK
 
 #include <arch_types.h>
 

@@ -11,7 +11,7 @@ void ipc_test(void) {
     for (int i = 0; i < 10; i++) {
         m.type = BENCHMARK_NOP_MSG;
         m.benchmark_nop.value = i;
-        err = ipc_call(INIT_TASK, &m);
+        err = ipc_call(VM_TASK, &m);
         TEST_ASSERT(err == OK);
         TEST_ASSERT(m.type == BENCHMARK_NOP_REPLY_MSG);
         TEST_ASSERT(m.benchmark_nop.value == i * 7);
@@ -21,7 +21,7 @@ void ipc_test(void) {
     m.type = BENCHMARK_NOP_WITH_OOL_MSG;
     m.benchmark_nop_with_ool.data = "hi!";
     m.benchmark_nop_with_ool.data_len = 3;
-    err = ipc_call(INIT_TASK, &m);
+    err = ipc_call(VM_TASK, &m);
     TEST_ASSERT(err == OK);
     TEST_ASSERT(m.type == BENCHMARK_NOP_WITH_OOL_REPLY_MSG);
     TEST_ASSERT(m.benchmark_nop_with_ool_reply.data_len == 7);
@@ -32,7 +32,7 @@ void ipc_test(void) {
     m.type = BENCHMARK_NOP_WITH_OOL_MSG;
     m.benchmark_nop_with_ool.data = page;
     m.benchmark_nop_with_ool.data_len = sizeof(page);
-    err = ipc_call(INIT_TASK, &m);
+    err = ipc_call(VM_TASK, &m);
     TEST_ASSERT(err == OK);
     TEST_ASSERT(m.type == BENCHMARK_NOP_WITH_OOL_REPLY_MSG);
 
@@ -40,7 +40,7 @@ void ipc_test(void) {
     m.type = BENCHMARK_NOP_WITH_OOL_MSG;
     m.benchmark_nop_with_ool.data = NULL;
     m.benchmark_nop_with_ool.data_len = 0;
-    err = ipc_call(INIT_TASK, &m);
+    err = ipc_call(VM_TASK, &m);
     TEST_ASSERT(err == OK);
     TEST_ASSERT(m.type == BENCHMARK_NOP_WITH_OOL_REPLY_MSG);
 }

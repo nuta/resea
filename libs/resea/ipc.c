@@ -19,7 +19,7 @@ __weak error_t ipc_call_pager(struct message *m) {
     WARN("ignoring %s", msgtype2str(m->type));
     return OK;
 #else
-    return ipc_call(INIT_TASK, m);
+    return ipc_call(VM_TASK, m);
 #endif
 }
 
