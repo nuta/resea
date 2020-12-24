@@ -10,7 +10,7 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
     ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     ASSERT(IS_ALIGNED(kpage, PAGE_SIZE));
 
-    uint64_t *table = from_paddr(pml4);
+    uint64_t *table = paddr2ptr(pml4);
     for (int level = 4; level > 1; level--) {
         int index = NTH_LEVEL_INDEX(level, vaddr);
         if (!table[index]) {
@@ -19,7 +19,7 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
             }
 
             // The PDPT, PD or PT is not allocated.
-            memset(from_paddr(kpage), 0, PAGE_SIZE);
+            memset(paddr2ptr(kpage), 0, PAGE_SIZE);
             table[index] = kpage;
             return NULL;
         }
@@ -28,7 +28,7 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
         table[index] = table[index] | attrs;
 
         // Go into the next level paging table.
-        table = (uint64_t *) from_paddr(ENTRY_PADDR(table[index]));
+        table = (uint64_t *) paddr2ptr(ENTRY_PADDR(table[index]));
     }
 
     return &table[NTH_LEVEL_INDEX(1, vaddr)];

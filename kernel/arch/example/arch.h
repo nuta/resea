@@ -11,11 +11,11 @@
 
 struct arch_task {};
 
-static inline void *from_paddr(paddr_t addr) {
+static inline void *paddr2ptr(paddr_t addr) {
     return (void *) addr;
 }
 
-static inline paddr_t into_paddr(void *addr) {
+static inline paddr_t ptr2paddr(void *addr) {
     return (vaddr_t) addr;
 }
 

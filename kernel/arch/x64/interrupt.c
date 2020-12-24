@@ -11,13 +11,13 @@
 #include <task.h>
 
 static uint32_t ioapic_read(uint8_t reg) {
-    *((uint32_t *) from_paddr(IOAPIC_ADDR)) = reg;
-    return *((uint32_t *) from_paddr(IOAPIC_ADDR + 0x10));
+    *((uint32_t *) paddr2ptr(IOAPIC_ADDR)) = reg;
+    return *((uint32_t *) paddr2ptr(IOAPIC_ADDR + 0x10));
 }
 
 static void ioapic_write(uint8_t reg, uint32_t data) {
-    *((uint32_t *) from_paddr(IOAPIC_ADDR)) = reg;
-    *((uint32_t *) from_paddr(IOAPIC_ADDR + 0x10)) = data;
+    *((uint32_t *) paddr2ptr(IOAPIC_ADDR)) = reg;
+    *((uint32_t *) paddr2ptr(IOAPIC_ADDR + 0x10)) = data;
 }
 
 static void ack_irq(void) {

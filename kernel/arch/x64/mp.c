@@ -32,8 +32,8 @@ static void send_ipi(uint8_t vector, enum ipi_dest dest, uint8_t dest_cpu,
 
 static struct mp_float_ptr *look_for_floatptr_table(paddr_t start,
                                                     paddr_t end) {
-    vaddr_t end_vaddr = (vaddr_t) from_paddr(end);
-    for (uint32_t *p = from_paddr(start); (vaddr_t) p < end_vaddr; p++) {
+    vaddr_t end_vaddr = (vaddr_t) paddr2ptr(end);
+    for (uint32_t *p = paddr2ptr(start); (vaddr_t) p < end_vaddr; p++) {
         if (*p == MP_FLOATPTR_SIGNATURE) {
             return (struct mp_float_ptr *) p;
         }
@@ -52,7 +52,7 @@ static void read_mp_table(void) {
         return;
     }
 
-    mptblhdr = (struct mp_table_header *) from_paddr(
+    mptblhdr = (struct mp_table_header *) paddr2ptr(
         (paddr_t) mpfltptr->mptable_header_addr);
     if (mptblhdr->signature != MP_MPTABLE_SIGNATURE) {
         WARN("invalid MP table");
@@ -98,11 +98,11 @@ static void start_aps(void) {
                                     - (paddr_t) __mp_boot_trampoine);
 
     // Copy MP boot code into the lower address (addressable in real mode).
-    memcpy(from_paddr((paddr_t) __mp_boot_trampoine),
-           from_paddr((paddr_t) mpboot), mpboot_size);
+    memcpy(paddr2ptr((paddr_t) __mp_boot_trampoine),
+           paddr2ptr((paddr_t) mpboot), mpboot_size);
     // Copy a GDTR into the lower address (addressable in real mode).
-    memcpy(from_paddr((paddr_t) __mp_boot_gdtr),
-           from_paddr((paddr_t) boot_gdtr), sizeof(struct gdtr));
+    memcpy(paddr2ptr((paddr_t) __mp_boot_gdtr),
+           paddr2ptr((paddr_t) boot_gdtr), sizeof(struct gdtr));
     // Send IPI to APs to boot them.
     for (int cpu = 1; cpu < mp_num_cpus(); cpu++) {
         TRACE("starting CPU #%d...", cpu);

@@ -18,7 +18,7 @@ static uint64_t *traverse_page_table(uint64_t *table, vaddr_t vaddr,
                 return NULL;
             }
 
-            memset(from_paddr(kpage), 0, PAGE_SIZE);
+            memset(paddr2ptr(kpage), 0, PAGE_SIZE);
             table[index] = kpage;
             return NULL;
         }
@@ -27,7 +27,7 @@ static uint64_t *traverse_page_table(uint64_t *table, vaddr_t vaddr,
         table[index] |= attrs | ARM64_PAGE_ACCESS | ARM64_PAGE_TABLE;
 
         // Go into the next level paging table.
-        table = (uint64_t *) from_paddr(ENTRY_PADDR(table[index]));
+        table = (uint64_t *) paddr2ptr(ENTRY_PADDR(table[index]));
     }
 
     return &table[NTH_LEVEL_INDEX(1, vaddr)];

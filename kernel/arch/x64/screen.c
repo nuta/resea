@@ -6,7 +6,7 @@ void x64_screen_printchar(char ch) {
     static int x = 0;
     static int y = 0;
     static bool in_esc = false;
-    uint16_t *vram = (uint16_t *) from_paddr(0xb8000);
+    uint16_t *vram = (uint16_t *) paddr2ptr(0xb8000);
 
     // Ignore ANSI escape sequences.
     if (in_esc) {

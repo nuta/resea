@@ -194,7 +194,7 @@ static struct page_area *resolve_guest_paddr(struct guest *guest,
     return NULL;
 }
 
-static vaddr_t from_paddr(struct guest *guest, paddr_t paddr) {
+static vaddr_t paddr2ptr(struct guest *guest, paddr_t paddr) {
     struct page_area *pa = resolve_paddr(guest, paddr);
     ASSERT(pa != NULL);
     return pa->vaddr + (paddr - pa->paddr);
@@ -223,7 +223,7 @@ static uint64_t *ept_traverse(struct guest *guest, gpaddr_t gpaddr,
         }
 
         table[index] |= attrs;
-        table = (uint64_t *) from_paddr(guest, ENTRY_PADDR(table[index]));
+        table = (uint64_t *) paddr2ptr(guest, ENTRY_PADDR(table[index]));
     }
 
     uint64_t *entry = &table[NTH_LEVEL_INDEX(1, gpaddr)];

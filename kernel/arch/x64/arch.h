@@ -29,11 +29,11 @@ struct arch_task {
 #endif
 } __packed;
 
-static inline void *from_paddr(paddr_t addr) {
+static inline void *paddr2ptr(paddr_t addr) {
     return (void *) (addr + KERNEL_BASE_ADDR);
 }
 
-static inline paddr_t into_paddr(void *addr) {
+static inline paddr_t ptr2paddr(void *addr) {
     return ((vaddr_t) addr - KERNEL_BASE_ADDR);
 }
 
@@ -65,7 +65,7 @@ static inline bool is_canonical_addr(vaddr_t addr) {
 }
 
 static inline int mp_self(void) {
-    return *((volatile uint32_t *) from_paddr(0xfee00020)) >> 24;
+    return *((volatile uint32_t *) paddr2ptr(0xfee00020)) >> 24;
 }
 
 static inline bool mp_is_bsp(void) {
@@ -221,11 +221,11 @@ extern char __kernel_pml4[];  // paddr_t
 #define IOAPIC_REG_NTH_IOREDTBL_HIGH(n) (0x10 + ((n) *2) + 1)
 
 static inline uint32_t read_apic(paddr_t addr) {
-    return *((volatile uint32_t *) from_paddr(addr));
+    return *((volatile uint32_t *) paddr2ptr(addr));
 }
 
 static inline void write_apic(paddr_t addr, uint32_t data) {
-    *((volatile uint32_t *) from_paddr(addr)) = data;
+    *((volatile uint32_t *) paddr2ptr(addr)) = data;
 }
 
 //

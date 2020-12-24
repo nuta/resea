@@ -770,7 +770,7 @@ void x64_handle_vmexit(struct guest_regs *regs) {
 
     // Reload the current task's VMCS since it may be changed during context
     // swithes occurred in IPC operations above.
-    paddr_t vmcs_paddr = into_paddr(CURRENT_VMX.vmcs);
+    paddr_t vmcs_paddr = ptr2paddr(CURRENT_VMX.vmcs);
     ASSERT_VM_INST(asm_vmptrld(vmcs_paddr));
 
     // Rewrite CPU-local host stastes in case the current CPU is different
@@ -792,7 +792,7 @@ static void init_vmcs(struct vmcs *vmcs, struct saved_msrs *msrs,
                       uint64_t guest_rip, paddr_t ept_pml4) {
     // Initialize VMCS.
     bzero(vmcs, sizeof(*vmcs));
-    paddr_t vmcs_paddr = into_paddr(vmcs);
+    paddr_t vmcs_paddr = ptr2paddr(vmcs);
     vmcs->revision = asm_rdmsr(MSR_IA32_VMX_BASIC);
     asm_vmclear(vmcs_paddr);
     ASSERT_VM_INST(asm_vmptrld(vmcs_paddr));
@@ -826,9 +826,9 @@ static void init_vmcs(struct vmcs *vmcs, struct saved_msrs *msrs,
     asm_vmwrite(VMCS_EPT, ept_pml4 | EPT_4LEVEL | EPT_TYPE_WB);
     asm_vmwrite(VMCS_LINK_POINTER, 0xffffffffffffffff);
 
-    asm_vmwrite(VMCS_VM_EXIT_MSR_STORE_ADDR, into_paddr(&msrs->guest));
-    asm_vmwrite(VMCS_VM_EXIT_MSR_LOAD_ADDR, into_paddr(&msrs->host));
-    asm_vmwrite(VMCS_VM_ENTRY_MSR_LOAD_ADDR, into_paddr(&msrs->guest));
+    asm_vmwrite(VMCS_VM_EXIT_MSR_STORE_ADDR, ptr2paddr(&msrs->guest));
+    asm_vmwrite(VMCS_VM_EXIT_MSR_LOAD_ADDR, ptr2paddr(&msrs->host));
+    asm_vmwrite(VMCS_VM_ENTRY_MSR_LOAD_ADDR, ptr2paddr(&msrs->guest));
     asm_vmwrite(VMCS_VM_EXIT_MSR_STORE_COUNT, msrs->num_entries);
     asm_vmwrite(VMCS_VM_EXIT_MSR_LOAD_COUNT, msrs->num_entries);
     asm_vmwrite(VMCS_VM_ENTRY_MSR_LOAD_COUNT, msrs->num_entries);
@@ -955,5 +955,5 @@ void x64_hv_init(void) {
     // Enable VMX.
     bzero(vmx_area, sizeof(vmx_area));
     *((uint32_t *) vmx_area) = asm_rdmsr(MSR_IA32_VMX_BASIC);
-    ASSERT_VM_INST(asm_vmxon(into_paddr(vmx_area)));
+    ASSERT_VM_INST(asm_vmxon(ptr2paddr(vmx_area)));
 }

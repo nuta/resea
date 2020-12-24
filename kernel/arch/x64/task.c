@@ -34,9 +34,9 @@ error_t arch_task_create(struct task *task, vaddr_t ip) {
 #endif
 
     // Initialize the page table.
-    task->arch.pml4 = into_paddr(pml4_tables[task->tid]);
-    uint64_t *table = from_paddr(task->arch.pml4);
-    memcpy(table, from_paddr((paddr_t) __kernel_pml4), PAGE_SIZE);
+    task->arch.pml4 = ptr2paddr(pml4_tables[task->tid]);
+    uint64_t *table = paddr2ptr(task->arch.pml4);
+    memcpy(table, paddr2ptr((paddr_t) __kernel_pml4), PAGE_SIZE);
 
     // The kernel no longer access a virtual address around 0x0000_0000. Unmap
     // the area to catch bugs (especially NULL pointer dereferences in the

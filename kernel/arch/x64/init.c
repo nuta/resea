@@ -15,7 +15,7 @@
 static void draw_text_screen(void) {
     const char *message =
         "Resea " VERSION " - Talk with me over the serial port :)";
-    uint16_t *vram = from_paddr(0xb8000);
+    uint16_t *vram = paddr2ptr(0xb8000);
 
     // Clear the screen.
     for (int y = 0; y < 25; y++) {
@@ -199,7 +199,7 @@ static void fill_bootinfo(struct multiboot_info *multiboot_info) {
 
         struct bootinfo_memmap_entry *m = &bootinfo.memmap[i];
         struct multiboot_mmap_entry *e =
-            from_paddr(multiboot_info->mmap_addr + off);
+            paddr2ptr(multiboot_info->mmap_addr + off);
         m->base = e->base;
         m->len = e->len;
         m->type = (e->type == 1) ? BOOTINFO_MEMMAP_TYPE_AVAILABLE

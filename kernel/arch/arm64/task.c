@@ -16,7 +16,7 @@ static uint8_t exception_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(
 static void init_stack(struct task *task, vaddr_t pc) {
     // Initialize the page table.
     memset(task->arch.page_table, 0, PAGE_SIZE);
-    task->arch.ttbr0 = into_paddr(task->arch.page_table);
+    task->arch.ttbr0 = ptr2paddr(task->arch.page_table);
 
     vaddr_t exception_stack = (vaddr_t) exception_stacks[task->tid];
     uint64_t *sp = (uint64_t *) (exception_stack + STACK_SIZE);

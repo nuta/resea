@@ -12,7 +12,7 @@ void machine_mp_start(void) {
 
         // https://leiradel.github.io/2019/01/20/Raspberry-Pi-Stubs.html
         paddr_t paddr = 0xd8 + cpu * 8;
-        *((volatile uint32_t *) from_paddr(paddr)) = (uint32_t) boot;
+        *((volatile uint32_t *) paddr2ptr(paddr)) = (uint32_t) boot;
 
         __asm__ __volatile__("sev");
     }

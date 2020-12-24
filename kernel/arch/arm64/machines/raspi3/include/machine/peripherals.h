@@ -52,11 +52,11 @@
 #define PM_WDOG_FULL_RESET 0x00000020
 
 static inline uint32_t mmio_read(vaddr_t paddr) {
-    return *((volatile uint32_t *) from_paddr(paddr));
+    return *((volatile uint32_t *) paddr2ptr(paddr));
 }
 
 static inline void mmio_write(paddr_t paddr, uint32_t value) {
-    *((volatile uint32_t *) from_paddr(paddr)) = value;
+    *((volatile uint32_t *) paddr2ptr(paddr)) = value;
 }
 
 void arm64_peripherals_init(void);
