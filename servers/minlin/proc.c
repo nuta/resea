@@ -101,7 +101,7 @@ static errno_t init_stack(struct proc *proc, char *argv[],
             return -ENOMEM;
         }
 
-        strncpy(&strbuf[stroff], argv[i], len + 1);
+        strncpy2(&strbuf[stroff], argv[i], len + 1);
         stroff += len + 1;
     }
     *sp++ = 0;
@@ -176,7 +176,7 @@ errno_t proc_execve(struct proc *proc, const char *path, char *argv[],
 
     // Fill out fields.
     ASSERT(argv[0]);
-    strncpy(proc->name, argv[0], sizeof(proc->name));
+    strncpy2(proc->name, argv[0], sizeof(proc->name));
     proc->state = PROC_RUNNABLE;
     proc->current_brk = HEAP_ADDR;
     proc->ehdr = ehdr;
@@ -211,7 +211,7 @@ pid_t proc_fork(struct proc *parent) {
     child->parent = parent;
     if (parent) {
         child->state = PROC_FORKED;
-        strncpy(child->name, parent->name, sizeof(child->name));
+        strncpy2(child->name, parent->name, sizeof(child->name));
         child->exec = parent->exec;
         child->current_brk = parent->current_brk;
         child->ehdr = parent->ehdr;
@@ -224,7 +224,7 @@ pid_t proc_fork(struct proc *parent) {
     } else {
         // The init process.
         ASSERT(child->pid == 1);
-        strncpy(child->name, "init", sizeof(child->name));
+        strncpy2(child->name, "init", sizeof(child->name));
         child->state = PROC_RUNNABLE;
         child->exec = NULL;
         child->current_brk = 0;

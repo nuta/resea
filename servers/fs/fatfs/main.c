@@ -46,7 +46,7 @@ void main(void) {
     char tmp[12];
     ASSERT_OK(fat_opendir(&fs, &dir, "/"));
     while ((e = fat_readdir(&fs, &dir)) != NULL) {
-        strncpy(tmp, (const char *) e->name, sizeof(tmp));
+        strncpy2(tmp, (const char *) e->name, sizeof(tmp));
         DBG("/%s", tmp);
     }
     DBG("---------------------------------------------------");

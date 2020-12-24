@@ -9,7 +9,7 @@ size_t strlen(const char *s) {
     return len;
 }
 
-char *strncpy(char *dst, const char *src, size_t num) {
+char *strncpy2(char *dst, const char *src, size_t num) {
     size_t i = 0;
     while (i < num - 1 && src[i] != '\0') {
         dst[i] = src[i];

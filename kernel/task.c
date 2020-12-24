@@ -95,7 +95,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     task->priority = TASK_PRIORITY_MAX - 1;
     task->ref_count = 0;
     bitmap_fill(task->caps, sizeof(task->caps), (flags & TASK_ALL_CAPS) != 0);
-    strncpy(task->name, name, sizeof(task->name));
+    strncpy2(task->name, name, sizeof(task->name));
     list_init(&task->senders);
     list_nullify(&task->runqueue_next);
     list_nullify(&task->sender_next);

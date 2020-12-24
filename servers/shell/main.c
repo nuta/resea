@@ -51,7 +51,7 @@ static void launch_task(int argc, char **argv) {
     char *name_and_cmdline = malloc(len);
     size_t offset = 0;
     for (int i = 0; i < argc; i++) {
-        strncpy(&name_and_cmdline[offset], argv[i], len - offset);
+        strncpy2(&name_and_cmdline[offset], argv[i], len - offset);
         offset += strlen(argv[i]);
         name_and_cmdline[offset++] = ' ';
     }

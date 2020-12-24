@@ -193,7 +193,7 @@ void *realloc(void *ptr, size_t size) {
 
 char *strndup(const char *s, size_t n) {
     char *new_s = malloc(n + 1);
-    strncpy(new_s, s, n + 1);
+    strncpy2(new_s, s, n + 1);
     return new_s;
 }
 

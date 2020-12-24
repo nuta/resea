@@ -164,7 +164,7 @@ paddr_t pager(struct task *task, vaddr_t vaddr, vaddr_t ip, unsigned fault) {
         ASSERT_OK(
             map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false));
         memset((void *) tmp_page, 0, PAGE_SIZE);
-        strncpy((void *) tmp_page, task->cmdline, PAGE_SIZE);
+        strncpy2((void *) tmp_page, task->cmdline, PAGE_SIZE);
         return paddr;
     }
 

@@ -68,9 +68,9 @@ static void init_task_struct(struct task *task, const char *name,
     task->received_ool_from = 0;
     list_init(&task->ool_sender_queue);
     list_nullify(&task->ool_sender_next);
-    strncpy(task->name, name, sizeof(task->name));
-    strncpy(task->cmdline, cmdline, sizeof(task->cmdline));
-    strncpy(task->waiting_for, "", sizeof(task->waiting_for));
+    strncpy2(task->name, name, sizeof(task->name));
+    strncpy2(task->cmdline, cmdline, sizeof(task->cmdline));
+    strncpy2(task->waiting_for, "", sizeof(task->waiting_for));
     list_init(&task->page_areas);
     list_init(&task->watchers);
 }
@@ -183,7 +183,7 @@ void service_register(struct task *task, const char *name) {
     // Add the server into the service list.
     struct service *service = malloc(sizeof(*service));
     service->task = task->tid;
-    strncpy(service->name, name, sizeof(service->name));
+    strncpy2(service->name, name, sizeof(service->name));
     list_nullify(&service->next);
     list_push_back(&services, &service->next);
 
@@ -199,7 +199,7 @@ void service_register(struct task *task, const char *name) {
             ipc_reply(task->tid, &m);
 
             // The task no longer wait for the service. Clear the field.
-            strncpy(task->waiting_for, "", sizeof(task->waiting_for));
+            strncpy2(task->waiting_for, "", sizeof(task->waiting_for));
         }
     }
 }
@@ -213,7 +213,7 @@ task_t service_wait(struct task *task, const char *name) {
 
     // The service is not yet available. Block the caller task until the
     // server is registered by `ipc_serve()`.
-    strncpy(task->waiting_for, name, sizeof(task->waiting_for));
+    strncpy2(task->waiting_for, name, sizeof(task->waiting_for));
     return ERR_WOULD_BLOCK;
 }
 

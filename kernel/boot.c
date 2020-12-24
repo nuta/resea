@@ -129,7 +129,7 @@ __noreturn void kmain(struct bootinfo *bootinfo) {
     // Look for the boot elf header.
     char name[CONFIG_TASK_NAME_LEN];
     struct bootelf_header *bootelf = locate_bootelf_header();
-    strncpy(name, (const char *) bootelf->name,
+    strncpy2(name, (const char *) bootelf->name,
             MIN(sizeof(name), sizeof(bootelf->name)));
 
     // Copy the bootinfo struct to the boot elf header.

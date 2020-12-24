@@ -139,7 +139,7 @@ struct pvh_start_info pvh_start_info = {
 
 static error_t pvh_fill(struct guest *guest, struct mapping *m, uint8_t *buf,
                         gpaddr_t gpaddr, size_t *filled_len) {
-    strncpy(pvh_start_info.data.cmdline, "console=ttyS0 root=/dev/vda1",
+    strncpy2(pvh_start_info.data.cmdline, "console=ttyS0 root=/dev/vda1",
             sizeof(pvh_start_info.data.cmdline));
 
     pvh_start_info.num_memmap_entries = 3;

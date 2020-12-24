@@ -65,7 +65,7 @@ device_t device_new(const char *name, transmit_fn_t transmit,
     memset(&device->ipaddr, 0, sizeof(ipaddr_t));
     memset(&device->netmask, 0, sizeof(ipaddr_t));
     memset(&device->gateway, 0, sizeof(ipaddr_t));
-    strncpy(device->name, name, DEVICE_NAME_LEN);
+    strncpy2(device->name, name, DEVICE_NAME_LEN);
     arp_init(&device->arp_table);
     return device;
 }

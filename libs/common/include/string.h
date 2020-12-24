@@ -4,7 +4,7 @@
 #include <types.h>
 
 size_t strlen(const char *s);
-char *strncpy(char *dst, const char *src, size_t num);
+char *strncpy2(char *dst, const char *src, size_t num);
 int strcmp(const char *s1, const char *s2);
 int strncmp(const char *s1, const char *s2, size_t len);
 char *strstr(const char *haystack, const char *needle);
