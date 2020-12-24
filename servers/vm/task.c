@@ -59,6 +59,7 @@ static void init_task_struct(struct task *task, const char *name,
     }
 
     task->pager = vm_task->tid;
+    task->in_use = true;
     task->free_vaddr = (vaddr_t) __free_vaddr;
     task->ool_buf = 0;
     task->ool_len = 0;
