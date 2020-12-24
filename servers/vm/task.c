@@ -91,12 +91,13 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
         return ERR_NOT_ACCEPTABLE;
     }
 
+    init_task_struct(task, file->name, file, file_header, ehdr, cmdline);
+
     // Create a new task for the server.
     error_t err =
         task_create(task->tid, file->name, ehdr->e_entry, task_self(), TASK_ALL_CAPS);
     ASSERT_OK(err);
 
-    init_task_struct(task, file->name, file, file_header, ehdr, cmdline);
     return task->tid;
 }
 
