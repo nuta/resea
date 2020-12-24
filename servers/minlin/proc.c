@@ -13,11 +13,14 @@
 
 struct proc *init_proc = NULL;
 static pid_t next_pid = 1;
-static pid_t next_tid = 16; // FIXME:
 static list_t procs;
 
-static task_t alloc_task(void) {
-    return next_tid++;
+task_t alloc_task(void) {
+    struct message m;
+    m.type = TASK_ALLOC_MSG;
+    m.task_alloc.pager = task_self();
+    ASSERT_OK(ipc_call(INIT_TASK, &m));
+    return m.task_alloc_reply.task;
 }
 
 static void free_task(task_t tid) {
