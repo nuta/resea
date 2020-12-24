@@ -1,5 +1,14 @@
 # Change Log
 
+## v0.8.0 (Dec 24, 2020)
+- x64: Hardware-assisted hypervisor support (like Linux KVM)
+- Add hypervisor implementation [hv](https://resea.org/docs/servers/hv.html)
+- Add (*not* cryptographic-secure) random number generator server (by @malbx)
+- x64: Support printing messages on the screen
+- vm: Support the physical memory map from GRUB
+- Fix a typo in docs (by @JeetKaria06)
+- Add link to IRC channel (by @milisarge)
+
 ## v0.7.0 (Nov 22, 2020)
 - Add the datetime server with UNIX timestamp support (by @PrayagS)
 - Add the x64-based system's RTC device driver (by @PrayagS)
