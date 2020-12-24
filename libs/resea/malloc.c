@@ -97,9 +97,9 @@ void *malloc(size_t size) {
         allocated->magic = MALLOC_IN_USE;
         allocated->size = size;
         memset(allocated->underflow_redzone, MALLOC_REDZONE_UNDFLOW_MARKER,
-                MALLOC_REDZONE_LEN);
+               MALLOC_REDZONE_LEN);
         memset(&allocated->data[allocated->capacity],
-                MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
+               MALLOC_REDZONE_OVRFLOW_MARKER, MALLOC_REDZONE_LEN);
 
         bins[bin_idx] = allocated->next;
         allocated->next = NULL;

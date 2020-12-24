@@ -3,16 +3,16 @@
 
 #include <types.h>
 
-#define SECTOR_SIZE 512
-#define NUM_VIRTQUEUES_MAX 4
+#define SECTOR_SIZE             512
+#define NUM_VIRTQUEUES_MAX      4
 #define VIRITO_BLK_REG_CAPACITY 0
 
-#define VIRTIO_BLK_T_IN      0
-#define VIRTIO_BLK_T_OUT     1
-#define VIRTIO_BLK_T_FLUSH   4
-#define VIRTIO_BLK_S_OK      0
-#define VIRTIO_BLK_S_IOERR   1
-#define VIRTIO_BLK_S_UNSUPP  2
+#define VIRTIO_BLK_T_IN     0
+#define VIRTIO_BLK_T_OUT    1
+#define VIRTIO_BLK_T_FLUSH  4
+#define VIRTIO_BLK_S_OK     0
+#define VIRTIO_BLK_S_IOERR  1
+#define VIRTIO_BLK_S_UNSUPP 2
 
 struct __packed virtio_blk_req_header {
     uint32_t type;

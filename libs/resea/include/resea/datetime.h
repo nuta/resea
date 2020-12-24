@@ -1,6 +1,8 @@
 #ifndef __RESEA_DATETIME_H__
 #define __RESEA_DATETIME_H__
 
+#include <types.h>
+
 struct datetime {
     uint32_t year;
     uint8_t month;

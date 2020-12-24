@@ -1,6 +1,6 @@
-#include <types.h>
-#include <task.h>
 #include <printk.h>
+#include <task.h>
+#include <types.h>
 
 void nmi_handler(void) {
     PANIC("hard reset");
@@ -20,7 +20,7 @@ void irq_handler(void) {
     handle_irq(irq);
 }
 
-void arch_enable_irq(unsigned irq){
+void arch_enable_irq(unsigned irq) {
     // TODO:
 }
 

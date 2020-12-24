@@ -1,9 +1,9 @@
-#include <resea/printf.h>
-#include <resea/malloc.h>
+#include "fat.h"
 #include <resea/handle.h>
 #include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
 #include <string.h>
-#include "fat.h"
 
 static task_t ramdisk_server;
 
@@ -80,7 +80,8 @@ void main(void) {
             }
             case FS_CREATE_MSG: {
                 struct fat_file *file = malloc(sizeof(*file));
-                error_t err = fat_create(&fs, file, m.fs_create.path, m.fs_create.exist_ok);
+                error_t err = fat_create(&fs, file, m.fs_create.path,
+                                         m.fs_create.exist_ok);
                 if (IS_ERROR(err)) {
                     free(file);
                     ipc_reply_err(m.src, err);
@@ -125,8 +126,8 @@ void main(void) {
                     break;
                 }
 
-                error_t err = fat_write(
-                    &fs, file, m.fs_write.offset, m.fs_write.data, m.fs_write.data_len);
+                error_t err = fat_write(&fs, file, m.fs_write.offset,
+                                        m.fs_write.data, m.fs_write.data_len);
                 if (IS_ERROR(err)) {
                     ipc_reply_err(m.src, err);
                     break;

@@ -11,8 +11,8 @@
 #define X64_PF_WRITE   (1 << 1)
 #define X64_PF_USER    (1 << 2)
 
-#define X64_PAGE_PRESENT    (1 << 0)
-#define X64_PAGE_WRITABLE   (1 << 1)
-#define X64_PAGE_USER       (1 << 2)
+#define X64_PAGE_PRESENT  (1 << 0)
+#define X64_PAGE_WRITABLE (1 << 1)
+#define X64_PAGE_USER     (1 << 2)
 
 #endif

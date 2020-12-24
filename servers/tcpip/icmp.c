@@ -1,12 +1,12 @@
-#include <list.h>
+#include "icmp.h"
+#include "checksum.h"
+#include "device.h"
+#include "ipv4.h"
+#include "sys.h"
 #include <endian.h>
+#include <list.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include "ipv4.h"
-#include "icmp.h"
-#include "device.h"
-#include "checksum.h"
-#include "sys.h"
 
 void icmp_send_echo_request(ipaddr_t *dst) {
     struct icmp_header header;
@@ -45,7 +45,6 @@ void icmp_send_echo_request(ipaddr_t *dst) {
     }
 }
 
-
 void icmp_receive(ipaddr_t *dst, ipaddr_t *src, mbuf_t pkt) {
     struct icmp_header header;
     if (mbuf_read(&pkt, &header, sizeof(header)) != sizeof(header)) {
@@ -60,4 +59,3 @@ void icmp_receive(ipaddr_t *dst, ipaddr_t *src, mbuf_t pkt) {
             TRACE("received ICMP type: 0x%x", header.type);
     }
 }
-

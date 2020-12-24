@@ -1,13 +1,13 @@
-#include <list.h>
-#include <resea/printf.h>
-#include <string.h>
+#include "tcp.h"
 #include "checksum.h"
 #include "device.h"
-#include <endian.h>
 #include "ipv4.h"
 #include "stats.h"
 #include "sys.h"
-#include "tcp.h"
+#include <endian.h>
+#include <list.h>
+#include <resea/printf.h>
+#include <string.h>
 
 static struct tcp_socket sockets[TCP_SOCKETS_MAX];
 static list_t active_socks;

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Visualize benchmark score (reported by the METRIC macro) changes in the log.")
@@ -27,9 +28,10 @@ def main():
 
         ys.append(data["value"])
 
-    data = pd.DataFrame({ "x": np.arange(len(ys)), "score": ys })
+    data = pd.DataFrame({"x": np.arange(len(ys)), "score": ys})
     sns.lineplot(data=data, x="x", y="score")
     plt.show()
+
 
 if __name__ == "__main__":
     main()

@@ -1,9 +1,9 @@
-#include <arch.h>
-#include <printk.h>
-#include <task.h>
-#include <kdebug.h>
 #include "serial.h"
 #include "screen.h"
+#include <arch.h>
+#include <kdebug.h>
+#include <printk.h>
+#include <task.h>
 
 static void serial_write(char ch) {
     while ((asm_in8(IOPORT_SERIAL + LSR) & TX_READY) == 0) {}

@@ -1,8 +1,8 @@
 #ifndef __MM_H__
 #define __MM_H__
 
-#include <types.h>
 #include <list.h>
+#include <types.h>
 
 struct page_area {
     list_elem_t next;
@@ -26,17 +26,18 @@ struct mapping {
     };
 };
 
+struct guest;
 struct mapping_ops {
     const char *name;
-    error_t (*fill_page)(struct guest *guest, struct mapping *mapping, uint8_t *buf,
-                         gpaddr_t gpaddr, size_t *filled_len);
+    error_t (*fill_page)(struct guest *guest, struct mapping *mapping,
+                         uint8_t *buf, gpaddr_t gpaddr, size_t *filled_len);
     uint64_t (*read)(struct guest *guest, struct mapping *mapping,
                      offset_t offset, int size);
-    void (*write)(struct guest *guest, struct mapping *mapping,
-                  offset_t offset, int size, uint64_t value);
+    void (*write)(struct guest *guest, struct mapping *mapping, offset_t offset,
+                  int size, uint64_t value);
 };
 
-#define MP_FLOATPTR_SIGNATURE   0x5f504d5f /* "_MP_" */
+#define MP_FLOATPTR_SIGNATURE 0x5f504d5f /* "_MP_" */
 struct __packed mp_float_ptr {
     uint32_t signature;
     uint32_t mptable_header_addr;
@@ -75,7 +76,7 @@ struct __packed mp_processor_entry {
     uint32_t reserved2;
 };
 
-#define MP_MPTABLE_SIGNATURE    0x504d4350 /* "PCMP" */
+#define MP_MPTABLE_SIGNATURE 0x504d4350 /* "PCMP" */
 struct __packed misc_area {
     struct mp_float_ptr mp_float_ptr;
     struct mp_table_header mp_table_header;
@@ -90,7 +91,8 @@ extern struct mapping_ops pvh_mapping_ops;
 void handle_ept_fault(struct guest *guest, gpaddr_t gpaddr, hv_frame_t *frame);
 void *alloc_guest_page(struct guest *guest, size_t num_pages, gpaddr_t gpaddr,
                        paddr_t *paddr);
-void *alloc_internal_page(struct guest *guest, size_t num_pages, paddr_t *paddr);
+void *alloc_internal_page(struct guest *guest, size_t num_pages,
+                          paddr_t *paddr);
 void *resolve_guest_paddr_buffer(struct guest *guest, gpaddr_t gpaddr);
 
 #endif

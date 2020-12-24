@@ -1,7 +1,7 @@
 #include <config.h>
-#include <resea/printf.h>
-#include <resea/ipc.h>
 #include <resea/async.h>
+#include <resea/ipc.h>
+#include <resea/printf.h>
 
 void main(void) {
     ipc_serve("memory_leak_test");

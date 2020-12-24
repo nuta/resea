@@ -1,9 +1,9 @@
 #include "fs.h"
-#include "proc.h"
 #include "abi.h"
-#include <string.h>
+#include "proc.h"
 #include <resea/ipc.h>
 #include <resea/malloc.h>
+#include <string.h>
 
 static task_t fs_server;
 
@@ -26,22 +26,26 @@ int nyi_release(__unused struct file *file) {
     return 0;
 }
 
-ssize_t nyi_read(__unused struct file *file, __unused uint8_t *buf, __unused size_t len) {
+ssize_t nyi_read(__unused struct file *file, __unused uint8_t *buf,
+                 __unused size_t len) {
     NYI();
     return 0;
 }
 
-ssize_t nyi_write(__unused struct file *file, __unused const uint8_t *buf, __unused size_t len) {
+ssize_t nyi_write(__unused struct file *file, __unused const uint8_t *buf,
+                  __unused size_t len) {
     NYI();
     return 0;
 }
 
-ssize_t nyi_ioctl(__unused struct file *file, __unused unsigned cmd, __unused unsigned arg) {
+ssize_t nyi_ioctl(__unused struct file *file, __unused unsigned cmd,
+                  __unused unsigned arg) {
     NYI();
     return 0;
 }
 
-loff_t nyi_seek(__unused struct file *file, __unused loff_t off, __unused int whence) {
+loff_t nyi_seek(__unused struct file *file, __unused loff_t off,
+                __unused int whence) {
     switch (whence) {
         case SEEK_SET:
             file->pos = off;
@@ -67,7 +71,7 @@ static errno_t driver_open(struct file *file, const char *path, int flags,
     m.fs_open.path = (char *) path;
     error_t err = ipc_call(fs_server, &m);
     if (IS_ERROR(err)) {
-        return -EDOM; // FIXME: Convert error_t to errno_t.
+        return -EDOM;  // FIXME: Convert error_t to errno_t.
     }
 
     ASSERT(m.type == FS_OPEN_REPLY_MSG);
@@ -85,7 +89,7 @@ static ssize_t driver_read(struct file *file, uint8_t *buf, size_t len) {
     m.fs_read.len = len;
     error_t err = ipc_call(fs_server, &m);
     if (IS_ERROR(err)) {
-        return -EDOM; // FIXME: Convert error_t to errno_t.
+        return -EDOM;  // FIXME: Convert error_t to errno_t.
     }
 
     ASSERT(m.type == FS_READ_REPLY_MSG);
@@ -101,7 +105,7 @@ int driver_stat(const char *path, struct stat *stat) {
     m.fs_stat.path = (char *) path;
     error_t err = ipc_call(fs_server, &m);
     if (IS_ERROR(err)) {
-        return -ENOENT; // FIXME: Convert error_t to errno_t.
+        return -ENOENT;  // FIXME: Convert error_t to errno_t.
     }
 
     ASSERT(m.type == FS_STAT_REPLY_MSG);
@@ -130,7 +134,8 @@ struct mountpoint root_mountpoint = {
 };
 
 extern struct file_ops tty_file_ops;
-errno_t devfs_open(struct file *file, const char *path, int flags, mode_t mode) {
+errno_t devfs_open(struct file *file, const char *path, int flags,
+                   mode_t mode) {
     static struct inode *tty_inode = NULL;
     if (!tty_inode) {
         tty_inode = inode_alloc();
@@ -197,7 +202,7 @@ int fs_open(struct file **file, const char *path, int flags, mode_t mode) {
 
     *file = malloc(sizeof(**file));
     (*file)->pos = 0;
-    (*file)->inode = NULL; // To be filled by the driver.
+    (*file)->inode = NULL;  // To be filled by the driver.
 
     // Open the file in the filesystem driver.
     int err;
@@ -265,14 +270,15 @@ ssize_t fs_read_pos(struct file *file, void *buf, loff_t off, size_t len) {
     }
 
     // Restore the position.
-    if ((err = fs_seek(file, off ,SEEK_SET)) < 0) {
+    if ((err = fs_seek(file, off, SEEK_SET)) < 0) {
         return err;
     }
 
     return read_len;
 }
 
-ssize_t fs_write_pos(struct file *file, const void *buf, loff_t off, size_t len) {
+ssize_t fs_write_pos(struct file *file, const void *buf, loff_t off,
+                     size_t len) {
     // Save the current position.
     loff_t pos;
     if ((pos = fs_tell(file)) < 0) {
@@ -292,7 +298,7 @@ ssize_t fs_write_pos(struct file *file, const void *buf, loff_t off, size_t len)
     }
 
     // Restore the position.
-    if ((err = fs_seek(file, off ,SEEK_SET)) < 0) {
+    if ((err = fs_seek(file, off, SEEK_SET)) < 0) {
         return err;
     }
 

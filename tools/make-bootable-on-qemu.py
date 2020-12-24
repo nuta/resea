@@ -8,6 +8,7 @@
 #
 import argparse
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("file")
@@ -17,6 +18,7 @@ def main():
         # Set EM_386 (0x0003) to em_machine.
         f.seek(18)
         f.write(bytes([0x03, 0x00]))
+
 
 if __name__ == "__main__":
     main()

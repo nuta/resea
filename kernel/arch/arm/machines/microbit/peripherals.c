@@ -1,6 +1,6 @@
-#include <types.h>
-#include <printk.h>
 #include <machine/peripherals.h>
+#include <printk.h>
+#include <types.h>
 
 static inline uint32_t mmio_read(vaddr_t addr) {
     return *((volatile uint32_t *) addr);
@@ -12,8 +12,9 @@ static inline void mmio_write(vaddr_t addr, uint32_t value) {
 
 void arch_printchar(char ch) {
     mmio_write(UART_TXD, ch);
-    while(!mmio_read(UART_TXREADY));
-    mmio_write(UART_TXREADY,0);
+    while (!mmio_read(UART_TXREADY))
+        ;
+    mmio_write(UART_TXREADY, 0);
 }
 
 char kdebug_readchar(void) {

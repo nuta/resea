@@ -1,14 +1,14 @@
-#include <arch.h>
-#include <kdebug.h>
-#include <printk.h>
-#include <syscall.h>
-#include <task.h>
 #include "interrupt.h"
 #include "mp.h"
 #include "serial.h"
 #include "task.h"
 #include "trap.h"
 #include "vm.h"
+#include <arch.h>
+#include <kdebug.h>
+#include <printk.h>
+#include <syscall.h>
+#include <task.h>
 
 static uint32_t ioapic_read(uint8_t reg) {
     *((uint32_t *) from_paddr(IOAPIC_ADDR)) = reg;
@@ -76,8 +76,9 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
     switch (vec) {
         case EXP_PAGE_FAULT: {
             if (frame->error & (1 << 3)) {
-                PANIC("#PF: RSVD bit violation "
-                      "(page table is presumably corrupted!)");
+                PANIC(
+                    "#PF: RSVD bit violation "
+                    "(page table is presumably corrupted!)");
             }
 
             vaddr_t addr = asm_read_cr2();

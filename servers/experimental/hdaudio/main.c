@@ -1,8 +1,8 @@
 #include "hdaudio.h"
+#include <driver/dma.h>
+#include <driver/io.h>
 #include <resea/ipc.h>
 #include <resea/printf.h>
-#include <driver/io.h>
-#include <driver/dma.h>
 #include <string.h>
 
 // Contains singed short sound_data[].

@@ -1,9 +1,9 @@
 #ifndef __DHCP_H__
 #define __DHCP_H__
 
-#include <list.h>
 #include "device.h"
 #include "tcpip.h"
+#include <list.h>
 
 #define BOOTP_OP_REQUEST      1
 #define BOOTP_HWTYPE_ETHERNET 1

@@ -3,8 +3,6 @@
 
 #include <types.h>
 
-
-
 #define BOOTINFO_MEMMAP_TYPE_END       0
 #define BOOTINFO_MEMMAP_TYPE_AVAILABLE 0xaa
 #define BOOTINFO_MEMMAP_TYPE_RESERVED  0xff
@@ -13,8 +11,8 @@ struct bootelf_mapping {
     uint64_t vaddr;
     uint32_t offset;
     uint16_t num_pages;
-    uint8_t type;   // 'R': readonly, 'W': writable, 'X': executable.
-    uint8_t zeroed; // If it's non-zero value, the pages are filled with zeros.
+    uint8_t type;    // 'R': readonly, 'W': writable, 'X': executable.
+    uint8_t zeroed;  // If it's non-zero value, the pages are filled with zeros.
 } __packed;
 
 struct bootinfo_memmap_entry {
@@ -33,7 +31,7 @@ struct bootinfo {
 // The maximum size hard-coded in start.S
 STATIC_ASSERT(sizeof(struct bootinfo) <= 512);
 
-#define BOOTELF_MAGIC "11BOOT\xe1\xff"
+#define BOOTELF_MAGIC            "11BOOT\xe1\xff"
 #define BOOTELF_NUM_MAPPINGS_MAX 8
 
 struct bootelf_header {

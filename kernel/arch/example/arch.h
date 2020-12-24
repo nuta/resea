@@ -3,14 +3,13 @@
 
 #include <types.h>
 
-#define STACK_SIZE 1024
-#define TICK_HZ 1000
-#define IRQ_MAX 32
-#define STRAIGHT_MAP_ADDR 0 // Unused.
-#define STRAIGHT_MAP_END  0 // Unused.
+#define STACK_SIZE        1024
+#define TICK_HZ           1000
+#define IRQ_MAX           32
+#define STRAIGHT_MAP_ADDR 0  // Unused.
+#define STRAIGHT_MAP_END  0  // Unused.
 
-struct arch_task {
-};
+struct arch_task {};
 
 static inline void *from_paddr(paddr_t addr) {
     return (void *) addr;
@@ -36,9 +35,7 @@ static inline bool mp_is_bsp(void) {
     return mp_self() == 0;
 }
 
-
-struct arch_cpuvar {
-};
+struct arch_cpuvar {};
 
 extern struct cpuvar cpuvar;
 static inline struct cpuvar *get_cpuvar(void) {

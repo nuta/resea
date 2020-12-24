@@ -1,12 +1,12 @@
-#include <resea/ipc.h>
-#include <resea/printf.h>
-#include <resea/malloc.h>
-#include <resea/syscall.h>
-#include <driver/irq.h>
-#include <string.h>
 #include "commands.h"
+#include <driver/irq.h>
+#include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
+#include <string.h>
 
-#define BOLD "\e[1;34m" // Bold.
+#define BOLD             "\e[1;34m"  // Bold.
 #define PRINTF(fmt, ...) printf(BOLD fmt SGR_RESET, ##__VA_ARGS__)
 
 static void skip_whitespaces(char **cmdline) {
@@ -155,7 +155,7 @@ void main(void) {
                 }
                 break;
             default:
-               discard_unknown_message(&m);
+                discard_unknown_message(&m);
         }
     }
 }

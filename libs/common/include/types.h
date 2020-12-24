@@ -29,18 +29,18 @@ typedef int task_t;
 typedef int handle_t;
 typedef int msec_t;
 
-#define INT8_MIN    -128
-#define INT16_MIN   -32768
-#define INT32_MIN   -2147483648
-#define INT64_MIN   -9223372036854775808LL
-#define INT8_MAX    127
-#define INT16_MAX   32767
-#define INT32_MAX   2147483647
-#define INT64_MAX   9223372036854775807LL
-#define UINT8_MAX   255
-#define UINT16_MAX  65535
-#define UINT32_MAX  4294967295U
-#define UINT64_MAX  18446744073709551615ULL
+#define INT8_MIN   -128
+#define INT16_MIN  -32768
+#define INT32_MIN  -2147483648
+#define INT64_MIN  -9223372036854775808LL
+#define INT8_MAX   127
+#define INT16_MAX  32767
+#define INT32_MAX  2147483647
+#define INT64_MAX  9223372036854775807LL
+#define UINT8_MAX  255
+#define UINT16_MAX 65535
+#define UINT32_MAX 4294967295U
+#define UINT64_MAX 18446744073709551615ULL
 
 #define MSEC_MAX INT32_MAX
 
@@ -57,7 +57,7 @@ typedef char bool;
 // <built-in>:356:9: note: previous definition is here
 // #define __weak __attribute__((objc_gc(weak)))
 #ifdef __APPLE__
-#undef __weak
+#    undef __weak
 #endif
 
 typedef __builtin_va_list va_list;
@@ -92,8 +92,8 @@ typedef __builtin_va_list va_list;
 
 // Error values. Don't forget to update `error_names` as well!
 typedef int error_t;
-#define IS_ERROR(err) ((err) < 0)
-#define IS_OK(err)    ((err) >= 0)
+#define IS_ERROR(err)      ((err) < 0)
+#define IS_OK(err)         ((err) >= 0)
 #define OK                 (0)
 #define ERR_NO_MEMORY      (-1)
 #define ERR_NOT_PERMITTED  (-2)
@@ -139,13 +139,14 @@ typedef int error_t;
 
 // Map flags.
 // TODO: Support No-Execute bit
-#define MAP_TYPE(flags) ((flags) & 0b11)
+#define MAP_TYPE(flags)    ((flags) &0b11)
 #define MAP_TYPE_READONLY  (0b01 << 0)
 #define MAP_TYPE_READWRITE (0b10 << 0)
 
 // IPC source task IDs.
-#define IPC_ANY  0  /* So-called "open receive". */
-#define IPC_DENY -1 /* Blocked in the IPC send phase. Internally used by kernel. */
+#define IPC_ANY 0 /* So-called "open receive". */
+#define IPC_DENY                                                               \
+    -1 /* Blocked in the IPC send phase. Internally used by kernel. */
 
 // IPC options.
 #define IPC_SEND    (1 << 0)
@@ -155,16 +156,16 @@ typedef int error_t;
 #define IPC_KERNEL  (1 << 3) /* Internally used by kernel. */
 
 // Flags in the message type (m->type).
-#define MSG_STR  (1 << 30)
-#define MSG_OOL (1 << 29)
-#define MSG_ID(type) ((type) & 0xffff)
+#define MSG_STR      (1 << 30)
+#define MSG_OOL      (1 << 29)
+#define MSG_ID(type) ((type) &0xffff)
 
 // Notifications.
 typedef uint8_t notifications_t;
-#define NOTIFY_TIMER    (1 << 0)
-#define NOTIFY_IRQ      (1 << 1)
-#define NOTIFY_ABORTED  (1 << 2)
-#define NOTIFY_ASYNC    (1 << 3)
+#define NOTIFY_TIMER   (1 << 0)
+#define NOTIFY_IRQ     (1 << 1)
+#define NOTIFY_ABORTED (1 << 2)
+#define NOTIFY_ASYNC   (1 << 3)
 
 // Page Fault exception error codes.
 #define EXP_PF_PRESENT (1 << 0)

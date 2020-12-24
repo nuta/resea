@@ -1,8 +1,8 @@
+#include "vm.h"
 #include <arch.h>
-#include <task.h>
 #include <printk.h>
 #include <string.h>
-#include "vm.h"
+#include <task.h>
 
 static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
                                      paddr_t kpage, uint64_t attrs) {
@@ -34,8 +34,8 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
     return &table[NTH_LEVEL_INDEX(1, vaddr)];
 }
 
-error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
-                unsigned flags) {
+error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
+                    paddr_t kpage, unsigned flags) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
     uint64_t attrs = X64_PAGE_PRESENT | X64_PAGE_USER;

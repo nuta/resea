@@ -1,12 +1,12 @@
-#include <resea/ipc.h>
+#include "device.h"
+#include "pci.h"
+#include <list.h>
 #include <resea/async.h>
 #include <resea/handle.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <string.h>
-#include <list.h>
-#include "pci.h"
-#include "device.h"
 
 static list_t devices;
 
@@ -81,7 +81,8 @@ void main(void) {
                 NYI();
             }
             case DM_PCI_GET_CONFIG_MSG: {
-                struct device *dev = handle_get(m.src, m.dm_pci_get_config.handle);
+                struct device *dev =
+                    handle_get(m.src, m.dm_pci_get_config.handle);
                 if (!dev) {
                     ipc_reply_err(m.src, ERR_INVALID_ARG);
                     break;
@@ -95,17 +96,16 @@ void main(void) {
                 break;
             }
             case DM_PCI_READ_CONFIG_MSG: {
-                struct device *dev = handle_get(m.src, m.dm_pci_read_config.handle);
+                struct device *dev =
+                    handle_get(m.src, m.dm_pci_read_config.handle);
                 if (!dev || dev->bus_type != BUS_TYPE_PCI) {
                     ipc_reply_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
 
-                uint32_t value = pci_read_config(
-                    &dev->pci,
-                    m.dm_pci_read_config.offset,
-                    m.dm_pci_read_config.size
-                );
+                uint32_t value =
+                    pci_read_config(&dev->pci, m.dm_pci_read_config.offset,
+                                    m.dm_pci_read_config.size);
 
                 m.type = DM_PCI_READ_CONFIG_REPLY_MSG;
                 m.dm_pci_read_config_reply.value = value;
@@ -113,25 +113,24 @@ void main(void) {
                 break;
             }
             case DM_PCI_WRITE_CONFIG_MSG: {
-                struct device *dev = handle_get(m.src, m.dm_pci_write_config.handle);
+                struct device *dev =
+                    handle_get(m.src, m.dm_pci_write_config.handle);
                 if (!dev || dev->bus_type != BUS_TYPE_PCI) {
                     ipc_reply_err(m.src, ERR_INVALID_ARG);
                     break;
                 }
 
-                pci_write_config(
-                    &dev->pci,
-                    m.dm_pci_write_config.offset,
-                    m.dm_pci_write_config.size,
-                    m.dm_pci_write_config.value
-                );
+                pci_write_config(&dev->pci, m.dm_pci_write_config.offset,
+                                 m.dm_pci_write_config.size,
+                                 m.dm_pci_write_config.value);
 
                 m.type = DM_PCI_WRITE_CONFIG_REPLY_MSG;
                 ipc_reply(m.src, &m);
                 break;
             }
             case DM_PCI_ENABLE_BUS_MASTER_MSG: {
-                struct device *dev = handle_get(m.src, m.dm_pci_enable_bus_master.handle);
+                struct device *dev =
+                    handle_get(m.src, m.dm_pci_enable_bus_master.handle);
                 if (!dev) {
                     ipc_reply_err(m.src, ERR_INVALID_ARG);
                     break;

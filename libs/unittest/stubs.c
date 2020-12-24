@@ -1,7 +1,7 @@
-#include <types.h>
+#include <arch/syscall.h>
 #include <resea/ipc.h>
 #include <resea/printf.h>
-#include <arch/syscall.h>
+#include <types.h>
 #include <unittest.h>
 
 const char *__program_name(void) {

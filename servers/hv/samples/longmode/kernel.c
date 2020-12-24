@@ -24,7 +24,7 @@ static inline uint8_t asm_in8(uint16_t port) {
 }
 
 static void printchar(char ch) {
-   while ((asm_in8(IOPORT_SERIAL + LSR) & TX_READY) == 0) {}
+    while ((asm_in8(IOPORT_SERIAL + LSR) & TX_READY) == 0) {}
     asm_out8(IOPORT_SERIAL, ch);
 }
 

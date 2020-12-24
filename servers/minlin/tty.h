@@ -3,7 +3,6 @@
 
 #include <types.h>
 
-struct tty {
-};
+struct tty {};
 
 #endif

@@ -29,8 +29,7 @@ void x64_screen_printchar(char ch) {
         int diff = y - SCREEN_HEIGHT + 1;
         for (int from = diff; from < SCREEN_HEIGHT; from++) {
             memcpy(vram + (from - diff) * SCREEN_WIDTH,
-                   vram + from * SCREEN_WIDTH,
-                   SCREEN_WIDTH * sizeof(uint16_t));
+                   vram + from * SCREEN_WIDTH, SCREEN_WIDTH * sizeof(uint16_t));
         }
 
         // Clear the new lines.
@@ -51,8 +50,8 @@ void x64_screen_printchar(char ch) {
 
     // Move the cursor.
     int pos = y * SCREEN_WIDTH + x;
-	asm_out8(0x3d4, 0x0f);
-	asm_out8(0x3d5, pos & 0xff);
-	asm_out8(0x3d4, 0x0e);
-	asm_out8(0x3d5, (pos >> 8) & 0xff);
+    asm_out8(0x3d4, 0x0f);
+    asm_out8(0x3d5, pos & 0xff);
+    asm_out8(0x3d4, 0x0e);
+    asm_out8(0x3d5, (pos >> 8) & 0xff);
 }

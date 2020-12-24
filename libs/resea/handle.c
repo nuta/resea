@@ -1,12 +1,12 @@
+#include <list.h>
 #include <resea/handle.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <list.h>
 
 // The number of buckets in `handles`.
 #define NUM_BUCKETS 32
 // The maximum number of handles per task.
-#define HANDLE_MAX  128
+#define HANDLE_MAX 128
 
 /// A hash table of handles.
 static list_t *handles[NUM_BUCKETS];

@@ -1,7 +1,7 @@
 #include <config.h>
 #include <resea/ipc.h>
-#include <resea/printf.h>
 #include <resea/malloc.h>
+#include <resea/printf.h>
 
 void main(void) {
     INFO("starting benchmark server...");

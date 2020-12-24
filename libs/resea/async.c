@@ -1,6 +1,6 @@
 #include <resea/async.h>
-#include <resea/malloc.h>
 #include <resea/ipc.h>
+#include <resea/malloc.h>
 #include <string.h>
 
 #define NUM_BUCKETS 32

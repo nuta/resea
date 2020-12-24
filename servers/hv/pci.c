@@ -1,7 +1,7 @@
 #include "pci.h"
 #include "guest.h"
-#include <resea/malloc.h>
 #include <list.h>
+#include <resea/malloc.h>
 
 static struct pci_device *lookup_device_by_slot(struct guest *guest, int slot) {
     LIST_FOR_EACH (device, &guest->pci.devices, struct pci_device, next) {
@@ -44,9 +44,12 @@ uint32_t pci_handle_io_read(struct guest *guest, uint64_t port, size_t size) {
             }
 
             switch (size) {
-                case 1: return ((uint8_t *) device->config)[offset];
-                case 2: return ((uint16_t *) device->config)[offset / 2];
-                case 4: return ((uint32_t *) device->config)[offset / 4];
+                case 1:
+                    return ((uint8_t *) device->config)[offset];
+                case 2:
+                    return ((uint16_t *) device->config)[offset / 2];
+                case 4:
+                    return ((uint32_t *) device->config)[offset / 4];
             }
 
             UNREACHABLE();
@@ -97,7 +100,7 @@ void pci_add_device(struct guest *guest, const char *name,
         uint8_t irq = guest->pci.next_irq++;
         device->irq = irq;
         config->interrupt_line = irq;
-        config->interrupt_pin = 1; // INTA#
+        config->interrupt_pin = 1;  // INTA#
     } else {
         device->irq = 0;
     }
@@ -118,22 +121,22 @@ static void host_bridge_ioport_write(struct pci_device *device, offset_t off,
     // No-op
 }
 
-static struct pci_device_ops host_bridge_ops ={
+static struct pci_device_ops host_bridge_ops = {
     .ioport_read = host_bridge_ioport_read,
     .ioport_write = host_bridge_ioport_write,
 };
 
 static struct pci_config host_bridge_config = {
     .header_type = 0,
-    .class = 0x06,    // Bridge Device
-    .subclass = 0x00, // Host Bridge
+    .class = 0x06,     // Bridge Device
+    .subclass = 0x00,  // Host Bridge
 };
 
 void pci_init(struct guest *guest) {
     list_init(&guest->pci.devices);
     guest->pci.next_slot = 0;
     guest->pci.next_port_base = 0xa000;
-    guest->pci.next_irq = 12; // IRQ #0 is used for PIT (timer)
+    guest->pci.next_irq = 12;  // IRQ #0 is used for PIT (timer)
     guest->pci.selected_addr = 0;
     guest->pci.read_bar0_size = false;
 

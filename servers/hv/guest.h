@@ -1,8 +1,8 @@
 #ifndef __GUEST_H__
 #define __GUEST_H__
 
-#include <types.h>
 #include <list.h>
+#include <types.h>
 
 struct guest {
     list_elem_t next;
@@ -32,8 +32,8 @@ enum image_type {
     IMAGE_TYPE_XEN_PVH,
 };
 
-#define E820_TYPE_RAM           1
-#define E820_TYPE_RESERVED      2
+#define E820_TYPE_RAM      1
+#define E820_TYPE_RESERVED 2
 
 struct __packed pvh_memmap_entry {
     uint64_t addr;

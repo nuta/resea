@@ -1,9 +1,9 @@
 #ifndef __HDAUDUIO_H__
 #define __HDAUDUIO_H__
 
-#include <types.h>
-#include <driver/io.h>
 #include <driver/dma.h>
+#include <driver/io.h>
+#include <types.h>
 
 #define REG_GCAP      0x00
 #define REG_GCTL      0x08
@@ -23,12 +23,12 @@
 #define REG_RIRBSTS   0x5d
 #define REG_RIRBSIZE  0x5e
 
-#define REG_SDnCTL(stream)    ((stream)->offset + 0x00)
-#define REG_SDnCBL(stream)    ((stream)->offset + 0x08)
-#define REG_SDnLVI(stream)    ((stream)->offset + 0x0c)
-#define REG_SDnFMT(stream)    ((stream)->offset + 0x12)
-#define REG_SDnBDLPL(stream)  ((stream)->offset + 0x18)
-#define REG_SDnBDLPU(stream)  ((stream)->offset + 0x1c)
+#define REG_SDnCTL(stream)   ((stream)->offset + 0x00)
+#define REG_SDnCBL(stream)   ((stream)->offset + 0x08)
+#define REG_SDnLVI(stream)   ((stream)->offset + 0x0c)
+#define REG_SDnFMT(stream)   ((stream)->offset + 0x12)
+#define REG_SDnBDLPL(stream) ((stream)->offset + 0x18)
+#define REG_SDnBDLPU(stream) ((stream)->offset + 0x1c)
 
 #define VERB_GET_PARAM          0xf00
 #define VERB_GET_CONLIST        0xf02
@@ -40,15 +40,15 @@
 #define VERB_SET_POWER_STATE    0x705
 
 /// Parameters that can be read by VERB_GET_PARAM.
-#define PARAM_NODE_CNT            0x04
-#define PARAM_AUDIO_WIDGET_CAPS   0x09
-#define PARAM_CON_LIST_LEN        0x0e
+#define PARAM_NODE_CNT          0x04
+#define PARAM_AUDIO_WIDGET_CAPS 0x09
+#define PARAM_CON_LIST_LEN      0x0e
 
 /// GCTL fields.
-#define GCTL_RESET        (1 << 0)
+#define GCTL_RESET (1 << 0)
 
 // CORBCTL fields.
-#define CORBCTL_CORBRUN   (1 << 1)
+#define CORBCTL_CORBRUN (1 << 1)
 
 // RIRBCTL fields.
 #define RIRBCTL_RIRBDMAEN (1 << 1)
@@ -60,10 +60,10 @@
 #define FORMAT_BTS_16BITS (1 << 4)
 #define FORMAT_NUM_CH_2   (1 << 0)
 
-#define NID_ROOT         0
+#define NID_ROOT 0
 
 /// "7.3.4.6. Audio Widget Capabilities"
-#define WIDGET_TYPE_PIN  4
+#define WIDGET_TYPE_PIN 4
 
 /// Buffer Descriptor List Entry.
 struct __packed hdaudio_buffer_desc {

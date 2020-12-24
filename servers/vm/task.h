@@ -1,8 +1,9 @@
 #ifndef __TASK_H__
 #define __TASK_H__
 
-#include <types.h>
 #include <list.h>
+#include <message.h>
+#include <types.h>
 
 #define SERVICE_NAME_LEN 32
 

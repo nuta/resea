@@ -72,7 +72,7 @@ char *strchr(const char *s, int c) {
 
 int atoi(const char *s) {
     int x = 0;
-    while ('0' <= *s && *s <= '9')  {
+    while ('0' <= *s && *s <= '9') {
         x = (x * 10) + (*s - '0');
         s++;
     }

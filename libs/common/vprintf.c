@@ -1,6 +1,6 @@
-#include <idl.h>
 #include "vprintf.h"
 #include "print_macros.h"
+#include <idl.h>
 
 static void puts(struct vprintf_context *ctx, const char *s) {
     while (*s != '\0') {
@@ -37,7 +37,8 @@ static void print_uint(struct vprintf_context *ctx, uintmax_t n, int base,
 ///  %x   - A hexadecimal integer.
 ///  %p   - An pointer value.
 ///  %pI4 - An IPv4 address (uint32_t).
-void vprintf_with_context(struct vprintf_context *ctx, const char *fmt, va_list vargs) {
+void vprintf_with_context(struct vprintf_context *ctx, const char *fmt,
+                          va_list vargs) {
     while (*fmt) {
         if (*fmt != '%') {
             ctx->printchar(ctx, *fmt++);
@@ -123,7 +124,7 @@ void vprintf_with_context(struct vprintf_context *ctx, const char *fmt, va_list 
                         default:
                             print_uint(ctx, (uintmax_t) va_arg(vargs, void *),
                                        16, '0', sizeof(vaddr_t) * 2);
-                            fmt --;
+                            fmt--;
                     }
                     break;
                 }

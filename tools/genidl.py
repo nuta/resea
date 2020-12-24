@@ -8,19 +8,24 @@ from lark import Lark
 from lark.exceptions import LarkError
 from colorama import Fore, Back, Style
 
+
 class ParseError(Exception):
     def __init__(self, message, hint=None):
         self.message = message
         self.hint = hint
 
+
 next_msg_id = 1
+
+
 class IDLParser:
     def __init__(self):
         self.msgs = []
         self.typedefs = []
         self.consts = []
         self.enums = []
-        self.namespaces = { "": dict(name="global", doc="", messages=[], types=[], consts=[]) }
+        self.namespaces = {
+            "": dict(name="global", doc="", messages=[], types=[], consts=[])}
         self.message_context = None
         self.namespace_contexts = [None]
         self.doc_comment = ""
@@ -151,7 +156,6 @@ class IDLParser:
             assert False
         self.prev_stmt = stmt
 
-
     def visit_type_stmt(self, tree):
         assert tree.data == "type_stmt"
         return {
@@ -236,7 +240,7 @@ class IDLParser:
                 if ool_field:
                     raise ParseError(
                         f"{self.current_ctx()}: Multiple ool fields (bytes or str) are not allowed: "
-                            f"{ool_field['name']}, {field['name']}",
+                        f"{ool_field['name']}, {field['name']}",
                     )
                 ool_field = field
                 ool_field["is_str"] = field["type"]["name"] == "str"
@@ -268,6 +272,7 @@ class IDLParser:
             "name": tree.children[0].value,
             "nr": nr,
         }
+
 
 def c_generator(args, idl):
     user_types = {}
@@ -315,7 +320,7 @@ def c_generator(args, idl):
             elif user_types[type_["name"]] == "typedef":
                 return f"{prefix}{type_['name']}_t"
             else:
-                assert False # unreachable
+                assert False  # unreachable
         else:
             resolved_type = builtins.get(type_["name"])
             if resolved_type is None:
@@ -352,17 +357,23 @@ def c_generator(args, idl):
         user_types[type_["name"]] = "typedef"
 
     renderer = jinja2.Environment()
-    renderer.filters["msg_name"] = lambda m: f"{m['namespace']}_".lstrip("_") + m['name']
-    renderer.filters["new_type_name"] = lambda t: f"{t['namespace']}_".lstrip("_") + t['name']
-    renderer.filters["enum_name"] = lambda t: f"{t['namespace']}_".lstrip("_") + t['name']
-    renderer.filters["enum_item_name"] = lambda i,e: (f"{e['namespace']}_".lstrip("_") + f"{e['name']}_".lstrip("_") + i['name']).upper()
-    renderer.filters["newlines_to_whitespaces"] = lambda text: text.replace("\n", " ")
+    renderer.filters["msg_name"] = lambda m: f"{m['namespace']}_".lstrip(
+        "_") + m['name']
+    renderer.filters["new_type_name"] = lambda t: f"{t['namespace']}_".lstrip(
+        "_") + t['name']
+    renderer.filters["enum_name"] = lambda t: f"{t['namespace']}_".lstrip(
+        "_") + t['name']
+    renderer.filters["enum_item_name"] = lambda i, e: (f"{e['namespace']}_".lstrip(
+        "_") + f"{e['name']}_".lstrip("_") + i['name']).upper()
+    renderer.filters["newlines_to_whitespaces"] = lambda text: text.replace(
+        "\n", " ")
     renderer.filters["field_def"] = field_def
     renderer.filters["const_def"] = const_def
     renderer.filters["type_def"] = type_def
     renderer.filters["msg_type"] = msg_type
-    renderer.filters["msg_str"] = lambda m: f"{m['namespace']}.".lstrip(".") + m['name']
-    template = renderer.from_string ("""\
+    renderer.filters["msg_str"] = lambda m: f"{m['namespace']}.".lstrip(
+        ".") + m['name']
+    template = renderer.from_string("""\
 #ifndef __GENIDL_MESSAGE_H__
 #define __GENIDL_MESSAGE_H__
 //
@@ -475,16 +486,18 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
 """)
 
     msgid_max = next_msg_id - 1
-    text = template.render(msgid_max=msgid_max,**idl)
+    text = template.render(msgid_max=msgid_max, **idl)
 
     with open(args.out, "w") as f:
         f.write(text)
+
 
 def html_generator(args, idl):
     renderer = jinja2.Environment()
     renderer.filters["md2html"] = lambda text: markdown.markdown(text)
     renderer.filters["params"] = \
-        lambda params: ", ".join(map(lambda p: f"{p['name']}: {p['type']['name']}", params["fields"]))
+        lambda params: ", ".join(
+            map(lambda p: f"{p['name']}: {p['type']['name']}", params["fields"]))
     css = """\
 body {
     font-family: sans-serif;
@@ -532,7 +545,7 @@ code {
     margin-bottom: 3rem;
 }
 """
-    template = renderer.from_string ("""\
+    template = renderer.from_string("""\
 <!DOCTYPE html>
 <html>
 <head>
@@ -585,14 +598,15 @@ code {
     with open(args.out, "w") as f:
         f.write(text)
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="The message definitions generator.")
     parser.add_argument("--idl", required=True, help="The IDL file.")
     parser.add_argument("--lang", choices=["c", "html"], default="c",
-        help="The output language.")
+                        help="The output language.")
     parser.add_argument("-o", dest="out", required=True,
-        help="The output directory.")
+                        help="The output directory.")
     args = parser.parse_args()
 
     try:
@@ -602,12 +616,16 @@ def main():
         elif args.lang == "html":
             html_generator(args, idl)
     except ParseError as e:
-        print(f"genidl: {Fore.RED}{Style.BRIGHT}error:{Fore.RESET} {e.message}{Style.RESET_ALL}")
+        print(
+            f"genidl: {Fore.RED}{Style.BRIGHT}error:{Fore.RESET} {e.message}{Style.RESET_ALL}")
         if e.hint is not None:
-            print(f"{Fore.YELLOW}{Style.BRIGHT}    | Hint:{Fore.RESET} {e.hint}{Style.RESET_ALL}")
+            print(
+                f"{Fore.YELLOW}{Style.BRIGHT}    | Hint:{Fore.RESET} {e.hint}{Style.RESET_ALL}")
         sys.exit(1)
     except LarkError as e:
-        print(f"genidl: {Style.BRIGHT}{Fore.RED}error:{Fore.RESET} {e}{Style.RESET_ALL}")
+        print(
+            f"genidl: {Style.BRIGHT}{Fore.RED}error:{Fore.RESET} {e}{Style.RESET_ALL}")
+
 
 if __name__ == "__main__":
     main()

@@ -1,12 +1,12 @@
+#include "syscall.h"
+#include "ipc.h"
+#include "kdebug.h"
+#include "printk.h"
+#include "task.h"
 #include <arch.h>
 #include <list.h>
 #include <string.h>
 #include <types.h>
-#include "ipc.h"
-#include "kdebug.h"
-#include "printk.h"
-#include "syscall.h"
-#include "task.h"
 
 /// Copies bytes from the userspace. If the user's pointer is invalid, this
 /// function or the page fault handler kills the current task.
@@ -164,7 +164,7 @@ static paddr_t resolve_paddr(vaddr_t vaddr) {
 }
 
 static error_t sys_vm_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
-                       unsigned flags) {
+                          unsigned flags) {
     if (!CAPABLE(CURRENT, CAP_MAP)) {
         return ERR_NOT_PERMITTED;
     }
@@ -342,7 +342,7 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             ret = sys_irq_release(a1);
             break;
         case SYS_KDEBUG:
-            ret = sys_kdebug((__user const char *) a1, a2, (__user char *)  a3,
+            ret = sys_kdebug((__user const char *) a1, a2, (__user char *) a3,
                              a4);
             break;
         case SYS_NOP:
@@ -374,8 +374,7 @@ void abi_emu_hook(trap_frame_t *frame, enum abi_hook_type type) {
 
     // Check if the reply is valid.
     if (m.type != ABI_HOOK_REPLY_MSG) {
-        WARN_DBG("%s: invalid abi hook reply (type=%d)",
-                 CURRENT->name, m.type);
+        WARN_DBG("%s: invalid abi hook reply (type=%d)", CURRENT->name, m.type);
         task_exit(EXP_INVALID_MSG_FROM_PAGER);
     }
 

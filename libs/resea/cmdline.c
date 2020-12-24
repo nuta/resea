@@ -1,5 +1,5 @@
-#include <resea/malloc.h>
 #include <resea/cmdline.h>
+#include <resea/malloc.h>
 #include <string.h>
 
 static list_t commands;
@@ -13,7 +13,8 @@ void cmdline_cmd(const char *name) {
 }
 
 /// Registers an argument.
-void cmdline_arg(char **result, const char *cmd, const char *name, bool optional) {
+void cmdline_arg(char **result, const char *cmd, const char *name,
+                 bool optional) {
     ASSERT(cmd != NULL);
 
     LIST_FOR_EACH (c, &commands, struct cmdline_cmd, next) {
@@ -62,7 +63,8 @@ void cmdline_parse(const char *cmdline, char **cmd_name) {
     // Look for the command.
     struct cmdline_cmd *cmd = NULL;
     LIST_FOR_EACH (c, &commands, struct cmdline_cmd, next) {
-        if ((!*cmd_name && !c->name) || (c->name && !strcmp(c->name, *cmd_name))) {
+        if ((!*cmd_name && !c->name)
+            || (c->name && !strcmp(c->name, *cmd_name))) {
             cmd = c;
             break;
         }

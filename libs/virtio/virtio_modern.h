@@ -1,14 +1,14 @@
 #ifndef __VIRTIO_VIRTIO_MODERN_H__
 #define __VIRTIO_VIRTIO_MODERN_H__
 
-#include <types.h>
-#include <driver/io.h>
 #include <driver/dma.h>
+#include <driver/io.h>
+#include <types.h>
 
-#define VIRTIO_PCI_CAP_COMMON_CFG  1
-#define VIRTIO_PCI_CAP_NOTIFY_CFG  2
-#define VIRTIO_PCI_CAP_ISR_CFG     3
-#define VIRTIO_PCI_CAP_DEVICE_CFG  4
+#define VIRTIO_PCI_CAP_COMMON_CFG 1
+#define VIRTIO_PCI_CAP_NOTIFY_CFG 2
+#define VIRTIO_PCI_CAP_ISR_CFG    3
+#define VIRTIO_PCI_CAP_DEVICE_CFG 4
 
 struct virtio_pci_common_cfg {
     uint32_t device_feature_select;
@@ -63,6 +63,7 @@ struct virtio_virtq_modern {
 };
 
 struct virtio_ops;
-error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops, uint8_t *irq);
+error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops,
+                                  uint8_t *irq);
 
 #endif

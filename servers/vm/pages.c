@@ -1,7 +1,7 @@
-#include <resea/printf.h>
-#include <resea/malloc.h>
-#include <bootinfo.h>
 #include "pages.h"
+#include <bootinfo.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
 
 size_t num_unused_pages = 0;
 static struct page pages[PAGES_MAX];
@@ -94,12 +94,9 @@ void pages_init(void) {
 
         size_t size_kb = (region->num_pages * PAGE_SIZE) / 1024;
         size_t size_mb = size_kb / 1024;
-        TRACE("available RAM region #%d: %p-%p (%d%s)",
-              i,
-              region->base,
+        TRACE("available RAM region #%d: %p-%p (%d%s)", i, region->base,
               region->base + region->num_pages * PAGE_SIZE,
-              (size_mb > 0) ? size_mb : size_kb,
-              (size_mb > 0) ? "MiB" : "KiB");
+              (size_mb > 0) ? size_mb : size_kb, (size_mb > 0) ? "MiB" : "KiB");
 
         list_push_back(&regions, &region->next);
     }

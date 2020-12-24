@@ -1,6 +1,6 @@
-#include <printk.h>
 #include <machine/machine.h>
 #include <machine/peripherals.h>
+#include <printk.h>
 
 #define NUM_CPUS 4
 

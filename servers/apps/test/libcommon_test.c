@@ -1,6 +1,6 @@
+#include "test.h"
 #include <resea/printf.h>
 #include <string.h>
-#include "test.h"
 
 void libcommon_test(void) {
     TEST_ASSERT(!memcmp("a", "a", 1));

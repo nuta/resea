@@ -8,7 +8,7 @@
 #ifdef __x86_64__
 static inline uint64_t cycle_counter(void) {
     uint32_t eax, edx;
-    __asm__ __volatile__("rdtscp" : "=a"(eax), "=d"(edx) :: "%ecx");
+    __asm__ __volatile__("rdtscp" : "=a"(eax), "=d"(edx)::"%ecx");
     return (((uint64_t) edx) << 32) | eax;
 }
 
@@ -39,37 +39,37 @@ static inline uint64_t l1_tlb_refill_counter(void) {
 #elif __aarch64__
 static inline uint64_t cycle_counter(void) {
     uint64_t value;
-    __asm__ __volatile__("mrs %0, pmccntr_el0" : "=r" (value));
+    __asm__ __volatile__("mrs %0, pmccntr_el0" : "=r"(value));
     return value;
 }
 
 static inline uint64_t l1d_cache_counter(void) {
     uint64_t value;
-    __asm__ __volatile__("mrs %0, pmevcntr0_el0" : "=r" (value));
+    __asm__ __volatile__("mrs %0, pmevcntr0_el0" : "=r"(value));
     return value;
 }
 
 static inline uint64_t l2d_cache_counter(void) {
     uint64_t value;
-    __asm__ __volatile__("mrs %0, pmevcntr1_el0" : "=r" (value));
+    __asm__ __volatile__("mrs %0, pmevcntr1_el0" : "=r"(value));
     return value;
 }
 
 static inline uint64_t mem_access_counter(void) {
     uint64_t value;
-    __asm__ __volatile__("mrs %0, pmevcntr2_el0" : "=r" (value));
+    __asm__ __volatile__("mrs %0, pmevcntr2_el0" : "=r"(value));
     return value;
 }
 
 static inline uint64_t exception_counter(void) {
     uint64_t value;
-    __asm__ __volatile__("mrs %0, pmevcntr3_el0" : "=r" (value));
+    __asm__ __volatile__("mrs %0, pmevcntr3_el0" : "=r"(value));
     return value;
 }
 
 static inline uint64_t l1_tlb_refill_counter(void) {
     uint64_t value;
-    __asm__ __volatile__("mrs %0, pmevcntr4_el0" : "=r" (value));
+    __asm__ __volatile__("mrs %0, pmevcntr4_el0" : "=r"(value));
     return value;
 }
 #else
@@ -111,7 +111,8 @@ static void print_stats(const char *name) {
         }
 
         avg /= NUM_ITERS;
-        INFO("%s: l1d_cache_access: avg=%d, min=%d, max=%d", name, avg, min, max);
+        INFO("%s: l1d_cache_access: avg=%d, min=%d, max=%d", name, avg, min,
+             max);
     }
 
     {
@@ -123,7 +124,8 @@ static void print_stats(const char *name) {
         }
 
         avg /= NUM_ITERS;
-        INFO("%s: l2d_cache_access: avg=%d, min=%d, max=%d", name, avg, min, max);
+        INFO("%s: l2d_cache_access: avg=%d, min=%d, max=%d", name, avg, min,
+             max);
     }
 
     {
@@ -225,7 +227,7 @@ void main(void) {
     //  IPC round-trip benchmark
     //
     for (int i = 0; i < NUM_ITERS; i++) {
-        struct message m = { .type = BENCHMARK_NOP_MSG };
+        struct message m = {.type = BENCHMARK_NOP_MSG};
         begin(i);
         ipc_call(server_task, &m);
         end(i);

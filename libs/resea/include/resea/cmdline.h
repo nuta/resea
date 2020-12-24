@@ -1,8 +1,8 @@
 #ifndef __RESEA_CMDLINE_H__
 #define __RESEA_CMDLINE_H__
 
-#include <types.h>
 #include <list.h>
+#include <types.h>
 
 /// A command (e.g. "add" in "git add new_file.c"). It's equivalent to
 /// sub-command in Python's argparse.
@@ -31,7 +31,8 @@ struct cmdline_arg {
 };
 
 void cmdline_cmd(const char *name);
-void cmdline_arg(char **result, const char *cmd, const char *name, bool optional);
+void cmdline_arg(char **result, const char *cmd, const char *name,
+                 bool optional);
 void cmdline_parse(const char *cmdline, char **cmd_name);
 void cmdline_init(void);
 

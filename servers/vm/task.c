@@ -1,13 +1,13 @@
+#include "task.h"
+#include "bootfs.h"
+#include "mm.h"
+#include <elf/elf.h>
+#include <message.h>
+#include <resea/async.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/task.h>
-#include <resea/ipc.h>
-#include <resea/async.h>
-#include <elf/elf.h>
 #include <string.h>
-#include <message.h>
-#include "task.h"
-#include "mm.h"
-#include "bootfs.h"
 
 extern char __free_vaddr[];
 
@@ -47,8 +47,8 @@ void task_free(struct task *task) {
 }
 
 static void init_task_struct(struct task *task, const char *name,
-    struct bootfs_file *file, void *file_header, struct elf64_ehdr *ehdr,
-    const char *cmdline) {
+                             struct bootfs_file *file, void *file_header,
+                             struct elf64_ehdr *ehdr, const char *cmdline) {
     task->file = file;
     task->file_header = file_header;
     task->ehdr = ehdr;
@@ -87,7 +87,11 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
 
     // Ensure that it's an ELF file.
     struct elf64_ehdr *ehdr = (struct elf64_ehdr *) file_header;
-    if (memcmp(ehdr->e_ident, "\x7f" "ELF", 4) != 0) {
+    if (memcmp(ehdr->e_ident,
+               "\x7f"
+               "ELF",
+               4)
+        != 0) {
         WARN("%s: invalid ELF magic, ignoring...", file->name);
         return ERR_NOT_ACCEPTABLE;
     }
@@ -95,8 +99,8 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     init_task_struct(task, file->name, file, file_header, ehdr, cmdline);
 
     // Create a new task for the server.
-    error_t err =
-        task_create(task->tid, file->name, ehdr->e_entry, task_self(), TASK_ALL_CAPS);
+    error_t err = task_create(task->tid, file->name, ehdr->e_entry, task_self(),
+                              TASK_ALL_CAPS);
     ASSERT_OK(err);
 
     return task->tid;
@@ -141,7 +145,7 @@ void task_kill(struct task *task) {
         free(w);
     }
 
-    LIST_FOR_EACH(pa, &task->page_areas, struct page_area, next) {
+    LIST_FOR_EACH (pa, &task->page_areas, struct page_area, next) {
         free_page_area(pa);
     }
 
@@ -220,8 +224,7 @@ void service_warn_deadlocked_tasks(void) {
             WARN(
                 "%s still waiting for a missing service '%s', "
                 "did you forgot to enable a server in the build config?",
-                task->name, task->waiting_for
-            );
+                task->name, task->waiting_for);
         }
     }
 }

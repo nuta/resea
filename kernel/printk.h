@@ -1,9 +1,9 @@
 #ifndef __PRINTK_H__
 #define __PRINTK_H__
 
+#include <config.h>
 #include <print_macros.h>
 #include <types.h>
-#include <config.h>
 
 /// The kernel log (ring) buffer.
 struct klog {

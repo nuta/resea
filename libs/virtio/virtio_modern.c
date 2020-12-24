@@ -1,10 +1,10 @@
+#include <driver/io.h>
+#include <driver/irq.h>
 #include <endian.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <driver/irq.h>
 #include <string.h>
-#include <driver/io.h>
 #include <virtio/virtio.h>
 
 /// The maximum number of virtqueues.
@@ -22,33 +22,32 @@ static offset_t notify_cap_off;
 static io_t isr_struct_io = NULL;
 static offset_t isr_cap_off;
 
-#define _COMMON_CFG_READ(size, field) \
-    io_read ## size(common_cfg_io, common_cfg_off + \
-        offsetof(struct virtio_pci_common_cfg, field))
-#define VIRTIO_COMMON_CFG_READ8(field) \
-    _COMMON_CFG_READ(8, field)
-#define VIRTIO_COMMON_CFG_READ16(field) \
-    from_le16(_COMMON_CFG_READ(16, field))
-#define VIRTIO_COMMON_CFG_READ32(field) \
-    from_le32(_COMMON_CFG_READ(32, field))
+#define _COMMON_CFG_READ(size, field)                                          \
+    io_read##size(                                                             \
+        common_cfg_io,                                                         \
+        common_cfg_off + offsetof(struct virtio_pci_common_cfg, field))
+#define VIRTIO_COMMON_CFG_READ8(field)  _COMMON_CFG_READ(8, field)
+#define VIRTIO_COMMON_CFG_READ16(field) from_le16(_COMMON_CFG_READ(16, field))
+#define VIRTIO_COMMON_CFG_READ32(field) from_le32(_COMMON_CFG_READ(32, field))
 
-#define _COMMON_CFG_WRITE(size, field, value) \
-    io_write ## size(common_cfg_io, common_cfg_off + \
-        offsetof(struct virtio_pci_common_cfg, field), value)
-#define VIRTIO_COMMON_CFG_WRITE8(field, value) \
+#define _COMMON_CFG_WRITE(size, field, value)                                  \
+    io_write##size(                                                            \
+        common_cfg_io,                                                         \
+        common_cfg_off + offsetof(struct virtio_pci_common_cfg, field), value)
+#define VIRTIO_COMMON_CFG_WRITE8(field, value)                                 \
     _COMMON_CFG_WRITE(8, field, value)
-#define VIRTIO_COMMON_CFG_WRITE16(field, value) \
+#define VIRTIO_COMMON_CFG_WRITE16(field, value)                                \
     _COMMON_CFG_WRITE(16, field, into_le32(value))
-#define VIRTIO_COMMON_CFG_WRITE32(field, value) \
+#define VIRTIO_COMMON_CFG_WRITE32(field, value)                                \
     _COMMON_CFG_WRITE(32, field, into_le32(value))
 
-#define _DEVICE_CFG_READ(size, struct_name, field) \
-    io_read ## size(device_cfg_io, device_cfg_off + offsetof(struct_name, field))
-#define VIRTIO_DEVICE_CFG_READ8(struct_name, field) \
+#define _DEVICE_CFG_READ(size, struct_name, field)                             \
+    io_read##size(device_cfg_io, device_cfg_off + offsetof(struct_name, field))
+#define VIRTIO_DEVICE_CFG_READ8(struct_name, field)                            \
     _DEVICE_CFG_READ(8, struct_name, field)
-#define VIRTIO_DEVICE_CFG_READ16(struct_name, field) \
+#define VIRTIO_DEVICE_CFG_READ16(struct_name, field)                           \
     from_le16(_DEVICE_CFG_READ(16, struct_name, field))
-#define VIRTIO_DEVICE_CFG_READ32(struct_name, field) \
+#define VIRTIO_DEVICE_CFG_READ32(struct_name, field)                           \
     from_le32(_DEVICE_CFG_READ(32, struct_name, field))
 
 static uint8_t read_device_status(void) {
@@ -62,13 +61,11 @@ static void write_device_status(uint8_t value) {
 static uint64_t read_device_features(void) {
     // Select and read feature bits 0 to 31.
     VIRTIO_COMMON_CFG_WRITE32(device_feature_select, 0);
-    uint32_t feats_lo =
-        VIRTIO_COMMON_CFG_READ32(device_feature);
+    uint32_t feats_lo = VIRTIO_COMMON_CFG_READ32(device_feature);
 
     // Select and read feature bits 32 to 63.
     VIRTIO_COMMON_CFG_WRITE32(device_feature_select, 1);
-    uint32_t feats_hi =
-        VIRTIO_COMMON_CFG_READ32(device_feature);
+    uint32_t feats_hi = VIRTIO_COMMON_CFG_READ32(device_feature);
 
     return (((uint64_t) feats_hi) << 32) | feats_lo;
 }
@@ -104,14 +101,17 @@ static struct virtio_virtq *virtq_get(unsigned index) {
     return &virtqs[index];
 }
 
-/// Notifies the device that the queue contains a descriptor it needs to process.
+/// Notifies the device that the queue contains a descriptor it needs to
+/// process.
 static void virtq_notify(struct virtio_virtq *vq) {
     io_write16(notify_struct_io, vq->modern.queue_notify_off, vq->index);
 }
 
 /// Returns true if the descriptor is available for the output to the device.
-/// XXX: should we count modern.used_wrap_counter and use is_desc_used() instead?
-static bool is_desc_free(struct virtio_virtq *vq, struct virtq_packed_desc *desc) {
+/// XXX: should we count modern.used_wrap_counter and use is_desc_used()
+/// instead?
+static bool is_desc_free(struct virtio_virtq *vq,
+                         struct virtq_packed_desc *desc) {
     uint16_t flags = from_le16(desc->flags);
     int avail = !!(flags & VIRTQ_DESC_F_AVAIL);
     int used = !!(flags & VIRTQ_DESC_F_USED);
@@ -119,7 +119,8 @@ static bool is_desc_free(struct virtio_virtq *vq, struct virtq_packed_desc *desc
 }
 
 /// Returns true if the descriptor has been used by the device.
-static bool is_desc_used(struct virtio_virtq *vq, struct virtq_packed_desc *desc) {
+static bool is_desc_used(struct virtio_virtq *vq,
+                         struct virtq_packed_desc *desc) {
     uint16_t flags = from_le16(desc->flags);
     int avail = !!(flags & VIRTQ_DESC_F_AVAIL);
     int used = !!(flags & VIRTQ_DESC_F_USED);
@@ -139,7 +140,8 @@ static void virtq_init(unsigned index) {
     ASSERT(num_descs < 1024 && "too large queue size");
 
     offset_t queue_notify_off =
-        notify_cap_off + VIRTIO_COMMON_CFG_READ16(queue_notify_off) * notify_off_multiplier;
+        notify_cap_off
+        + VIRTIO_COMMON_CFG_READ16(queue_notify_off) * notify_off_multiplier;
 
     // Allocate the descriptor area.
     size_t descs_size = num_descs * sizeof(struct virtq_packed_desc);
@@ -166,7 +168,8 @@ static void virtq_init(unsigned index) {
     virtqs[index].index = index;
     virtqs[index].descs_dma = descs_dma;
     virtqs[index].num_descs = num_descs;
-    virtqs[index].modern.descs = (struct virtq_packed_desc *) dma_buf(descs_dma);
+    virtqs[index].modern.descs =
+        (struct virtq_packed_desc *) dma_buf(descs_dma);
     virtqs[index].modern.queue_notify_off = queue_notify_off;
     virtqs[index].modern.next_avail = 0;
     virtqs[index].modern.next_used = 0;
@@ -186,11 +189,9 @@ static int virtq_alloc(struct virtio_virtq *vq, size_t len, uint16_t flags,
     int index = vq->modern.next_avail;
     struct virtq_packed_desc *desc = &vq->modern.descs[index];
 
-    ASSERT(
-        (prev_desc != VIRTQ_ALLOC_NO_PREV
-        || prev_desc != ((index == 0) ? vq->num_descs - 1 : index - 1))
-        && "(prev_desc + 1) == (next_desc) does not hold"
-    );
+    ASSERT((prev_desc != VIRTQ_ALLOC_NO_PREV
+            || prev_desc != ((index == 0) ? vq->num_descs - 1 : index - 1))
+           && "(prev_desc + 1) == (next_desc) does not hold");
 
     if (!is_desc_free(vq, desc)) {
         return -1;
@@ -198,9 +199,8 @@ static int virtq_alloc(struct virtio_virtq *vq, size_t len, uint16_t flags,
 
     flags &= ~(1 << VIRTQ_DESC_F_AVAIL_SHIFT);
     flags &= ~(1 << VIRTQ_DESC_F_USED_SHIFT);
-    flags |=
-        (vq->modern.avail_wrap_counter << VIRTQ_DESC_F_AVAIL_SHIFT)
-        | (!vq->modern.avail_wrap_counter << VIRTQ_DESC_F_USED_SHIFT);
+    flags |= (vq->modern.avail_wrap_counter << VIRTQ_DESC_F_AVAIL_SHIFT)
+             | (!vq->modern.avail_wrap_counter << VIRTQ_DESC_F_USED_SHIFT);
 
     desc->flags = into_le16(flags);
     desc->len = into_le32(len);
@@ -218,7 +218,8 @@ static int virtq_alloc(struct virtio_virtq *vq, size_t len, uint16_t flags,
 /// Returns the next descriptor which is already filled by the device. If the
 /// buffer is input from the device, call `virtq_push_desc` once you've handled
 /// the input.
-static error_t virtq_pop_desc(struct virtio_virtq *vq, int *index, size_t *len) {
+static error_t virtq_pop_desc(struct virtio_virtq *vq, int *index,
+                              size_t *len) {
     struct virtq_packed_desc *desc = &vq->modern.descs[vq->modern.next_used];
     if (!is_desc_used(vq, desc)) {
         return ERR_NOT_FOUND;
@@ -238,7 +239,8 @@ static void virtq_kick_desc(struct virtio_virtq *vq, int index) {
 /// Makes the descriptor available for input from the device.
 static void virtq_push_desc(struct virtio_virtq *vq, int index) {
     struct virtq_packed_desc *desc = &vq->modern.descs[index];
-    uint16_t flags = VIRTQ_DESC_F_WRITE
+    uint16_t flags =
+        VIRTQ_DESC_F_WRITE
         | (!vq->modern.used_wrap_counter << VIRTQ_DESC_F_AVAIL_SHIFT)
         | (vq->modern.used_wrap_counter << VIRTQ_DESC_F_USED_SHIFT);
 
@@ -264,13 +266,15 @@ static void virtq_allocate_buffers(struct virtio_virtq *vq, size_t buffer_size,
     uint16_t flags = writable ? (VIRTQ_DESC_F_AVAIL | VIRTQ_DESC_F_WRITE) : 0;
     for (int i = 0; i < vq->num_descs; i++) {
         vq->modern.descs[i].id = into_le16(i);
-        vq->modern.descs[i].addr = into_le64(dma_daddr(dma) + (buffer_size * i));
+        vq->modern.descs[i].addr =
+            into_le64(dma_daddr(dma) + (buffer_size * i));
         vq->modern.descs[i].len = into_le32(buffer_size);
         vq->modern.descs[i].flags = into_le16(flags);
     }
 }
 
-/// Checks and enables features. It aborts if any of the features is not supported.
+/// Checks and enables features. It aborts if any of the features is not
+/// supported.
 static void negotiate_feature(uint64_t features) {
     features |= VIRTIO_F_VERSION_1 | VIRTIO_F_RING_PACKED;
 
@@ -289,7 +293,8 @@ static void negotiate_feature(uint64_t features) {
     ASSERT((read_device_status() & VIRTIO_STATUS_FEAT_OK) != 0);
 }
 
-static uint32_t pci_config_read(handle_t device, unsigned offset, unsigned size) {
+static uint32_t pci_config_read(handle_t device, unsigned offset,
+                                unsigned size) {
     struct message m;
     m.type = DM_PCI_READ_CONFIG_MSG;
     m.dm_pci_read_config.handle = device;
@@ -301,10 +306,14 @@ static uint32_t pci_config_read(handle_t device, unsigned offset, unsigned size)
 
 static uint64_t read_device_config(offset_t offset, size_t size) {
     switch (size) {
-        case sizeof(uint8_t): return io_read8(device_cfg_io, device_cfg_off + offset);
-        case sizeof(uint16_t): return io_read16(device_cfg_io, device_cfg_off + offset);
-        case sizeof(uint32_t): return io_read32(device_cfg_io, device_cfg_off + offset);
-        default: UNREACHABLE();
+        case sizeof(uint8_t):
+            return io_read8(device_cfg_io, device_cfg_off + offset);
+        case sizeof(uint16_t):
+            return io_read16(device_cfg_io, device_cfg_off + offset);
+        case sizeof(uint32_t):
+            return io_read32(device_cfg_io, device_cfg_off + offset);
+        default:
+            UNREACHABLE();
     }
 }
 
@@ -327,7 +336,8 @@ struct virtio_ops virtio_modern_ops = {
 
 /// Looks for and initializes a virtio device with the given device type. It
 /// sets the IRQ vector to `irq` on success.
-error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops, uint8_t *irq) {
+error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops,
+                                  uint8_t *irq) {
     // Search the PCI bus for a virtio device...
     dm_server = ipc_lookup("dm");
     struct message m;
@@ -355,34 +365,34 @@ error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops, uint
     uint8_t cap_off = pci_config_read(pci_device, 0x34, sizeof(uint8_t));
     while (cap_off != 0) {
         uint8_t cap_id = pci_config_read(pci_device, cap_off, sizeof(uint8_t));
-        uint8_t cfg_type = pci_config_read(pci_device, cap_off + 3, sizeof(uint8_t));
-        uint8_t bar_index = pci_config_read(pci_device, cap_off + 4, sizeof(uint8_t));
+        uint8_t cfg_type =
+            pci_config_read(pci_device, cap_off + 3, sizeof(uint8_t));
+        uint8_t bar_index =
+            pci_config_read(pci_device, cap_off + 4, sizeof(uint8_t));
 
         if (cap_id == 9 && cfg_type == VIRTIO_PCI_CAP_COMMON_CFG) {
             uint32_t bar = pci_config_read(pci_device, 0x10 + 4 * bar_index, 4);
-            ASSERT((bar & 1) == 0 && "only supports memory-mapped I/O access for now");
+            ASSERT((bar & 1) == 0
+                   && "only supports memory-mapped I/O access for now");
             uint32_t bar_base = bar & ~0xf;
             size_t size = pci_config_read(pci_device, cap_off + 12, 4);
             common_cfg_off = pci_config_read(pci_device, cap_off + 8, 4);
             common_cfg_io = io_alloc_memory_fixed(
-                bar_base,
-                ALIGN_UP(common_cfg_off + size, PAGE_SIZE),
-                IO_ALLOC_CONTINUOUS
-            );
+                bar_base, ALIGN_UP(common_cfg_off + size, PAGE_SIZE),
+                IO_ALLOC_CONTINUOUS);
         }
 
         if (cap_id == 9 && cfg_type == VIRTIO_PCI_CAP_DEVICE_CFG) {
             // Device-specific configuration space.
             uint32_t bar = pci_config_read(pci_device, 0x10 + 4 * bar_index, 4);
-            ASSERT((bar & 1) == 0 && "only supports memory-mapped I/O access for now");
+            ASSERT((bar & 1) == 0
+                   && "only supports memory-mapped I/O access for now");
             uint32_t bar_base = bar & ~0xf;
             size_t size = pci_config_read(pci_device, cap_off + 12, 4);
             device_cfg_off = pci_config_read(pci_device, cap_off + 8, 4);
             device_cfg_io = io_alloc_memory_fixed(
-                bar_base,
-                ALIGN_UP(device_cfg_off + size, PAGE_SIZE),
-                IO_ALLOC_CONTINUOUS
-            );
+                bar_base, ALIGN_UP(device_cfg_off + size, PAGE_SIZE),
+                IO_ALLOC_CONTINUOUS);
         }
 
         if (cap_id == 9 && cfg_type == VIRTIO_PCI_CAP_NOTIFY_CFG) {
@@ -390,20 +400,20 @@ error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops, uint
             //
             // struct virtio_pci_notify_cap {
             //     struct virtio_pci_cap cap;
-            //     le32 notify_off_multiplier; /* Multiplier for queue_notify_off. */
+            //     le32 notify_off_multiplier; /* Multiplier for
+            //     queue_notify_off. */
             // };
             notify_cap_off = pci_config_read(pci_device, cap_off + 8, 4);
             notify_off_multiplier =
                 pci_config_read(pci_device, cap_off + 16, 4);
             uint32_t bar = pci_config_read(pci_device, 0x10 + 4 * bar_index, 4);
-            ASSERT((bar & 1) == 0 && "only supports memory-mapped I/O access for now");
+            ASSERT((bar & 1) == 0
+                   && "only supports memory-mapped I/O access for now");
             uint32_t bar_base = bar & ~0xf;
             size_t size = pci_config_read(pci_device, cap_off + 12, 4);
             notify_struct_io = io_alloc_memory_fixed(
-                bar_base,
-                ALIGN_UP(notify_cap_off + size, PAGE_SIZE),
-                IO_ALLOC_CONTINUOUS
-            );
+                bar_base, ALIGN_UP(notify_cap_off + size, PAGE_SIZE),
+                IO_ALLOC_CONTINUOUS);
         }
 
         if (cap_id == 9 && cfg_type == VIRTIO_PCI_CAP_ISR_CFG) {
@@ -414,20 +424,20 @@ error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops, uint
             // };
             isr_cap_off = pci_config_read(pci_device, cap_off + 8, 4);
             uint32_t bar = pci_config_read(pci_device, 0x10 + 4 * bar_index, 4);
-            ASSERT((bar & 1) == 0 && "only supports memory-mapped I/O access for now");
+            ASSERT((bar & 1) == 0
+                   && "only supports memory-mapped I/O access for now");
             uint32_t bar_base = bar & ~0xf;
             size_t size = pci_config_read(pci_device, cap_off + 12, 4);
             isr_struct_io = io_alloc_memory_fixed(
-                bar_base,
-                ALIGN_UP(isr_cap_off + size, PAGE_SIZE),
-                IO_ALLOC_CONTINUOUS
-            );
+                bar_base, ALIGN_UP(isr_cap_off + size, PAGE_SIZE),
+                IO_ALLOC_CONTINUOUS);
         }
 
         cap_off = pci_config_read(pci_device, cap_off + 1, sizeof(uint8_t));
     }
 
-    if (!common_cfg_io || !device_cfg_io || !notify_struct_io || !isr_struct_io) {
+    if (!common_cfg_io || !device_cfg_io || !notify_struct_io
+        || !isr_struct_io) {
         WARN_DBG("missing a BAR for the device access");
         return ERR_NOT_FOUND;
     }
@@ -442,7 +452,7 @@ error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops, uint
     ASSERT_OK(ipc_call(dm_server, &m));
 
     // "3.1.1 Driver Requirements: Device Initialization"
-    write_device_status(0); // Reset the device.
+    write_device_status(0);  // Reset the device.
     write_device_status(read_device_status() | VIRTIO_STATUS_ACK);
     write_device_status(read_device_status() | VIRTIO_STATUS_DRIVER);
 

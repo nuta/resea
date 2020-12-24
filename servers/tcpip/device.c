@@ -1,8 +1,8 @@
-#include <resea/printf.h>
-#include <string.h>
 #include "device.h"
 #include "dhcp.h"
 #include "ipv4.h"
+#include <resea/printf.h>
+#include <string.h>
 
 static struct device devices[DEVICES_MAX];
 

@@ -1,8 +1,8 @@
-#include <task.h>
-#include <ipc.h>
-#include <printk.h>
 #include "hv.h"
 #include "arch.h"
+#include <ipc.h>
+#include <printk.h>
+#include <task.h>
 
 static __aligned(PAGE_SIZE) uint8_t vmx_area[PAGE_SIZE];
 static __aligned(PAGE_SIZE) struct vmcs vmcs_areas[CONFIG_NUM_TASKS];
@@ -18,22 +18,38 @@ static uint32_t compute_ctrl_caps(uint32_t msr, uint32_t value) {
 
 static uint64_t get_value_by_reg_index(struct guest_regs *regs, int index) {
     switch (index) {
-        case 0: return regs->rax;
-        case 1: return regs->rcx;
-        case 2: return regs->rdx;
-        case 3: return regs->rbx;
-        case 4: return asm_vmread(VMCS_GUEST_RSP);
-        case 5: return regs->rbp;
-        case 6: return regs->rsi;
-        case 7: return regs->rdi;
-        case 8: return regs->r8;
-        case 9: return regs->r9;
-        case 10: return regs->r10;
-        case 11: return regs->r11;
-        case 12: return regs->r12;
-        case 13: return regs->r13;
-        case 14: return regs->r14;
-        case 15: return regs->r15;
+        case 0:
+            return regs->rax;
+        case 1:
+            return regs->rcx;
+        case 2:
+            return regs->rdx;
+        case 3:
+            return regs->rbx;
+        case 4:
+            return asm_vmread(VMCS_GUEST_RSP);
+        case 5:
+            return regs->rbp;
+        case 6:
+            return regs->rsi;
+        case 7:
+            return regs->rdi;
+        case 8:
+            return regs->r8;
+        case 9:
+            return regs->r9;
+        case 10:
+            return regs->r10;
+        case 11:
+            return regs->r11;
+        case 12:
+            return regs->r12;
+        case 13:
+            return regs->r13;
+        case 14:
+            return regs->r14;
+        case 15:
+            return regs->r15;
     }
 
     UNREACHABLE();
@@ -42,22 +58,54 @@ static uint64_t get_value_by_reg_index(struct guest_regs *regs, int index) {
 static void set_value_by_reg_index(struct guest_regs *regs, int index,
                                    uint64_t value) {
     switch (index) {
-        case 0: regs->rax = value; return;
-        case 1: regs->rcx = value; return;
-        case 2: regs->rdx = value; return;
-        case 3: regs->rbx = value; return;
-        case 4: asm_vmwrite(VMCS_GUEST_RSP, value); return;
-        case 5: regs->rbp = value; return;
-        case 6: regs->rsi = value; return;
-        case 7: regs->rdi = value; return;
-        case 8: regs->r8 = value; return;
-        case 9: regs->r9 = value; return;
-        case 10: regs->r10 = value; return;
-        case 11: regs->r11 = value; return;
-        case 12: regs->r12 = value; return;
-        case 13: regs->r13 = value; return;
-        case 14: regs->r14 = value; return;
-        case 15: regs->r15 = value; return;
+        case 0:
+            regs->rax = value;
+            return;
+        case 1:
+            regs->rcx = value;
+            return;
+        case 2:
+            regs->rdx = value;
+            return;
+        case 3:
+            regs->rbx = value;
+            return;
+        case 4:
+            asm_vmwrite(VMCS_GUEST_RSP, value);
+            return;
+        case 5:
+            regs->rbp = value;
+            return;
+        case 6:
+            regs->rsi = value;
+            return;
+        case 7:
+            regs->rdi = value;
+            return;
+        case 8:
+            regs->r8 = value;
+            return;
+        case 9:
+            regs->r9 = value;
+            return;
+        case 10:
+            regs->r10 = value;
+            return;
+        case 11:
+            regs->r11 = value;
+            return;
+        case 12:
+            regs->r12 = value;
+            return;
+        case 13:
+            regs->r13 = value;
+            return;
+        case 14:
+            regs->r14 = value;
+            return;
+        case 15:
+            regs->r15 = value;
+            return;
     }
 
     UNREACHABLE();
@@ -73,11 +121,8 @@ static void activate_long_mode_if_needed(void) {
     if ((efer & EFER_LME) != 0 && (cr0 & CR0_PG) != 0) {
         TRACE("hv: activating the long mode");
         asm_vmwrite(VMCS_GUEST_IA32_EFER, efer | EFER_LMA);
-        asm_vmwrite(
-            VMCS_VM_ENTRY_CTLS,
-            asm_vmread(VMCS_VM_ENTRY_CTLS)
-            | VM_ENTRY_CTLS_LONG_MODE_GUEST
-        );
+        asm_vmwrite(VMCS_VM_ENTRY_CTLS, asm_vmread(VMCS_VM_ENTRY_CTLS)
+                                            | VM_ENTRY_CTLS_LONG_MODE_GUEST);
         CURRENT_VMX.long_mode = true;
     }
 }
@@ -94,7 +139,8 @@ static struct saved_msr_entry *lookup_msr(uint32_t index) {
     return NULL;
 }
 
-/// Registers a MSR entry. It must be called before the guest reads the register.
+/// Registers a MSR entry. It must be called before the guest reads the
+/// register.
 static struct saved_msr_entry *register_msr(uint32_t index, uint64_t value) {
     struct saved_msrs *msrs = CURRENT_VMX.saved_msrs;
     ASSERT(msrs->num_entries < NUM_SAVED_MSRS_MAX && "too many saved MSRs");
@@ -118,7 +164,7 @@ static struct saved_msr_entry *register_msr(uint32_t index, uint64_t value) {
 }
 
 void handle_rdmsr(uint32_t index, uint32_t *eax, uint32_t *edx) {
-    uint64_t  value;
+    uint64_t value;
     switch (index) {
         case MSR_EFER: {
             value = asm_vmread(VMCS_GUEST_IA32_EFER);
@@ -192,11 +238,10 @@ void handle_cpuid(struct guest_regs *regs) {
             regs->rax = 0;
             // Feature information:
             regs->rbx = 0;
-            regs->rcx =
-                (1u << 21) /* x2APIC */ |(1u << 26) /* XSAVE */
-                | (1u << 19) /* SSE4.1 */ | (1u << 20) /* SSE4.2 */;
-            regs->rdx =
-                (1u << 0) /* FPU */ | (1u << 6) /* PAE */ | (1u << 9) /* APIC */;
+            regs->rcx = (1u << 21) /* x2APIC */ | (1u << 26) /* XSAVE */
+                        | (1u << 19) /* SSE4.1 */ | (1u << 20) /* SSE4.2 */;
+            regs->rdx = (1u << 0) /* FPU */ | (1u << 6) /* PAE */
+                        | (1u << 9) /* APIC */;
             break;
         case 0x6:
             regs->rax = 0;
@@ -237,7 +282,8 @@ void handle_cpuid(struct guest_regs *regs) {
         case 0x80000001:
             // Maximum Input Value for Extended Function CPUID Information.
             regs->rax = 0x6;
-            regs->rbx = (1u << 11) /* SYSCALL/SYSRET */ | (1u << 29) /* Intel 64 */;
+            regs->rbx =
+                (1u << 11) /* SYSCALL/SYSRET */ | (1u << 29) /* Intel 64 */;
             regs->rcx = 0;
             regs->rdx = 0;
             break;
@@ -265,7 +311,8 @@ void call_pager(struct message *m, int expected_reply) {
     // Check if the reply is valid.
     if (expected_reply > 0 && m->type != expected_reply) {
         WARN_DBG("%s: invalid reply from pager (expected=%s, actual=%s)",
-                 CURRENT->name, msgtype2str(expected_reply), msgtype2str(m->type));
+                 CURRENT->name, msgtype2str(expected_reply),
+                 msgtype2str(m->type));
         task_exit(EXP_INVALID_MSG_FROM_PAGER);
     }
 }
@@ -320,7 +367,8 @@ void handle_ept_violation(struct guest_regs *regs, uint64_t guest_rip,
     ASSERT_VM_INST(asm_invept(1, ept_pml4));
 }
 
-void handle_cr_access(struct guest_regs *regs, int cr, int access_type, int reg) {
+void handle_cr_access(struct guest_regs *regs, int cr, int access_type,
+                      int reg) {
     switch (cr) {
         case 0: {
             switch (access_type) {
@@ -395,8 +443,8 @@ void serial_write(char ch) {
     CURRENT_VMX.pending_irq_bitmap |= 1 << VMX_SERIAL_IRQ;
 }
 
-void handle_io(struct guest_regs *regs, uint16_t port, bool out, int access_size,
-               bool is_string) {
+void handle_io(struct guest_regs *regs, uint16_t port, bool out,
+               int access_size, bool is_string) {
     uint32_t value = regs->rax & 0xffffffff;
 
     // TRACE("VMExit by IO Instruction: port=%x, size=%d, value=%x, direct=%s",
@@ -435,8 +483,8 @@ void handle_io(struct guest_regs *regs, uint16_t port, bool out, int access_size
                         break;
                     case 3:
                         // ICW4
-                       CURRENT_VMX_MASTER_PIC.init_phase = 0;
-                       break;
+                        CURRENT_VMX_MASTER_PIC.init_phase = 0;
+                        break;
                     default:
                         UNREACHABLE();
                 }
@@ -468,8 +516,8 @@ void handle_io(struct guest_regs *regs, uint16_t port, bool out, int access_size
                         break;
                     case 3:
                         // ICW4
-                       CURRENT_VMX_SLAVE_PIC.init_phase = 0;
-                       break;
+                        CURRENT_VMX_SLAVE_PIC.init_phase = 0;
+                        break;
                     default:
                         UNREACHABLE();
                 }
@@ -498,7 +546,7 @@ void handle_io(struct guest_regs *regs, uint16_t port, bool out, int access_size
         // Serial port: Line Status Register.
         case 0x3fd:
             if (!out && access_size == 1) {
-                SET8(regs, rax, 0x60); // TX ready
+                SET8(regs, rax, 0x60);  // TX ready
             }
             break;
         // Serial port: Modem Status Register.
@@ -543,7 +591,8 @@ static void vmwrite_cpu_locals(void) {
 static bool pic_is_irq_masked(int irq) {
     if (irq >= 8) {
         bool slave_masked = (CURRENT_VMX_MASTER_PIC.irq_mask & (1 << 2)) != 0;
-        bool irq_masked = (CURRENT_VMX_SLAVE_PIC.irq_mask & (1 << (irq - 8))) != 0;
+        bool irq_masked =
+            (CURRENT_VMX_SLAVE_PIC.irq_mask & (1 << (irq - 8))) != 0;
         return slave_masked || irq_masked;
     } else {
         return (CURRENT_VMX_MASTER_PIC.irq_mask & (1 << irq)) != 0;
@@ -553,9 +602,8 @@ static bool pic_is_irq_masked(int irq) {
 static bool inject_event_if_exists(void) {
     // Resumed this guest task. Continue executing...
     struct message m;
-    error_t err = ipc(CURRENT->pager, IPC_ANY,
-                        (__user struct message *) &m,
-                        IPC_RECV | IPC_NOBLOCK | IPC_KERNEL);
+    error_t err = ipc(CURRENT->pager, IPC_ANY, (__user struct message *) &m,
+                      IPC_RECV | IPC_NOBLOCK | IPC_KERNEL);
     if (err == OK && m.type == NOTIFICATIONS_MSG) {
         if (m.notifications.data & NOTIFY_ASYNC) {
             m.type = HV_AWAIT_MSG;
@@ -563,7 +611,8 @@ static bool inject_event_if_exists(void) {
             call_pager(&m, -1);
             switch (m.type) {
                 case HV_INJECT_IRQ_MSG:
-                    CURRENT_VMX.pending_irq_bitmap |= m.hv_inject_irq.irq_bitmap;
+                    CURRENT_VMX.pending_irq_bitmap |=
+                        m.hv_inject_irq.irq_bitmap;
                     break;
                 default:
                     WARN_DBG("hv: unknown async message (type=%d)", m.type);
@@ -643,7 +692,8 @@ void x64_handle_vmexit(struct guest_regs *regs) {
             advance_rip = false;
             paddr_t gpaddr = asm_vmread(VMCS_GUEST_PHYSICAL_ADDR);
             // uint64_t gvaddr = asm_vmread(VMCS_GUEST_LINEAR_ADDR);
-            // TRACE("VMExit by EPT Violation: gpaddr=%p, gvaddr=%p", gpaddr, gvaddr);
+            // TRACE("VMExit by EPT Violation: gpaddr=%p, gvaddr=%p", gpaddr,
+            // gvaddr);
             handle_ept_violation(regs, guest_rip, gpaddr, inst_len);
             break;
         }
@@ -663,7 +713,8 @@ void x64_handle_vmexit(struct guest_regs *regs) {
             int cr = exit_qual & 0b111;
             int access_type = (exit_qual >> 4) & 0b11;
             int reg = (exit_qual >> 8) & 0b1111;
-            // TRACE("VMExit by CR Access: CR=%d, access_type=%d", cr, access_type);
+            // TRACE("VMExit by CR Access: CR=%d, access_type=%d", cr,
+            // access_type);
             handle_cr_access(regs, cr, access_type, reg);
             break;
         }
@@ -712,8 +763,8 @@ void x64_handle_vmexit(struct guest_regs *regs) {
             task_exit(EXP_HV_INVALID_STATE);
             break;
         default:
-            WARN_DBG("unsupported vmexit reason=%d (guest_rip=%p)",
-                     reason, guest_rip);
+            WARN_DBG("unsupported vmexit reason=%d (guest_rip=%p)", reason,
+                     guest_rip);
             task_exit(EXP_HV_UNIMPLEMENTED);
     }
 
@@ -748,31 +799,29 @@ static void init_vmcs(struct vmcs *vmcs, struct saved_msrs *msrs,
 
     // Populate control flags.
     asm_vmwrite(VMCS_PINBASED_CTLS,
-        compute_ctrl_caps(MSR_IA32_VMX_PINBASED_CTLS,
-                          VMX_PINBASED_CTLS_EXIT_BY_EXT_INT
-                          | VMX_PINBASED_CTLS_EXIT_BY_NMI));
+                compute_ctrl_caps(MSR_IA32_VMX_PINBASED_CTLS,
+                                  VMX_PINBASED_CTLS_EXIT_BY_EXT_INT
+                                      | VMX_PINBASED_CTLS_EXIT_BY_NMI));
     asm_vmwrite(VMCS_PROCBASED_CTLS1,
-        compute_ctrl_caps(MSR_IA32_VMX_PROCBASED_CTLS1,
-                          VMX_PROCBASED_CTLS1_EXIT_BY_HLT
-                          | VMX_PROCBASED_CTLS1_EXIT_BY_IO
-                          | VMX_PROCBASED_CTLS1_ENABLE_CTLS2));
-    asm_vmwrite(VMCS_PROCBASED_CTLS2,
+                compute_ctrl_caps(MSR_IA32_VMX_PROCBASED_CTLS1,
+                                  VMX_PROCBASED_CTLS1_EXIT_BY_HLT
+                                      | VMX_PROCBASED_CTLS1_EXIT_BY_IO
+                                      | VMX_PROCBASED_CTLS1_ENABLE_CTLS2));
+    asm_vmwrite(
+        VMCS_PROCBASED_CTLS2,
         compute_ctrl_caps(MSR_IA32_VMX_PROCBASED_CTLS2,
-            PROCBASED_CTLS2_UNRESTRICTED_GUEST
-            | PROCBASED_CTLS2_EPT
-            | PROCBASED_CTLS2_XSAVE
-        )
-    );
+                          PROCBASED_CTLS2_UNRESTRICTED_GUEST
+                              | PROCBASED_CTLS2_EPT | PROCBASED_CTLS2_XSAVE));
     asm_vmwrite(VMCS_VM_ENTRY_CTLS,
-        compute_ctrl_caps(MSR_IA32_VMX_VM_ENTRY_CTLS,
-                          VMX_VM_ENTRY_CTLS_LOAD_DEBUG_CTLS
-                          | VMX_VM_ENTRY_CTLS_LOAD_IA32_EFER));
+                compute_ctrl_caps(MSR_IA32_VMX_VM_ENTRY_CTLS,
+                                  VMX_VM_ENTRY_CTLS_LOAD_DEBUG_CTLS
+                                      | VMX_VM_ENTRY_CTLS_LOAD_IA32_EFER));
     asm_vmwrite(VMCS_VM_EXIT_CTLS,
-        compute_ctrl_caps(MSR_IA32_VMX_VM_EXIT_CTLS,
-                          VMX_VM_EXIT_CTLS_HOST_IS_64BIT
-                          | VMX_VM_EXIT_CTLS_SAVE_DEBUG_CTLS
-                          | VMX_VM_EXIT_CTLS_SAVE_IA32_EFER
-                          | VMX_VM_EXIT_CTLS_LOAD_IA32_EFER));
+                compute_ctrl_caps(MSR_IA32_VMX_VM_EXIT_CTLS,
+                                  VMX_VM_EXIT_CTLS_HOST_IS_64BIT
+                                      | VMX_VM_EXIT_CTLS_SAVE_DEBUG_CTLS
+                                      | VMX_VM_EXIT_CTLS_SAVE_IA32_EFER
+                                      | VMX_VM_EXIT_CTLS_LOAD_IA32_EFER));
 
     asm_vmwrite(VMCS_EPT, ept_pml4 | EPT_4LEVEL | EPT_TYPE_WB);
     asm_vmwrite(VMCS_LINK_POINTER, 0xffffffffffffffff);
@@ -808,9 +857,11 @@ static void init_vmcs(struct vmcs *vmcs, struct saved_msrs *msrs,
     asm_vmwrite(VMCS_GUEST_RIP, guest_rip);
     asm_vmwrite(VMCS_GUEST_RSP, 0);
     asm_vmwrite(VMCS_GUEST_RFLAGS, 0x2);
-    asm_vmwrite(VMCS_GUEST_CR0,
+    asm_vmwrite(
+        VMCS_GUEST_CR0,
         (1ul << 0) /* Protected Mode */
-        | (1ul << 5) /* NX: required by Linux's nested VMX implementation */);
+            | (1ul
+               << 5) /* NX: required by Linux's nested VMX implementation */);
     asm_vmwrite(VMCS_GUEST_CR3, 0);
     asm_vmwrite(VMCS_GUEST_CR4, 1 << 13 /* VMXE */);
     asm_vmwrite(VMCS_GUEST_IA32_EFER, 0);

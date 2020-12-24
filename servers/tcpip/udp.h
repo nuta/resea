@@ -1,9 +1,10 @@
 #ifndef __UDP_H__
 #define __UDP_H__
 
-#include <list.h>
+#include "device.h"
 #include "mbuf.h"
 #include "tcpip.h"
+#include <list.h>
 
 struct udp_header {
     uint16_t src_port;

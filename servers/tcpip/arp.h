@@ -1,10 +1,10 @@
 #ifndef __ARP_H__
 #define __ARP_H__
 
-#include <list.h>
 #include "ethernet.h"
 #include "mbuf.h"
 #include "tcpip.h"
+#include <list.h>
 
 #define ARP_ENTRIES_MAX 128
 
@@ -49,7 +49,8 @@ bool arp_resolve(struct arp_table *arp, ipv4addr_t ipaddr, macaddr_t *macaddr);
 struct device;
 void arp_enqueue(struct arp_table *arp, enum ether_type type, ipv4addr_t dst,
                  mbuf_t payload);
-void arp_register_macaddr(struct device *device, ipv4addr_t ipaddr, macaddr_t macaddr);
+void arp_register_macaddr(struct device *device, ipv4addr_t ipaddr,
+                          macaddr_t macaddr);
 void arp_request(struct device *device, ipv4addr_t addr);
 void arp_receive(struct device *device, mbuf_t pkt);
 void arp_init(struct arp_table *arp);

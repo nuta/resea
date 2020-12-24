@@ -1,7 +1,7 @@
+#include "test.h"
 #include <config.h>
 #include <resea/printf.h>
 #include <resea/syscall.h>
-#include "test.h"
 
 int failed = 0;
 

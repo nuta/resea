@@ -1,11 +1,11 @@
-#include <config.h>
-#include <string.h>
-#include <bootinfo.h>
 #include "boot.h"
 #include "kdebug.h"
 #include "printk.h"
 #include "syscall.h"
 #include "task.h"
+#include <bootinfo.h>
+#include <config.h>
+#include <string.h>
 
 // Defined in arch.
 extern uint8_t __bootelf[];
@@ -13,8 +13,8 @@ extern uint8_t __bootelf_end[];
 
 static struct bootelf_header *locate_bootelf_header(void) {
     const offset_t offsets[] = {
-        0x1000,  // x64
-        0x10000, // arm64
+        0x1000,   // x64
+        0x10000,  // arm64
     };
 
     for (size_t i = 0; i < sizeof(offsets) / sizeof(*offsets); i++) {
@@ -69,8 +69,8 @@ static error_t map_page(struct bootinfo *bootinfo, struct task *task,
 #endif
 
 // Maps ELF segments in the boot ELF into virtual memory.
-static void map_bootelf(struct bootinfo *bootinfo, struct bootelf_header *header,
-                        struct task *task) {
+static void map_bootelf(struct bootinfo *bootinfo,
+                        struct bootelf_header *header, struct task *task) {
     TRACE("boot ELF: entry=%p", header->entry);
     for (unsigned i = 0; i < BOOTELF_NUM_MAPPINGS_MAX; i++) {
         struct bootelf_mapping *m = &header->mappings[i];
@@ -81,11 +81,8 @@ static void map_bootelf(struct bootinfo *bootinfo, struct bootelf_header *header
             continue;
         }
 
-        TRACE("boot ELF: %p -> %p (%dKiB%s)",
-              vaddr,
-              (m->zeroed) ? 0 : paddr,
-              m->num_pages * PAGE_SIZE / 1024,
-              (m->zeroed) ? ", zeroed" : "");
+        TRACE("boot ELF: %p -> %p (%dKiB%s)", vaddr, (m->zeroed) ? 0 : paddr,
+              m->num_pages * PAGE_SIZE / 1024, (m->zeroed) ? ", zeroed" : "");
 
 #ifdef CONFIG_NOMMU
         if (m->zeroed) {
@@ -105,13 +102,15 @@ static void map_bootelf(struct bootinfo *bootinfo, struct bootelf_header *header
                 void *page = alloc_page(bootinfo);
                 ASSERT(page);
                 memset(page, 0, PAGE_SIZE);
-                error_t err = map_page(bootinfo, task, vaddr, into_paddr(page), MAP_TYPE_READWRITE);
+                error_t err = map_page(bootinfo, task, vaddr, into_paddr(page),
+                                       MAP_TYPE_READWRITE);
                 ASSERT_OK(err);
                 vaddr += PAGE_SIZE;
             }
         } else {
             for (size_t j = 0; j < m->num_pages; j++) {
-                error_t err = map_page(bootinfo, task, vaddr, paddr, MAP_TYPE_READWRITE);
+                error_t err =
+                    map_page(bootinfo, task, vaddr, paddr, MAP_TYPE_READWRITE);
                 ASSERT_OK(err);
                 vaddr += PAGE_SIZE;
                 paddr += PAGE_SIZE;

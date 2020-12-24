@@ -1,7 +1,7 @@
-#include <resea/printf.h>
-#include <resea/ipc.h>
-#include <string.h>
 #include "test.h"
+#include <resea/ipc.h>
+#include <resea/printf.h>
+#include <string.h>
 
 void ipc_test(void) {
     struct message m;
@@ -36,7 +36,7 @@ void ipc_test(void) {
     TEST_ASSERT(err == OK);
     TEST_ASSERT(m.type == BENCHMARK_NOP_WITH_OOL_REPLY_MSG);
 
-     // A ool IPC call (with empty payload).
+    // A ool IPC call (with empty payload).
     m.type = BENCHMARK_NOP_WITH_OOL_MSG;
     m.benchmark_nop_with_ool.data = NULL;
     m.benchmark_nop_with_ool.data_len = 0;

@@ -1,19 +1,20 @@
-#include <arch.h>
-#include <boot.h>
-#include <printk.h>
-#include <task.h>
-#include <kdebug.h>
-#include <string.h>
-#include <bootinfo.h>
 #include "hv.h"
+#include "multiboot.h"
 #include "serial.h"
 #include "task.h"
 #include "trap.h"
-#include "multiboot.h"
+#include <arch.h>
+#include <boot.h>
+#include <bootinfo.h>
+#include <kdebug.h>
+#include <printk.h>
+#include <string.h>
+#include <task.h>
 
 #ifndef CONFIG_X64_PRINTK_IN_SCREEN
 static void draw_text_screen(void) {
-    const char *message = "Resea " VERSION " - Talk with me over the serial port :)";
+    const char *message =
+        "Resea " VERSION " - Talk with me over the serial port :)";
     uint16_t *vram = from_paddr(0xb8000);
 
     // Clear the screen.
@@ -201,10 +202,8 @@ static void fill_bootinfo(struct multiboot_info *multiboot_info) {
             from_paddr(multiboot_info->mmap_addr + off);
         m->base = e->base;
         m->len = e->len;
-        m->type =
-            (e->type == 1)
-                ? BOOTINFO_MEMMAP_TYPE_AVAILABLE
-                : BOOTINFO_MEMMAP_TYPE_RESERVED;
+        m->type = (e->type == 1) ? BOOTINFO_MEMMAP_TYPE_AVAILABLE
+                                 : BOOTINFO_MEMMAP_TYPE_RESERVED;
 
         if (m->base + m->len <= (vaddr_t) __kernel_image_end) {
             m->base = BOOTINFO_MEMMAP_TYPE_RESERVED;
@@ -254,6 +253,6 @@ __noreturn void arch_idle(void) {
 
 void arch_semihosting_halt(void) {
     // QEMU
-    __asm__ __volatile__("outw %0, %1" ::
-        "a"((uint16_t) 0x2000), "Nd"((uint16_t) 0x604));
+    __asm__ __volatile__("outw %0, %1" ::"a"((uint16_t) 0x2000),
+                         "Nd"((uint16_t) 0x604));
 }

@@ -1,13 +1,13 @@
 #ifndef __ARCH_H__
 #define __ARCH_H__
 
-#include <types.h>
-#include <machine/machine.h>
 #include "asm.h"
+#include <machine/machine.h>
+#include <types.h>
 
-#define STACK_SIZE 4096
-#define TICK_HZ 1000
-#define IRQ_MAX 32
+#define STACK_SIZE        4096
+#define TICK_HZ           1000
+#define IRQ_MAX           32
 #define KERNEL_BASE_ADDR  0xffff000000000000
 #define STRAIGHT_MAP_ADDR 0x03000000
 #define STRAIGHT_MAP_END  0x3f000000
@@ -41,7 +41,7 @@ extern char __kernel_image_end[];
 
 static inline bool is_kernel_paddr(paddr_t paddr) {
     return (paddr_t) __kernel_image <= paddr
-            && paddr <= (paddr_t) __kernel_image_end;
+           && paddr <= (paddr_t) __kernel_image_end;
 }
 
 static inline int mp_self(void) {
@@ -52,9 +52,7 @@ static inline bool mp_is_bsp(void) {
     return mp_self() == 0;
 }
 
-
-struct arch_cpuvar {
-};
+struct arch_cpuvar {};
 
 struct cpuvar *arm64_get_cpuvar(void);
 static inline struct cpuvar *get_cpuvar(void) {

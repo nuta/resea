@@ -1,10 +1,10 @@
-#include <resea/ipc.h>
+#include "e1000.h"
+#include <driver/irq.h>
 #include <resea/async.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <driver/irq.h>
 #include <string.h>
-#include "e1000.h"
 
 static task_t tcpip_tid;
 

@@ -1,13 +1,13 @@
 #ifndef __ICMP_H__
 #define __ICMP_H__
 
-#include <list.h>
 #include "ethernet.h"
 #include "mbuf.h"
 #include "tcpip.h"
+#include <list.h>
 
-#define ICMP_TYPE_ECHO_REPLY    0x00
-#define ICMP_TYPE_ECHO_REQUEST  0x08
+#define ICMP_TYPE_ECHO_REPLY   0x00
+#define ICMP_TYPE_ECHO_REQUEST 0x08
 
 struct icmp_header {
     uint8_t type;

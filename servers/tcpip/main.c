@@ -1,17 +1,17 @@
-#include <list.h>
-#include <resea/ipc.h>
-#include <resea/async.h>
-#include <resea/malloc.h>
-#include <resea/printf.h>
-#include <resea/timer.h>
-#include <resea/handle.h>
+#include "main.h"
 #include "device.h"
 #include "dhcp.h"
 #include "dns.h"
-#include "main.h"
 #include "sys.h"
 #include "tcp.h"
 #include "udp.h"
+#include <list.h>
+#include <resea/async.h>
+#include <resea/handle.h>
+#include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <resea/timer.h>
 
 struct client {
     task_t task;
@@ -61,13 +61,13 @@ static void deferred_work(void) {
     tcp_flush();
 
     // TODO:
-    LIST_FOR_EACH(driver, &drivers, struct driver, next) {
-        if (driver->device->dhcp_enabled
-            && !driver->device->dhcp_leased
+    LIST_FOR_EACH (driver, &drivers, struct driver, next) {
+        if (driver->device->dhcp_enabled && !driver->device->dhcp_leased
             && driver->dhcp_discover_retires < 3
             && driver->last_dhcp_discover + 200 < sys_uptime()) {
             WARN("retrying DHCP discover...");
-            dhcp_transmit(driver->device, DHCP_TYPE_DISCOVER, IPV4_ADDR_UNSPECIFIED);
+            dhcp_transmit(driver->device, DHCP_TYPE_DISCOVER,
+                          IPV4_ADDR_UNSPECIFIED);
             driver->last_dhcp_discover = sys_uptime();
             driver->dhcp_discover_retires++;
         }
@@ -189,7 +189,7 @@ void main(void) {
                             handle_free_all(m.task_exited.task, free_handle);
                             break;
                         default:
-                           discard_unknown_message(&m);
+                            discard_unknown_message(&m);
                     }
                 }
 
@@ -316,14 +316,15 @@ void main(void) {
                     break;
                 }
 
-                ethernet_receive(driver->device, m.net_rx.payload, m.net_rx.payload_len);
+                ethernet_receive(driver->device, m.net_rx.payload,
+                                 m.net_rx.payload_len);
                 free(m.net_rx.payload);
                 dhcp_receive();
                 dns_receive();
                 break;
             }
             default:
-               discard_unknown_message(&m);
+                discard_unknown_message(&m);
         }
 
         deferred_work();

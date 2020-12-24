@@ -5,15 +5,18 @@ import sys
 from pathlib import Path
 from colorama import Fore, Back, Style
 
+
 def error(msg):
-    sys.exit(f"{Fore.RED}{Style.BRIGHT}scan-servers-dir.py: {msg}{Style.RESET_ALL}")
+    sys.exit(
+        f"{Fore.RED}{Style.BRIGHT}scan-servers-dir.py: {msg}{Style.RESET_ALL}")
+
 
 def server_dir_lint(server_dir: Path):
     server_name = server_dir.stem
     makefile = open(server_dir / "build.mk").read()
     if f"name:={server_name}" not in makefile.replace(" ", ""):
         error(f"The correct server name definition (name := {server_name}) "
-            "not found in {server_dir}")
+              "not found in {server_dir}")
 
 
 def main():
@@ -43,6 +46,6 @@ def main():
             error(f"No such a server: '{args.dir}'")
         print(server_dir)
 
+
 if __name__ == "__main__":
     main()
-

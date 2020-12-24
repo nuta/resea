@@ -5,12 +5,12 @@
 #include <types.h>
 
 #ifdef CONFIG_HYPERVISOR
-#include <hv.h>
+#    include <hv.h>
 #endif
 
 #define STACK_SIZE 4096
-#define IRQ_MAX   256
-#define TIMER_IRQ 0
+#define IRQ_MAX    256
+#define TIMER_IRQ  0
 
 #define KERNEL_BASE_ADDR  0xffff800000000000
 #define STRAIGHT_MAP_ADDR 0x0000000003000000
@@ -53,7 +53,7 @@ extern char __kernel_image_end[];
 /// kernel memory pages.
 static inline bool is_kernel_paddr(paddr_t paddr) {
     return (paddr_t) __kernel_image <= paddr
-        && paddr <= (paddr_t) __kernel_image_end;
+           && paddr <= (paddr_t) __kernel_image_end;
 }
 
 /// Checks if the address satisfies the "canonical form" defined in the Intel
@@ -127,15 +127,15 @@ struct idtr {
 //
 //  Control Registers
 //
-#define CR0_MP          (1ul << 1)
-#define CR0_EM          (1ul << 2)
-#define CR0_TS          (1ul << 3)
-#define CR0_NX          (1ul << 5)
-#define CR4_FSGSBASE    (1ul << 16)
-#define CR4_OSXSAVE     (1ul << 18)
-#define CR4_OSFXSR      (1ul << 9)
-#define CR4_OSXMMEXCPT  (1ul << 10)
-#define CR4_VMXE        (1ul << 13)
+#define CR0_MP         (1ul << 1)
+#define CR0_EM         (1ul << 2)
+#define CR0_TS         (1ul << 3)
+#define CR0_NX         (1ul << 5)
+#define CR4_FSGSBASE   (1ul << 16)
+#define CR4_OSXSAVE    (1ul << 18)
+#define CR4_OSFXSR     (1ul << 9)
+#define CR4_OSXMMEXCPT (1ul << 10)
+#define CR4_VMXE       (1ul << 13)
 
 //
 //  Extended Control Register 0 (XCR0)

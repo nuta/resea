@@ -6,18 +6,22 @@ import signal
 import os
 from colorama import Fore, Back, Style
 
+
 def scrub_stdout(stdout):
     return stdout.replace("\n\n", "\n") \
         .replace("\r", "") \
         .replace("\x1b\x63", "") \
         .replace("\x1b[2J", "").strip()
 
+
 def error(message):
     print(f"{Fore.RED}{Style.BRIGHT}run-and-check.py: {message}{Style.RESET_ALL}")
     sys.exit(1)
 
+
 def success(message):
     print(f"{Fore.GREEN}{Style.BRIGHT}run-and-check.py: {message}{Style.RESET_ALL}")
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -30,10 +34,10 @@ def main():
 
     try:
         p = subprocess.Popen(args.argv,
-            preexec_fn=os.setsid,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
+                             preexec_fn=os.setsid,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT,
+                             )
         p.wait(args.timeout)
     except subprocess.TimeoutExpired as e:
         os.killpg(os.getpgid(p.pid), signal.SIGTERM)
@@ -52,6 +56,7 @@ def main():
         if not args.quiet:
             print(stdout)
             success("OK")
+
 
 if __name__ == "__main__":
     main()

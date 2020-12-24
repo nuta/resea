@@ -1,10 +1,10 @@
-#include <syscall.h>
-#include <string.h>
 #include <arch.h>
+#include <string.h>
+#include <syscall.h>
 #include <task.h>
 
-error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
-                unsigned flags) {
+error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
+                    paddr_t kpage, unsigned flags) {
     // Do nothing: we don't support virtual memory.
     return OK;
 }

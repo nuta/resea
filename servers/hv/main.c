@@ -1,10 +1,10 @@
-#include <resea/ipc.h>
-#include <resea/async.h>
-#include <resea/timer.h>
-#include <string.h>
 #include "guest.h"
 #include "ioport.h"
 #include "mm.h"
+#include <resea/async.h>
+#include <resea/ipc.h>
+#include <resea/timer.h>
+#include <string.h>
 
 extern char __kernel_elf[];
 extern char __kernel_elf_end[];
@@ -12,8 +12,8 @@ extern char __kernel_elf_end[];
 #define SENDER_CHECK()                                                         \
     do {                                                                       \
         if (m.src != KERNEL_TASK) {                                            \
-            WARN_DBG("%s: not from the kernel: task=%d",                       \
-                     msgtype2str(m.type), m.src);                              \
+            WARN_DBG("%s: not from the kernel: task=%d", msgtype2str(m.type),  \
+                     m.src);                                                   \
             ipc_reply_err(m.src, ERR_NOT_PERMITTED);                           \
             break;                                                             \
         }                                                                      \
@@ -57,7 +57,8 @@ void main(void) {
             case HV_X64_START_MSG: {
                 SENDER_CHECK();
                 if (m.src != KERNEL_TASK) {
-                    WARN_DBG("hv.x64_start: not from the kernel: task=%d", m.src);
+                    WARN_DBG("hv.x64_start: not from the kernel: task=%d",
+                             m.src);
                     ipc_reply_err(m.src, ERR_NOT_PERMITTED);
                     break;
                 }
@@ -74,11 +75,8 @@ void main(void) {
             case HV_IOPORT_READ_MSG: {
                 SENDER_CHECK();
                 struct guest *guest = guest_lookup(m.hv_ioport_read.task);
-                uint32_t value = handle_io_read(
-                    guest,
-                    m.hv_ioport_read.port,
-                    m.hv_ioport_read.size
-                );
+                uint32_t value = handle_io_read(guest, m.hv_ioport_read.port,
+                                                m.hv_ioport_read.size);
 
                 m.type = HV_IOPORT_READ_REPLY_MSG;
                 m.hv_ioport_read_reply.value = value;
@@ -88,12 +86,9 @@ void main(void) {
             case HV_IOPORT_WRITE_MSG: {
                 SENDER_CHECK();
                 struct guest *guest = guest_lookup(m.hv_ioport_write.task);
-                handle_io_write(
-                    guest,
-                    m.hv_ioport_write.port,
-                    m.hv_ioport_write.size,
-                    m.hv_ioport_write.value
-                );
+                handle_io_write(guest, m.hv_ioport_write.port,
+                                m.hv_ioport_write.size,
+                                m.hv_ioport_write.value);
 
                 m.type = HV_IOPORT_WRITE_REPLY_MSG;
                 ipc_reply(guest->task, &m);
@@ -105,11 +100,11 @@ void main(void) {
                 memcpy(&frame, &m.hv_guest_page_fault.frame, sizeof(frame));
 
                 struct guest *guest = guest_lookup(m.hv_guest_page_fault.task);
-                handle_ept_fault(guest, m.hv_guest_page_fault.gpaddr,
-                                 &frame);
+                handle_ept_fault(guest, m.hv_guest_page_fault.gpaddr, &frame);
 
                 m.type = HV_GUEST_PAGE_FAULT_REPLY_MSG;
-                memcpy(&m.hv_guest_page_fault_reply.frame, &frame, sizeof(frame));
+                memcpy(&m.hv_guest_page_fault_reply.frame, &frame,
+                       sizeof(frame));
                 ipc_reply(guest->task, &m);
                 break;
             }

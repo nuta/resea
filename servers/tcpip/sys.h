@@ -1,9 +1,9 @@
 #ifndef __SYS_H__
 #define __SYS_H__
 
+#include "tcp.h"
 #include <list.h>
 #include <types.h>
-#include "tcp.h"
 
 enum event_type {
     TCP_NEW_CLIENT,
@@ -27,7 +27,6 @@ struct event {
         } dns_got_answer;
     };
 };
-
 
 void sys_process_event(struct event *event);
 msec_t sys_uptime(void);

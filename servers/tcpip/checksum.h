@@ -1,9 +1,9 @@
 #ifndef __CHECKSUM_H__
 #define __CHECKSUM_H__
 
-#include <types.h>
-#include <endian.h>
 #include "mbuf.h"
+#include <endian.h>
+#include <types.h>
 
 typedef uint32_t checksum_t;
 

@@ -1,6 +1,9 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include "device.h"
+#include <list.h>
+#include <resea/ipc.h>
 #include <types.h>
 
 #define TIMER_INTERVAL 200

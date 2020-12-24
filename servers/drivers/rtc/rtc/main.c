@@ -1,18 +1,18 @@
-#include <resea/printf.h>
-#include <vprintf.h>
+#include "rtc.h"
 #include <driver/io.h>
+#include <resea/datetime.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
-#include <resea/datetime.h>
+#include <resea/printf.h>
 #include <string.h>
-#include "rtc.h"
+#include <vprintf.h>
 
 static io_t rtc_io;
 
 bool is_update_in_progress(void) {
-	io_write8(rtc_io, 0, 10);
+    io_write8(rtc_io, 0, 10);
     uint8_t status = io_read8(rtc_io, 1);
-	return status & 0x80;
+    return status & 0x80;
 }
 
 uint8_t read_cmos_register(int reg_index) {
@@ -25,9 +25,9 @@ uint8_t bcd_to_binary(uint8_t bcd) {
 }
 
 void read_datetime(struct datetime *datetime) {
-
     // Wait until rtc is not updating
-    while (is_update_in_progress());
+    while (is_update_in_progress())
+        ;
 
     datetime->second = read_cmos_register(0x00);
     datetime->minute = read_cmos_register(0x02);
@@ -41,7 +41,7 @@ void read_datetime(struct datetime *datetime) {
     bool use_bcd = !(status_b & 0x04);
     bool use_twelve_hours = !(status_b & 0x02);
 
-    if(use_bcd) {
+    if (use_bcd) {
         datetime->second = bcd_to_binary(datetime->second);
         datetime->minute = bcd_to_binary(datetime->minute);
         datetime->hour = bcd_to_binary(datetime->hour & 0x7F);
@@ -53,8 +53,8 @@ void read_datetime(struct datetime *datetime) {
 
     datetime->year += 2000;
 
-    if(use_twelve_hours && (datetime->hour & 0x80)) {
-        datetime->hour =(((datetime->hour & 0x7F) + 12) % 24);
+    if (use_twelve_hours && (datetime->hour & 0x80)) {
+        datetime->hour = (((datetime->hour & 0x7F) + 12) % 24);
     }
 }
 

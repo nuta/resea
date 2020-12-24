@@ -1,6 +1,5 @@
-#include <unittest.h>
 #include <resea/printf.h>
-
+#include <unittest.h>
 
 void exit(int);
 void printf(const char *fmt, ...);
@@ -40,10 +39,12 @@ void unittest_aborted(void) {
     on_fail();
 }
 
-void unittest_expect_fail(const char *file, unsigned lineno, const char *expected,
-                          unsigned long long a, unsigned long long b) {
+void unittest_expect_fail(const char *file, unsigned lineno,
+                          const char *expected, unsigned long long a,
+                          unsigned long long b) {
     on_fail();
-    printf("\n\x1b[33mAssertion Failure at %s:%d:\n\n\t%s\x1b[0m\n\n"
+    printf(
+        "\n\x1b[33mAssertion Failure at %s:%d:\n\n\t%s\x1b[0m\n\n"
         "\t\x1b[91mleft: %#llx\x1b[0m, \x1b[92mright: %#llx\x1b[0m\n\n",
         file, lineno, expected, a, b);
 }
@@ -51,9 +52,10 @@ void unittest_expect_fail(const char *file, unsigned lineno, const char *expecte
 void report_test_results(void) {
     if (tests_failed > 0) {
         printf("[unittest] \x1b[1;91mFailed %d/%d tests!\x1b[0m\n",
-            tests_failed, tests_passed + tests_failed);
+               tests_failed, tests_passed + tests_failed);
     } else {
-        printf("[unittest] \x1b[32mPassed all %d tests!\x1b[0m\n", tests_passed);
+        printf("[unittest] \x1b[32mPassed all %d tests!\x1b[0m\n",
+               tests_passed);
     }
 }
 

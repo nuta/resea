@@ -1,15 +1,15 @@
-#include <list.h>
-#include <resea/printf.h>
-#include <resea/task.h>
-#include <resea/malloc.h>
-#include <resea/ipc.h>
-#include <resea/async.h>
-#include <string.h>
-#include <elf/elf.h>
 #include "guest.h"
 #include "mm.h"
 #include "pci.h"
 #include "virtio_blk.h"
+#include <elf/elf.h>
+#include <list.h>
+#include <resea/async.h>
+#include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <resea/task.h>
+#include <string.h>
 
 static list_t guests;
 
@@ -19,7 +19,11 @@ error_t load_kernel_elf(struct guest *guest, uint8_t *elf, size_t elf_len,
                         enum image_type *image_type) {
     struct elf64_ehdr *ehdr = (struct elf64_ehdr *) elf;
     *image_type = IMAGE_TYPE_PLAIN;
-    if (memcmp(ehdr->e_ident, "\x7f" "ELF", 4) != 0) {
+    if (memcmp(ehdr->e_ident,
+               "\x7f"
+               "ELF",
+               4)
+        != 0) {
         WARN_DBG("invalid ELF magic");
         return ERR_NOT_ACCEPTABLE;
     }
@@ -37,8 +41,10 @@ error_t load_kernel_elf(struct guest *guest, uint8_t *elf, size_t elf_len,
             offset_t offset = 0;
             while (offset < phdrs[i].p_filesz) {
                 struct elf64_nhdr *nhdr =
-                    (struct elf64_nhdr *) ((uintptr_t) elf + phdrs[i].p_offset + offset);
-                vaddr_t contents = (vaddr_t) nhdr + sizeof(*nhdr) + nhdr->n_namesz;
+                    (struct elf64_nhdr *) ((uintptr_t) elf + phdrs[i].p_offset
+                                           + offset);
+                vaddr_t contents =
+                    (vaddr_t) nhdr + sizeof(*nhdr) + nhdr->n_namesz;
                 if (nhdr->n_type == ELF_NOTE_PVH_ENTRY) {
                     uint32_t entry = *((uint32_t *) contents);
                     TRACE("found the Xen PVH header: entry=%p", entry);
@@ -47,7 +53,7 @@ error_t load_kernel_elf(struct guest *guest, uint8_t *elf, size_t elf_len,
                 }
 
                 offset += sizeof(*nhdr) + ALIGN_UP(nhdr->n_namesz, 4)
-                    + ALIGN_UP(nhdr->n_descsz, 4);
+                          + ALIGN_UP(nhdr->n_descsz, 4);
             }
 
             continue;
@@ -72,7 +78,7 @@ error_t load_kernel_elf(struct guest *guest, uint8_t *elf, size_t elf_len,
 }
 
 struct guest *guest_lookup(task_t task) {
-    LIST_FOR_EACH(guest, &guests, struct guest, next) {
+    LIST_FOR_EACH (guest, &guests, struct guest, next) {
         if (guest->task == task) {
             return guest;
         }
@@ -159,7 +165,7 @@ void guest_inject_irq(struct guest *guest, int irq) {
 }
 
 void guest_tick(void) {
-    LIST_FOR_EACH(guest, &guests, struct guest, next) {
+    LIST_FOR_EACH (guest, &guests, struct guest, next) {
         guest->pending_irq_bitmap |= 1 /* timer IRQ */;
         if (guest->halted) {
             struct message m;
@@ -172,7 +178,7 @@ void guest_tick(void) {
 }
 
 void guest_send_pending_events(void) {
-    LIST_FOR_EACH(guest, &guests, struct guest, next) {
+    LIST_FOR_EACH (guest, &guests, struct guest, next) {
         if (guest->pending_irq_bitmap) {
             ipc_notify(guest->task, NOTIFY_ASYNC);
             if (guest->halted) {

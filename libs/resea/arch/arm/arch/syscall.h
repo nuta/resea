@@ -12,11 +12,10 @@ static inline long syscall(int n, long a1, long a2, long a3, long a4, long a5) {
     register long r5 __asm__("r5") = a5;
     register long r6 __asm__("r6") = r6;
 
-    __asm__ __volatile__(
-        "svc 0"
-        : "=r"(r0), "=r"(r6)
-        : "r"(r0), "r"(r1), "r"(r2), "r"(r3), "r"(r4), "r"(r5)
-        : "ip", "memory");
+    __asm__ __volatile__("svc 0"
+                         : "=r"(r0), "=r"(r6)
+                         : "r"(r0), "r"(r1), "r"(r2), "r"(r3), "r"(r4), "r"(r5)
+                         : "ip", "memory");
 
     return r6;
 }

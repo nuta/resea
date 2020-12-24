@@ -3,10 +3,11 @@ import argparse
 import struct
 from elftools.elf.elffile import ELFFile
 
-PAGE_SIZE = 0x1000 # FIXME: This could be other values.
+PAGE_SIZE = 0x1000  # FIXME: This could be other values.
 BOOTELF_NUM_MAPPINGS_MAX = 8
 BOOTELF_PRE_MAGIC = b"00BOOT\xe1\xff"
 BOOTELF_MAGIC = b"11BOOT\xe1\xff"
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -46,7 +47,7 @@ def main():
         num_pages = (segment.header.p_memsz + PAGE_SIZE - 1) // PAGE_SIZE
         zeroed = segment.header.p_filesz == 0
         header += struct.pack("QIHcb", vaddr, offset, num_pages,
-                              b'W', # TODO: Support so-called W^X
+                              b'W',  # TODO: Support so-called W^X
                               1 if zeroed else 0)
 
     with open(args.elf_file, "r+b") as f:
@@ -59,6 +60,7 @@ def main():
         assert f.read(8) == BOOTELF_PRE_MAGIC
         f.seek(offset)
         f.write(header)
+
 
 if __name__ == "__main__":
     main()

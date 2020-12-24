@@ -1,8 +1,8 @@
 #ifndef __DNS_H__
 #define __DNS_H__
 
-#include <types.h>
 #include "tcpip.h"
+#include <types.h>
 
 #define DNS_QTYPE_A 0x0001
 

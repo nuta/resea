@@ -1,8 +1,8 @@
 #ifndef __PCI_H__
 #define __PCI_H__
 
-#include <types.h>
 #include <list.h>
+#include <types.h>
 
 struct __packed pci_config {
     uint16_t vendor_id;
@@ -37,7 +37,8 @@ struct __packed pci_config {
 
 struct pci_device;
 struct pci_device_ops {
-    uint32_t (*ioport_read)(struct pci_device *device, uint64_t port, size_t size);
+    uint32_t (*ioport_read)(struct pci_device *device, uint64_t port,
+                            size_t size);
     void (*ioport_write)(struct pci_device *device, uint64_t port, size_t size,
                          uint32_t value);
 };

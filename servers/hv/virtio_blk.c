@@ -1,41 +1,45 @@
 #include "virtio_blk.h"
 #include "guest.h"
 #include "ioport.h"
-#include "pci.h"
 #include "mm.h"
+#include "pci.h"
 #include <resea/ipc.h>
-#include <resea/printf.h>
 #include <resea/malloc.h>
-#include <virtio/virtio.h>
+#include <resea/printf.h>
 #include <string.h>
+#include <virtio/virtio.h>
 
 static void handle_pending_requests(struct pci_device *device) {
-    struct virtio_blk_device *virtio = (struct virtio_blk_device *) device->data;
+    struct virtio_blk_device *virtio =
+        (struct virtio_blk_device *) device->data;
     struct virtqueue *vq = &virtio->virtqueues[virtio->selected_virtq];
 
     offset_t avail_ring_off = sizeof(struct virtq_desc) * vq->num_descs;
     size_t avail_ring_size = sizeof(uint16_t) * (3 + vq->num_descs);
-    offset_t used_ring_off = ALIGN_UP(avail_ring_off + avail_ring_size, PAGE_SIZE);
+    offset_t used_ring_off =
+        ALIGN_UP(avail_ring_off + avail_ring_size, PAGE_SIZE);
 
     // XXX: What if descriptors span across multiple pages?
-    struct virtq_desc *descs = (struct virtq_desc *)
-        resolve_guest_paddr_buffer(device->guest, vq->gpaddr);
+    struct virtq_desc *descs = (struct virtq_desc *) resolve_guest_paddr_buffer(
+        device->guest, vq->gpaddr);
     if (!descs) {
         WARN_DBG("virtio-blk: descriptors are not accessible");
         return;
     }
 
     // XXX: What if the ring spans across multiple pages?
-    struct virtq_avail *avail_ring = (struct virtq_avail *)
-        resolve_guest_paddr_buffer(device->guest, vq->gpaddr + avail_ring_off);
+    struct virtq_avail *avail_ring =
+        (struct virtq_avail *) resolve_guest_paddr_buffer(
+            device->guest, vq->gpaddr + avail_ring_off);
     if (!avail_ring) {
         WARN_DBG("virtio-blk: avail ring is not accessible");
         return;
     }
 
     // XXX: What if the ring spans across multiple pages?
-    struct virtq_used *used_ring = (struct virtq_used *)
-        resolve_guest_paddr_buffer(device->guest, vq->gpaddr + used_ring_off);
+    struct virtq_used *used_ring =
+        (struct virtq_used *) resolve_guest_paddr_buffer(
+            device->guest, vq->gpaddr + used_ring_off);
     if (!used_ring) {
         WARN_DBG("virtio-blk: used ring is not accessible");
         return;
@@ -66,7 +70,8 @@ static void handle_pending_requests(struct pci_device *device) {
                 remaining = desc->len - sizeof(*req);
 
                 if (desc->len < sizeof(*req)) {
-                    WARN_DBG("virtio-blk: too short request (desc->len=%d)", desc->len);
+                    WARN_DBG("virtio-blk: too short request (desc->len=%d)",
+                             desc->len);
                     return;
                 }
 
@@ -85,7 +90,8 @@ static void handle_pending_requests(struct pci_device *device) {
                             return;
                         }
 
-                        size_t num_sectors = ALIGN_DOWN(remaining, SECTOR_SIZE) / SECTOR_SIZE;
+                        size_t num_sectors =
+                            ALIGN_DOWN(remaining, SECTOR_SIZE) / SECTOR_SIZE;
                         if (num_sectors > 0) {
                             struct message m;
                             m.type = BLK_READ_MSG;
@@ -98,7 +104,7 @@ static void handle_pending_requests(struct pci_device *device) {
                                    m.blk_read_reply.data_len);
 
                             remaining -= num_sectors * SECTOR_SIZE;
-                            written_len +=  num_sectors * SECTOR_SIZE;
+                            written_len += num_sectors * SECTOR_SIZE;
                         }
 
                         if (remaining == 1) {
@@ -108,7 +114,8 @@ static void handle_pending_requests(struct pci_device *device) {
                         }
                         break;
                     case VIRTIO_BLK_T_OUT: {
-                        size_t num_sectors = ALIGN_DOWN(remaining, SECTOR_SIZE) / SECTOR_SIZE;
+                        size_t num_sectors =
+                            ALIGN_DOWN(remaining, SECTOR_SIZE) / SECTOR_SIZE;
                         if (num_sectors > 0) {
                             struct message m;
                             m.type = BLK_WRITE_MSG;
@@ -154,8 +161,10 @@ static void handle_pending_requests(struct pci_device *device) {
     }
 }
 
-static uint32_t ioport_read(struct pci_device *device, offset_t off, size_t size) {
-    struct virtio_blk_device *virtio = (struct virtio_blk_device *) device->data;
+static uint32_t ioport_read(struct pci_device *device, offset_t off,
+                            size_t size) {
+    struct virtio_blk_device *virtio =
+        (struct virtio_blk_device *) device->data;
     switch (off) {
         case VIRTIO_REG_DEVICE_FEATS:
             return 0;
@@ -181,15 +190,21 @@ static uint32_t ioport_read(struct pci_device *device, offset_t off, size_t size
             virtio->sending_interrupt = false;
             return value;
         }
-        case VIRTIO_REG_DEVICE_CONFIG_BASE + VIRITO_BLK_REG_CAPACITY
-            ... VIRTIO_REG_DEVICE_CONFIG_BASE + VIRITO_BLK_REG_CAPACITY + sizeof(uint64_t): {
-            uint64_t value = (256 * 1024) / SECTOR_SIZE; // FIXME:
-            int access_off = off - VIRTIO_REG_DEVICE_CONFIG_BASE + VIRITO_BLK_REG_CAPACITY;
+        case VIRTIO_REG_DEVICE_CONFIG_BASE
+            + VIRITO_BLK_REG_CAPACITY... VIRTIO_REG_DEVICE_CONFIG_BASE
+            + VIRITO_BLK_REG_CAPACITY + sizeof(uint64_t): {
+            uint64_t value = (256 * 1024) / SECTOR_SIZE;  // FIXME:
+            int access_off =
+                off - VIRTIO_REG_DEVICE_CONFIG_BASE + VIRITO_BLK_REG_CAPACITY;
             switch (size) {
-                case 1: return (value >> (8 * access_off)) & 0xff;
-                case 2: return (value >> (8 * access_off)) & 0xffff;
-                case 4: return (value >> (8 * access_off)) & 0xffffffff;
-                default: UNREACHABLE();
+                case 1:
+                    return (value >> (8 * access_off)) & 0xff;
+                case 2:
+                    return (value >> (8 * access_off)) & 0xffff;
+                case 4:
+                    return (value >> (8 * access_off)) & 0xffffffff;
+                default:
+                    UNREACHABLE();
             }
         }
         default:
@@ -200,14 +215,16 @@ static uint32_t ioport_read(struct pci_device *device, offset_t off, size_t size
 
 static void ioport_write(struct pci_device *device, offset_t off, size_t size,
                          uint32_t value) {
-    struct virtio_blk_device *virtio = (struct virtio_blk_device *) device->data;
+    struct virtio_blk_device *virtio =
+        (struct virtio_blk_device *) device->data;
     switch (off) {
         case VIRTIO_REG_DEVICE_FEATS:
             break;
         case VIRTIO_REG_DRIVER_FEATS:
             break;
         case VIRTIO_REG_QUEUE_ADDR_PFN:
-            virtio->virtqueues[virtio->selected_virtq].gpaddr = value * PAGE_SIZE;
+            virtio->virtqueues[virtio->selected_virtq].gpaddr =
+                value * PAGE_SIZE;
             break;
         case VIRTIO_REG_NUM_DESCS:
             if (value == 0) {
@@ -244,12 +261,12 @@ static struct pci_config config = {
     .vendor_id = 0x1af4,
     .device_id = 0x1001,
     .subsystem_id = 0x02, /* block device */
-    .class = 0x02,    // Network Controller
-    .subclass = 0x00, // Ethernet Controller
-    .bar0 = 0xa001, /* IO port, base=0xa000 */
+    .class = 0x02,        // Network Controller
+    .subclass = 0x00,     // Ethernet Controller
+    .bar0 = 0xa001,       /* IO port, base=0xa000 */
 };
 
-static struct pci_device_ops ops ={
+static struct pci_device_ops ops = {
     .ioport_read = ioport_read,
     .ioport_write = ioport_write,
 };

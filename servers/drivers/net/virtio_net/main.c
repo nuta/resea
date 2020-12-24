@@ -1,14 +1,14 @@
-#include <resea/ipc.h>
+#include "virtio_net.h"
+#include <driver/dma.h>
+#include <driver/io.h>
+#include <driver/irq.h>
+#include <endian.h>
 #include <resea/async.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <driver/irq.h>
-#include <driver/io.h>
-#include <driver/dma.h>
-#include <virtio/virtio.h>
-#include <endian.h>
 #include <string.h>
-#include "virtio_net.h"
+#include <virtio/virtio.h>
 
 static task_t tcpip_task;
 static struct virtio_virtq *tx_virtq = NULL;
@@ -62,9 +62,9 @@ static void transmit(void) {
 
     // Allocate a desc for the transmission.
     size_t len = m.net_tx.payload_len;
-    int index = virtio->virtq_alloc(tx_virtq,
-                                    sizeof(struct virtio_net_header) + len,
-                                    0, VIRTQ_ALLOC_NO_PREV);
+    int index =
+        virtio->virtq_alloc(tx_virtq, sizeof(struct virtio_net_header) + len, 0,
+                            VIRTQ_ALLOC_NO_PREV);
     if (index < 0) {
         WARN("failed to alloc a desc for TX");
         return;
@@ -92,19 +92,21 @@ void main(void) {
     // Look for and initialize a virtio-net device.
     uint8_t irq;
     ASSERT_OK(virtio_find_device(VIRTIO_DEVICE_NET, &virtio, &irq));
-    virtio->negotiate_feature(
-        VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS | VIRTIO_NET_F_MRG_RXBUF);
+    virtio->negotiate_feature(VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS
+                              | VIRTIO_NET_F_MRG_RXBUF);
 
     virtio->virtq_init(VIRTIO_NET_QUEUE_RX);
     virtio->virtq_init(VIRTIO_NET_QUEUE_TX);
 
     // Allocate TX buffers.
     tx_virtq = virtio->virtq_get(VIRTIO_NET_QUEUE_TX);
-    virtio->virtq_allocate_buffers(tx_virtq, sizeof(struct virtio_net_buffer), false);
+    virtio->virtq_allocate_buffers(tx_virtq, sizeof(struct virtio_net_buffer),
+                                   false);
 
     // Allocate RX buffers.
     rx_virtq = virtio->virtq_get(VIRTIO_NET_QUEUE_RX);
-    virtio->virtq_allocate_buffers(rx_virtq, sizeof(struct virtio_net_buffer), true);
+    virtio->virtq_allocate_buffers(rx_virtq, sizeof(struct virtio_net_buffer),
+                                   true);
     for (int i = 0; i < rx_virtq->num_descs; i++) {
         struct virtio_net_buffer *buf = virtq_net_buffer(rx_virtq, i);
         buf->header.num_buffers = 1;
@@ -119,8 +121,8 @@ void main(void) {
     uint8_t mac[6];
     read_macaddr((uint8_t *) &mac);
     INFO("initialized the device");
-    INFO("MAC address = %02x:%02x:%02x:%02x:%02x:%02x",
-         mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    INFO("MAC address = %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2],
+         mac[3], mac[4], mac[5]);
 
     ASSERT_OK(ipc_serve("net"));
 

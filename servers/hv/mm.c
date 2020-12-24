@@ -1,14 +1,14 @@
-#include <resea/ipc.h>
-#include <resea/printf.h>
-#include <resea/malloc.h>
-#include <string.h>
-#include <list.h>
-#include "guest.h"
 #include "mm.h"
+#include "guest.h"
 #include "x64.h"
+#include <list.h>
+#include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <string.h>
 
 static error_t file_fill(struct guest *guest, struct mapping *m, uint8_t *buf,
-                    gpaddr_t gpaddr, size_t *filled_len) {
+                         gpaddr_t gpaddr, size_t *filled_len) {
     offset_t off = gpaddr - m->gpaddr;
     DEBUG_ASSERT(m->len >= off);
 
@@ -30,23 +30,24 @@ struct mapping_ops file_mapping_ops = {
 };
 
 static struct misc_area misc_area = {
-    .mp_float_ptr = {
-        .signature = MP_FLOATPTR_SIGNATURE,
-        .spec = 4,
-        .length = 1,
-    },
-    .mp_table_header = {
-        .signature = MP_MPTABLE_SIGNATURE,
-        .spec = 4,
-        .base_table_length = sizeof(struct mp_table_header)
-            + sizeof(struct mp_processor_entry),
-        .localapic_addr = 0xfee00000,
-    },
+    .mp_float_ptr =
+        {
+            .signature = MP_FLOATPTR_SIGNATURE,
+            .spec = 4,
+            .length = 1,
+        },
+    .mp_table_header =
+        {
+            .signature = MP_MPTABLE_SIGNATURE,
+            .spec = 4,
+            .base_table_length = sizeof(struct mp_table_header)
+                                 + sizeof(struct mp_processor_entry),
+            .localapic_addr = 0xfee00000,
+        },
     .bsp_entry = {
-        .type = 0, // Processor entry
+        .type = 0,  // Processor entry
         .cpu_flags = (1u << 1) /* BSP */ | (1u << 0) /* Enabled */,
-    }
-};
+    }};
 
 STATIC_ASSERT(sizeof(misc_area) < PAGE_SIZE);
 
@@ -65,15 +66,17 @@ static uint8_t compute_mp_checksum(uint8_t *buf, size_t len) {
 }
 
 static error_t misc_fill(struct guest *guest, struct mapping *m, uint8_t *buf,
-                            gpaddr_t gpaddr, size_t *filled_len) {
+                         gpaddr_t gpaddr, size_t *filled_len) {
     struct mp_float_ptr *fp = &misc_area.mp_float_ptr;
     struct mp_table_header *header = &misc_area.mp_table_header;
     ASSERT(fp->checksum == 0 && "why it's called twice?");
 
     fp->mptable_header_addr =
         gpaddr + offsetof(struct misc_area, mp_table_header);
-    misc_area.mp_float_ptr.checksum = compute_mp_checksum((uint8_t *) fp, sizeof(*fp));
-    header->checksum = compute_mp_checksum((uint8_t *) header,
+    misc_area.mp_float_ptr.checksum =
+        compute_mp_checksum((uint8_t *) fp, sizeof(*fp));
+    header->checksum = compute_mp_checksum(
+        (uint8_t *) header,
         sizeof(*header) + sizeof(struct mp_processor_entry));
 
     memcpy(buf, &misc_area, sizeof(misc_area));
@@ -89,7 +92,7 @@ struct mapping_ops misc_mapping_ops = {
 };
 
 static uint64_t lapic_read(struct guest *guest, struct mapping *mapping,
-                          offset_t offset, int size) {
+                           offset_t offset, int size) {
     switch (offset) {
         // Local APIC ID Register
         case 0x20:
@@ -109,10 +112,10 @@ static void lapic_write(struct guest *guest, struct mapping *mapping,
         case 0x320:
             break;
         default:
-            WARN_DBG("lapic_write: not implemented register: offset=%x", offset);
+            WARN_DBG("lapic_write: not implemented register: offset=%x",
+                     offset);
     }
 }
-
 
 struct mapping_ops lapic_mapping_ops = {
     .name = "lapic",
@@ -135,8 +138,7 @@ struct pvh_start_info pvh_start_info = {
 };
 
 static error_t pvh_fill(struct guest *guest, struct mapping *m, uint8_t *buf,
-                            gpaddr_t gpaddr, size_t *filled_len) {
-
+                        gpaddr_t gpaddr, size_t *filled_len) {
     strncpy(pvh_start_info.data.cmdline, "console=ttyS0 root=/dev/vda1",
             sizeof(pvh_start_info.data.cmdline));
 
@@ -149,7 +151,8 @@ static error_t pvh_fill(struct guest *guest, struct mapping *m, uint8_t *buf,
     pvh_start_info.data.memmap[1].type = E820_TYPE_RAM;
     pvh_start_info.data.memmap[1].reserved = 0;
     pvh_start_info.data.memmap[2].addr = 0x01000000;
-    pvh_start_info.data.memmap[2].size = 0x04000000; /* 64MiB; TODO: expand dynamically */
+    pvh_start_info.data.memmap[2].size =
+        0x04000000; /* 64MiB; TODO: expand dynamically */
     pvh_start_info.data.memmap[2].type = E820_TYPE_RAM;
     pvh_start_info.data.memmap[2].reserved = 0;
 
@@ -169,8 +172,9 @@ struct mapping_ops pvh_mapping_ops = {
 };
 
 static struct page_area *resolve_paddr(struct guest *guest, paddr_t paddr) {
-    LIST_FOR_EACH(pa, &guest->page_areas, struct page_area, next) {
-        if (pa->paddr <= paddr && paddr < pa->paddr + pa->num_pages * PAGE_SIZE) {
+    LIST_FOR_EACH (pa, &guest->page_areas, struct page_area, next) {
+        if (pa->paddr <= paddr
+            && paddr < pa->paddr + pa->num_pages * PAGE_SIZE) {
             return pa;
         }
     }
@@ -178,8 +182,9 @@ static struct page_area *resolve_paddr(struct guest *guest, paddr_t paddr) {
     return NULL;
 }
 
-static struct page_area *resolve_guest_paddr(struct guest *guest, gpaddr_t gpaddr) {
-    LIST_FOR_EACH(pa, &guest->page_areas, struct page_area, next) {
+static struct page_area *resolve_guest_paddr(struct guest *guest,
+                                             gpaddr_t gpaddr) {
+    LIST_FOR_EACH (pa, &guest->page_areas, struct page_area, next) {
         if (!pa->internal && pa->gpaddr <= gpaddr
             && gpaddr < pa->gpaddr + pa->num_pages * PAGE_SIZE) {
             return pa;
@@ -195,12 +200,12 @@ static vaddr_t from_paddr(struct guest *guest, paddr_t paddr) {
     return pa->vaddr + (paddr - pa->paddr);
 }
 
-#define ENTRY_PADDR(entry) ((entry) & 0x0000fffffffff000)
+#define ENTRY_PADDR(entry) ((entry) &0x0000fffffffff000)
 #define NTH_LEVEL_INDEX(level, vaddr)                                          \
     (((vaddr) >> ((((level) -1) * 9) + 12)) & 0x1ff)
 
-static uint64_t *ept_traverse(struct guest *guest, gpaddr_t gpaddr, uint64_t attrs,
-                              bool fill_if_not_exists) {
+static uint64_t *ept_traverse(struct guest *guest, gpaddr_t gpaddr,
+                              uint64_t attrs, bool fill_if_not_exists) {
     ASSERT(IS_ALIGNED(gpaddr, PAGE_SIZE));
 
     uint64_t *table = guest->ept_pml4;
@@ -274,7 +279,6 @@ static gpaddr_t resolve_guest_vaddr(struct guest *guest, uint64_t cr3,
     return ENTRY_PADDR(*entry) + offset;
 }
 
-
 static void *alloc_page(struct guest *guest, size_t num_pages, gpaddr_t gpaddr,
                         bool internal, paddr_t *paddr) {
     struct message m;
@@ -302,7 +306,8 @@ void *alloc_guest_page(struct guest *guest, size_t num_pages, gpaddr_t gpaddr,
     return alloc_page(guest, num_pages, gpaddr, false, paddr);
 }
 
-void *alloc_internal_page(struct guest *guest, size_t num_pages, paddr_t *paddr) {
+void *alloc_internal_page(struct guest *guest, size_t num_pages,
+                          paddr_t *paddr) {
     return alloc_page(guest, num_pages, 0, true, paddr);
 }
 
@@ -313,7 +318,8 @@ static error_t handle_mmio_access(struct guest *guest, struct mapping *mapping,
     // Guest's virtual address -> Guest's physical address.
     uint64_t rip_gpaddr = resolve_guest_vaddr(guest, frame->cr3, frame->rip);
     if (!rip_gpaddr) {
-        WARN_DBG("handle_mmio_access: guest-unmapped RIP address: %p", frame->rip);
+        WARN_DBG("handle_mmio_access: guest-unmapped RIP address: %p",
+                 frame->rip);
         return ERR_NOT_FOUND;
     }
 
@@ -321,7 +327,8 @@ static error_t handle_mmio_access(struct guest *guest, struct mapping *mapping,
     uint64_t *host_entry =
         ept_traverse(guest, ALIGN_DOWN(rip_gpaddr, PAGE_SIZE), 0, false);
     if (!host_entry) {
-        WARN_DBG("handle_mmio_access: host-unmapped RIP address: %p", rip_gpaddr);
+        WARN_DBG("handle_mmio_access: host-unmapped RIP address: %p",
+                 rip_gpaddr);
         return ERR_NOT_FOUND;
     }
 
@@ -331,10 +338,12 @@ static error_t handle_mmio_access(struct guest *guest, struct mapping *mapping,
 
     // Finally we have a valid pointer to access the RIP...
     uint8_t *inst = (uint8_t *) pa->vaddr + (rip_gpaddr - pa->gpaddr);
-    if (ALIGN_DOWN((vaddr_t) inst, PAGE_SIZE) != ALIGN_DOWN((vaddr_t) inst + frame->inst_len, PAGE_SIZE)) {
+    if (ALIGN_DOWN((vaddr_t) inst, PAGE_SIZE)
+        != ALIGN_DOWN((vaddr_t) inst + frame->inst_len, PAGE_SIZE)) {
         // TODO:
-        WARN_DBG("handle_mmio_access: the instruction is in multiple pages (guest_rip=%p)",
-                 frame->rip);
+        WARN_DBG(
+            "handle_mmio_access: the instruction is in multiple pages (guest_rip=%p)",
+            frame->rip);
         return ERR_NOT_ACCEPTABLE;
     }
 
@@ -343,8 +352,10 @@ static error_t handle_mmio_access(struct guest *guest, struct mapping *mapping,
     bool reg_to_mem;
     enum x64_reg reg;
     int size;
-    if (decode_inst(inst, frame->inst_len, &op, &reg, &reg_to_mem, &size) != OK) {
-        WARN_DBG("unsupported (or invalid) instruction (guest_rip=%p)", frame->rip);
+    if (decode_inst(inst, frame->inst_len, &op, &reg, &reg_to_mem, &size)
+        != OK) {
+        WARN_DBG("unsupported (or invalid) instruction (guest_rip=%p)",
+                 frame->rip);
         return ERR_NOT_ACCEPTABLE;
     }
 
@@ -357,23 +368,47 @@ static error_t handle_mmio_access(struct guest *guest, struct mapping *mapping,
     if (reg_to_mem) {
         uint64_t value;
         switch (reg) {
-            case X64_REG_EAX: value = frame->rax & 0xffffffff; break;
-            case X64_REG_ECX: value = frame->rcx & 0xffffffff; break;
-            case X64_REG_EDX: value = frame->rdx & 0xffffffff; break;
-            case X64_REG_EBX: value = frame->rbx & 0xffffffff; break;
-            case X64_REG_ESI: value = frame->rsi & 0xffffffff; break;
-            case X64_REG_EDI: value = frame->rdi & 0xffffffff; break;
+            case X64_REG_EAX:
+                value = frame->rax & 0xffffffff;
+                break;
+            case X64_REG_ECX:
+                value = frame->rcx & 0xffffffff;
+                break;
+            case X64_REG_EDX:
+                value = frame->rdx & 0xffffffff;
+                break;
+            case X64_REG_EBX:
+                value = frame->rbx & 0xffffffff;
+                break;
+            case X64_REG_ESI:
+                value = frame->rsi & 0xffffffff;
+                break;
+            case X64_REG_EDI:
+                value = frame->rdi & 0xffffffff;
+                break;
         }
         mapping->ops->write(guest, mapping, offset, value, size);
     } else {
         uint64_t value = mapping->ops->read(guest, mapping, offset, size);
         switch (reg) {
-            case X64_REG_EAX: frame->rax = value & 0xffffffff; break;
-            case X64_REG_ECX: frame->rcx = value & 0xffffffff; break;
-            case X64_REG_EDX: frame->rdx = value & 0xffffffff; break;
-            case X64_REG_EBX: frame->rbx = value & 0xffffffff; break;
-            case X64_REG_ESI: frame->rsi = value & 0xffffffff; break;
-            case X64_REG_EDI: frame->rdi = value & 0xffffffff; break;
+            case X64_REG_EAX:
+                frame->rax = value & 0xffffffff;
+                break;
+            case X64_REG_ECX:
+                frame->rcx = value & 0xffffffff;
+                break;
+            case X64_REG_EDX:
+                frame->rdx = value & 0xffffffff;
+                break;
+            case X64_REG_EBX:
+                frame->rbx = value & 0xffffffff;
+                break;
+            case X64_REG_ESI:
+                frame->rsi = value & 0xffffffff;
+                break;
+            case X64_REG_EDI:
+                frame->rdi = value & 0xffffffff;
+                break;
         }
     }
 
@@ -383,7 +418,7 @@ static error_t handle_mmio_access(struct guest *guest, struct mapping *mapping,
 void handle_ept_fault(struct guest *guest, gpaddr_t gpaddr, hv_frame_t *frame) {
     gpaddr_t aligned_gpaddr = ALIGN_DOWN(gpaddr, PAGE_SIZE);
     struct mapping *mapping = NULL;
-    LIST_FOR_EACH (m, &guest->mappings, struct mapping, next){
+    LIST_FOR_EACH (m, &guest->mappings, struct mapping, next) {
         if (m->gpaddr <= gpaddr && gpaddr < m->gpaddr + m->len) {
             mapping = m;
             break;
@@ -397,21 +432,25 @@ void handle_ept_fault(struct guest *guest, gpaddr_t gpaddr, hv_frame_t *frame) {
     if (mapping) {
         if (mapping->ops->read || mapping->ops->write) {
             if (!frame) {
-                WARN_DBG("accessing mmio with frame=NULL, filling a zeroed page for gpaddr=%p",
-                         gpaddr);
+                WARN_DBG(
+                    "accessing mmio with frame=NULL, filling a zeroed page for gpaddr=%p",
+                    gpaddr);
                 map_page = true;
             } else {
                 map_page = false;
-                DEBUG_ASSERT(mapping->ops->read != NULL && mapping->ops->write != NULL);
+                DEBUG_ASSERT(mapping->ops->read != NULL
+                             && mapping->ops->write != NULL);
                 ASSERT_OK(handle_mmio_access(guest, mapping, gpaddr, frame));
                 frame->rip += frame->inst_len;
             }
         } else {
             map_page = true;
             DEBUG_ASSERT(mapping->ops->fill_page != NULL);
-            ASSERT_OK(mapping->ops->fill_page(guest, mapping, page, aligned_gpaddr, &filled_len));
+            ASSERT_OK(mapping->ops->fill_page(guest, mapping, page,
+                                              aligned_gpaddr, &filled_len));
         }
-        // TRACE("%s_fill: gpaddr=%p, filled_len=%p", mapping->ops->name, gpaddr, filled_len);
+        // TRACE("%s_fill: gpaddr=%p, filled_len=%p", mapping->ops->name,
+        // gpaddr, filled_len);
     } else {
         map_page = true;
         // TRACE("anon_fill: gpaddr=%p", gpaddr);
@@ -421,9 +460,8 @@ void handle_ept_fault(struct guest *guest, gpaddr_t gpaddr, hv_frame_t *frame) {
         DEBUG_ASSERT(filled_len <= PAGE_SIZE);
         memset(&page[filled_len], 0, PAGE_SIZE - filled_len);
 
-        uint64_t ept_attrs = 0x07; // allow RWX access
-        uint64_t *entry = ept_traverse(guest, aligned_gpaddr,
-                                       ept_attrs, true);
+        uint64_t ept_attrs = 0x07;  // allow RWX access
+        uint64_t *entry = ept_traverse(guest, aligned_gpaddr, ept_attrs, true);
         *entry = paddr | ept_attrs;
     }
 }

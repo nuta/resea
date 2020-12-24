@@ -4,7 +4,6 @@
 typedef struct {
 } trap_frame_t;
 
-
 typedef struct {
 } hv_frame_t;
 

@@ -3,20 +3,26 @@
 
 static enum x64_reg decode_rm(uint8_t rm) {
     switch (rm) {
-        case 0b000: return X64_REG_EAX;
-        case 0b001: return X64_REG_ECX;
-        case 0b010: return X64_REG_EDX;
-        case 0b011: return X64_REG_EBX;
-        case 0b110: return X64_REG_ESI;
-        case 0b111: return X64_REG_EDI;
-        default: NYI();
+        case 0b000:
+            return X64_REG_EAX;
+        case 0b001:
+            return X64_REG_ECX;
+        case 0b010:
+            return X64_REG_EDX;
+        case 0b011:
+            return X64_REG_EBX;
+        case 0b110:
+            return X64_REG_ESI;
+        case 0b111:
+            return X64_REG_EDI;
+        default:
+            NYI();
     }
 }
 
 /// Decodes a memory access instruction.
 error_t decode_inst(uint8_t *inst, int inst_len, enum x64_op *op,
                     enum x64_reg *reg, bool *reg_to_mem, int *size) {
-
     // TRACE("decode_inst: inst=[%02x, %02x, %02x, %02x, %02x, ...], len=%d",
     //       inst[0], inst[1], inst[2], inst[3], inst[4], inst_len);
 

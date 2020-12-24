@@ -1,7 +1,7 @@
+#include <driver/dma.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <driver/dma.h>
 
 /// Allocates a DMA area which is accessible from the DMA controller.
 dma_t dma_alloc(size_t len, unsigned flags) {
@@ -42,7 +42,8 @@ void dma_flush_read(dma_t dma) {
     __sync_synchronize();
 }
 
-/// Returns the "device" or "bus" address, which is accessible from the DMA controller.
+/// Returns the "device" or "bus" address, which is accessible from the DMA
+/// controller.
 daddr_t dma_daddr(dma_t dma) {
     return dma->daddr;
 }
@@ -56,4 +57,3 @@ vaddr_t dma_vaddr(dma_t dma) {
 uint8_t *dma_buf(dma_t dma) {
     return (uint8_t *) dma_vaddr(dma);
 }
-

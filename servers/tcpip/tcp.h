@@ -1,9 +1,9 @@
 #ifndef __TCP_H__
 #define __TCP_H__
 
-#include <list.h>
 #include "mbuf.h"
 #include "tcpip.h"
+#include <list.h>
 
 enum tcp_state {
     TCP_STATE_LISTEN,

@@ -1,7 +1,7 @@
+#include "test.h"
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <string.h>
-#include "test.h"
 #define NUM_PTRS 16
 
 void malloc_test(void) {

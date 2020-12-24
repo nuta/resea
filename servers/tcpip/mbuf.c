@@ -1,6 +1,6 @@
+#include "mbuf.h"
 #include <resea/malloc.h>
 #include <string.h>
-#include "mbuf.h"
 
 mbuf_t mbuf_alloc(void) {
     struct mbuf *m = malloc(sizeof(*m));

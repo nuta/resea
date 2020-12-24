@@ -1,10 +1,10 @@
+#include "webapi.h"
+#include <resea/async.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <resea/async.h>
 #include <string.h>
 #include <vprintf.h>
-#include "webapi.h"
 
 static list_t clients;
 static task_t tcpip_server;
@@ -157,7 +157,8 @@ void main(void) {
                             m.type = TCPIP_ACCEPT_MSG;
                             m.tcpip_accept.handle = m.tcpip_new_client.handle;
                             ASSERT_OK(ipc_call(tcpip_server, &m));
-                            handle_t new_handle = m.tcpip_accept_reply.new_handle;
+                            handle_t new_handle =
+                                m.tcpip_accept_reply.new_handle;
 
                             struct client *client = malloc(sizeof(*client));
                             client->handle = new_handle;
@@ -182,7 +183,7 @@ void main(void) {
                 break;
             };
             default:
-               discard_unknown_message(&m);
+                discard_unknown_message(&m);
         }
     }
 }

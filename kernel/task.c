@@ -1,13 +1,13 @@
-#include <arch.h>
-#include <list.h>
-#include <config.h>
-#include <string.h>
-#include <message.h>
 #include "task.h"
 #include "ipc.h"
 #include "kdebug.h"
 #include "printk.h"
 #include "syscall.h"
+#include <arch.h>
+#include <config.h>
+#include <list.h>
+#include <message.h>
+#include <string.h>
 
 /// All tasks.
 static struct task tasks[CONFIG_NUM_TASKS];
@@ -83,8 +83,8 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     }
 
     // Initialize fields.
-    TRACE("new task #%d: %s (pager=%s)",
-          task->tid, name, pager ? pager->name : NULL);
+    TRACE("new task #%d: %s (pager=%s)", task->tid, name,
+          pager ? pager->name : NULL);
     task->state = TASK_BLOCKED;
     task->flags = flags;
     task->notifications = 0;
@@ -127,8 +127,8 @@ error_t task_destroy(struct task *task) {
     }
 
     if (task->ref_count > 0) {
-        WARN_DBG("%s (#%d) is still referenced from %d tasks",
-                 task->name, task->tid, task->ref_count);
+        WARN_DBG("%s (#%d) is still referenced from %d tasks", task->name,
+                 task->tid, task->ref_count);
         return ERR_IN_USE;
     }
 
@@ -283,10 +283,11 @@ error_t task_unlisten_irq(unsigned irq) {
 /// Maps a memory page in the task's virtual memory space. `kpage` is a memory
 /// page which provides a memory page for arch-specific page table structures.
 ///
-/// Please note that this is the most DANGEROUS operation in system calls. A user
-/// task can map the whole physical memory space including the kernel data area.
+/// Please note that this is the most DANGEROUS operation in system calls. A
+/// user task can map the whole physical memory space including the kernel data
+/// area.
 __mustuse error_t vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
-                                paddr_t kpage, unsigned flags) {
+                         paddr_t kpage, unsigned flags) {
     DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(kpage, PAGE_SIZE));
@@ -386,7 +387,7 @@ void task_dump(void) {
         }
 
         INFO("#%d %s: state=%s, src=%d", task->tid, task->name,
-                states[task->state], task->src);
+             states[task->state], task->src);
         if (!list_is_empty(&task->senders)) {
             INFO("  senders:");
             LIST_FOR_EACH (sender, &task->senders, struct task, sender_next) {

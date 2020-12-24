@@ -1,17 +1,17 @@
+#include "bootfs.h"
+#include "elf.h"
+#include "mm.h"
+#include "ool.h"
+#include "pages.h"
+#include "task.h"
 #include <list.h>
-#include <resea/ipc.h>
 #include <resea/async.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/task.h>
 #include <resea/timer.h>
 #include <string.h>
-#include "elf.h"
-#include "bootfs.h"
-#include "pages.h"
-#include "task.h"
-#include "mm.h"
-#include "ool.h"
 
 // for sparse
 error_t ipc_call_pager(struct message *m);
@@ -44,7 +44,7 @@ static void spawn_servers(void) {
     // Launch servers in bootfs.
     int num_launched = 0;
     struct bootfs_file *file;
-    for (int i =0; (file = bootfs_open(i)) != NULL; i++) {
+    for (int i = 0; (file = bootfs_open(i)) != NULL; i++) {
         // Autostart server names (separated by whitespace).
         char *startups = AUTOSTARTS;
 
@@ -196,15 +196,17 @@ void main(void) {
                 ASSERT(task->pager == vm_task->tid);
                 ASSERT(m.page_fault.task == task->tid);
 
-                paddr_t paddr =
-                    pager(task, m.page_fault.vaddr, m.page_fault.ip, m.page_fault.fault);
+                paddr_t paddr = pager(task, m.page_fault.vaddr, m.page_fault.ip,
+                                      m.page_fault.fault);
                 if (!paddr) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
                     break;
                 }
 
-                vaddr_t aligned_vaddr = ALIGN_DOWN(m.page_fault.vaddr, PAGE_SIZE);
-                ASSERT_OK(map_page(task, aligned_vaddr, paddr, MAP_TYPE_READWRITE, false));
+                vaddr_t aligned_vaddr =
+                    ALIGN_DOWN(m.page_fault.vaddr, PAGE_SIZE);
+                ASSERT_OK(map_page(task, aligned_vaddr, paddr,
+                                   MAP_TYPE_READWRITE, false));
                 r.type = PAGE_FAULT_REPLY_MSG;
 
                 ipc_reply(task->tid, &r);
@@ -233,8 +235,8 @@ void main(void) {
 
                 vaddr_t vaddr;
                 paddr_t paddr = m.vm_alloc_pages.paddr;
-                error_t err =
-                    alloc_phy_pages(task, &vaddr, &paddr, m.vm_alloc_pages.num_pages);
+                error_t err = alloc_phy_pages(task, &vaddr, &paddr,
+                                              m.vm_alloc_pages.num_pages);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
@@ -276,7 +278,8 @@ void main(void) {
                 break;
             }
             case TASK_LAUNCH_MSG: {
-                task_t task_or_err = task_spawn_by_cmdline(m.task_launch.name_and_cmdline);
+                task_t task_or_err =
+                    task_spawn_by_cmdline(m.task_launch.name_and_cmdline);
                 free(m.task_launch.name_and_cmdline);
                 if (IS_ERROR(task_or_err)) {
                     ipc_reply_err(m.src, task_or_err);
@@ -313,7 +316,7 @@ void main(void) {
                 break;
             }
             default:
-               discard_unknown_message(&m);
+                discard_unknown_message(&m);
         }
     }
 }

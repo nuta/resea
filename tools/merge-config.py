@@ -2,6 +2,7 @@
 import argparse
 from kconfiglib import Kconfig
 
+
 def main():
     parser = argparse.ArgumentParser(description="Merge .config files.")
     parser.add_argument("--outfile", required=True)
@@ -16,6 +17,7 @@ def main():
         config.load_config(config_file, replace=False)
 
     config.write_config(args.outfile)
+
 
 if __name__ == "__main__":
     main()

@@ -1,10 +1,10 @@
+#include "e1000.h"
+#include <driver/dma.h>
+#include <driver/io.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <driver/io.h>
-#include <driver/dma.h>
 #include <string.h>
-#include "e1000.h"
 
 static io_t regs_io;
 static dma_t rx_descs_dma;
@@ -104,7 +104,8 @@ static void e1000_init(void) {
     while ((io_read32(regs_io, REG_CTRL) & CTRL_RST) != 0) {}
 
     // Link up!
-    io_write32(regs_io, REG_CTRL, io_read32(regs_io, REG_CTRL) | CTRL_SLU | CTRL_ASDE);
+    io_write32(regs_io, REG_CTRL,
+               io_read32(regs_io, REG_CTRL) | CTRL_SLU | CTRL_ASDE);
 
     // Fill Multicast Table Array with zeros.
     for (int i = 0; i < 0x80; i++) {
@@ -143,17 +144,15 @@ static void e1000_init(void) {
     io_flush_write(regs_io);
 }
 
-
 void e1000_init_for_pci(uint32_t bar0_addr, uint32_t bar0_len) {
     regs_io = io_alloc_memory_fixed(bar0_addr, bar0_len, IO_ALLOC_CONTINUOUS);
-    rx_descs_dma = dma_alloc(sizeof(struct rx_desc) * NUM_RX_DESCS,
-                             DMA_ALLOC_FROM_DEVICE);
-    tx_descs_dma = dma_alloc(sizeof(struct tx_desc) * NUM_TX_DESCS,
-                             DMA_ALLOC_TO_DEVICE);
-    rx_buffers_dma = dma_alloc(BUFFER_SIZE * NUM_RX_DESCS,
-                               DMA_ALLOC_FROM_DEVICE);
-    tx_buffers_dma = dma_alloc(BUFFER_SIZE * NUM_TX_DESCS,
-                               DMA_ALLOC_TO_DEVICE);
+    rx_descs_dma =
+        dma_alloc(sizeof(struct rx_desc) * NUM_RX_DESCS, DMA_ALLOC_FROM_DEVICE);
+    tx_descs_dma =
+        dma_alloc(sizeof(struct tx_desc) * NUM_TX_DESCS, DMA_ALLOC_TO_DEVICE);
+    rx_buffers_dma =
+        dma_alloc(BUFFER_SIZE * NUM_RX_DESCS, DMA_ALLOC_FROM_DEVICE);
+    tx_buffers_dma = dma_alloc(BUFFER_SIZE * NUM_TX_DESCS, DMA_ALLOC_TO_DEVICE);
 
     e1000_init();
 }

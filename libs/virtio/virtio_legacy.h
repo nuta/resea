@@ -1,8 +1,8 @@
 #ifndef __VIRTIO_VIRTIO_LEGACY_H__
 #define __VIRTIO_VIRTIO_LEGACY_H__
 
-#include <types.h>
 #include <driver/dma.h>
+#include <types.h>
 
 #define VIRTIO_REG_DEVICE_FEATS       0x00
 #define VIRTIO_REG_DRIVER_FEATS       0x04
@@ -20,7 +20,6 @@
 #define DEVICE_STATUS_FEATURES_OK        8
 #define DEVICE_STATUS_DEVICE_NEEDS_RESET 64
 #define DEVICE_STATUS_FAILED             128
-
 
 struct virtq_desc {
     uint64_t addr;
@@ -57,6 +56,7 @@ struct virtio_virtq_legacy {
 };
 
 struct virtio_ops;
-error_t virtio_legacy_find_device(int device_type, struct virtio_ops **ops, uint8_t *irq);
+error_t virtio_legacy_find_device(int device_type, struct virtio_ops **ops,
+                                  uint8_t *irq);
 
 #endif

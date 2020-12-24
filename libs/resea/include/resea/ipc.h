@@ -1,8 +1,8 @@
 #ifndef __RESEA_IPC_H__
 #define __RESEA_IPC_H__
 
-#include <types.h>
 #include <message.h>
+#include <types.h>
 
 error_t ipc_send(task_t dst, struct message *m);
 error_t ipc_send_noblock(task_t dst, struct message *m);

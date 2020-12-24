@@ -40,7 +40,7 @@ static void printchar(__unused struct vprintf_context *ctx, char ch) {
 
 /// Prints a message. See vprintf() for detailed formatting specifications.
 void printk(const char *fmt, ...) {
-    struct vprintf_context ctx = { .printchar = printchar };
+    struct vprintf_context ctx = {.printchar = printchar};
     va_list vargs;
     va_start(vargs, fmt);
     vprintf_with_context(&ctx, fmt, vargs);

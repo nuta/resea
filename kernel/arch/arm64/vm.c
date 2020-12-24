@@ -1,9 +1,9 @@
+#include "vm.h"
 #include <arch.h>
-#include <task.h>
-#include <syscall.h>
 #include <printk.h>
 #include <string.h>
-#include "vm.h"
+#include <syscall.h>
+#include <task.h>
 
 static uint64_t *traverse_page_table(uint64_t *table, vaddr_t vaddr,
                                      paddr_t kpage, uint64_t attrs) {
@@ -33,11 +33,11 @@ static uint64_t *traverse_page_table(uint64_t *table, vaddr_t vaddr,
     return &table[NTH_LEVEL_INDEX(1, vaddr)];
 }
 
-error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
-                unsigned flags) {
+error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
+                    paddr_t kpage, unsigned flags) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
-    uint64_t attrs = 1 << 6; // user
+    uint64_t attrs = 1 << 6;  // user
     switch (MAP_TYPE(flags)) {
         case MAP_TYPE_READONLY:
             attrs = ARM64_PAGE_MEMATTR_READONLY << 6;
@@ -47,7 +47,8 @@ error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpa
             break;
     }
 
-    uint64_t *entry = traverse_page_table(task->arch.page_table, vaddr, kpage, attrs);
+    uint64_t *entry =
+        traverse_page_table(task->arch.page_table, vaddr, kpage, attrs);
     if (!entry) {
         return (kpage) ? ERR_TRY_AGAIN : ERR_EMPTY;
     }

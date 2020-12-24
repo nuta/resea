@@ -1,13 +1,13 @@
-#include <list.h>
-#include <resea/ipc.h>
-#include <string.h>
-#include <resea/malloc.h>
-#include <resea/printf.h>
 #include "elf.h"
 #include "fs.h"
 #include "mm.h"
 #include "proc.h"
 #include "syscall.h"
+#include <list.h>
+#include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <string.h>
 
 // FIXME:
 void on_new_data(void);
@@ -21,8 +21,8 @@ void main(void) {
     // Spawn the init process.
     // FIXME: char *argv[] = { "init", NULL };
     // char *argv[] = { "busybox", "sh", "-c", "uname", NULL };
-    char *argv[] = { "/bin/sh", NULL };
-    char *envp[] = { NULL };
+    char *argv[] = {"/bin/sh", NULL};
+    char *envp[] = {NULL};
     errno_t errno = proc_execve(init_proc, "/bin/sh", argv, envp);
     if (errno < 0) {
         PANIC("failed to spawn the init process: %d", errno);
@@ -94,7 +94,7 @@ void main(void) {
                 break;
             }
             default:
-               discard_unknown_message(&m);
+                discard_unknown_message(&m);
         }
     }
 }

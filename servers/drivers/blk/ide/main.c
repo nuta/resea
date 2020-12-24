@@ -1,28 +1,29 @@
-#include <resea/printf.h>
-#include <resea/malloc.h>
-#include <resea/ipc.h>
-#include <driver/io.h>
-#include <string.h>
 #include "ide.h"
+#include <driver/io.h>
+#include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <string.h>
 
 #define BUF_SIZE 8192
 static io_t ide_io;
 
 static void ide_init(offset_t sector) {
-  io_write8(ide_io, IDE_REG_SECCNT, 1);
-  io_write8(ide_io, IDE_REG_LBA_LO, sector & 0xff);
-  io_write8(ide_io, IDE_REG_LBA_MID, (sector >> 8) & 0xff);
-  io_write8(ide_io, IDE_REG_LBA_HI, (sector >> 16) & 0xff);
-  io_write8(ide_io, IDE_REG_DRIVE,
-            IDE_DRIVE_LBA | IDE_DRIVE_PRIMARY | ((sector >> 24) & 0x0f));
+    io_write8(ide_io, IDE_REG_SECCNT, 1);
+    io_write8(ide_io, IDE_REG_LBA_LO, sector & 0xff);
+    io_write8(ide_io, IDE_REG_LBA_MID, (sector >> 8) & 0xff);
+    io_write8(ide_io, IDE_REG_LBA_HI, (sector >> 16) & 0xff);
+    io_write8(ide_io, IDE_REG_DRIVE,
+              IDE_DRIVE_LBA | IDE_DRIVE_PRIMARY | ((sector >> 24) & 0x0f));
 }
 
 static void ide_wait(void) {
-    while ((io_read8(ide_io, IDE_REG_STATUS) & IDE_STATUS_DRQ) == 0);
+    while ((io_read8(ide_io, IDE_REG_STATUS) & IDE_STATUS_DRQ) == 0)
+        ;
 }
 
 static error_t ide_read(offset_t sector, uint8_t *buf, size_t len) {
-    ASSERT(IS_ALIGNED(len , sizeof(uint16_t)));
+    ASSERT(IS_ALIGNED(len, sizeof(uint16_t)));
     ide_init(sector);
     io_write8(ide_io, IDE_REG_CMD, IDE_CMD_READ);
     ide_wait();
@@ -37,7 +38,7 @@ static error_t ide_read(offset_t sector, uint8_t *buf, size_t len) {
 }
 
 static error_t ide_write(offset_t sector, const uint8_t *buf, size_t len) {
-    ASSERT(IS_ALIGNED(len , sizeof(uint16_t)));
+    ASSERT(IS_ALIGNED(len, sizeof(uint16_t)));
     ide_init(sector);
     io_write8(ide_io, IDE_REG_CMD, IDE_CMD_WRITE);
     ide_wait();
@@ -82,7 +83,8 @@ void main(void) {
                 break;
             }
             case BLK_WRITE_MSG: {
-                error_t err = ide_write(m.blk_write.sector, m.blk_write.data, m.blk_write.data_len);
+                error_t err = ide_write(m.blk_write.sector, m.blk_write.data,
+                                        m.blk_write.data_len);
                 free(m.blk_write.data);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);

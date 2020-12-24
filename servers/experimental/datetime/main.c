@@ -1,7 +1,7 @@
+#include <resea/datetime.h>
 #include <resea/ipc.h>
 #include <resea/printf.h>
 #include <resea/timer.h>
-#include <resea/datetime.h>
 #include <string.h>
 
 static uint64_t timeofday;
