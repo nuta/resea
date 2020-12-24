@@ -97,6 +97,8 @@ PYTHON3    ?= python3
 CARGO      ?= cargo
 SPARSE     ?= sparse
 
+GIT_REVISION  := $(shell git rev-parse --short HEAD)
+
 CFLAGS += -g3 -std=c11 -ffreestanding -fno-builtin -nostdlib -nostdinc
 CFLAGS += -Wall -Wextra
 CFLAGS += -Werror=implicit-function-declaration
@@ -112,7 +114,7 @@ CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
 CFLAGS += -I$(BUILD_DIR)/include
 CFLAGS += -Ikernel/arch/$(ARCH)/machines/$(MACHINE)/include
-CFLAGS += -DVERSION='"$(VERSION)"'
+CFLAGS += -DVERSION='"$(VERSION)"' -DGIT_REVISION='"$(GIT_REVISION)"'
 CFLAGS += -DBOOTELF_PATH='"$(boot_elf)"'
 CFLAGS += -DBOOTFS_PATH='"$(bootfs_bin)"'
 CFLAGS += -DAUTOSTARTS='"$(autostarts)"'

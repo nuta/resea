@@ -122,7 +122,7 @@ static void map_bootelf(struct bootinfo *bootinfo,
 
 /// Initializes the kernel and starts the first task.
 __noreturn void kmain(struct bootinfo *bootinfo) {
-    printf("\nBooting Resea " VERSION "...\n");
+    printf("\nBooting Resea " VERSION " (" GIT_REVISION ")...\n");
     task_init();
     mp_start();
 
