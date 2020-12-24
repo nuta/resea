@@ -10,6 +10,7 @@
 struct task {
     bool in_use;
     task_t tid;
+    task_t pager;
     char name[32];
     char cmdline[512];
     struct bootfs_file *file;
@@ -43,6 +44,8 @@ struct task_watcher {
 
 extern struct task *vm_task;
 
+struct task *task_alloc(task_t pager);
+void task_free(struct task *task);
 task_t task_spawn(struct bootfs_file *file, const char *cmdline);
 task_t task_spawn_by_cmdline(const char *name_with_cmdline);
 struct task *task_lookup(task_t tid);

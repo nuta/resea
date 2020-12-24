@@ -73,6 +73,10 @@ namespace discovery {
 
 /// High-level task managemnt.
 namespace task {
+    /// Allocates an unused TASK ID.
+    rpc alloc(pager: task) -> (task: task);
+    /// Deallocates an unused TASK ID.
+    rpc free(task: task) -> ();
     /// Launches a task.
     rpc launch(name_and_cmdline: str) -> (task: task);
     /// Watches a task. If the task exits, the watcher task receives an async

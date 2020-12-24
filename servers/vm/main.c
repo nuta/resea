@@ -171,6 +171,7 @@ void main(void) {
 
                 struct task *task = task_lookup(m.exception.task);
                 ASSERT(task);
+                ASSERT(task->pager == vm_task->tid);
                 ASSERT(m.exception.task == task->tid);
 
                 if (m.exception.exception == EXP_GRACE_EXIT) {
@@ -192,6 +193,7 @@ void main(void) {
 
                 struct task *task = task_lookup(m.page_fault.task);
                 ASSERT(task);
+                ASSERT(task->pager == vm_task->tid);
                 ASSERT(m.page_fault.task == task->tid);
 
                 paddr_t paddr =
@@ -241,6 +243,35 @@ void main(void) {
                 r.type = VM_ALLOC_PAGES_REPLY_MSG;
                 r.vm_alloc_pages_reply.vaddr = vaddr;
                 r.vm_alloc_pages_reply.paddr = paddr;
+                ipc_reply(m.src, &r);
+                break;
+            }
+            case TASK_ALLOC_MSG: {
+                struct task *task = task_alloc(m.task_alloc.pager);
+                if (!task) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                r.type = TASK_ALLOC_REPLY_MSG;
+                r.task_alloc_reply.task = task->tid;
+                ipc_reply(m.src, &r);
+                break;
+            }
+            case TASK_FREE_MSG: {
+                struct task *task = task_lookup(m.task_free.task);
+                if (!task) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                if (task->pager != m.src) {
+                    ipc_reply_err(m.src, ERR_NOT_PERMITTED);
+                    break;
+                }
+
+                task_free(task);
+                r.type = TASK_FREE_REPLY_MSG;
                 ipc_reply(m.src, &r);
                 break;
             }

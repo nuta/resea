@@ -25,10 +25,30 @@ struct task *task_lookup(task_t tid) {
     return task;
 }
 
+/// Allocates a task ID.
+struct task *task_alloc(task_t pager) {
+    // Look for an unused task ID.
+    struct task *task = NULL;
+    for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
+        if (!tasks[i].in_use) {
+            task = &tasks[i];
+            task->in_use = true;
+            task->pager = pager;
+            return task;
+        }
+    }
+
+    return NULL;
+}
+
+/// Deallocates a task ID.
+void task_free(struct task *task) {
+    task->in_use = false;
+}
+
 static void init_task_struct(struct task *task, const char *name,
     struct bootfs_file *file, void *file_header, struct elf64_ehdr *ehdr,
     const char *cmdline) {
-    task->in_use = true;
     task->file = file;
     task->file_header = file_header;
     task->ehdr = ehdr;
@@ -38,6 +58,7 @@ static void init_task_struct(struct task *task, const char *name,
         task->phdrs = NULL;
     }
 
+    task->pager = vm_task->tid;
     task->free_vaddr = (vaddr_t) __free_vaddr;
     task->ool_buf = 0;
     task->ool_len = 0;
@@ -55,16 +76,7 @@ static void init_task_struct(struct task *task, const char *name,
 
 task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     TRACE("launching %s...", file->name);
-
-    // Look for an unused task ID.
-    struct task *task = NULL;
-    for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
-        if (!tasks[i].in_use) {
-            task = &tasks[i];
-            break;
-        }
-    }
-
+    struct task *task = task_alloc(vm_task->tid);
     if (!task) {
         PANIC("too many tasks");
     }
