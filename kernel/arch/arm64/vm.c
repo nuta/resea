@@ -37,14 +37,16 @@ error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
                     paddr_t kpage, unsigned flags) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
-    uint64_t attrs = 1 << 6;  // user
+    uint64_t attrs;
     switch (MAP_TYPE(flags)) {
         case MAP_TYPE_READONLY:
-            attrs = ARM64_PAGE_MEMATTR_READONLY << 6;
+            attrs = ARM64_PAGE_MEMATTR_READONLY;
             break;
         case MAP_TYPE_READWRITE:
-            attrs = ARM64_PAGE_MEMATTR_READWRITE << 6;
+            attrs = ARM64_PAGE_MEMATTR_READWRITE;
             break;
+        default:
+            UNREACHABLE();
     }
 
     uint64_t *entry =
