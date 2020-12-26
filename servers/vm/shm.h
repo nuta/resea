@@ -11,8 +11,8 @@ struct shm {
 
 #define NUM_SHARED_MEMS_MAX 32
 int shm_check_available(void);
-int shm_create(size_t size, paddr_t paddr, int slot);
-vaddr_t shm_map(struct task* task, int shm_id, bool writable);
+error_t shm_create(struct task* task, size_t size, int* slot);
+error_t shm_map(struct task* task, int shm_id, bool writable,vaddr_t *vaddr);
 void shm_close(int shm_id);
 struct shm *shm_lookup(int shm_id);
 #endif

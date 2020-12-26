@@ -285,39 +285,25 @@ void main(void) {
                 break;
             }
             case SHM_CREATE_MSG: {
-                // check if slot is available
-                int slot = shm_check_available();
-                if (slot < 0) {
-                    ipc_reply_err(m.src, ERR_UNAVAILABLE);
-                }
                 struct task *task = task_lookup(m.src);
                 ASSERT(task);
-                // allocate paddr
-                paddr_t paddr;
-                vaddr_t vaddr;
-                error_t err =
-                    alloc_phy_pages(task, &vaddr, &paddr, m.shm_create.size);
+                int slot;
+                err = shm_create(task, m.shm_create.size, &slot);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
                 }
-                int shm_id = shm_create(m.shm_create.size, paddr, slot);
                 m.type = SHM_CREATE_REPLY_MSG;
-                m.shm_create_reply.shm_id = shm_id;
+                m.shm_create_reply.shm_id = slot;
                 ipc_reply(m.src, &m);
                 break;
             }
             case SHM_MAP_MSG: {
-                struct shm *shm = shm_lookup(m.shm_map.shm_id);
-                if (shm == NULL) {
-                    ipc_reply_err(m.src, ERR_NOT_FOUND);
-                    break;
-                }
                 struct task *task = task_lookup(m.src);
-
-                vaddr_t vaddr = alloc_virt_pages(task, shm->len);
-                int flag = (m.shm_map.writable) ? MAP_W : 0;
-                error_t err = map_page(task, vaddr, shm->paddr, flag, true);
+                error_t err;
+                vaddr_t vaddr;
+                err =
+                    shm_map(task, m.shm_map.shm_id, m.shm_map.writable, &vaddr);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
