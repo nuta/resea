@@ -8,15 +8,14 @@ void main(void) {
     ASSERT_OK(ipc_serve("shm_test_server"));
     struct message m;
     error_t err;
-    // create shared memory
+    // Create shared memory
     m.type = SHM_CREATE_MSG;
     m.shm_create.size = 100;
     err = ipc_call(INIT_TASK, &m);
     ASSERT_OK(err);
     int shm_id = m.shm_create_reply.shm_id;
     ASSERT_OK(shm_id);
-    INFO("shm_id: %d", shm_id);
-    // map shm
+    // Map shm
     bzero(&m, sizeof(m));
     m.type = SHM_MAP_MSG;
     m.shm_map.shm_id = shm_id;
@@ -24,8 +23,7 @@ void main(void) {
     err = ipc_call(INIT_TASK, &m);
     ASSERT_OK(err);
     vaddr_t vaddr = m.shm_map_reply.vaddr;
-    INFO("vaddr : %ld", vaddr);
-    // write to vaddr
+    // Write to vaddr
     char buf[32] = TEST_DATA;
     memcpy((void*) vaddr, buf, sizeof(buf));
     while (true) {

@@ -18,7 +18,7 @@ error_t shm_create(struct task* task, size_t size, int* slot) {
     if (slot < 0) {
         return ERR_UNAVAILABLE;
     }
-    paddr_t paddr;
+    paddr_t paddr = 0;
     vaddr_t vaddr;
     error_t err = alloc_phy_pages(task, &vaddr, &paddr, size);
     if (err != OK) {
