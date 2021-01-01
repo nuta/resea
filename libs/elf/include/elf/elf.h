@@ -37,6 +37,7 @@ struct elf32_ehdr {
     uint16_t e_shstrndx;
 } __packed;
 
+#define PT_NOTE 4
 struct elf64_phdr {
     uint32_t p_type;
     uint32_t p_flags;
@@ -57,6 +58,12 @@ struct elf32_phdr {
     uint32_t p_memsz;
     uint32_t p_flags;
     uint32_t p_align;
+} __packed;
+
+struct elf64_nhdr {
+    uint32_t n_namesz;
+    uint32_t n_descsz;
+    uint32_t n_type;
 } __packed;
 
 #ifdef __LP64__

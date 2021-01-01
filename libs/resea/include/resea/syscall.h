@@ -66,7 +66,8 @@ static inline int sys_console_read(char *buf, size_t len) {
 
 static inline error_t sys_kdebug(const char *cmd, size_t cmd_len, char *buf,
                                  size_t buf_len) {
-    return syscall(SYS_KDEBUG, (uintptr_t) cmd, cmd_len, (uintptr_t) buf, buf_len, 0);
+    return syscall(SYS_KDEBUG, (uintptr_t) cmd, cmd_len, (uintptr_t) buf,
+                   buf_len, 0);
 }
 
 #endif

@@ -1,8 +1,8 @@
+#include "test.h"
+#include <resea/datetime.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <resea/datetime.h>
 #include <string.h>
-#include "test.h"
 
 void datetime_test(void) {
     uint64_t timestamp, timestamp_new;

@@ -1,6 +1,6 @@
 # Default values for build system.
 export V         ?=
-export VERSION   ?= v0.7.0
+export VERSION   ?= v0.8.0
 export BUILD_DIR ?= build
 ifeq ($(shell uname), Darwin)
 LLVM_PREFIX ?= /usr/local/opt/llvm/bin/
@@ -21,7 +21,7 @@ ifeq ($(V),)
 endif
 
 # Determine if we need to load ".config".
-non_config_targets := defconfig olddefconfig menuconfig website book clean unittest
+non_config_targets := defconfig olddefconfig menuconfig mergeconfig website book clean unittest
 load_config := y
 ifeq ($(filter-out $(non_config_targets), $(MAKECMDGOALS)),)
 load_config :=
@@ -97,6 +97,8 @@ PYTHON3    ?= python3
 CARGO      ?= cargo
 SPARSE     ?= sparse
 
+GIT_REVISION  := $(shell git rev-parse --short HEAD)
+
 CFLAGS += -g3 -std=c11 -ffreestanding -fno-builtin -nostdlib -nostdinc
 CFLAGS += -Wall -Wextra
 CFLAGS += -Werror=implicit-function-declaration
@@ -112,7 +114,7 @@ CFLAGS += -fstack-size-section
 CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
 CFLAGS += -I$(BUILD_DIR)/include
 CFLAGS += -Ikernel/arch/$(ARCH)/machines/$(MACHINE)/include
-CFLAGS += -DVERSION='"$(VERSION)"'
+CFLAGS += -DVERSION='"$(VERSION)"' -DGIT_REVISION='"$(GIT_REVISION)"'
 CFLAGS += -DBOOTELF_PATH='"$(boot_elf)"'
 CFLAGS += -DBOOTFS_PATH='"$(bootfs_bin)"'
 CFLAGS += -DAUTOSTARTS='"$(autostarts)"'
@@ -181,6 +183,11 @@ defconfig: $(BUILD_DIR)/Kconfig.autogen
 olddefconfig: $(BUILD_DIR)/Kconfig.autogen
 	$(PROGRESS) "CONFIG"
 	./tools/config.py --olddefconfig
+
+.PHONY: mergeconfig
+mergeconfig: $(BUILD_DIR)/Kconfig.autogen
+	$(PROGRESS) "CONFIG"
+	./tools/merge-config.py --outfile=.config $(CONFIG_FILES)
 
 .PHONY: menuconfig
 menuconfig: $(BUILD_DIR)/Kconfig.autogen

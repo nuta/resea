@@ -1,19 +1,19 @@
-#include <resea/printf.h>
+#include "ethernet.h"
 #include "arp.h"
 #include "device.h"
-#include <endian.h>
-#include "ethernet.h"
 #include "ipv4.h"
 #include "mbuf.h"
+#include <endian.h>
+#include <resea/printf.h>
 
 void ethernet_transmit(struct device *device, enum ether_type type,
                        ipaddr_t *dst, mbuf_t payload) {
     ASSERT(dst->type == IP_TYPE_V4);
 
-
     ipv4addr_t next_router =
         (dst->v4 != IPV4_ADDR_BROADCAST && device_dst_is_gateway(device, dst))
-            ? device->gateway.v4 : dst->v4;
+            ? device->gateway.v4
+            : dst->v4;
 
     macaddr_t dst_macaddr;
     if (!arp_resolve(&device->arp_table, next_router, &dst_macaddr)) {

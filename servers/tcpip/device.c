@@ -1,8 +1,8 @@
-#include <resea/printf.h>
-#include <string.h>
 #include "device.h"
 #include "dhcp.h"
 #include "ipv4.h"
+#include <resea/printf.h>
+#include <string.h>
 
 static struct device devices[DEVICES_MAX];
 
@@ -65,7 +65,7 @@ device_t device_new(const char *name, transmit_fn_t transmit,
     memset(&device->ipaddr, 0, sizeof(ipaddr_t));
     memset(&device->netmask, 0, sizeof(ipaddr_t));
     memset(&device->gateway, 0, sizeof(ipaddr_t));
-    strncpy(device->name, name, DEVICE_NAME_LEN);
+    strncpy2(device->name, name, DEVICE_NAME_LEN);
     arp_init(&device->arp_table);
     return device;
 }

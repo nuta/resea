@@ -1,23 +1,23 @@
-#include <arch.h>
-#include <kdebug.h>
-#include <printk.h>
-#include <syscall.h>
-#include <task.h>
 #include "interrupt.h"
 #include "mp.h"
 #include "serial.h"
 #include "task.h"
 #include "trap.h"
 #include "vm.h"
+#include <arch.h>
+#include <kdebug.h>
+#include <printk.h>
+#include <syscall.h>
+#include <task.h>
 
 static uint32_t ioapic_read(uint8_t reg) {
-    *((uint32_t *) from_paddr(IOAPIC_ADDR)) = reg;
-    return *((uint32_t *) from_paddr(IOAPIC_ADDR + 0x10));
+    *((uint32_t *) paddr2ptr(IOAPIC_ADDR)) = reg;
+    return *((uint32_t *) paddr2ptr(IOAPIC_ADDR + 0x10));
 }
 
 static void ioapic_write(uint8_t reg, uint32_t data) {
-    *((uint32_t *) from_paddr(IOAPIC_ADDR)) = reg;
-    *((uint32_t *) from_paddr(IOAPIC_ADDR + 0x10)) = data;
+    *((uint32_t *) paddr2ptr(IOAPIC_ADDR)) = reg;
+    *((uint32_t *) paddr2ptr(IOAPIC_ADDR + 0x10)) = data;
 }
 
 static void ack_irq(void) {
@@ -76,8 +76,9 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
     switch (vec) {
         case EXP_PAGE_FAULT: {
             if (frame->error & (1 << 3)) {
-                PANIC("#PF: RSVD bit violation "
-                      "(page table is presumably corrupted!)");
+                PANIC(
+                    "#PF: RSVD bit violation "
+                    "(page table is presumably corrupted!)");
             }
 
             vaddr_t addr = asm_read_cr2();
@@ -136,10 +137,9 @@ void x64_handle_interrupt(uint8_t vec, struct iframe *frame) {
     }
 }
 
-uintmax_t x64_handle_syscall(uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,
-                             uintmax_t arg4, uintmax_t arg5, uintmax_t type) {
+long x64_handle_syscall(long n, long a1, long a2, long a3, long a4, long a5) {
     lock();
-    uint64_t ret = handle_syscall(arg1, arg2, arg3, arg4, arg5, type);
+    long ret = handle_syscall(n, a1, a2, a3, a4, a5);
     unlock();
     return ret;
 }

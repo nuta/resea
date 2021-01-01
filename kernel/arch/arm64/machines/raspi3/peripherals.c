@@ -1,7 +1,7 @@
-#include <types.h>
-#include <printk.h>
-#include <machine/peripherals.h>
 #include "asm.h"
+#include <machine/peripherals.h>
+#include <printk.h>
+#include <types.h>
 
 static inline void delay(unsigned clocks) {
     while (clocks-- > 0) {
@@ -19,8 +19,8 @@ static void mbox_call(uint8_t ch, const uint32_t *mbox) {
 
     // Send a message.
     unsigned int value =
-        (((vaddr_t) mbox) & ~0xf) // The address of the mailbox to be sent.
-        | (ch & 0xf)              // Channel.
+        (((vaddr_t) mbox) & ~0xf)  // The address of the mailbox to be sent.
+        | (ch & 0xf)               // Channel.
         ;
     mmio_write(MBOX_WRITE, value);
 
@@ -39,24 +39,24 @@ static void mbox_call(uint8_t ch, const uint32_t *mbox) {
 void uart_init(void) {
     // Set up the clock.
     uint32_t __aligned(16) m[9];
-    m[0] = 9*4;                  // The size of the meessage.
+    m[0] = 9 * 4;  // The size of the meessage.
     m[1] = MBOX_CODE_REQUEST;
     m[2] = MBOX_TAG_SETCLKRATE;  // Set clock rate.
     m[3] = 12;                   // The value length.
     m[4] = 8;                    // The clock ID.
     m[5] = 2;                    // UART clock
-    m[6] = 4000000;              // The clock rate = 4MHz. (TODO: is 4MHz too low?)
-    m[7] = 0;                    // Allow turbo settings.
+    m[6] = 4000000;  // The clock rate = 4MHz. (TODO: is 4MHz too low?)
+    m[7] = 0;        // Allow turbo settings.
     m[8] = MBOX_TAG_LAST;
     mbox_call(MBOX_CH_PROP, m);
 
     // Initialize GPIO pins #14 and #15 as alternative function 0 (UART0).
     mmio_write(GPIO_FSEL1,
-        (mmio_read(GPIO_FSEL1) & ~((0b111 << 12)|(0b111 << 15)))
-        | (0b100 << 12) | (0b100 << 15));
+               (mmio_read(GPIO_FSEL1) & ~((0b111 << 12) | (0b111 << 15)))
+                   | (0b100 << 12) | (0b100 << 15));
 
-    // See "GPIO Pull-up/down Clock Registers (GPPUDCLKn)" in "BCM2835 ARM Peripherals"
-    // for more details on this initializaiton sequence.
+    // See "GPIO Pull-up/down Clock Registers (GPPUDCLKn)" in "BCM2835 ARM
+    // Peripherals" for more details on this initializaiton sequence.
     mmio_write(GPIO_PUD, 0);
     delay(150);
     mmio_write(GPIO_PUDCLK0, (1 << 14) | (1 << 15));
@@ -84,14 +84,15 @@ int kdebug_readchar(void) {
 }
 
 void arch_printchar(char ch) {
-    while (mmio_read(UART0_FR) & (1 << 5));
+    while (mmio_read(UART0_FR) & (1 << 5))
+        ;
     mmio_write(UART0_DR, ch);
 }
 
 #ifdef CONFIG_FORCE_REBOOT_BY_WATCHDOG
 static void watchdog_init(void) {
-	mmio_write(PM_WDOG, PM_PASSWORD | CONFIG_WATCHDOG_TIMEOUT << 16);
-	mmio_write(PM_RSTC, PM_PASSWORD | PM_WDOG_FULL_RESET);
+    mmio_write(PM_WDOG, PM_PASSWORD | CONFIG_WATCHDOG_TIMEOUT << 16);
+    mmio_write(PM_RSTC, PM_PASSWORD | PM_WDOG_FULL_RESET);
 }
 #endif
 

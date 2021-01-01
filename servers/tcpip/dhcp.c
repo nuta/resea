@@ -1,10 +1,10 @@
-#include <list.h>
-#include <resea/malloc.h>
-#include <resea/printf.h>
-#include <endian.h>
 #include "dhcp.h"
 #include "dns.h"
 #include "udp.h"
+#include <endian.h>
+#include <list.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
 
 static udp_sock_t udp_sock;
 
@@ -98,7 +98,7 @@ static void dhcp_process(struct device *device, mbuf_t payload) {
 #define CHECK_OPTION_LEN(option_type, option_len, opt_struct)                  \
     if (option_len != sizeof(opt_struct)) {                                    \
         WARN_DBG("invalid dhcp option len (%d) for option type %d",            \
-            option_len, option_type);                                          \
+                 option_len, option_type);                                     \
         return;                                                                \
     }
 
@@ -169,7 +169,8 @@ static void dhcp_process(struct device *device, mbuf_t payload) {
                 device, &(ipaddr_t){.type = IP_TYPE_V4, .v4 = your_ipaddr},
                 &(ipaddr_t){.type = IP_TYPE_V4, .v4 = netmask},
                 &(ipaddr_t){.type = IP_TYPE_V4, .v4 = gateway});
-            dns_set_name_server(&(ipaddr_t){.type = IP_TYPE_V4, .v4 = dns_server });
+            dns_set_name_server(
+                &(ipaddr_t){.type = IP_TYPE_V4, .v4 = dns_server});
             break;
         default:
             WARN("ignoring a DHCP message (dhcp_type=%d)", type);

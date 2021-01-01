@@ -1,14 +1,16 @@
+#include "interrupt.h"
+#include "trap.h"
+#include "vm.h"
 #include <arch.h>
 #include <string.h>
 #include <syscall.h>
 #include <task.h>
-#include "interrupt.h"
-#include "trap.h"
-#include "vm.h"
 
 static uint64_t pml4_tables[CONFIG_NUM_TASKS][512] __aligned(PAGE_SIZE);
-static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(STACK_SIZE);
-static uint8_t syscall_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(STACK_SIZE);
+static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(
+    STACK_SIZE);
+static uint8_t syscall_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(
+    STACK_SIZE);
 static uint8_t xsave_areas[CONFIG_NUM_TASKS][4096] __aligned(4096);
 
 error_t arch_task_create(struct task *task, vaddr_t ip) {
@@ -27,10 +29,14 @@ error_t arch_task_create(struct task *task, vaddr_t ip) {
     task->arch.gsbase = 0;
     task->arch.fsbase = 0;
 
+#ifdef CONFIG_HYPERVISOR
+    task->arch.vmx.launched = false;
+#endif
+
     // Initialize the page table.
-    task->arch.pml4 = into_paddr(pml4_tables[task->tid]);
-    uint64_t *table = from_paddr(task->arch.pml4);
-    memcpy(table, from_paddr((paddr_t) __kernel_pml4), PAGE_SIZE);
+    task->arch.pml4 = ptr2paddr(pml4_tables[task->tid]);
+    uint64_t *table = paddr2ptr(task->arch.pml4);
+    memcpy(table, paddr2ptr((paddr_t) __kernel_pml4), PAGE_SIZE);
 
     // The kernel no longer access a virtual address around 0x0000_0000. Unmap
     // the area to catch bugs (especially NULL pointer dereferences in the
@@ -85,6 +91,13 @@ void arch_task_switch(struct task *prev, struct task *next) {
     asm_write_cr3(next->arch.pml4);
     // Enable ABI emulation if needed.
     ARCH_CPUVAR->abi_emu = (next->flags & TASK_ABI_EMU) ? 1 : 0;
+
+#ifdef CONFIG_HYPERVISOR
+    // Execute VMLAUNCH instead of switching into the task.
+    ARCH_CPUVAR->hv =
+        (((next->flags & TASK_HV) != 0) && !next->arch.vmx.launched) ? 1 : 0;
+#endif
+
     // Update the kernel stack for syscall and interrupt/exception handlers.
     ARCH_CPUVAR->rsp0 = next->arch.syscall_stack;
     ARCH_CPUVAR->tss.rsp0 = next->arch.interrupt_stack;
@@ -94,6 +107,7 @@ void arch_task_switch(struct task *prev, struct task *next) {
     // think we should implement "lazy FPU switching".
     asm_xsave(prev->arch.xsave);
     asm_xrstor(next->arch.xsave);
+
     // Restore registers (resume the next thread).
     switch_context(&prev->arch.rsp, &next->arch.rsp);
 }

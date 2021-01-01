@@ -2,7 +2,7 @@
 .intel_syntax noprefix
 
 #define MULTIBOOT_MAGIC    0x1badb002
-#define MULTIBOOT_FLAGS    0x00000002 // memory map
+#define MULTIBOOT_FLAGS    0x00000040 // memory map
 #define MULTIBOOT_CHECKSUM -(MULTIBOOT_MAGIC + MULTIBOOT_FLAGS)
 
 .code32

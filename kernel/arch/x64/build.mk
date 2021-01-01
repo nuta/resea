@@ -1,4 +1,6 @@
 objs-y += task.o vm.o serial.o boot.o init.o interrupt.o trap.o mp.o
+objs-$(CONFIG_HYPERVISOR) += hv.o
+objs-$(CONFIG_X64_PRINTK_IN_SCREEN) += screen.o
 
 QEMU  ?= qemu-system-x86_64
 BOCHS ?= bochs
@@ -10,6 +12,10 @@ QEMUFLAGS += -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
 QEMUFLAGS += -no-reboot -boot d -device isa-debug-exit -d guest_errors,unimp
 QEMUFLAGS += $(if $(SMP), -smp $(SMP))
 QEMUFLAGS += $(if $(GUI),,-nographic)
+
+ifneq ($(VMX),)
+QEMUFLAGS += -enable-kvm -cpu host,vmx
+endif
 
 ifneq ($(HD_AUDIO),)
 QEMUFLAGS += -device intel-hda,debug=3 -device hda-duplex,debug=3

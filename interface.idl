@@ -25,6 +25,28 @@ rpc page_fault(task: task, vaddr: vaddr, ip: vaddr, fault: uint) -> ();
 /// initiated a system call.
 rpc abi_hook(task: task, type: int, frame: trap_frame) -> (frame: trap_frame);
 
+/// Hardware-assisted hypervisor like Linux's KVM.
+namespace hv {
+    /// The x64 guest calls this RPC before it starts to retrieve some initial
+    /// guest states.
+    rpc x64_start(task: task) -> (guest_rip: uint64, ept_pml4: paddr, initial_rbx: uint64);
+
+    /// The guest calls this RPC when it enters an idle state or waits for interrupt.
+    rpc halt(task: task) -> ();
+    /// The guest calls this RPC when it tried to perform an invalid access to a
+    /// guest physical memory address (EPT violation in Intel VT).
+    rpc guest_page_fault(task: task, gpaddr: gpaddr, frame: hv_frame) -> (frame: hv_frame);
+    /// IO port read access from the guest.
+    rpc ioport_read(task: task, port: uint16, size: size) -> (value: uint32);
+    /// IO port write access from the guest.
+    rpc ioport_write(task: task, port: uint16, size: size, value: uint32) -> ();
+
+    /// Receive a pending message from the server.
+    oneway await(task: task);
+    /// Injects an IRQ into the guest.
+    oneway inject_irq(irq_bitmap: uint32);
+}
+
 /// IPC benchmarking.
 namespace benchmark {
     /// No-op. Do nothing but returns the value as it is.
@@ -51,6 +73,10 @@ namespace discovery {
 
 /// High-level task managemnt.
 namespace task {
+    /// Allocates an unused TASK ID.
+    rpc alloc(pager: task) -> (task: task);
+    /// Deallocates an unused TASK ID.
+    rpc free(task: task) -> ();
     /// Launches a task.
     rpc launch(name_and_cmdline: str) -> (task: task);
     /// Watches a task. If the task exits, the watcher task receives an async

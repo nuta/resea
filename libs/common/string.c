@@ -9,7 +9,7 @@ size_t strlen(const char *s) {
     return len;
 }
 
-char *strncpy(char *dst, const char *src, size_t num) {
+char *strncpy2(char *dst, const char *src, size_t num) {
     size_t i = 0;
     while (i < num - 1 && src[i] != '\0') {
         dst[i] = src[i];
@@ -72,7 +72,7 @@ char *strchr(const char *s, int c) {
 
 int atoi(const char *s) {
     int x = 0;
-    while ('0' <= *s && *s <= '9')  {
+    while ('0' <= *s && *s <= '9') {
         x = (x * 10) + (*s - '0');
         s++;
     }

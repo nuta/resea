@@ -1,9 +1,10 @@
 #ifndef __DEVICE_H__
 #define __DEVICE_H__
 
+#include "pci.h"
+#include <list.h>
 #include <resea/handle.h>
 #include <types.h>
-#include <list.h>
 
 enum bus_type {
     BUS_TYPE_PCI,

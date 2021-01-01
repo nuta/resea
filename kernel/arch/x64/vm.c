@@ -1,8 +1,8 @@
+#include "vm.h"
 #include <arch.h>
-#include <task.h>
 #include <printk.h>
 #include <string.h>
-#include "vm.h"
+#include <task.h>
 
 static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
                                      paddr_t kpage, uint64_t attrs) {
@@ -10,7 +10,7 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
     ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     ASSERT(IS_ALIGNED(kpage, PAGE_SIZE));
 
-    uint64_t *table = from_paddr(pml4);
+    uint64_t *table = paddr2ptr(pml4);
     for (int level = 4; level > 1; level--) {
         int index = NTH_LEVEL_INDEX(level, vaddr);
         if (!table[index]) {
@@ -19,9 +19,8 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
             }
 
             // The PDPT, PD or PT is not allocated.
-            memset(from_paddr(kpage), 0, PAGE_SIZE);
+            memset(paddr2ptr(kpage), 0, PAGE_SIZE);
             table[index] = kpage;
-            kpage = 0;
             return NULL;
         }
 
@@ -29,17 +28,25 @@ static uint64_t *traverse_page_table(uint64_t pml4, vaddr_t vaddr,
         table[index] = table[index] | attrs;
 
         // Go into the next level paging table.
-        table = (uint64_t *) from_paddr(ENTRY_PADDR(table[index]));
+        table = (uint64_t *) paddr2ptr(ENTRY_PADDR(table[index]));
     }
 
     return &table[NTH_LEVEL_INDEX(1, vaddr)];
 }
 
-error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
-                unsigned flags) {
+error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
+                    paddr_t kpage, unsigned flags) {
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
-    uint64_t attrs = (1 << 2) | 1 /* user, present */;
-    attrs |= (flags & MAP_W) ? X64_PAGE_WRITABLE : 0;
+
+    uint64_t attrs = X64_PAGE_PRESENT | X64_PAGE_USER;
+    switch (MAP_TYPE(flags)) {
+        case MAP_TYPE_READONLY:
+            // Present pages are readable by default.
+            break;
+        case MAP_TYPE_READWRITE:
+            attrs |= X64_PAGE_WRITABLE;
+            break;
+    }
 
     uint64_t *entry = traverse_page_table(task->arch.pml4, vaddr, kpage, attrs);
     if (!entry) {

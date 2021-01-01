@@ -1,5 +1,5 @@
-#include <types.h>
 #include <printk.h>
+#include <types.h>
 
 void arch_printchar(char ch) {
 }

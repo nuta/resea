@@ -1,8 +1,9 @@
+#include "serial.h"
+#include "screen.h"
 #include <arch.h>
+#include <kdebug.h>
 #include <printk.h>
 #include <task.h>
-#include <kdebug.h>
-#include "serial.h"
 
 static void serial_write(char ch) {
     while ((asm_in8(IOPORT_SERIAL + LSR) & TX_READY) == 0) {}
@@ -10,6 +11,10 @@ static void serial_write(char ch) {
 }
 
 void arch_printchar(char ch) {
+#ifdef CONFIG_X64_PRINTK_IN_SCREEN
+    x64_screen_printchar(ch);
+#endif
+
     serial_write(ch);
     if (ch == '\n') {
         serial_write('\r');

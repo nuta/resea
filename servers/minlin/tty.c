@@ -1,9 +1,9 @@
-#include <resea/ipc.h>
-#include <resea/syscall.h>
-#include <resea/printf.h>
-#include <driver/irq.h>
-#include "fs.h"
 #include "tty.h"
+#include "fs.h"
+#include <driver/irq.h>
+#include <resea/ipc.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
 
 #define QUEUE_LEN 32
 static char queue[QUEUE_LEN];
@@ -65,12 +65,14 @@ static int release(__unused struct file *file) {
     return 0;
 }
 
-static ssize_t ioctl(__unused struct file *file, __unused unsigned cmd, __unused unsigned arg) {
+static ssize_t ioctl(__unused struct file *file, __unused unsigned cmd,
+                     __unused unsigned arg) {
     NYI();
     return 0;
 }
 
-static loff_t seek(__unused struct file *file, __unused loff_t off, __unused int whence) {
+static loff_t seek(__unused struct file *file, __unused loff_t off,
+                   __unused int whence) {
     NYI();
     return 0;
 }

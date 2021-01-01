@@ -12,7 +12,8 @@ error_t task_destroy(task_t task) {
 
 __noreturn void task_exit(void) {
     sys_task_exit();
-    for (;;);
+    for (;;)
+        ;
 }
 
 task_t task_self(void) {
@@ -20,7 +21,7 @@ task_t task_self(void) {
 }
 
 error_t vm_map(task_t task, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
-                 unsigned flags) {
+               unsigned flags) {
     return sys_vm_map(task, vaddr, src, kpage, flags);
 }
 

@@ -1,13 +1,13 @@
+#include "task.h"
+#include "bootfs.h"
+#include "mm.h"
+#include <elf/elf.h>
+#include <message.h>
+#include <resea/async.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/task.h>
-#include <resea/ipc.h>
-#include <resea/async.h>
-#include <elf/elf.h>
 #include <string.h>
-#include <message.h>
-#include "task.h"
-#include "mm.h"
-#include "bootfs.h"
 
 extern char __free_vaddr[];
 
@@ -25,10 +25,30 @@ struct task *task_lookup(task_t tid) {
     return task;
 }
 
+/// Allocates a task ID.
+struct task *task_alloc(task_t pager) {
+    // Look for an unused task ID.
+    struct task *task = NULL;
+    for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
+        if (!tasks[i].in_use) {
+            task = &tasks[i];
+            task->in_use = true;
+            task->pager = pager;
+            return task;
+        }
+    }
+
+    return NULL;
+}
+
+/// Deallocates a task ID.
+void task_free(struct task *task) {
+    task->in_use = false;
+}
+
 static void init_task_struct(struct task *task, const char *name,
-    struct bootfs_file *file, void *file_header, struct elf64_ehdr *ehdr,
-    const char *cmdline) {
-    task->in_use = true;
+                             struct bootfs_file *file, void *file_header,
+                             struct elf64_ehdr *ehdr, const char *cmdline) {
     task->file = file;
     task->file_header = file_header;
     task->ehdr = ehdr;
@@ -38,6 +58,8 @@ static void init_task_struct(struct task *task, const char *name,
         task->phdrs = NULL;
     }
 
+    task->pager = vm_task->tid;
+    task->in_use = true;
     task->free_vaddr = (vaddr_t) __free_vaddr;
     task->ool_buf = 0;
     task->ool_len = 0;
@@ -46,25 +68,16 @@ static void init_task_struct(struct task *task, const char *name,
     task->received_ool_from = 0;
     list_init(&task->ool_sender_queue);
     list_nullify(&task->ool_sender_next);
-    strncpy(task->name, name, sizeof(task->name));
-    strncpy(task->cmdline, cmdline, sizeof(task->cmdline));
-    strncpy(task->waiting_for, "", sizeof(task->waiting_for));
+    strncpy2(task->name, name, sizeof(task->name));
+    strncpy2(task->cmdline, cmdline, sizeof(task->cmdline));
+    strncpy2(task->waiting_for, "", sizeof(task->waiting_for));
     list_init(&task->page_areas);
     list_init(&task->watchers);
 }
 
 task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     TRACE("launching %s...", file->name);
-
-    // Look for an unused task ID.
-    struct task *task = NULL;
-    for (int i = 0; i < CONFIG_NUM_TASKS; i++) {
-        if (!tasks[i].in_use) {
-            task = &tasks[i];
-            break;
-        }
-    }
-
+    struct task *task = task_alloc(vm_task->tid);
     if (!task) {
         PANIC("too many tasks");
     }
@@ -74,17 +87,22 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
 
     // Ensure that it's an ELF file.
     struct elf64_ehdr *ehdr = (struct elf64_ehdr *) file_header;
-    if (memcmp(ehdr->e_ident, "\x7f" "ELF", 4) != 0) {
+    if (memcmp(ehdr->e_ident,
+               "\x7f"
+               "ELF",
+               4)
+        != 0) {
         WARN("%s: invalid ELF magic, ignoring...", file->name);
         return ERR_NOT_ACCEPTABLE;
     }
 
+    init_task_struct(task, file->name, file, file_header, ehdr, cmdline);
+
     // Create a new task for the server.
-    error_t err =
-        task_create(task->tid, file->name, ehdr->e_entry, task_self(), TASK_ALL_CAPS);
+    error_t err = task_create(task->tid, file->name, ehdr->e_entry, task_self(),
+                              TASK_ALL_CAPS);
     ASSERT_OK(err);
 
-    init_task_struct(task, file->name, file, file_header, ehdr, cmdline);
     return task->tid;
 }
 
@@ -127,7 +145,7 @@ void task_kill(struct task *task) {
         free(w);
     }
 
-    LIST_FOR_EACH(pa, &task->page_areas, struct page_area, next) {
+    LIST_FOR_EACH (pa, &task->page_areas, struct page_area, next) {
         free_page_area(pa);
     }
 
@@ -165,7 +183,7 @@ void service_register(struct task *task, const char *name) {
     // Add the server into the service list.
     struct service *service = malloc(sizeof(*service));
     service->task = task->tid;
-    strncpy(service->name, name, sizeof(service->name));
+    strncpy2(service->name, name, sizeof(service->name));
     list_nullify(&service->next);
     list_push_back(&services, &service->next);
 
@@ -181,7 +199,7 @@ void service_register(struct task *task, const char *name) {
             ipc_reply(task->tid, &m);
 
             // The task no longer wait for the service. Clear the field.
-            strncpy(task->waiting_for, "", sizeof(task->waiting_for));
+            strncpy2(task->waiting_for, "", sizeof(task->waiting_for));
         }
     }
 }
@@ -195,7 +213,7 @@ task_t service_wait(struct task *task, const char *name) {
 
     // The service is not yet available. Block the caller task until the
     // server is registered by `ipc_serve()`.
-    strncpy(task->waiting_for, name, sizeof(task->waiting_for));
+    strncpy2(task->waiting_for, name, sizeof(task->waiting_for));
     return ERR_WOULD_BLOCK;
 }
 
@@ -206,8 +224,7 @@ void service_warn_deadlocked_tasks(void) {
             WARN(
                 "%s still waiting for a missing service '%s', "
                 "did you forgot to enable a server in the build config?",
-                task->name, task->waiting_for
-            );
+                task->name, task->waiting_for);
         }
     }
 }

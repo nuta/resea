@@ -1,6 +1,6 @@
+#include "pci.h"
 #include <driver/io.h>
 #include <resea/printf.h>
-#include "pci.h"
 
 static io_t io;
 
@@ -34,7 +34,8 @@ void pci_enable_bus_master(struct pci_device *dev) {
     write32(dev->bus, dev->slot, PCI_CONFIG_COMMAND, value);
 }
 
-error_t pci_find_device(uint16_t vendor, uint16_t device, int *bus_out, int *slot_out) {
+error_t pci_find_device(uint16_t vendor, uint16_t device, int *bus_out,
+                        int *slot_out) {
     for (int bus = 0; bus <= 255; bus++) {
         for (int slot = 0; slot < 32; slot++) {
             uint16_t vendor2 = read16(bus, slot, PCI_CONFIG_VENDOR_ID);
@@ -56,7 +57,8 @@ error_t pci_find_device(uint16_t vendor, uint16_t device, int *bus_out, int *slo
     return ERR_NOT_FOUND;
 }
 
-uint32_t pci_read_config(struct pci_device *dev, unsigned offset, unsigned size) {
+uint32_t pci_read_config(struct pci_device *dev, unsigned offset,
+                         unsigned size) {
     switch (size) {
         case 1:
             return read8(dev->bus, dev->slot, offset);
@@ -73,11 +75,11 @@ void pci_write_config(struct pci_device *dev, unsigned offset, unsigned size,
                       uint32_t value) {
     switch (size) {
         case 1:
-//            write8(dev->bus, dev->slot, offset, value);
+            //            write8(dev->bus, dev->slot, offset, value);
             NYI();
             break;
         case 2:
-//            write16(dev->bus, dev->slot, offset, value);
+            //            write16(dev->bus, dev->slot, offset, value);
             NYI();
             break;
         case 4:

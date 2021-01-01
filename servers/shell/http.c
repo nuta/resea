@@ -1,9 +1,9 @@
 #include "http.h"
-#include <resea/ipc.h>
 #include <resea/async.h>
+#include <resea/ctype.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <resea/ctype.h>
 #include <string.h>
 
 static task_t tcpip_server;
@@ -52,11 +52,12 @@ static error_t parse_ipaddr(const char *str, uint32_t *ip_addr) {
     return OK;
 }
 
-static error_t resolve_url(const char *url, uint32_t *ip_addr, uint16_t *port, char **path) {
+static error_t resolve_url(const char *url, uint32_t *ip_addr, uint16_t *port,
+                           char **path) {
     char *s_orig = strdup(url);
     char *s = s_orig;
     if (strstr(s, "http://") == s) {
-        s += 7; // strlen("http://")
+        s += 7;  // strlen("http://")
     } else {
         WARN_DBG("the url must start with http://");
         return ERR_INVALID_ARG;
@@ -74,7 +75,7 @@ static error_t resolve_url(const char *url, uint32_t *ip_addr, uint16_t *port, c
         }
     } else {
         *sep = '\0';
-        char *port_str = sep + 1; // Next to ':'.
+        char *port_str = sep + 1;  // Next to ':'.
         s = strchr(port_str, '/');
         *s++ = '\0';
         *port = atoi(port_str);
@@ -144,13 +145,14 @@ void http_get(const char *url) {
                             break;
                         }
                         default:
-                        WARN("unknown async message type (type=%d)", m.type);
+                            WARN("unknown async message type (type=%d)",
+                                 m.type);
                     }
                 }
                 break;
             };
             default:
-               discard_unknown_message(&m);
+                discard_unknown_message(&m);
         }
     }
 }

@@ -13,7 +13,8 @@ void panic_lock(void);
 #else
 void printf(const char *fmt, ...);
 __noreturn void task_exit(void);
-static inline void panic_lock(void) {}
+static inline void panic_lock(void) {
+}
 #endif
 
 const char *__program_name(void);
@@ -51,15 +52,14 @@ const char *__program_name(void);
 
 #define WARN_DBG(fmt, ...)                                                     \
     do {                                                                       \
-        printf(SGR_WARN_DBG "[%s] WARN: " fmt SGR_RESET "\n", __program_name(),\
-               ##__VA_ARGS__);                                                 \
+        printf(SGR_WARN_DBG "[%s] WARN: " fmt SGR_RESET "\n",                  \
+               __program_name(), ##__VA_ARGS__);                               \
     } while (0)
-
 
 #define METRIC(key, value)                                                     \
     do {                                                                       \
-        printf("{\"type\":\"metric\",\"key\":\"%s\",\"value\":%lld}\n",        \
-               name, value);                                                   \
+        printf("{\"type\":\"metric\",\"key\":\"%s\",\"value\":%lld}\n", name,  \
+               value);                                                         \
     } while (0)
 
 #define HEXDUMP(ptr, len)                                                      \
@@ -84,10 +84,7 @@ const char *__program_name(void);
     do {                                                                       \
         if (!(expr)) {                                                         \
             printf(SGR_ERR "[%s] %s:%d: ASSERTION FAILURE: %s" SGR_RESET "\n", \
-                   __program_name(),                                           \
-                   __FILE__,                                                   \
-                   __LINE__,                                                   \
-                   #expr);                                                     \
+                   __program_name(), __FILE__, __LINE__, #expr);               \
             backtrace();                                                       \
             halt();                                                            \
             __builtin_unreachable();                                           \
@@ -101,10 +98,7 @@ const char *__program_name(void);
         __typeof__(expr) __expr = (expr);                                      \
         if (IS_ERROR(__expr)) {                                                \
             printf(SGR_ERR "[%s] %s:%d: unexpected error (%s)\n" SGR_RESET,    \
-                   __program_name(),                                           \
-                   __FILE__,                                                   \
-                   __LINE__,                                                   \
-                   err2str(__expr));                                           \
+                   __program_name(), __FILE__, __LINE__, err2str(__expr));     \
             backtrace();                                                       \
             halt();                                                            \
             __builtin_unreachable();                                           \
@@ -155,7 +149,6 @@ const char *__program_name(void);
         halt();                                                                \
         __builtin_unreachable();                                               \
     } while (0)
-
 
 #if !defined(CONFIG_BUILD_DEBUG)
 #    undef DEBUG_ASSERT

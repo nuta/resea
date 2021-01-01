@@ -6,6 +6,7 @@ import struct
 SYMBOL_TABLE_EMPTY = bytes([0x53, 0x59, 0x4d, 0xb0])
 SYMBOL_TABLE_MAGIC = bytes([0x53, 0x59, 0x4d, 0x4c])
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("symbols_file")
@@ -20,7 +21,7 @@ def main():
     if image.find(SYMBOL_TABLE_EMPTY, offset + 1) >= 0:
         print(hex(offset), hex(image.find(SYMBOL_TABLE_EMPTY, offset + 1)))
         sys.exit("found multiple empty symbol tables (perhaps because " +
-            "SYMBOL_TABLE_EMPTY is not sufficiently long to be unique?)")
+                 "SYMBOL_TABLE_EMPTY is not sufficiently long to be unique?)")
 
     # Extract the NUM_SYMBOLS value.
     _, num_symbols = struct.unpack("<II", image[offset:offset+8])
@@ -39,7 +40,7 @@ def main():
     symbols = sorted(symbols.items(), key=lambda s: s[0])
     if len(symbols) > num_symbols:
         print(
-            f"too many symbols: max={num_symbols}, actual={len(symbols)} " \
+            f"too many symbols: max={num_symbols}, actual={len(symbols)} "
             + "(hint: increase NUM_SYMBOLS config)")
         symbols = symbols[:num_symbols]
 
@@ -53,6 +54,7 @@ def main():
     # Embed the symbol table.
     image = image[:offset] + symbol_table + image[offset + len(symbol_table):]
     open(args.executable, "wb").write(image)
+
 
 if __name__ == "__main__":
     main()

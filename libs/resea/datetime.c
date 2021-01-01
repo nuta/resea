@@ -1,10 +1,9 @@
-#include <types.h>
-#include <resea/printf.h>
 #include <resea/datetime.h>
+#include <resea/printf.h>
+#include <types.h>
 
 static bool is_leap_year(uint32_t year) {
-    return (((year % 4 == 0) && (year % 100 != 0)) ||
-        (year % 400 == 0));
+    return (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0));
 }
 
 uint64_t datetime_to_timestamp(struct datetime *datetime) {
@@ -18,13 +17,13 @@ uint64_t datetime_to_timestamp(struct datetime *datetime) {
 
     seconds_since_epoch = year * (365 * 86400);
     for (uint32_t i = 0; i < year; i++) {
-        if (is_leap_year(i+1970)) {
+        if (is_leap_year(i + 1970)) {
             seconds_since_epoch += 86400;
         }
     }
 
     for (uint32_t i = 1; i < datetime->month; i++) {
-        if (is_leap_year(year+1970) && i == 2) {
+        if (is_leap_year(year + 1970) && i == 2) {
             seconds_since_epoch += (86400 * 29);
         } else {
             seconds_since_epoch += (86400 * days_in_month[i - 1]);
@@ -54,7 +53,7 @@ void timestamp_to_datetime(uint64_t epoch, struct datetime *datetime) {
 
     year = 1970;
     day = 0;
-    while((day += (is_leap_year(year) ? 366 : 365)) <= epoch) {
+    while ((day += (is_leap_year(year) ? 366 : 365)) <= epoch) {
         year++;
     }
     datetime->year = year;

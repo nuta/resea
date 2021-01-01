@@ -3,11 +3,13 @@ import argparse
 import sys
 import re
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="A cross-platform text editing tool like egrep(1), sed(1), etc.")
     parser.add_argument("-f", "--filter", action="append", default=[])
-    parser.add_argument("-r", "--replace", nargs=2, action="append", default=[])
+    parser.add_argument("-r", "--replace", nargs=2,
+                        action="append", default=[])
     parser.add_argument("-u", "--uppercase", action="store_true")
     args = parser.parse_args()
 
@@ -25,6 +27,7 @@ def main():
         text = text.upper()
 
     print(text)
+
 
 if __name__ == "__main__":
     main()

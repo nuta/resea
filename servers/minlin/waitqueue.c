@@ -1,7 +1,7 @@
+#include "waitqueue.h"
+#include "proc.h"
 #include <resea/malloc.h>
 #include <string.h>
-#include "proc.h"
-#include "waitqueue.h"
 
 void waitqueue_init(struct waitqueue *wq) {
     list_init(&wq->queue);
@@ -24,8 +24,8 @@ void waitqueue_wake_one(struct waitqueue *wq) {
 }
 
 void waitqueue_wake_all(struct waitqueue *wq) {
-// FIXME:
-//    while (!list_is_empty(&old_queue)) {
-        waitqueue_wake_one(wq);
-//    }
+    // FIXME:
+    //    while (!list_is_empty(&old_queue)) {
+    waitqueue_wake_one(wq);
+    //    }
 }

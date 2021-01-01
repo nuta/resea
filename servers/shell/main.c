@@ -1,12 +1,12 @@
-#include <resea/ipc.h>
-#include <resea/printf.h>
-#include <resea/malloc.h>
-#include <resea/syscall.h>
-#include <driver/irq.h>
-#include <string.h>
 #include "commands.h"
+#include <driver/irq.h>
+#include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <resea/syscall.h>
+#include <string.h>
 
-#define BOLD "\e[1;34m" // Bold.
+#define BOLD             "\e[1;34m"  // Bold.
 #define PRINTF(fmt, ...) printf(BOLD fmt SGR_RESET, ##__VA_ARGS__)
 
 static void skip_whitespaces(char **cmdline) {
@@ -51,7 +51,7 @@ static void launch_task(int argc, char **argv) {
     char *name_and_cmdline = malloc(len);
     size_t offset = 0;
     for (int i = 0; i < argc; i++) {
-        strncpy(&name_and_cmdline[offset], argv[i], len - offset);
+        strncpy2(&name_and_cmdline[offset], argv[i], len - offset);
         offset += strlen(argv[i]);
         name_and_cmdline[offset++] = ' ';
     }
@@ -60,7 +60,7 @@ static void launch_task(int argc, char **argv) {
     struct message m;
     m.type = TASK_LAUNCH_MSG;
     m.task_launch.name_and_cmdline = name_and_cmdline;
-    error_t err = ipc_call(INIT_TASK, &m);
+    error_t err = ipc_call(VM_TASK, &m);
     free(name_and_cmdline);
     if (err != OK) {
         WARN("failed to launch '%s': %s", argv[0], err2str(err));
@@ -155,7 +155,7 @@ void main(void) {
                 }
                 break;
             default:
-               discard_unknown_message(&m);
+                discard_unknown_message(&m);
         }
     }
 }

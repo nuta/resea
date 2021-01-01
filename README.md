@@ -18,7 +18,7 @@ Features
 - Supports **x86_64** (with SMP), **64-bit ARM** (Raspberry Pi 3), and **ARMv6-M** (micro:bit).
 - Includes userspace servers like **TCP/IP protocol stack** and **FAT file system driver**.
 - Provides **easy-to-use APIs** and every components are written in **single-threaded event-driven** approarch. It makes really easy to understand how Resea works and debug your code.
-- Some attractive experimental features like **Linux ABI emulation** and **Rust support**.
+- Some attractive experimental features like **Linux ABI emulation**, **Rust support**, and **Hardware-assisted Hypervisor (like Linux's KVM)**.
 
 See **[Road Map](https://github.com/nuta/resea/projects/1)** for planned new features and improvements.
 
@@ -41,7 +41,7 @@ make run
 
 Community
 ---------
-If you have any questions, feel free to talk to us on [Gitter](https://gitter.im/resea/community).
+If you have any questions, feel free to talk to us on [Gitter](https://gitter.im/resea/community) or [IRC](https://kiwiirc.com/client/irc.freenode.net/resea).
 
 Contributing
 ------------

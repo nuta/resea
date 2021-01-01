@@ -1,12 +1,12 @@
+#include "udp.h"
+#include "checksum.h"
+#include "device.h"
+#include "ipv4.h"
+#include <endian.h>
 #include <list.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <string.h>
-#include "device.h"
-#include <endian.h>
-#include "ipv4.h"
-#include "udp.h"
-#include "checksum.h"
 
 static struct udp_socket sockets[UDP_SOCKETS_MAX];
 static list_t active_socks;

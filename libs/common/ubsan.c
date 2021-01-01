@@ -2,8 +2,8 @@
 // Undefined Behavior Sanitizer runtime (UBSan).
 // https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 //
-#include <ubsan.h>
 #include "print_macros.h"
+#include <ubsan.h>
 
 static void report_ubsan_event(const char *event) {
     PANIC("detected an undefined behavior: %s", event);

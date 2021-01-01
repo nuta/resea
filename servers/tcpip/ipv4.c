@@ -1,11 +1,11 @@
-#include <resea/printf.h>
+#include "ipv4.h"
 #include "checksum.h"
 #include "device.h"
-#include <endian.h>
-#include "ipv4.h"
 #include "icmp.h"
 #include "tcp.h"
 #include "udp.h"
+#include <endian.h>
+#include <resea/printf.h>
 
 void ipv4_transmit(ipv4addr_t dst, ip_proto_t proto, mbuf_t payload) {
     struct device *device = device_lookup(&(ipaddr_t){
@@ -91,7 +91,7 @@ void ipv4_receive(device_t device, mbuf_t pkt) {
             break;
         case IPV4_PROTO_ICMP:
             icmp_receive(&(ipaddr_t){.type = IP_TYPE_V4, .v4 = dst},
-                        &(ipaddr_t){.type = IP_TYPE_V4, .v4 = src}, pkt);
+                         &(ipaddr_t){.type = IP_TYPE_V4, .v4 = src}, pkt);
             break;
         default:
             WARN("unknown ip proto type: %x", header.proto);

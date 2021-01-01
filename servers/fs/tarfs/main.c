@@ -1,17 +1,17 @@
-#include <resea/printf.h>
-#include <resea/malloc.h>
+#include <list.h>
 #include <resea/handle.h>
 #include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
 #include <string.h>
-#include <list.h>
 
 extern char __tarball[];
 extern char __tarball_end[];
 static list_t files;
 
-#define TAR_TYPE_NORMAL   '0'
-#define TAR_TYPE_SYMLINK  '2'
-#define TAR_TYPE_DIR      '5'
+#define TAR_TYPE_NORMAL  '0'
+#define TAR_TYPE_SYMLINK '2'
+#define TAR_TYPE_DIR     '5'
 
 struct tar_header {
     char filename[100];
@@ -73,10 +73,10 @@ static void load_all_files(void) {
             (file->type == TAR_TYPE_SYMLINK) ? header->linked_to : NULL;
         memcpy(file->data, header->data, file->len);
         list_push_back(&files, &file->next);
-        header = (struct tar_header *)
-            ALIGN_UP((uintptr_t) header + sizeof(*header) + file->len, 512);
-        DBG("tarfs: %s (len=%d, type=%c) %d %p",
-            file->path, file->len, file->type);
+        header = (struct tar_header *) ALIGN_UP(
+            (uintptr_t) header + sizeof(*header) + file->len, 512);
+        DBG("tarfs: %s (len=%d, type=%c) %d %p", file->path, file->len,
+            file->type);
     }
 }
 
@@ -85,7 +85,7 @@ static struct file *open(const char *path) {
         path = &path[1];
     }
 
-    LIST_FOR_EACH(file, &files, struct file, next) {
+    LIST_FOR_EACH (file, &files, struct file, next) {
         if (!strcmp(file->path, path)) {
             if (file->linked_to) {
                 return open(file->linked_to);

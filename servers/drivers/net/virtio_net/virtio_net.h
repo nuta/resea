@@ -3,11 +3,11 @@
 
 #include <types.h>
 
-#define VIRTIO_NET_F_MAC      (1 << 5)
+#define VIRTIO_NET_F_MAC       (1 << 5)
 #define VIRTIO_NET_F_MRG_RXBUF (1 << 15)
-#define VIRTIO_NET_F_STATUS   (1 << 16)
-#define VIRTIO_NET_QUEUE_RX   0
-#define VIRTIO_NET_QUEUE_TX   1
+#define VIRTIO_NET_F_STATUS    (1 << 16)
+#define VIRTIO_NET_QUEUE_RX    0
+#define VIRTIO_NET_QUEUE_TX    1
 
 struct virtio_net_config {
     uint8_t mac[6];

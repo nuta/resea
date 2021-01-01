@@ -1,9 +1,9 @@
-#include <syscall.h>
 #include <arch.h>
+#include <syscall.h>
 #include <task.h>
 
-error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr, paddr_t kpage,
-                unsigned flags) {
+error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
+                    paddr_t kpage, unsigned flags) {
     return OK;
 }
 

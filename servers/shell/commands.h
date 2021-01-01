@@ -1,8 +1,9 @@
 #ifndef __COMMANDS_H__
 #define __COMMANDS_H__
 
-#include <types.h>
+#include <resea/syscall.h>
 #include <string.h>
+#include <types.h>
 
 struct command {
     const char *name;

@@ -1,12 +1,12 @@
 #ifndef __TASK_H__
 #define __TASK_H__
 
-#include <config.h>
-#include <types.h>
 #include <arch.h>
-#include <message.h>
-#include <list.h>
 #include <bitmap.h>
+#include <config.h>
+#include <list.h>
+#include <message.h>
+#include <types.h>
 
 /// The context switching time slice (# of ticks).
 #define TASK_TIME_SLICE ((CONFIG_TASK_TIME_SLICE_MS * TICK_HZ) / 1000)
@@ -35,14 +35,15 @@ STATIC_ASSERT(TASK_PRIORITY_MAX > 0);
 #define IDLE_TASK (&get_cpuvar()->idle_task)
 
 // Task capabilities.
-#define CAP_TASK    0
-#define CAP_IRQ     1
-#define CAP_IO      2
-#define CAP_MAP     3
-#define CAP_KDEBUG  4
-#define CAP_MAX     4
+#define CAP_TASK   0
+#define CAP_IRQ    1
+#define CAP_IO     2
+#define CAP_MAP    3
+#define CAP_KDEBUG 4
+#define CAP_MAX    4
 
-#define CAPABLE(task, cap) (bitmap_get((task)->caps, sizeof((task)->caps), cap) != 0)
+#define CAPABLE(task, cap)                                                     \
+    (bitmap_get((task)->caps, sizeof((task)->caps), cap) != 0)
 
 /// The task struct (so-called Task Control Block).
 struct task {
@@ -101,7 +102,7 @@ struct cpuvar {
 };
 
 __mustuse error_t task_create(struct task *task, const char *name, vaddr_t ip,
-                            struct task *pager, unsigned flags);
+                              struct task *pager, unsigned flags);
 __mustuse error_t task_destroy(struct task *task);
 __noreturn void task_exit(enum exception_type exp);
 void task_block(struct task *task);
@@ -111,7 +112,7 @@ struct task *task_lookup(task_t tid);
 struct task *task_lookup_unchecked(task_t tid);
 void task_switch(void);
 __mustuse error_t vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
-                                paddr_t kpage, unsigned flags);
+                         paddr_t kpage, unsigned flags);
 __mustuse error_t vm_unmap(struct task *task, vaddr_t vaddr);
 __mustuse error_t task_listen_irq(struct task *task, unsigned irq);
 __mustuse error_t task_unlisten_irq(unsigned irq);
@@ -135,7 +136,7 @@ void arch_task_switch(struct task *prev, struct task *next);
 void arch_enable_irq(unsigned irq);
 void arch_disable_irq(unsigned irq);
 __mustuse error_t arch_vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
-                          paddr_t kpage, unsigned flags);
+                              paddr_t kpage, unsigned flags);
 __mustuse error_t arch_vm_unmap(struct task *task, vaddr_t vaddr);
 paddr_t vm_resolve(struct task *task, vaddr_t vaddr);
 

@@ -3,11 +3,14 @@ import argparse
 import re
 import sys
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Greps memory leaks in the log")
-    parser.add_argument("--alloc-pattern", default="@alloc.+ (?P<id>[a-zA-Z0-9]+)")
-    parser.add_argument("--free-pattern", default="@free.+ (?P<id>[a-zA-Z0-9]+)")
+    parser.add_argument("--alloc-pattern",
+                        default="@alloc.+ (?P<id>[a-zA-Z0-9]+)")
+    parser.add_argument(
+        "--free-pattern", default="@free.+ (?P<id>[a-zA-Z0-9]+)")
     parser.add_argument("log_file")
     args = parser.parse_args()
 
@@ -30,6 +33,7 @@ def main():
 
     for leak in leaks:
         print(leak)
+
 
 if __name__ == "__main__":
     main()

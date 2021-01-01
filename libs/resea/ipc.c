@@ -1,7 +1,7 @@
 #include <resea/ipc.h>
-#include <resea/syscall.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
+#include <resea/syscall.h>
 #include <string.h>
 
 /// The internal buffer to receive ool payloads.
@@ -19,7 +19,7 @@ __weak error_t ipc_call_pager(struct message *m) {
     WARN("ignoring %s", msgtype2str(m->type));
     return OK;
 #else
-    return ipc_call(INIT_TASK, m);
+    return ipc_call(VM_TASK, m);
 #endif
 }
 
@@ -83,15 +83,15 @@ static void pre_recv(void) {
 #endif
 }
 
- static error_t post_recv(error_t err, struct message *m) {
+static error_t post_recv(error_t err, struct message *m) {
 #ifndef CONFIG_NOMMU
     if (!IS_ERROR(m->type) && m->type & MSG_OOL) {
         // Received a ool payload.
-        m->ool_ptr = (void *) ool_verify(m->src, (vaddr_t) m->ool_ptr,
-                                               m->ool_len);
+        m->ool_ptr =
+            (void *) ool_verify(m->src, (vaddr_t) m->ool_ptr, m->ool_len);
         if (!m->ool_ptr) {
-            WARN_DBG("received an invalid oolcopy payload from #%d: %s",
-                     m->src, err2str(err));
+            WARN_DBG("received an invalid oolcopy payload from #%d: %s", m->src,
+                     err2str(err));
             m->type = INVALID_MSG;
             return OK;
         }
@@ -111,7 +111,7 @@ static void pre_recv(void) {
     // Handle the case when m.type is negative: a message represents an error
     // (sent by `ipc_send_err()`).
     return (IS_OK(err) && m->type < 0) ? m->type : err;
- }
+}
 
 error_t ipc_send(task_t dst, struct message *m) {
     void *saved_ool_ptr = m->ool_ptr;
@@ -194,10 +194,8 @@ task_t ipc_lookup(const char *name) {
 
 /// Discards an unknown message.
 void discard_unknown_message(struct message *m) {
-    OOPS("received an unknown message (%s [%d]%s)",
-         msgtype2str(m->type),
-         MSG_ID(m->type),
-         (m->type & MSG_OOL) ? ", ool" : "",
+    OOPS("received an unknown message (%s [%d]%s)", msgtype2str(m->type),
+         MSG_ID(m->type), (m->type & MSG_OOL) ? ", ool" : "",
          (m->type & MSG_STR) ? ", str" : "");
 
     if (m->type & MSG_OOL) {

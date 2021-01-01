@@ -1,31 +1,33 @@
-#include <syscall.h>
-#include <string.h>
-#include <boot.h>
-#include <task.h>
 #include "asm.h"
+#include <boot.h>
+#include <string.h>
+#include <syscall.h>
+#include <task.h>
 
 void arm64_start_task(void);
 
 static uint64_t page_tables[CONFIG_NUM_TASKS][512] __aligned(PAGE_SIZE);
-static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(STACK_SIZE);
-static uint8_t exception_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(STACK_SIZE);
+static uint8_t kernel_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(
+    STACK_SIZE);
+static uint8_t exception_stacks[CONFIG_NUM_TASKS][STACK_SIZE] __aligned(
+    STACK_SIZE);
 
 // Prepare the initial stack for arm64_task_switch().
 static void init_stack(struct task *task, vaddr_t pc) {
     // Initialize the page table.
     memset(task->arch.page_table, 0, PAGE_SIZE);
-    task->arch.ttbr0 = into_paddr(task->arch.page_table);
+    task->arch.ttbr0 = ptr2paddr(task->arch.page_table);
 
     vaddr_t exception_stack = (vaddr_t) exception_stacks[task->tid];
     uint64_t *sp = (uint64_t *) (exception_stack + STACK_SIZE);
     // Fill the stack values for arm64_start_task().
     *--sp = pc;
 
-    int num_zeroed_regs = 11; // x19-x29
+    int num_zeroed_regs = 11;  // x19-x29
     for (int i = 0; i < num_zeroed_regs; i++) {
         *--sp = 0;
     }
-    *--sp = (vaddr_t) arm64_start_task; // Task starts here (x30).
+    *--sp = (vaddr_t) arm64_start_task;  // Task starts here (x30).
 
     task->arch.stack = (vaddr_t) sp;
 }

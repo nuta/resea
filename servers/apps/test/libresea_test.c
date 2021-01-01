@@ -1,6 +1,6 @@
-#include <resea/printf.h>
-#include <resea/malloc.h>
 #include "test.h"
+#include <resea/malloc.h>
+#include <resea/printf.h>
 
 void libresea_test(void) {
     // malloc

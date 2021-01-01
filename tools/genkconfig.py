@@ -49,6 +49,7 @@ endmenu
 
 choice
     prompt "Target CPU architecture"
+        default ARCH_X64
 {%- for arch in archs %}
     config ARCH_{{ arch.name | upper }}
         bool "{{ arch.name }}"
@@ -90,6 +91,7 @@ endif
 {%- endfor %}
 """
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", dest="outfile", required=True)
@@ -109,7 +111,8 @@ def main():
     server_sections = {}
     for path in sorted(glob("servers/**/build.mk", recursive=True)):
         kconfig = open(path).read()
-        d = dict(re.findall(r"(?P<key>[a-zA-Z0-9_\-]+).+=[ ]*(?P<value>.+)[ ]*", kconfig))
+        d = dict(re.findall(
+            r"(?P<key>[a-zA-Z0-9_\-]+).+=[ ]*(?P<value>.+)[ ]*", kconfig))
         kconfig_path = Path(path).parent / "Kconfig"
         if kconfig_path.exists():
             d["kconfig_path"] = kconfig_path
@@ -132,7 +135,7 @@ def main():
             for machine_dir in glob((arch_dir / "machines" / "*").as_posix()):
                 machine_dir = Path(machine_dir)
                 if machine_dir.is_dir():
-                    machines.append({ "name": machine_dir.name })
+                    machines.append({"name": machine_dir.name})
             archs.append({
                 "name": arch_dir.name,
                 "machines": machines,
@@ -140,6 +143,7 @@ def main():
 
     with open(args.outfile, "w") as f:
         f.write(jinja2.Template(TMPL).render(**locals()))
+
 
 if __name__ == "__main__":
     main()

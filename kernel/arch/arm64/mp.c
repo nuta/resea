@@ -1,6 +1,6 @@
-#include <task.h>
-#include <machine/machine.h>
 #include "asm.h"
+#include <machine/machine.h>
+#include <task.h>
 
 static struct cpuvar cpuvars[NUM_CPUS_MAX];
 
@@ -29,14 +29,14 @@ static int big_lock = UNLOCKED;
 static int lock_owner = NO_LOCK_OWNER;
 
 void lock(void) {
-    return; // FIXME:
+    return;  // FIXME:
 
     if (mp_self() == lock_owner) {
         PANIC("recursive lock (#%d)", mp_self());
     }
 
     while (!__sync_bool_compare_and_swap(&big_lock, UNLOCKED, LOCKED)) {
-//        __asm__ __volatile__("");
+        //        __asm__ __volatile__("");
     }
 
     lock_owner = mp_self();
@@ -47,7 +47,7 @@ void panic_lock(void) {
 }
 
 void unlock(void) {
-    return; // FIXME:
+    return;  // FIXME:
 
     DEBUG_ASSERT(lock_owner == mp_self());
     lock_owner = NO_LOCK_OWNER;

@@ -1,11 +1,11 @@
-#include <resea/malloc.h>
-#include <string.h>
+#include "syscall.h"
+#include "abi.h"
 #include "elf.h"
 #include "fs.h"
 #include "mm.h"
-#include "abi.h"
 #include "proc.h"
-#include "syscall.h"
+#include <resea/malloc.h>
+#include <string.h>
 
 static uint8_t tmpbuf[PAGE_SIZE * 2];
 
@@ -132,7 +132,7 @@ long sys_writev(struct proc *proc) {
         fs_write(file, tmpbuf, iov.len);
         written_len += iov.len;
 
-        if (tmpbuf[0] != '\n')  {
+        if (tmpbuf[0] != '\n') {
             tmpbuf[iov.len] = '\0';
             DBG("writev = '%s'", tmpbuf);
         }
@@ -142,8 +142,8 @@ long sys_writev(struct proc *proc) {
 }
 
 int pre_writev(struct proc *proc, fd_t fd, vaddr_t iovbase, int iovcnt) {
-    TRACE("%s: sys_writev(fd=%d, iov=%p, iovcnt=%d)",
-          proc->name, fd, iovbase, iovcnt);
+    TRACE("%s: sys_writev(fd=%d, iov=%p, iovcnt=%d)", proc->name, fd, iovbase,
+          iovcnt);
 
     struct file *file = get_file_by_fd(proc, fd);
     if (!file) {
@@ -218,7 +218,7 @@ int pre_brk(struct proc *proc, vaddr_t addr) {
             return -ENOMEM;
         }
 
-        proc->current_brk  = addr;
+        proc->current_brk = addr;
     } else {
         // Do nothing and return the current break. Typically, brk(NULL).
     }
@@ -230,10 +230,10 @@ long sys_mmap(struct proc *proc) {
     return 0;
 }
 
-int pre_mmap(struct proc *proc, vaddr_t addr, size_t len, int prot,
-                 int flags, fd_t fd, loff_t off) {
-    TRACE("%s: sys_mmap(addr=%p, len=%d, flags=%x)",
-          proc->name, addr, len, flags);
+int pre_mmap(struct proc *proc, vaddr_t addr, size_t len, int prot, int flags,
+             fd_t fd, loff_t off) {
+    TRACE("%s: sys_mmap(addr=%p, len=%d, flags=%x)", proc->name, addr, len,
+          flags);
     // TODO:
     NYI();
     return 0;
@@ -269,9 +269,9 @@ long sys_execve(struct proc *proc) {
             break;
         }
 
-        char *strbuf = malloc(PATH_MAX); // FIXME:
+        char *strbuf = malloc(PATH_MAX);  // FIXME:
         if (strncpy_from_user(proc, strbuf, user_ptr, PATH_MAX) == PATH_MAX) {
-            return -EINVAL; // FIXME: Use an appropriate errno
+            return -EINVAL;  // FIXME: Use an appropriate errno
         }
 
         argvbuf[i] = strbuf;
@@ -279,11 +279,11 @@ long sys_execve(struct proc *proc) {
     }
 
     if (i == ARGV_MAX - 1) {
-        return -EINVAL; // FIXME: Use an appropriate errno
+        return -EINVAL;  // FIXME: Use an appropriate errno
     }
     argvbuf[i] = NULL;
 
-    char *envpbuf[] = { NULL }; // TODO:
+    char *envpbuf[] = {NULL};  // TODO:
     errno_t err;
     if ((err = proc_execve(proc, pathbuf, argvbuf, envpbuf)) < 0) {
         return err;
@@ -294,8 +294,8 @@ long sys_execve(struct proc *proc) {
 }
 
 int pre_execve(struct proc *proc, vaddr_t path, vaddr_t argv, vaddr_t envp) {
-    TRACE("%s: sys_execve(path=%p, argv=%p, envp=%p)",
-          proc->name, path, argv, envp);
+    TRACE("%s: sys_execve(path=%p, argv=%p, envp=%p)", proc->name, path, argv,
+          envp);
     proc->syscall.execve.path = path;
     proc->syscall.execve.argv = argv;
     proc->syscall.execve.envp = envp;
@@ -357,7 +357,7 @@ long sys_rt_sigaction(struct proc *proc) {
 }
 
 int pre_rt_sigaction(struct proc *proc, int signum, vaddr_t act, vaddr_t oldact,
-                         size_t sigsetsize) {
+                     size_t sigsetsize) {
     TRACE("%s: sys_rt_sigaction(argnum=%d, act=%p, oldact=%p, sigsetsize=%d)",
           proc->name, act, oldact, sigsetsize);
     // TODO:
@@ -370,8 +370,8 @@ long sys_rt_sigprocmask(struct proc *proc) {
 
 int pre_rt_sigprocmask(struct proc *proc, int how, vaddr_t set,
                        vaddr_t oldset) {
-    TRACE("%s: sys_rt_sigprocmask(how=%d, set=%p, oldset=%p)",
-          proc->name, how, set, oldset);
+    TRACE("%s: sys_rt_sigprocmask(how=%d, set=%p, oldset=%p)", proc->name, how,
+          set, oldset);
     // TODO:
     return 0;
 }
@@ -433,7 +433,7 @@ static void dispatch(struct proc *proc, int syscall, uintmax_t arg0,
                      uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,
                      uintmax_t arg4, uintmax_t arg5) {
     int err;
-    long (*handler)(struct proc *proc) = NULL;
+    long (*handler)(struct proc * proc) = NULL;
     switch (syscall) {
         case SYS_EXIT:
             err = pre_exit(proc, arg0);
@@ -521,8 +521,8 @@ static void dispatch(struct proc *proc, int syscall, uintmax_t arg0,
             break;
         default:
             err = -ENOSYS;
-            WARN("unknown syscall %d (args=[%p, %p, ...])",
-                 syscall, arg0, arg1);
+            WARN("unknown syscall %d (args=[%p, %p, ...])", syscall, arg0,
+                 arg1);
     }
 
     proc->syscall.err = err;
@@ -557,6 +557,6 @@ void try_syscall(struct proc *proc) {
 
 void handle_syscall(struct proc *proc, trap_frame_t *args) {
     memcpy(&proc->frame, args, sizeof(proc->frame));
-    dispatch(proc, args->rax, args->rdi, args->rsi, args->rdx,
-             args->r10, args->r8, args->r9);
+    dispatch(proc, args->rax, args->rdi, args->rsi, args->rdx, args->r10,
+             args->r8, args->r9);
 }

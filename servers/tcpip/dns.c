@@ -1,12 +1,12 @@
-#include <endian.h>
-#include <list.h>
-#include <string.h>
-#include <resea/malloc.h>
-#include "device.h"
 #include "dns.h"
+#include "device.h"
+#include "sys.h"
 #include "tcpip.h"
 #include "udp.h"
-#include "sys.h"
+#include <endian.h>
+#include <list.h>
+#include <resea/malloc.h>
+#include <string.h>
 
 static udp_sock_t udp_sock;
 static ipaddr_t dns_server_ipaddr;
@@ -14,7 +14,7 @@ static ipaddr_t dns_server_ipaddr;
 error_t dns_query(uint16_t id, const char *hostname) {
     struct dns_header header;
     header.id = hton16(id);
-    header.flags = hton16(0x0100); // a standard query (recursive)
+    header.flags = hton16(0x0100);  // a standard query (recursive)
     header.num_queries = hton16(1);
     header.num_answers = 0;
     header.num_authority = 0;
@@ -35,14 +35,14 @@ error_t dns_query(uint16_t id, const char *hostname) {
             return ERR_INVALID_ARG;
         }
 
-        mbuf_append_bytes(m, &(uint8_t){ label_len }, 1);
+        mbuf_append_bytes(m, &(uint8_t){label_len}, 1);
         mbuf_append_bytes(m, label, strlen(label));
         s++;
     }
 
     uint16_t qtype_ne = hton16(DNS_QTYPE_A);
     uint16_t qclass_ne = hton16(0x0001);
-    mbuf_append_bytes(m,  &(uint8_t){ 0 }, 1);
+    mbuf_append_bytes(m, &(uint8_t){0}, 1);
     mbuf_append_bytes(m, (uint8_t *) &qtype_ne, sizeof(uint16_t));
     mbuf_append_bytes(m, (uint8_t *) &qclass_ne, sizeof(uint16_t));
 
@@ -140,5 +140,6 @@ void dns_set_name_server(ipaddr_t *ipaddr) {
 void dns_init(void) {
     udp_sock = udp_new();
     udp_bind(udp_sock,
-             &(ipaddr_t){.type = IP_TYPE_V4, .v4 = IPV4_ADDR_UNSPECIFIED}, 3535);
+             &(ipaddr_t){.type = IP_TYPE_V4, .v4 = IPV4_ADDR_UNSPECIFIED},
+             3535);
 }

@@ -1,13 +1,13 @@
+#include "mm.h"
+#include "elf.h"
+#include "fs.h"
+#include "proc.h"
 #include <resea/malloc.h>
 #include <resea/task.h>
 #include <string.h>
-#include "elf.h"
-#include "fs.h"
-#include "mm.h"
-#include "proc.h"
 
 struct mchunk *mm_resolve(struct mm *mm, vaddr_t vaddr) {
-    LIST_FOR_EACH(mchunk, &mm->mchunks, struct mchunk, next) {
+    LIST_FOR_EACH (mchunk, &mm->mchunks, struct mchunk, next) {
         if (mchunk->vaddr <= vaddr && vaddr < mchunk->vaddr + mchunk->len) {
             return mchunk;
         }
@@ -23,7 +23,7 @@ struct mchunk *mm_alloc_mchunk(struct mm *mm, vaddr_t vaddr, size_t len) {
     m.type = VM_ALLOC_PAGES_MSG;
     m.vm_alloc_pages.paddr = 0;
     m.vm_alloc_pages.num_pages = len / PAGE_SIZE;
-    error_t err = ipc_call(INIT_TASK, &m);
+    error_t err = ipc_call(VM_TASK, &m);
     ASSERT_OK(err);
     ASSERT(m.type == VM_ALLOC_PAGES_REPLY_MSG);
 
@@ -45,7 +45,7 @@ struct mchunk *mm_clone_mchunk(struct proc *child, struct mchunk *src) {
 errno_t mm_fork(struct proc *parent, struct proc *child) {
     list_init(&child->mm.mchunks);
     if (parent) {
-        LIST_FOR_EACH(mchunk, &parent->mm.mchunks, struct mchunk, next) {
+        LIST_FOR_EACH (mchunk, &parent->mm.mchunks, struct mchunk, next) {
             mm_clone_mchunk(child, mchunk);
         }
     }
@@ -53,8 +53,7 @@ errno_t mm_fork(struct proc *parent, struct proc *child) {
     return 0;
 }
 
-error_t copy_from_user(struct proc *proc, void *dst, vaddr_t src,
-                       size_t len) {
+error_t copy_from_user(struct proc *proc, void *dst, vaddr_t src, size_t len) {
     size_t remaining = len;
     while (remaining > 0) {
         size_t copy_len = MIN(remaining, PAGE_SIZE - (src % PAGE_SIZE));
@@ -122,7 +121,7 @@ size_t strncpy_from_user(struct proc *proc, char *dst, vaddr_t src,
     return read_len;
 }
 
-volatile unsigned long long x = 123; // TODO: remove me
+volatile unsigned long long x = 123;  // TODO: remove me
 
 static error_t map_page(struct proc *proc, vaddr_t vaddr, vaddr_t paddr,
                         unsigned flags, bool overwrite) {
@@ -135,8 +134,10 @@ static error_t map_page(struct proc *proc, vaddr_t vaddr, vaddr_t paddr,
 
     while (true) {
         struct mchunk *m = mm_alloc_mchunk(&proc->mm, vaddr, PAGE_SIZE);
-        x += *((uint8_t *) paddr); // Handle page faults in advance. FIXME: remove me
-        x += *((uint8_t *) m->buf); // Handle page faults in advance. FIXME: remove me
+        x += *((uint8_t *)
+                   paddr);  // Handle page faults in advance. FIXME: remove me
+        x += *((uint8_t *)
+                   m->buf);  // Handle page faults in advance. FIXME: remove me
         error_t err = vm_map(proc->task, vaddr, paddr, (vaddr_t) m->buf, flags);
         switch (err) {
             case ERR_TRY_AGAIN:
@@ -166,7 +167,8 @@ static vaddr_t fill_page(struct proc *proc, vaddr_t vaddr, unsigned fault) {
 
     // Allocate heap.
     if (HEAP_ADDR <= vaddr && vaddr < proc->current_brk) {
-        struct mchunk *new_mchunk = mm_alloc_mchunk(&proc->mm, aligned_vaddr, PAGE_SIZE);
+        struct mchunk *new_mchunk =
+            mm_alloc_mchunk(&proc->mm, aligned_vaddr, PAGE_SIZE);
         if (!new_mchunk) {
             return 0;
         }
@@ -194,12 +196,14 @@ static vaddr_t fill_page(struct proc *proc, vaddr_t vaddr, unsigned fault) {
     }
 
     if (!phdr) {
-        WARN("invalid memory access (addr=%p), killing %s...", vaddr, proc->name);
+        WARN("invalid memory access (addr=%p), killing %s...", vaddr,
+             proc->name);
         return 0;
     }
 
     // Allocate a page and fill it with the file data.
-    struct mchunk *new_mchunk = mm_alloc_mchunk(&proc->mm, aligned_vaddr, PAGE_SIZE);
+    struct mchunk *new_mchunk =
+        mm_alloc_mchunk(&proc->mm, aligned_vaddr, PAGE_SIZE);
     if (!new_mchunk) {
         return 0;
     }
@@ -228,8 +232,8 @@ static vaddr_t fill_page(struct proc *proc, vaddr_t vaddr, unsigned fault) {
         }
     }
 
-    fs_read_pos(proc->exec, &new_mchunk->buf[offset_in_page],
-                offset_in_file, copy_len);
+    fs_read_pos(proc->exec, &new_mchunk->buf[offset_in_page], offset_in_file,
+                copy_len);
 
     return (vaddr_t) new_mchunk->buf;
 }
@@ -243,6 +247,7 @@ error_t handle_page_fault(struct proc *proc, vaddr_t vaddr, unsigned fault) {
     }
 
     vaddr_t aligned_vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
-    ASSERT_OK(map_page(proc, aligned_vaddr, target, MAP_W /* TODO: */, false));
+    ASSERT_OK(map_page(proc, aligned_vaddr, target,
+                       MAP_TYPE_READWRITE /* TODO: */, false));
     return OK;
 }

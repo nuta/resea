@@ -1,17 +1,25 @@
 #ifndef __VIRTIO_VIRTIO_LEGACY_H__
 #define __VIRTIO_VIRTIO_LEGACY_H__
 
+#include <driver/dma.h>
 #include <types.h>
 
-#define REG_DEVICE_FEATS       0x00
-#define REG_DRIVER_FEATS       0x04
-#define REG_QUEUE_ADDR         0x08
-#define REG_NUM_DESCS          0x0c
-#define REG_QUEUE_SELECT       0x0e
-#define REG_QUEUE_NOTIFY       0x10
-#define REG_DEVICE_STATUS      0x12
-#define REG_ISR_STATUS         0x13
-#define REG_DEVICE_CONFIG_BASE 0x14
+#define VIRTIO_REG_DEVICE_FEATS       0x00
+#define VIRTIO_REG_DRIVER_FEATS       0x04
+#define VIRTIO_REG_QUEUE_ADDR_PFN     0x08
+#define VIRTIO_REG_NUM_DESCS          0x0c
+#define VIRTIO_REG_QUEUE_SELECT       0x0e
+#define VIRTIO_REG_QUEUE_NOTIFY       0x10
+#define VIRTIO_REG_DEVICE_STATUS      0x12
+#define VIRTIO_REG_ISR_STATUS         0x13
+#define VIRTIO_REG_DEVICE_CONFIG_BASE 0x14
+
+#define DEVICE_STATUS_ACKNOWLEDGE        1
+#define DEVICE_STATUS_DRIVER             2
+#define DEVICE_STATUS_DRIVER_OK          4
+#define DEVICE_STATUS_FEATURES_OK        8
+#define DEVICE_STATUS_DEVICE_NEEDS_RESET 64
+#define DEVICE_STATUS_FAILED             128
 
 struct virtq_desc {
     uint64_t addr;
@@ -48,6 +56,7 @@ struct virtio_virtq_legacy {
 };
 
 struct virtio_ops;
-error_t virtio_legacy_find_device(int device_type, struct virtio_ops **ops, uint8_t *irq);
+error_t virtio_legacy_find_device(int device_type, struct virtio_ops **ops,
+                                  uint8_t *irq);
 
 #endif

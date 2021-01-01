@@ -1,5 +1,5 @@
 # Asynchronous IPC
-Despite the asynchronous IPC works well in most cases, asynchronous message
+Despite the synchronous IPC works well in most cases, asynchronous message
 passing is sometimes convinient.
 
 The Resea Standard Library provides an asynchronous message pasing on top of the

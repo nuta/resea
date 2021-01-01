@@ -1,10 +1,10 @@
-#include <resea/printf.h>
-#include <resea/malloc.h>
 #include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
 #include <string.h>
 
 #define SECTOR_SIZE 512
-#define BUF_SIZE 8192
+#define BUF_SIZE    8192
 extern uint8_t __image[];
 extern uint8_t __image_end[];
 

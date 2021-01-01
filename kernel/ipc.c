@@ -1,10 +1,10 @@
-#include <list.h>
-#include <string.h>
-#include <types.h>
 #include "ipc.h"
 #include "printk.h"
 #include "syscall.h"
 #include "task.h"
+#include <list.h>
+#include <string.h>
+#include <types.h>
 
 /// Resumes a sender task for the `receiver` tasks and updates `receiver->src`
 /// properly.
@@ -44,8 +44,8 @@ static void resume_sender(struct task *receiver, task_t src) {
 
 /// Sends and receives a message. Note that `m` is a user pointer if
 /// IPC_KERNEL is not set!
-static error_t ipc_slowpath(struct task *dst, task_t src, __user struct message *m,
-                            unsigned flags) {
+static error_t ipc_slowpath(struct task *dst, task_t src,
+                            __user struct message *m, unsigned flags) {
     // Send a message.
     if (flags & IPC_SEND) {
         // Copy the message into the receiver's buffer in case the receiver is
@@ -94,8 +94,8 @@ static error_t ipc_slowpath(struct task *dst, task_t src, __user struct message 
         task_resume(dst);
 
 #ifdef CONFIG_TRACE_IPC
-        TRACE("IPC: %s: %s -> %s",
-              msgtype2str(tmp_m.type), CURRENT->name, dst->name);
+        TRACE("IPC: %s: %s -> %s", msgtype2str(tmp_m.type), CURRENT->name,
+              dst->name);
 #endif
     }
 
@@ -110,6 +110,10 @@ static error_t ipc_slowpath(struct task *dst, task_t src, __user struct message 
             tmp_m.notifications.data = CURRENT->notifications;
             CURRENT->notifications = 0;
         } else {
+            if ((flags & IPC_NOBLOCK) != 0) {
+                return ERR_WOULD_BLOCK;
+            }
+
             // Resume a sender task and sleep until a sender task resumes this
             // task...
             resume_sender(CURRENT, src);
@@ -135,7 +139,8 @@ static error_t ipc_slowpath(struct task *dst, task_t src, __user struct message 
 /// The IPC fastpath: an IPC implementation optimized for the common case.
 ///
 /// Note that `m` is a user pointer if IPC_KERNEL is not set!
-error_t ipc(struct task *dst, task_t src, __user struct message *m, unsigned flags) {
+error_t ipc(struct task *dst, task_t src, __user struct message *m,
+            unsigned flags) {
     if (dst == CURRENT) {
         WARN_DBG("%s: tried to send a message to myself", CURRENT->name);
         return ERR_INVALID_ARG;
@@ -163,10 +168,10 @@ error_t ipc(struct task *dst, task_t src, __user struct message *m, unsigned fla
     dst->m.src = CURRENT->tid;
     task_resume(dst);
 
-#ifdef CONFIG_TRACE_IPC
-    TRACE("IPC: %s: %s -> %s (fastpath)",
-          msgtype2str(dst->m.type), CURRENT->name, dst->name);
-#endif
+#    ifdef CONFIG_TRACE_IPC
+    TRACE("IPC: %s: %s -> %s (fastpath)", msgtype2str(dst->m.type),
+          CURRENT->name, dst->name);
+#    endif
 
     // The receive phase: wait for a message, copy it into the user's
     // buffer, and return to the user.
@@ -180,7 +185,7 @@ error_t ipc(struct task *dst, task_t src, __user struct message *m, unsigned fla
     return OK;
 #else
     return ipc_slowpath(dst, src, m, flags);
-#endif // CONFIG_IPC_FASTPATH
+#endif  // CONFIG_IPC_FASTPATH
 }
 
 // Notifies notifications to the task.

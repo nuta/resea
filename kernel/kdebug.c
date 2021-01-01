@@ -1,8 +1,8 @@
-#include <string.h>
 #include "kdebug.h"
-#include "task.h"
-#include "printk.h"
 #include "ipc.h"
+#include "printk.h"
+#include "task.h"
+#include <string.h>
 
 error_t kdebug_run(const char *cmdline, char *buf, size_t len) {
     if (strlen(cmdline) == 0) {

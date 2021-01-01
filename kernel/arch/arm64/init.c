@@ -1,10 +1,11 @@
-#include <types.h>
+#include "asm.h"
 #include <boot.h>
-#include <task.h>
+#include <bootinfo.h>
+#include <machine/peripherals.h>
 #include <printk.h>
 #include <string.h>
-#include <machine/peripherals.h>
-#include "asm.h"
+#include <task.h>
+#include <types.h>
 
 extern uint8_t exception_vector;
 
@@ -39,6 +40,8 @@ __noreturn void mpinit(void) {
     }
 }
 
+static struct bootinfo bootinfo;
+
 void arm64_init(void) {
     // TODO: disable unused exception table vectors
     // TODO: smp
@@ -65,11 +68,11 @@ void arm64_init(void) {
     ARM64_MSR(sctlr_el1, ARM64_MRS(sctlr_el1) | (1 << 2) | (1 << 12));
 
     // Initialize the performance counter for benchmarking.
-    ARM64_MSR(pmcr_el0, 0b1ull);           // Reset counters.
-    ARM64_MSR(pmcr_el0, 0b11ull);          // Enable counters.
+    ARM64_MSR(pmcr_el0, 0b1ull);   // Reset counters.
+    ARM64_MSR(pmcr_el0, 0b11ull);  // Enable counters.
 
-    // QEMU does not support performance counters available in the real Raspberry
-    // Pi 3B+.
+    // QEMU does not support performance counters available in the real
+    // Raspberry Pi 3B+.
 #ifndef CONFIG_SEMIHOSTING
     int num_perf_counters = (ARM64_MRS(pmcr_el0) >> 11) & 0b11111;
     ASSERT(num_perf_counters >= 5);
@@ -87,10 +90,15 @@ void arm64_init(void) {
     ARM64_MSR(pmevtyper4_el0, 0x05ull);
 #endif
 
-    ARM64_MSR(pmcntenset_el0, 0x8000001full); // Enable the cycle and 5 event counters.
-    ARM64_MSR(pmuserenr_el0, 0b11ull);     // Enable user access to the counters.
+    ARM64_MSR(pmcntenset_el0,
+              0x8000001full);  // Enable the cycle and 5 event counters.
+    ARM64_MSR(pmuserenr_el0, 0b11ull);  // Enable user access to the counters.
 
-    kmain();
+    // FIXME: machine-specific
+    bootinfo.memmap[0].base = (vaddr_t) __kernel_image_end;
+    bootinfo.memmap[0].len = 128 * 1024 * 1024;  // 128MiB
+    bootinfo.memmap[0].type = BOOTINFO_MEMMAP_TYPE_AVAILABLE;
+    kmain(&bootinfo);
 
     PANIC("kmain returned");
     for (;;) {
@@ -101,11 +109,11 @@ void arm64_init(void) {
 void arch_semihosting_halt(void) {
     // ARM Semihosting
     uint64_t params[] = {
-        0x20026, // application exit
-        0,       // exit code
+        0x20026,  // application exit
+        0,        // exit code
     };
 
-    register uint64_t x0 __asm__("x0") = 0x20; // exit
+    register uint64_t x0 __asm__("x0") = 0x20;  // exit
     register uint64_t x1 __asm__("x1") = (uint64_t) params;
-    __asm__ __volatile__("hlt #0xf000" :: "r"(x0), "r"(x1));
+    __asm__ __volatile__("hlt #0xf000" ::"r"(x0), "r"(x1));
 }

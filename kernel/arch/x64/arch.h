@@ -1,11 +1,16 @@
 #ifndef __ARCH_H__
 #define __ARCH_H__
 
+#include <config.h>
 #include <types.h>
 
+#ifdef CONFIG_HYPERVISOR
+#    include <hv.h>
+#endif
+
 #define STACK_SIZE 4096
-#define IRQ_MAX   256
-#define TIMER_IRQ 0
+#define IRQ_MAX    256
+#define TIMER_IRQ  0
 
 #define KERNEL_BASE_ADDR  0xffff800000000000
 #define STRAIGHT_MAP_ADDR 0x0000000003000000
@@ -19,13 +24,16 @@ struct arch_task {
     uint64_t gsbase;
     uint64_t fsbase;
     paddr_t pml4;
+#ifdef CONFIG_HYPERVISOR
+    struct vmx vmx;
+#endif
 } __packed;
 
-static inline void *from_paddr(paddr_t addr) {
+static inline void *paddr2ptr(paddr_t addr) {
     return (void *) (addr + KERNEL_BASE_ADDR);
 }
 
-static inline paddr_t into_paddr(void *addr) {
+static inline paddr_t ptr2paddr(void *addr) {
     return ((vaddr_t) addr - KERNEL_BASE_ADDR);
 }
 
@@ -45,7 +53,7 @@ extern char __kernel_image_end[];
 /// kernel memory pages.
 static inline bool is_kernel_paddr(paddr_t paddr) {
     return (paddr_t) __kernel_image <= paddr
-        && paddr <= (paddr_t) __kernel_image_end;
+           && paddr <= (paddr_t) __kernel_image_end;
 }
 
 /// Checks if the address satisfies the "canonical form" defined in the Intel
@@ -57,7 +65,7 @@ static inline bool is_canonical_addr(vaddr_t addr) {
 }
 
 static inline int mp_self(void) {
-    return *((volatile uint32_t *) from_paddr(0xfee00020)) >> 24;
+    return *((volatile uint32_t *) paddr2ptr(0xfee00020)) >> 24;
 }
 
 static inline bool mp_is_bsp(void) {
@@ -119,13 +127,15 @@ struct idtr {
 //
 //  Control Registers
 //
-#define CR0_MP          (1ul << 1)
-#define CR0_EM          (1ul << 2)
-#define CR0_TS          (1ul << 3)
-#define CR4_FSGSBASE    (1ul << 16)
-#define CR4_OSXSAVE     (1ul << 18)
-#define CR4_OSFXSR      (1ul << 9)
-#define CR4_OSXMMEXCPT  (1ul << 10)
+#define CR0_MP         (1ul << 1)
+#define CR0_EM         (1ul << 2)
+#define CR0_TS         (1ul << 3)
+#define CR0_NX         (1ul << 5)
+#define CR4_FSGSBASE   (1ul << 16)
+#define CR4_OSXSAVE    (1ul << 18)
+#define CR4_OSFXSR     (1ul << 9)
+#define CR4_OSXMMEXCPT (1ul << 10)
+#define CR4_VMXE       (1ul << 13)
 
 //
 //  Extended Control Register 0 (XCR0)
@@ -211,11 +221,11 @@ extern char __kernel_pml4[];  // paddr_t
 #define IOAPIC_REG_NTH_IOREDTBL_HIGH(n) (0x10 + ((n) *2) + 1)
 
 static inline uint32_t read_apic(paddr_t addr) {
-    return *((volatile uint32_t *) from_paddr(addr));
+    return *((volatile uint32_t *) paddr2ptr(addr));
 }
 
 static inline void write_apic(paddr_t addr, uint32_t data) {
-    *((volatile uint32_t *) from_paddr(addr)) = data;
+    *((volatile uint32_t *) paddr2ptr(addr)) = data;
 }
 
 //
@@ -245,9 +255,13 @@ struct arch_cpuvar {
     uint64_t rsp3;
     // Set to 1 if ABI emulation is enabled in the current task.
     uint8_t abi_emu;
+    // Set to 1 if the hypervisor guest mode is enabled in the current task.
+    uint8_t hv;
     struct gdt gdt;
     struct idt idt;
     struct tss tss;
+    struct gdtr gdtr;
+    struct idtr idtr;
 };
 
 struct cpuvar;
@@ -313,6 +327,12 @@ static inline uint64_t asm_read_cr0(void) {
 static inline uint64_t asm_read_cr2(void) {
     uint64_t value;
     __asm__ __volatile__("mov %%cr2, %0" : "=r"(value));
+    return value;
+}
+
+static inline uint64_t asm_read_cr3(void) {
+    uint64_t value;
+    __asm__ __volatile__("mov %%cr3, %0" : "=r"(value));
     return value;
 }
 

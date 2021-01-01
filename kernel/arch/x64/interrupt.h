@@ -32,8 +32,7 @@ struct iframe {
 } __packed;
 
 void x64_handle_interrupt(uint8_t vec, struct iframe *frame);
-uintmax_t x64_handle_syscall(uintmax_t arg1, uintmax_t arg2, uintmax_t arg3,
-                             uintmax_t arg4, uintmax_t arg5, uintmax_t type);
+long x64_handle_syscall(long n, long a1, long a2, long a3, long a4, long a5);
 struct task;
 void release_task_irq(struct task *task);
 void interrupt_init(void);

@@ -1,13 +1,13 @@
-#include <arch.h>
-#include <list.h>
-#include <config.h>
-#include <string.h>
-#include <message.h>
 #include "task.h"
 #include "ipc.h"
 #include "kdebug.h"
 #include "printk.h"
 #include "syscall.h"
+#include <arch.h>
+#include <config.h>
+#include <list.h>
+#include <message.h>
+#include <string.h>
 
 /// All tasks.
 static struct task tasks[CONFIG_NUM_TASKS];
@@ -49,15 +49,29 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
         return ERR_ALREADY_EXISTS;
     }
 
-    unsigned allowed_flags = TASK_ALL_CAPS | TASK_ABI_EMU;
+    unsigned allowed_flags = TASK_ALL_CAPS | TASK_ABI_EMU | TASK_HV;
     if ((flags & ~allowed_flags) != 0) {
         WARN_DBG("unknown task flags (%x)", flags);
         return ERR_INVALID_ARG;
     }
 
+#if defined(CONFIG_ABI_EMU) || defined(CONFIG_HYPERVISOR)
+    if ((flags & (TASK_ABI_EMU | TASK_HV)) == (TASK_ABI_EMU | TASK_HV)) {
+        WARN_DBG("TASK_ABI_EMU and TASK_HV are exclusive", flags);
+        return ERR_INVALID_ARG;
+    }
+#endif
+
 #ifndef CONFIG_ABI_EMU
     if ((flags & TASK_ABI_EMU) != 0) {
         WARN_DBG("ABI emulation is not enabled");
+        return ERR_UNAVAILABLE;
+    }
+#endif
+
+#ifndef CONFIG_HYPERVISOR
+    if ((flags & TASK_HV) != 0) {
+        WARN_DBG("hypervisor support is not enabled");
         return ERR_UNAVAILABLE;
     }
 #endif
@@ -69,8 +83,8 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     }
 
     // Initialize fields.
-    TRACE("new task #%d: %s (pager=%s)",
-          task->tid, name, pager ? pager->name : NULL);
+    TRACE("new task #%d: %s (pager=%s)", task->tid, name,
+          pager ? pager->name : NULL);
     task->state = TASK_BLOCKED;
     task->flags = flags;
     task->notifications = 0;
@@ -81,7 +95,7 @@ error_t task_create(struct task *task, const char *name, vaddr_t ip,
     task->priority = TASK_PRIORITY_MAX - 1;
     task->ref_count = 0;
     bitmap_fill(task->caps, sizeof(task->caps), (flags & TASK_ALL_CAPS) != 0);
-    strncpy(task->name, name, sizeof(task->name));
+    strncpy2(task->name, name, sizeof(task->name));
     list_init(&task->senders);
     list_nullify(&task->runqueue_next);
     list_nullify(&task->sender_next);
@@ -113,8 +127,8 @@ error_t task_destroy(struct task *task) {
     }
 
     if (task->ref_count > 0) {
-        WARN_DBG("%s (#%d) is still referenced from %d tasks",
-                 task->name, task->tid, task->ref_count);
+        WARN_DBG("%s (#%d) is still referenced from %d tasks", task->name,
+                 task->tid, task->ref_count);
         return ERR_IN_USE;
     }
 
@@ -269,10 +283,11 @@ error_t task_unlisten_irq(unsigned irq) {
 /// Maps a memory page in the task's virtual memory space. `kpage` is a memory
 /// page which provides a memory page for arch-specific page table structures.
 ///
-/// Please note that this is the most DANGEROUS operation in system calls. A user
-/// task can map the whole physical memory space including the kernel data area.
+/// Please note that this is the most DANGEROUS operation in system calls. A
+/// user task can map the whole physical memory space including the kernel data
+/// area.
 __mustuse error_t vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
-                                paddr_t kpage, unsigned flags) {
+                         paddr_t kpage, unsigned flags) {
     DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(kpage, PAGE_SIZE));
@@ -340,7 +355,9 @@ void handle_irq(unsigned irq) {
 
 /// The page fault handler. It calls a pager and updates the page table.
 void handle_page_fault(vaddr_t addr, vaddr_t ip, unsigned fault) {
-    ASSERT(CURRENT->pager != NULL);
+    if (CURRENT->pager == NULL) {
+        PANIC("page fault in the init task: addr=%p, ip=%p", addr, ip);
+    }
 
     struct message m;
     m.type = PAGE_FAULT_MSG;
@@ -370,7 +387,7 @@ void task_dump(void) {
         }
 
         INFO("#%d %s: state=%s, src=%d", task->tid, task->name,
-                states[task->state], task->src);
+             states[task->state], task->src);
         if (!list_is_empty(&task->senders)) {
             INFO("  senders:");
             LIST_FOR_EACH (sender, &task->senders, struct task, sender_next) {

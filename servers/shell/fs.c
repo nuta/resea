@@ -1,7 +1,7 @@
 #include "fs.h"
 #include <resea/ipc.h>
-#include <resea/printf.h>
 #include <resea/malloc.h>
+#include <resea/printf.h>
 #include <string.h>
 
 void fs_read(const char *path) {

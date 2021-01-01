@@ -1,8 +1,8 @@
 #include "hdaudio.h"
+#include <driver/dma.h>
+#include <driver/io.h>
 #include <resea/ipc.h>
 #include <resea/printf.h>
-#include <driver/io.h>
-#include <driver/dma.h>
 #include <string.h>
 
 static io_t regs;
@@ -42,7 +42,8 @@ static uint32_t rirb_data(uint32_t index) {
 static uint32_t run_command(uint32_t nid, uint32_t verb, uint32_t payload) {
     int cad = 0;
     uint32_t idx = corb_enqueue(cad, nid, verb, payload);
-    while ((io_read8(regs, REG_RIRBSTS) & 1) == 0);
+    while ((io_read8(regs, REG_RIRBSTS) & 1) == 0)
+        ;
     io_write8(regs, REG_RIRBSTS, 0x5);
     return rirb_data(idx);
 }
@@ -53,7 +54,8 @@ static void init_corb(void) {
     corb_dma = dma_alloc(corb_len, DMA_ALLOC_FROM_DEVICE);
 
     // Stop CORB.
-    io_write8(regs, REG_CORBCTL, io_read8(regs, REG_CORBCTL) | ~CORBCTL_CORBRUN);
+    io_write8(regs, REG_CORBCTL,
+              io_read8(regs, REG_CORBCTL) | ~CORBCTL_CORBRUN);
 
     // TODO: Check and specify available # of entries.
     ASSERT((io_read8(regs, REG_CORBSIZE) & 0b11) == 0b10);
@@ -77,7 +79,8 @@ static void init_rirb(void) {
     rirb_dma = dma_alloc(rirb_len, DMA_ALLOC_FROM_DEVICE);
 
     // Stop RIRB.
-    io_write8(regs, REG_RIRBCTL, io_read16(regs, REG_RIRBCTL) & ~RIRBCTL_RIRBDMAEN);
+    io_write8(regs, REG_RIRBCTL,
+              io_read16(regs, REG_RIRBCTL) & ~RIRBCTL_RIRBDMAEN);
 
     // TODO: Check and specify available # of entries.
     ASSERT((io_read8(regs, REG_RIRBSIZE) & 0b11) == 0b10);
@@ -89,8 +92,9 @@ static void init_rirb(void) {
     io_write16(regs, REG_RINTCNT, 1);
     io_write16(regs, REG_RIRBWP, 1 << 15 /* Reset */);
 
-    io_write8(regs, REG_RIRBCTL, io_read16(regs, REG_RIRBCTL)
-              | RIRBCTL_RIRBDMAEN | RIRBCTL_RINTCTL);
+    io_write8(
+        regs, REG_RIRBCTL,
+        io_read16(regs, REG_RIRBCTL) | RIRBCTL_RIRBDMAEN | RIRBCTL_RINTCTL);
 }
 
 /// Looks for a node with the given widget type.
@@ -103,8 +107,8 @@ static int look_for_node(uint8_t parent_nid, uint8_t target_widget_type) {
     }
 
     for (uint32_t i = 0; i < num_nodes; i++) {
-        uint32_t value = run_command(nid_base + i, VERB_GET_PARAM,
-                                     PARAM_AUDIO_WIDGET_CAPS);
+        uint32_t value =
+            run_command(nid_base + i, VERB_GET_PARAM, PARAM_AUDIO_WIDGET_CAPS);
         uint8_t widget_type = (value >> 20) & 0xf;
         if (widget_type == target_widget_type) {
             return nid_base + i;
@@ -129,16 +133,16 @@ static void init_out_stream(struct hdaudio_stream *stream, int id) {
 
     // Set the stream ID.
     io_write32(regs, REG_SDnCTL(stream),
-        (io_read32(regs, REG_SDnCTL(stream))
-             & ~(0xf << 20)) | (stream->id << 20));
+               (io_read32(regs, REG_SDnCTL(stream)) & ~(0xf << 20))
+                   | (stream->id << 20));
 
     // Populate the buffer descriptor list.
     stream->bdl_dma = dma_alloc(stream->buffer_size, DMA_ALLOC_FROM_DEVICE);
     struct hdaudio_buffer_desc *bd_list =
         (struct hdaudio_buffer_desc *) dma_buf(stream->bdl_dma);
 
-    // The spec requires at least two entries (see "3.3.39 Offset 8C: {IOB}ISDnLVI"
-    // in the spec).
+    // The spec requires at least two entries (see "3.3.39 Offset 8C:
+    // {IOB}ISDnLVI" in the spec).
     size_t num_bds = 2;
     bd_list[0].buffer_addr = dma_daddr(stream->buffer_dma);
     bd_list[0].buffer_len = stream->buffer_size;
@@ -157,7 +161,8 @@ static void init_out_stream(struct hdaudio_stream *stream, int id) {
 void init_controller(void) {
     // Reset the controller.
     io_write32(regs, REG_GCTL, io_read32(regs, REG_GCTL) & ~GCTL_RESET);
-    while ((io_read32(regs, REG_GCTL) & GCTL_RESET) == 1);
+    while ((io_read32(regs, REG_GCTL) & GCTL_RESET) == 1)
+        ;
     io_write32(regs, REG_GCTL, GCTL_RESET);
 
     gcap_iss = (io_read16(regs, REG_GCAP) >> 8) & 0xf;
@@ -205,7 +210,7 @@ void init_speaker(uint16_t stream_format) {
     run_command(pin_node, VERB_SET_PIN_WIDGET_CTL, 0xc0);
 
     // Start the first stream descriptor. Maybe this is not needed.
-   io_write32(regs, REG_SSYNC, 1);
+    io_write32(regs, REG_SSYNC, 1);
 }
 
 void hdaudio_init(vaddr_t mmio_addr, size_t mmio_len, uint16_t stream_format) {
@@ -218,7 +223,7 @@ void hdaudio_init(vaddr_t mmio_addr, size_t mmio_len, uint16_t stream_format) {
 
 void hdaudio_unmute(void) {
     run_command(speaker_node, VERB_SET_AMP_GAIN_MUTE,
-        run_command(speaker_node, VERB_GET_AMP_GAIN_MUTE, 0) | 0xb000);
+                run_command(speaker_node, VERB_GET_AMP_GAIN_MUTE, 0) | 0xb000);
     run_command(pin_node, VERB_SET_POWER_STATE, 0x0000 /* D0: Fully On */);
 }
 

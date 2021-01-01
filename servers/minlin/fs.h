@@ -1,10 +1,10 @@
 #ifndef __FS_H__
 #define __FS_H__
 
-#include <types.h>
-#include <resea/ipc.h>
 #include "abi.h"
 #include "waitqueue.h"
+#include <resea/ipc.h>
+#include <types.h>
 
 struct file;
 struct fs_ops {
@@ -50,7 +50,8 @@ int fs_stat(const char *path, struct stat *stat);
 loff_t fs_tell(struct file *file);
 loff_t fs_seek(struct file *file, loff_t off, int whence);
 ssize_t fs_read_pos(struct file *file, void *buf, loff_t off, size_t len);
-ssize_t fs_write_pos(struct file *file, const void *buf, loff_t off, size_t len);
+ssize_t fs_write_pos(struct file *file, const void *buf, loff_t off,
+                     size_t len);
 ssize_t fs_read(struct file *file, void *buf, size_t len);
 ssize_t fs_write(struct file *file, const void *buf, size_t len);
 int fs_fork(struct proc *parent, struct proc *child);

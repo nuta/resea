@@ -1,19 +1,20 @@
 #include "fat.h"
-#include <resea/printf.h>
-#include <resea/malloc.h>
-#include <string.h>
 #include <resea/ctype.h>
+#include <resea/malloc.h>
+#include <resea/printf.h>
+#include <string.h>
 
 error_t fat_probe(struct fat *fs,
                   void (*blk_read)(size_t offset, void *buf, size_t len),
-                  void (*blk_write)(size_t offset, const void *buf, size_t len)) {
+                  void (*blk_write)(size_t offset, const void *buf,
+                                    size_t len)) {
     struct bpb bpb;
     STATIC_ASSERT(sizeof(bpb) == SECTOR_SIZE);
     blk_read(0, &bpb, 1);
 
     if (bpb.sector_size != SECTOR_SIZE) {
-        WARN("unexpected sector size: %d (expected to be %d)",
-             bpb.sector_size, SECTOR_SIZE);
+        WARN("unexpected sector size: %d (expected to be %d)", bpb.sector_size,
+             SECTOR_SIZE);
         return ERR_NOT_ACCEPTABLE;
     }
 
@@ -24,21 +25,21 @@ error_t fat_probe(struct fat *fs,
 
     size_t sectors_per_fat;
     if (bpb.sectors_per_fat16 == 0) {
-      sectors_per_fat = bpb.sectors_per_fat32;
+        sectors_per_fat = bpb.sectors_per_fat32;
     } else {
-      sectors_per_fat = bpb.sectors_per_fat16;
+        sectors_per_fat = bpb.sectors_per_fat16;
     }
 
     size_t sectors;
     if (bpb.num_total_sectors16 == 0) {
-      sectors = bpb.num_total_sectors32;
+        sectors = bpb.num_total_sectors32;
     } else {
-      sectors = bpb.num_total_sectors16;
+        sectors = bpb.num_total_sectors16;
     }
 
-    size_t non_data_sectors =
-        bpb.num_reserved_sectors + (bpb.num_fat * sectors_per_fat)
-        + root_dir_sectors;
+    size_t non_data_sectors = bpb.num_reserved_sectors
+                              + (bpb.num_fat * sectors_per_fat)
+                              + root_dir_sectors;
     size_t total_data_clus =
         (sectors - non_data_sectors) / bpb.sectors_per_cluster;
 
@@ -68,7 +69,8 @@ error_t fat_probe(struct fat *fs,
 /// Returns true if it's the end of cluster.
 static bool is_end_of_cluster(struct fat *fs, cluster_t cluster) {
     switch (fs->type) {
-        case FAT16: return 0xfff8 <= cluster && cluster <= 0xffff;
+        case FAT16:
+            return 0xfff8 <= cluster && cluster <= 0xffff;
     }
 }
 
@@ -93,7 +95,7 @@ static bool filename_equals(struct fat_dirent *e, const char *name,
     }
 
     return !strncmp((const char *) e->name, name, name_len)
-        && !strncmp((const char *) e->ext, ext, ext_len);
+           && !strncmp((const char *) e->ext, ext, ext_len);
 }
 
 static char *get_next_filename(char *path, char *name, char *ext) {
@@ -101,7 +103,7 @@ static char *get_next_filename(char *path, char *name, char *ext) {
     for (i = 0; i < 8 && *path; i++) {
         if (*path == '/') {
             break;
-        }else if (*path == '.') {
+        } else if (*path == '.') {
             path++;
             break;
         }
@@ -204,7 +206,7 @@ static void open_root_dir(struct fat *fs, struct fat_dir *dir) {
 }
 
 static void opendir_from_dirent(struct fat *fs, struct fat_dir *dir,
-                             struct fat_dirent *e) {
+                                struct fat_dirent *e) {
     dir->cluster = get_cluster_from_entry(e);
     dir->entries = malloc(fs->sectors_per_cluster * SECTOR_SIZE);
     dir->index = 0;
@@ -221,7 +223,7 @@ static struct fat_dirent *lookup(struct fat *fs, const char *path) {
 
     struct fat_dir dir;
     open_root_dir(fs, &dir);
-    while(1) {
+    while (1) {
         char name[9];
         char ext[4];
         p = get_next_filename(p, (char *) name, (char *) ext);
@@ -263,7 +265,8 @@ error_t fat_truncate(struct fat *fs, struct fat_file *file, offset_t offset) {
     return OK;
 }
 
-error_t fat_create(struct fat *fs, struct fat_file *file, const char *path, bool exist_ok) {
+error_t fat_create(struct fat *fs, struct fat_file *file, const char *path,
+                   bool exist_ok) {
     if (fat_open(fs, file, path) == OK) {
         // The file already exists.
         if (!exist_ok) {
@@ -395,7 +398,6 @@ error_t fat_opendir(struct fat *fs, struct fat_dir *dir, const char *path) {
 void fat_closedir(struct fat *fs, struct fat_dir *dir) {
     free(dir->entries);
 }
-
 
 struct fat_dirent *fat_readdir(struct fat *fs, struct fat_dir *dir) {
     if (dir->index < 0) {

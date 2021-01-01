@@ -1,12 +1,11 @@
+#include <driver/io.h>
+#include <driver/irq.h>
 #include <endian.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
-#include <driver/irq.h>
 #include <string.h>
-#include <driver/io.h>
 #include <virtio/virtio.h>
-#include "virtio_legacy.h"
 
 /// The maximum number of virtqueues.
 #define NUM_VIRTQS_MAX 8
@@ -16,26 +15,26 @@ static struct virtio_virtq virtqs[NUM_VIRTQS_MAX];
 static io_t bar0_io = NULL;
 
 static uint8_t read_device_status(void) {
-    return io_read8(bar0_io, REG_DEVICE_STATUS);
+    return io_read8(bar0_io, VIRTIO_REG_DEVICE_STATUS);
 }
 
 static void write_device_status(uint8_t value) {
-    io_write8(bar0_io, REG_DEVICE_STATUS, value);
+    io_write8(bar0_io, VIRTIO_REG_DEVICE_STATUS, value);
 }
 
 static uint64_t read_device_features(void) {
-    return io_read32(bar0_io, REG_DEVICE_FEATS);
+    return io_read32(bar0_io, VIRTIO_REG_DEVICE_FEATS);
 }
 
 /// Reads the ISR status and de-assert an interrupt
 /// ("4.1.4.5 ISR status capability").
 static uint8_t read_isr_status(void) {
-    return io_read8(bar0_io, REG_ISR_STATUS);
+    return io_read8(bar0_io, VIRTIO_REG_ISR_STATUS);
 }
 
 /// Returns the number of descriptors in total in the queue.
 static uint16_t virtq_num_descs(void) {
-    return io_read16(bar0_io, REG_NUM_DESCS);
+    return io_read16(bar0_io, VIRTIO_REG_NUM_DESCS);
 }
 
 /// Returns the `index`-th virtqueue.
@@ -43,15 +42,16 @@ static struct virtio_virtq *virtq_get(unsigned index) {
     return &virtqs[index];
 }
 
-/// Notifies the device that the queue contains a descriptor it needs to process.
+/// Notifies the device that the queue contains a descriptor it needs to
+/// process.
 static void virtq_notify(struct virtio_virtq *vq) {
     mb();
-    io_write16(bar0_io, REG_QUEUE_NOTIFY, vq->index);
+    io_write16(bar0_io, VIRTIO_REG_QUEUE_NOTIFY, vq->index);
 }
 
 /// Selects the current virtqueue in the common config.
 static void virtq_select(unsigned index) {
-    io_write16(bar0_io, REG_QUEUE_SELECT, index);
+    io_write16(bar0_io, VIRTIO_REG_QUEUE_SELECT, index);
 }
 
 /// Initializes a virtqueue.
@@ -63,7 +63,8 @@ static void virtq_init(unsigned index) {
 
     offset_t avail_ring_off = sizeof(struct virtq_desc) * num_descs;
     size_t avail_ring_size = sizeof(uint16_t) * (3 + num_descs);
-    offset_t used_ring_off = ALIGN_UP(avail_ring_off + avail_ring_size, PAGE_SIZE);
+    offset_t used_ring_off =
+        ALIGN_UP(avail_ring_off + avail_ring_size, PAGE_SIZE);
     size_t used_ring_size =
         sizeof(uint16_t) * 3 + sizeof(struct virtq_used_elem) * num_descs;
     size_t virtq_size = used_ring_off + ALIGN_UP(used_ring_size, PAGE_SIZE);
@@ -84,7 +85,7 @@ static void virtq_init(unsigned index) {
 
     paddr_t paddr = dma_daddr(virtq_dma);
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
-    io_write32(bar0_io, REG_QUEUE_ADDR, paddr / PAGE_SIZE);
+    io_write32(bar0_io, VIRTIO_REG_QUEUE_ADDR_PFN, paddr / PAGE_SIZE);
 }
 
 static void activate(void) {
@@ -92,16 +93,22 @@ static void activate(void) {
 }
 
 /// Allocates a descriptor for the ouput to the device (e.g. TX virtqueue in
-/// virtio-net).
-static int virtq_alloc(struct virtio_virtq *vq, size_t len) {
+/// virtio-net). If `VIRTQ_DESC_F_NEXT` is set in `flags`, it allocates the next
+/// descriptor (i.e. constructs a descriptor chain). If `prev_desc` is set, it
+/// reuses the previously allocated descriptor.
+static int virtq_alloc(struct virtio_virtq *vq, size_t len, uint16_t flags,
+                       int prev_desc) {
     int desc_index = vq->legacy.next_avail_index % vq->num_descs;
     struct virtq_desc *desc = &vq->legacy.descs[desc_index];
 
     // TODO: FIXME: Check if the descriptor is available.
 
+    // TODO: Use `descs[prev->desc]->next` if prev_desc != VIRTQ_ALLOC_NO_PREV.
+    ASSERT(prev_desc == VIRTQ_ALLOC_NO_PREV && "not yet implemented");
+
     desc->len = into_le32(len);
-    desc->flags = 0;
-    desc->next = 0; // TODO:
+    desc->flags = flags;
+    desc->next = 0;  // TODO:
 
     vq->legacy.next_avail_index++;
     return desc_index;
@@ -110,12 +117,14 @@ static int virtq_alloc(struct virtio_virtq *vq, size_t len) {
 /// Returns the next descriptor which is already used by the device. If the
 /// buffer is input from the device, call `virtq_push_desc` once you've handled
 /// the input.
-static error_t virtq_pop_desc(struct virtio_virtq *vq, int *index, size_t *len) {
+static error_t virtq_pop_desc(struct virtio_virtq *vq, int *index,
+                              size_t *len) {
     if (vq->legacy.last_used_index == vq->legacy.used->index) {
         return ERR_EMPTY;
     }
 
-    struct virtq_used_elem *used_elem = &vq->legacy.used->ring[vq->legacy.last_used_index];
+    struct virtq_used_elem *used_elem =
+        &vq->legacy.used->ring[vq->legacy.last_used_index];
     *index = used_elem->id;
     *len = used_elem->len;
     vq->legacy.last_used_index++;
@@ -147,7 +156,8 @@ static void virtq_allocate_buffers(struct virtio_virtq *vq, size_t buffer_size,
 
     uint16_t flags = writable ? VIRTQ_DESC_F_WRITE : 0;
     for (int i = 0; i < vq->num_descs; i++) {
-        vq->legacy.descs[i].addr = into_le64(dma_daddr(dma) + (buffer_size * i));
+        vq->legacy.descs[i].addr =
+            into_le64(dma_daddr(dma) + (buffer_size * i));
         vq->legacy.descs[i].len = into_le32(buffer_size);
         vq->legacy.descs[i].flags = flags;
         vq->legacy.descs[i].next = 0;
@@ -159,16 +169,18 @@ static void virtq_allocate_buffers(struct virtio_virtq *vq, size_t buffer_size,
     }
 }
 
-/// Checks and enables features. It aborts if any of the features is not supported.
+/// Checks and enables features. It aborts if any of the features is not
+/// supported.
 static void negotiate_feature(uint64_t features) {
     // Abort if the device does not support features we need.
     ASSERT((read_device_features() & features) == features);
-    io_write32(bar0_io, REG_DRIVER_FEATS, features);
+    io_write32(bar0_io, VIRTIO_REG_DRIVER_FEATS, features);
     write_device_status(read_device_status() | VIRTIO_STATUS_FEAT_OK);
     ASSERT((read_device_status() & VIRTIO_STATUS_FEAT_OK) != 0);
 }
 
-static uint32_t pci_config_read(handle_t device, unsigned offset, unsigned size) {
+static uint32_t pci_config_read(handle_t device, unsigned offset,
+                                unsigned size) {
     struct message m;
     m.type = DM_PCI_READ_CONFIG_MSG;
     m.dm_pci_read_config.handle = device;
@@ -179,7 +191,7 @@ static uint32_t pci_config_read(handle_t device, unsigned offset, unsigned size)
 }
 
 static uint64_t read_device_config(offset_t offset, size_t size) {
-    return io_read8(bar0_io, REG_DEVICE_CONFIG_BASE + offset);
+    return io_read8(bar0_io, VIRTIO_REG_DEVICE_CONFIG_BASE + offset);
 }
 
 struct virtio_ops virtio_legacy_ops = {
@@ -200,7 +212,8 @@ struct virtio_ops virtio_legacy_ops = {
 
 /// Looks for and initializes a virtio device with the given device type. It
 /// sets the IRQ vector to `irq` on success.
-error_t virtio_legacy_find_device(int device_type, struct virtio_ops **ops, uint8_t *irq) {
+error_t virtio_legacy_find_device(int device_type, struct virtio_ops **ops,
+                                  uint8_t *irq) {
     // Search the PCI bus for a virtio device...
     dm_server = ipc_lookup("dm");
     struct message m;
@@ -225,7 +238,7 @@ error_t virtio_legacy_find_device(int device_type, struct virtio_ops **ops, uint
     ASSERT_OK(ipc_call(dm_server, &m));
 
     // "3.1.1 Driver Requirements: Device Initialization"
-    write_device_status(0); // Reset the device.
+    write_device_status(0);  // Reset the device.
     write_device_status(read_device_status() | VIRTIO_STATUS_ACK);
     write_device_status(read_device_status() | VIRTIO_STATUS_DRIVER);
 

@@ -1,16 +1,21 @@
-#include <arch.h>
-#include <boot.h>
-#include <printk.h>
-#include <task.h>
-#include <kdebug.h>
-#include <string.h>
+#include "hv.h"
+#include "multiboot.h"
 #include "serial.h"
 #include "task.h"
 #include "trap.h"
+#include <arch.h>
+#include <boot.h>
+#include <bootinfo.h>
+#include <kdebug.h>
+#include <printk.h>
+#include <string.h>
+#include <task.h>
 
+#ifndef CONFIG_X64_PRINTK_IN_SCREEN
 static void draw_text_screen(void) {
-    const char *message = "Resea " VERSION " - Talk with me over the serial port :)";
-    uint16_t *vram = from_paddr(0xb8000);
+    const char *message =
+        "Resea " VERSION " - Talk with me over the serial port :)";
+    uint16_t *vram = paddr2ptr(0xb8000);
 
     // Clear the screen.
     for (int y = 0; y < 25; y++) {
@@ -24,6 +29,7 @@ static void draw_text_screen(void) {
         vram[i] = message[i] | (0x1f << 8);
     }
 }
+#endif
 
 static void gdt_init(void) {
     uint64_t tss_addr = (uint64_t) &ARCH_CPUVAR->tss;
@@ -40,10 +46,9 @@ static void gdt_init(void) {
     gdt->tss_high = tss_addr >> 32;
 
     // Update GDTR
-    struct gdtr gdtr;
-    gdtr.laddr = (uint64_t) gdt;
-    gdtr.len = sizeof(*gdt) - 1;
-    asm_lgdt((uint64_t) &gdtr);
+    ARCH_CPUVAR->gdtr.laddr = (uint64_t) gdt;
+    ARCH_CPUVAR->gdtr.len = sizeof(*gdt) - 1;
+    asm_lgdt((uint64_t) &ARCH_CPUVAR->gdtr);
 }
 
 static void idt_init(void) {
@@ -61,10 +66,9 @@ static void idt_init(void) {
         idt->descs[i].reserved = 0;
     }
 
-    struct idtr idtr;
-    idtr.laddr = (uint64_t) idt;
-    idtr.len = sizeof(*idt) - 1;
-    asm_lidt((uint64_t) &idtr);
+    ARCH_CPUVAR->idtr.laddr = (uint64_t) idt;
+    ARCH_CPUVAR->idtr.len = sizeof(*idt) - 1;
+    asm_lidt((uint64_t) &ARCH_CPUVAR->idtr);
 }
 
 // Disables PIC. We use IO APIC instead.
@@ -136,8 +140,6 @@ static void calibrate_apic_timer(void) {
 
     // Calibrate the APIC timer interval to fire the timer interrupt every
     // 1/TICK_HZ seconds.
-    // DBG("calibrated_count = %x", calibrated_count);PANIC("");
-    // write_apic(APIC_REG_TIMER_CURRENT, calibrated_count);
     write_apic(APIC_REG_TIMER_INITCNT, calibrated_count);
 }
 
@@ -164,7 +166,7 @@ static void common_setup(void) {
     STATIC_ASSERT(IS_ALIGNED(CPUVAR_SIZE_MAX, PAGE_SIZE));
 
     // Enable some CPU features.
-    asm_write_cr0((asm_read_cr0() | CR0_MP) & (~CR0_EM) & (~CR0_TS));
+    asm_write_cr0((asm_read_cr0() | CR0_MP | CR0_NX) & (~CR0_EM) & (~CR0_TS));
     asm_write_cr4(asm_read_cr4() | CR4_FSGSBASE | CR4_OSXSAVE | CR4_OSFXSR
                   | CR4_OSXMMEXCPT);
     asm_xsetbv(0, asm_xgetbv(0) | XCR0_SSE | XCR0_AVX);
@@ -179,24 +181,57 @@ static void common_setup(void) {
     idt_init();
     apic_timer_init();
     syscall_init();
+#ifdef CONFIG_HYPERVISOR
+    x64_hv_init();
+#endif
 }
 
-// Add declarations to make sparse happy.
-void init(void);
-void mpinit(void);
-
+static struct bootinfo bootinfo;
 extern char __bss[];
 extern char __bss_end[];
 
-void init(void) {
+static void fill_bootinfo(struct multiboot_info *multiboot_info) {
+    offset_t off = 0;
+    for (int i = 0; i < NUM_BOOTINFO_MEMMAP_MAX; i++) {
+        if (off >= multiboot_info->mmap_len) {
+            break;
+        }
+
+        struct bootinfo_memmap_entry *m = &bootinfo.memmap[i];
+        struct multiboot_mmap_entry *e =
+            paddr2ptr(multiboot_info->mmap_addr + off);
+        m->base = e->base;
+        m->len = e->len;
+        m->type = (e->type == 1) ? BOOTINFO_MEMMAP_TYPE_AVAILABLE
+                                 : BOOTINFO_MEMMAP_TYPE_RESERVED;
+
+        if (m->base + m->len <= (vaddr_t) __kernel_image_end) {
+            m->base = BOOTINFO_MEMMAP_TYPE_RESERVED;
+            m->base = 0;
+            m->len = 0;
+        } else {
+            if (m->base < (vaddr_t) __kernel_image_end) {
+                m->base = (vaddr_t) __kernel_image_end;
+                m->len -= (vaddr_t) __kernel_image_end - m->base;
+            }
+        }
+
+        off += e->entry_size + sizeof(uint32_t);
+    }
+}
+
+void init(struct multiboot_info *multiboot_info) {
     memset(__bss, 0, (vaddr_t) __bss_end - (vaddr_t) __bss);
     lock();
+#ifndef CONFIG_X64_PRINTK_IN_SCREEN
     draw_text_screen();
+#endif
     serial_init();
     pic_init();
     common_setup();
     serial_enable_interrupt();
-    kmain();
+    fill_bootinfo(multiboot_info);
+    kmain(&bootinfo);
 }
 
 void mpinit(void) {
@@ -218,6 +253,6 @@ __noreturn void arch_idle(void) {
 
 void arch_semihosting_halt(void) {
     // QEMU
-    __asm__ __volatile__("outw %0, %1" ::
-        "a"((uint16_t) 0x2000), "Nd"((uint16_t) 0x604));
+    __asm__ __volatile__("outw %0, %1" ::"a"((uint16_t) 0x2000),
+                         "Nd"((uint16_t) 0x604));
 }

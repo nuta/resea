@@ -1,5 +1,5 @@
-#include <resea/timer.h>
 #include <resea/syscall.h>
+#include <resea/timer.h>
 
 // TODO: Support multiple timers.
 

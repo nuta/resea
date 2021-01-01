@@ -1,12 +1,12 @@
 #ifndef __PROC_H__
 #define __PROC_H__
 
-#include <list.h>
-#include <resea/ipc.h>
 #include "abi.h"
 #include "mm.h"
+#include <list.h>
+#include <resea/ipc.h>
 
-#define FD_MAX  128
+#define FD_MAX 128
 
 enum proc_state {
     PROC_ALLOCED,

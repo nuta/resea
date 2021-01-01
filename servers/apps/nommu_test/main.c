@@ -1,8 +1,8 @@
 #include <resea/ipc.h>
-#include <resea/timer.h>
-#include <resea/task.h>
 #include <resea/printf.h>
 #include <resea/syscall.h>
+#include <resea/task.h>
+#include <resea/timer.h>
 
 #define TASK_A_TID 1
 #define TASK_B_TID 2

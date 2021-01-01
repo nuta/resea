@@ -1,12 +1,12 @@
+#include "commands.h"
+#include "fs.h"
+#include "http.h"
+#include <resea/cmdline.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
 #include <resea/syscall.h>
-#include <resea/cmdline.h>
 #include <string.h>
-#include "commands.h"
-#include "http.h"
-#include "fs.h"
 
 static void fs_read_command(int argc, char **argv) {
     if (argc < 2) {
@@ -54,11 +54,11 @@ static void help_command(__unused int argc, __unused char **argv) {
 }
 
 struct command commands[] = {
-    { .name = "help", .run = help_command },
-    { .name = "ps", .run = ps_command },
-    { .name = "q", .run = quit_command },
-    { .name = "fs-read", .run = fs_read_command },
-    { .name = "fs-write", .run = fs_write_command },
-    { .name = "http-get", .run = http_get_command },
-    { .name = NULL, .run = NULL },
+    {.name = "help", .run = help_command},
+    {.name = "ps", .run = ps_command},
+    {.name = "q", .run = quit_command},
+    {.name = "fs-read", .run = fs_read_command},
+    {.name = "fs-write", .run = fs_write_command},
+    {.name = "http-get", .run = http_get_command},
+    {.name = NULL, .run = NULL},
 };

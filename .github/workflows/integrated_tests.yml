@@ -74,7 +74,7 @@ jobs:
 
       - name: Build
         run: |
-          cp ci/${{ matrix.TARGET }}.config .config
+          make mergeconfig CONFIG_FILES="ci/${{ matrix.TARGET }}.config"
           make -j2 build
 
       - name: Test

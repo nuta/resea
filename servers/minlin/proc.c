@@ -1,23 +1,26 @@
-#include <resea/malloc.h>
-#include <resea/ipc.h>
-#include <resea/task.h>
-#include <string.h>
-#include <list.h>
-#include "abi.h"
 #include "proc.h"
+#include "abi.h"
 #include "elf.h"
 #include "fs.h"
 #include "mm.h"
 #include "syscall.h"
 #include "waitqueue.h"
+#include <list.h>
+#include <resea/ipc.h>
+#include <resea/malloc.h>
+#include <resea/task.h>
+#include <string.h>
 
 struct proc *init_proc = NULL;
 static pid_t next_pid = 1;
-static pid_t next_tid = 16; // FIXME:
 static list_t procs;
 
-static task_t alloc_task(void) {
-    return next_tid++;
+task_t alloc_task(void) {
+    struct message m;
+    m.type = TASK_ALLOC_MSG;
+    m.task_alloc.pager = task_self();
+    ASSERT_OK(ipc_call(VM_TASK, &m));
+    return m.task_alloc_reply.task;
 }
 
 static void free_task(task_t tid) {
@@ -34,7 +37,7 @@ struct proc *proc_alloc(void) {
 }
 
 struct proc *proc_lookup_by_task(task_t task) {
-    LIST_FOR_EACH(proc, &procs, struct proc, next) {
+    LIST_FOR_EACH (proc, &procs, struct proc, next) {
         if (proc->task == task) {
             return proc;
         }
@@ -44,7 +47,7 @@ struct proc *proc_lookup_by_task(task_t task) {
 }
 
 struct proc *proc_lookup_by_pid(pid_t pid) {
-    LIST_FOR_EACH(proc, &procs, struct proc, next) {
+    LIST_FOR_EACH (proc, &procs, struct proc, next) {
         if (proc->pid == pid) {
             return proc;
         }
@@ -68,7 +71,8 @@ static void add_aux_vector(uintptr_t **sp, int type, uintptr_t ptr) {
 
 /// Initializes a user stack. See "Initial Process Stack" in System V ABI spec
 /// for details.
-static errno_t init_stack(struct proc *proc, char *argv[], __unused char *envp[]) {
+static errno_t init_stack(struct proc *proc, char *argv[],
+                          __unused char *envp[]) {
     uintptr_t *sp = proc->stack->buf + STACK_TOP;
     char *strbuf = proc->stack->buf + STACK_STRBUF;
     vaddr_t strbuf_top = (vaddr_t) proc->stack->buf + STACK_STRBUF;
@@ -97,7 +101,7 @@ static errno_t init_stack(struct proc *proc, char *argv[], __unused char *envp[]
             return -ENOMEM;
         }
 
-        strncpy(&strbuf[stroff], argv[i], len + 1);
+        strncpy2(&strbuf[stroff], argv[i], len + 1);
         stroff += len + 1;
     }
     *sp++ = 0;
@@ -106,7 +110,7 @@ static errno_t init_stack(struct proc *proc, char *argv[], __unused char *envp[]
     *sp++ = 0;
 
     // Prepare random bytes for AT_RANDOM.
-    uint8_t rand_bytes[16]; // TODO:
+    uint8_t rand_bytes[16];  // TODO:
     if (stroff + sizeof(rand_bytes) >= strbuf_size) {
         return -ENOMEM;
     }
@@ -116,7 +120,8 @@ static errno_t init_stack(struct proc *proc, char *argv[], __unused char *envp[]
     stroff += sizeof(rand_bytes);
 
     // Fill auxiliary vectors.
-    add_aux_vector(&sp, AT_PHDR, proc->file_header->vaddr + proc->ehdr->e_phoff);
+    add_aux_vector(&sp, AT_PHDR,
+                   proc->file_header->vaddr + proc->ehdr->e_phoff);
     add_aux_vector(&sp, AT_PHENT, proc->ehdr->e_phentsize);
     add_aux_vector(&sp, AT_PHNUM, proc->ehdr->e_phnum);
     add_aux_vector(&sp, AT_PAGESZ, PAGE_SIZE);
@@ -155,18 +160,23 @@ errno_t proc_execve(struct proc *proc, const char *path, char *argv[],
     proc->exec = file;
 
     // Read the beginning of the executable to read ELF headers.
-    proc->file_header = mm_alloc_mchunk(&proc->mm, ELF_HEADER_ADDR, ELF_HEADER_LEN);
+    proc->file_header =
+        mm_alloc_mchunk(&proc->mm, ELF_HEADER_ADDR, ELF_HEADER_LEN);
     fs_read_pos(proc->exec, proc->file_header->buf, 0, PAGE_SIZE);
 
     // Ensure it's an ELF file.
     struct elf64_ehdr *ehdr = (struct elf64_ehdr *) proc->file_header->buf;
-    if (memcmp(ehdr->e_ident, "\x7f" "ELF", 4) != 0) {
+    if (memcmp(ehdr->e_ident,
+               "\x7f"
+               "ELF",
+               4)
+        != 0) {
         return -ENOEXEC;
     }
 
     // Fill out fields.
     ASSERT(argv[0]);
-    strncpy(proc->name, argv[0], sizeof(proc->name));
+    strncpy2(proc->name, argv[0], sizeof(proc->name));
     proc->state = PROC_RUNNABLE;
     proc->current_brk = HEAP_ADDR;
     proc->ehdr = ehdr;
@@ -175,7 +185,8 @@ errno_t proc_execve(struct proc *proc, const char *path, char *argv[],
     proc->gsbase = 0xbad0eeee;
 
     // Initialize the stack.
-    struct mchunk *stack_mchunk = mm_alloc_mchunk(&proc->mm, STACK_ADDR, STACK_LEN);
+    struct mchunk *stack_mchunk =
+        mm_alloc_mchunk(&proc->mm, STACK_ADDR, STACK_LEN);
     if (!stack_mchunk) {
         return -ENOMEM;
     }
@@ -200,7 +211,7 @@ pid_t proc_fork(struct proc *parent) {
     child->parent = parent;
     if (parent) {
         child->state = PROC_FORKED;
-        strncpy(child->name, parent->name, sizeof(child->name));
+        strncpy2(child->name, parent->name, sizeof(child->name));
         child->exec = parent->exec;
         child->current_brk = parent->current_brk;
         child->ehdr = parent->ehdr;
@@ -213,7 +224,7 @@ pid_t proc_fork(struct proc *parent) {
     } else {
         // The init process.
         ASSERT(child->pid == 1);
-        strncpy(child->name, "init", sizeof(child->name));
+        strncpy2(child->name, "init", sizeof(child->name));
         child->state = PROC_RUNNABLE;
         child->exec = NULL;
         child->current_brk = 0;
@@ -224,8 +235,8 @@ pid_t proc_fork(struct proc *parent) {
         child->gsbase = 0;
     }
 
-    error_t err = task_create(child->task, child->name, 0, task_self(),
-                              TASK_ABI_EMU);
+    error_t err =
+        task_create(child->task, child->name, 0, task_self(), TASK_ABI_EMU);
     if (err != OK) {
         return -EAGAIN;
     }
@@ -253,7 +264,7 @@ void proc_destroy(struct proc *proc) {
 struct waitqueue waiting_procs_wq;
 
 pid_t proc_try_wait(struct proc *proc, pid_t pid, int *wstatus, int options) {
-    LIST_FOR_EACH(child, &procs, struct proc, next) {
+    LIST_FOR_EACH (child, &procs, struct proc, next) {
         // TODO: use pid
         if (child->state == PROC_EXITED && child->parent == proc) {
             // TODO: return status
