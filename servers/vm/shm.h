@@ -2,6 +2,8 @@
 #define __SHM_H__
 
 #include <types.h>
+#include "task.h"
+
 struct shm {
     bool inuse;
     int shm_id;
