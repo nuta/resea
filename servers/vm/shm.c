@@ -37,7 +37,7 @@ error_t shm_map(struct task* task, int shm_id, bool writable, vaddr_t* vaddr) {
         return ERR_NOT_FOUND;
     }
     *vaddr = alloc_virt_pages(task, shm->len);
-    int flag = (writable) ? MAP_TYPE_READWRITE : 0;
+    int flag = (writable) ? MAP_TYPE_READWRITE : MAP_TYPE_READONLY;
     error_t err = map_page(task, *vaddr, shm->paddr, flag, true);
     return err;
 }
