@@ -143,4 +143,14 @@ namespace time {
     rpc gettimeofday() -> (unixtime: uint64);
 }
 
+namespace shm {
+    rpc create(size: size) ->  (shm_id: int);
+    rpc map(shm_id: int, writable: bool)   ->  (vaddr: vaddr);
+    rpc close(shm_id: int) ->  ();
+}
+
+namespace shm_test {
+    rpc read()  ->  (shm_id: int);
+}
+
 include "servers/*/interface.idl";

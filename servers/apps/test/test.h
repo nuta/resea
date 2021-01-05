@@ -17,4 +17,5 @@ void libcommon_test(void);
 void libresea_test(void);
 void malloc_test(void);
 void datetime_test(void);
+void shm_test(void);
 #endif

@@ -3,6 +3,7 @@
 #include "mm.h"
 #include "ool.h"
 #include "pages.h"
+#include "shm.h"
 #include "task.h"
 #include <list.h>
 #include <resea/async.h>
@@ -313,6 +314,41 @@ void main(void) {
                 task_unwatch(caller, task);
                 r.type = TASK_UNWATCH_REPLY_MSG;
                 ipc_reply(m.src, &r);
+                break;
+            }
+            case SHM_CREATE_MSG: {
+                struct task *task = task_lookup(m.src);
+                ASSERT(task);
+                int slot;
+                err = shm_create(task, m.shm_create.size, &slot);
+                if (err != OK) {
+                    ipc_reply_err(m.src, err);
+                    break;
+                }
+                m.type = SHM_CREATE_REPLY_MSG;
+                m.shm_create_reply.shm_id = slot;
+                ipc_reply(m.src, &m);
+                break;
+            }
+            case SHM_MAP_MSG: {
+                struct task *task = task_lookup(m.src);
+                error_t err;
+                vaddr_t vaddr;
+                err =
+                    shm_map(task, m.shm_map.shm_id, m.shm_map.writable, &vaddr);
+                if (err != OK) {
+                    ipc_reply_err(m.src, err);
+                    break;
+                }
+                m.type = SHM_MAP_REPLY_MSG;
+                m.shm_map_reply.vaddr = vaddr;
+                ipc_reply(m.src, &m);
+                break;
+            }
+            case SHM_CLOSE_MSG: {
+                shm_close(m.shm_close.shm_id);
+                m.type = SHM_CLOSE_REPLY_MSG;
+                ipc_reply(m.src, &m);
                 break;
             }
             default:
