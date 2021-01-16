@@ -1,6 +1,6 @@
 #include "task.h"
 #include "bootfs.h"
-#include "mm.h"
+#include "page_alloc.h"
 #include <elf/elf.h>
 #include <message.h>
 #include <resea/async.h>
@@ -145,10 +145,6 @@ void task_kill(struct task *task) {
         free(w);
     }
 
-    LIST_FOR_EACH (pa, &task->page_areas, struct page_area, next) {
-        free_page_area(pa);
-    }
-
     LIST_FOR_EACH (service, &services, struct service, next) {
         if (service->task == task->tid) {
             list_remove(&service->next);
@@ -156,6 +152,7 @@ void task_kill(struct task *task) {
         }
     }
 
+    task_page_free_all(task);
     task_destroy(task->tid);
     task->in_use = false;
     if (task->file_header) {

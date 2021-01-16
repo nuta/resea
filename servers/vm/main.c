@@ -1,10 +1,10 @@
 #include "bootfs.h"
-#include "elf.h"
-#include "mm.h"
 #include "ool.h"
-#include "pages.h"
+#include "page_alloc.h"
+#include "page_fault.h"
 #include "shm.h"
 #include "task.h"
+#include <elf/elf.h>
 #include <list.h>
 #include <resea/async.h>
 #include <resea/ipc.h>
@@ -77,9 +77,9 @@ static void spawn_servers(void) {
 void main(void) {
     TRACE("starting...");
     bootfs_init();
-    pages_init();
+    page_alloc_init();
     task_init();
-    mm_init();
+    page_fault_init();
     spawn_servers();
 
     timer_set(5000);
@@ -197,7 +197,8 @@ void main(void) {
                 ASSERT(task->pager == vm_task->tid);
                 ASSERT(m.page_fault.task == task->tid);
 
-                paddr_t paddr = pager(task, m.page_fault.vaddr, m.page_fault.ip,
+                paddr_t paddr =
+                    handle_page_fault(task, m.page_fault.vaddr, m.page_fault.ip,
                                       m.page_fault.fault);
                 if (!paddr) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
@@ -236,7 +237,7 @@ void main(void) {
 
                 vaddr_t vaddr;
                 paddr_t paddr = m.vm_alloc_pages.paddr;
-                error_t err = alloc_phy_pages(task, &vaddr, &paddr,
+                error_t err = task_page_alloc(task, &vaddr, &paddr,
                                               m.vm_alloc_pages.num_pages);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);

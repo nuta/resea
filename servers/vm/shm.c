@@ -1,5 +1,6 @@
 #include "shm.h"
-#include "mm.h"
+#include "page_alloc.h"
+#include "page_fault.h"
 #include <string.h>
 
 static struct shm shared_mems[NUM_SHARED_MEMS_MAX];
@@ -20,7 +21,7 @@ error_t shm_create(struct task* task, size_t size, int* slot) {
     }
     paddr_t paddr = 0;
     vaddr_t vaddr;
-    error_t err = alloc_phy_pages(task, &vaddr, &paddr, size);
+    error_t err = task_page_alloc(task, &vaddr, &paddr, size);
     if (err != OK) {
         return err;
     }
@@ -36,7 +37,7 @@ error_t shm_map(struct task* task, int shm_id, bool writable, vaddr_t* vaddr) {
     if (shm == NULL) {
         return ERR_NOT_FOUND;
     }
-    *vaddr = alloc_virt_pages(task, shm->len);
+    *vaddr = virt_page_alloc(task, shm->len);
     int flag = (writable) ? MAP_TYPE_READWRITE : MAP_TYPE_READONLY;
     error_t err = map_page(task, *vaddr, shm->paddr, flag, true);
     return err;

@@ -7,6 +7,15 @@
 
 #define SERVICE_NAME_LEN 32
 
+/// A page area allocated for a task. It is mainly used to free memory pages
+/// when the task exit.
+struct page_area {
+    list_elem_t next;
+    vaddr_t vaddr;
+    paddr_t paddr;
+    size_t num_pages;
+};
+
 /// Task Control Block (TCB).
 struct task {
     bool in_use;

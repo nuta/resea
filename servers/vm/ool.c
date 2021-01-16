@@ -1,5 +1,5 @@
 #include "ool.h"
-#include "mm.h"
+#include "page_fault.h"
 #include "task.h"
 #include <message.h>
 #include <resea/ipc.h>
@@ -8,6 +8,19 @@
 
 static uint8_t __src_page[PAGE_SIZE] __aligned(PAGE_SIZE);
 static uint8_t __dst_page[PAGE_SIZE] __aligned(PAGE_SIZE);
+
+static paddr_t vaddr2paddr(struct task *task, vaddr_t vaddr) {
+    LIST_FOR_EACH (area, &task->page_areas, struct page_area, next) {
+        if (area->vaddr <= vaddr
+            && vaddr < area->vaddr + area->num_pages * PAGE_SIZE) {
+            return area->paddr + (vaddr - area->vaddr);
+        }
+    }
+
+    // The page is not mapped. Try filling it with pager.
+    return handle_page_fault(
+        task, vaddr, 0, EXP_PF_USER | EXP_PF_WRITE /* FIXME: strip PF_WRITE */);
+}
 
 error_t handle_ool_recv(struct message *m) {
     struct task *task = task_lookup(m->src);

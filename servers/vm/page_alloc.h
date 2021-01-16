@@ -1,5 +1,5 @@
-#ifndef __ALLOC_PAGE_H__
-#define __ALLOC_PAGE_H__
+#ifndef __PAGE_ALLOC_H__
+#define __PAGE_ALLOC_H__
 
 #include <list.h>
 #include <types.h>
@@ -25,9 +25,15 @@ extern char __straight_mapping[];
 extern size_t num_unused_pages;
 
 pfn_t paddr2pfn(paddr_t paddr);
-void pages_incref(pfn_t pfn, size_t num_pages);
-void pages_decref(pfn_t pfn, size_t num_pages);
-paddr_t pages_alloc(size_t num_pages);
-void pages_init(void);
+void page_incref(pfn_t pfn, size_t num_pages);
+void page_decref(pfn_t pfn, size_t num_pages);
+paddr_t page_alloc(size_t num_pages);
+struct task;
+error_t task_page_alloc(struct task *task, vaddr_t *vaddr, paddr_t *paddr,
+                        size_t num_pages);
+vaddr_t virt_page_alloc(struct task *task, size_t num_pages);
+void task_page_free(struct task *task, paddr_t paddr);
+void task_page_free_all(struct task *task);
+void page_alloc_init(void);
 
 #endif
