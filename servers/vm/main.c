@@ -235,7 +235,7 @@ void main(void) {
                 struct task *task = task_lookup(m.src);
                 ASSERT(task);
 
-                vaddr_t vaddr;
+                vaddr_t vaddr = 0;
                 paddr_t paddr = m.vm_alloc_pages.paddr;
                 error_t err = task_page_alloc(task, &vaddr, &paddr,
                                               m.vm_alloc_pages.num_pages);
