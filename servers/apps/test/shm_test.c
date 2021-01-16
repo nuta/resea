@@ -48,9 +48,8 @@ void shm_access_test(void) {
     struct message m;
     error_t err;
     task_t shm_test = ipc_lookup("shm_test_server");
-    if (shm_test < 0) {
-        return;
-    }
+    ASSERT_OK(shm_test);
+
     // Send read request to shm_test_server
     m.type = SHM_TEST_READ_MSG;
     err = ipc_call(shm_test, &m);

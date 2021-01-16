@@ -11,7 +11,7 @@ void main(void) {
         struct message m;
         m.type = TASK_LAUNCH_MSG;
         m.task_launch.name_and_cmdline = "hello";
-        ipc_call(VM_TASK, &m);
+        ASSERT_OK(ipc_call(VM_TASK, &m));
         task_t task = m.task_launch_reply.task;
 
         m.type = TASK_WATCH_MSG;
