@@ -78,7 +78,8 @@ static bool is_mappable_paddr_range(paddr_t paddr, size_t num_pages) {
         ;
 }
 
-/// Allocates a memory space for at task.
+/// Allocates a memory space for at task. Note that *vaddr and *paddr MUST BE
+/// initialized with proper values as described below.
 ///
 /// If `*paddr` is zero, it allocates unused physical memory pages. Otherwise,
 /// it maps to the specified physical memory addreess (used by some device
