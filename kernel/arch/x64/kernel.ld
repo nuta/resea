@@ -4,10 +4,9 @@ ENTRY(boot);
 LMA_OFFSET = 0xffff800000000000;
 
 MEMORY {
-    /* FIXME: merge */
-    boot_ram (rwx): ORIGIN = 0x0000000000100000, LENGTH = 0x0200000
-    ram (rwx):      ORIGIN = 0xffff800000300000, LENGTH = 0x2d00000
-    lma_ram (rwx):  ORIGIN = 0x0000000000300000, LENGTH = 0x2d00000
+    boot_ram (rwx): ORIGIN = 0x0000000000100000, LENGTH = 0x0001000
+    ram (rwx):      ORIGIN = 0xffff800000101000, LENGTH = 0x2fff000
+    lma_ram (rwx):  ORIGIN = 0x0000000000101000, LENGTH = 0x2fff000
 }
 
 SECTIONS {
