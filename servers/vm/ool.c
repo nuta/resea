@@ -124,8 +124,8 @@ error_t handle_ool_send(struct message *m) {
                 return DONT_REPLY;
             }
 
-            ASSERT_OK(map_page(vm_task, (vaddr_t) __src_page, src_paddr,
-                               MAP_TYPE_READWRITE, true));
+            OK_OR_RETURN(map_page(vm_task, (vaddr_t) __src_page, src_paddr,
+                                  MAP_TYPE_READWRITE, true));
             src_ptr = &__src_page[src_off];
         }
 
@@ -141,8 +141,8 @@ error_t handle_ool_send(struct message *m) {
             }
 
             // Temporarily map the pages into the our address space.
-            ASSERT_OK(map_page(vm_task, (vaddr_t) __dst_page, dst_paddr,
-                               MAP_TYPE_READWRITE, true));
+            OK_OR_RETURN(map_page(vm_task, (vaddr_t) __dst_page, dst_paddr,
+                         MAP_TYPE_READWRITE, true));
             dst_ptr = &__dst_page[dst_off];
         }
 

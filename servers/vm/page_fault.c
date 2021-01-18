@@ -45,6 +45,8 @@ error_t map_page(struct task *task, vaddr_t vaddr, paddr_t paddr,
     }
 }
 
+/// Tries to fill a page at `vaddr` for the task. Returns the allocated physical
+/// memory address on success or 0 on failure.
 paddr_t handle_page_fault(struct task *task, vaddr_t vaddr, vaddr_t ip,
                           unsigned fault) {
     if (vaddr < PAGE_SIZE) {
@@ -67,10 +69,12 @@ paddr_t handle_page_fault(struct task *task, vaddr_t vaddr, vaddr_t ip,
     // The `cmdline` for main().
     if (vaddr == (vaddr_t) __cmdline) {
         paddr_t paddr = 0;
-        // FIXME: Don't ues ASSERT_OK to prevent vm from crashing.
-        ASSERT_OK(task_page_alloc(task, &vaddr, &paddr, 1));
-        ASSERT_OK(
-            map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false));
+        if (task_page_alloc(task, &vaddr, &paddr, 1) != OK) {
+            return 0;
+        }
+        if (map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false) != OK) {
+            return 0;
+        }
         memset((void *) tmp_page, 0, PAGE_SIZE);
         strncpy2((void *) tmp_page, task->cmdline, PAGE_SIZE);
         return paddr;
@@ -88,11 +92,13 @@ paddr_t handle_page_fault(struct task *task, vaddr_t vaddr, vaddr_t ip,
     vaddr_t zeroed_pages_end = (vaddr_t) __zeroed_pages_end;
     if (zeroed_pages_start <= vaddr && vaddr < zeroed_pages_end) {
         // The accessed page is zeroed one (.bss section, stack, or heap).
-        // FIXME: Don't ues ASSERT_OK to prevent vm from crashing.
         paddr_t paddr = 0;
-        ASSERT_OK(task_page_alloc(task, &vaddr, &paddr, 1));
-        ASSERT_OK(
-            map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false));
+        if (task_page_alloc(task, &vaddr, &paddr, 1) != OK) {
+            return 0;
+        }
+        if (map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false) != OK) {
+            return 0;
+        }
         memset((void *) tmp_page, 0, PAGE_SIZE);
         return paddr;
     }
@@ -116,11 +122,13 @@ paddr_t handle_page_fault(struct task *task, vaddr_t vaddr, vaddr_t ip,
 
         if (phdr) {
             // Allocate a page and fill it with the file data.
-            // FIXME: Don't ues ASSERT_OK to prevent vm from crashing.
             paddr_t paddr = 0;
-            ASSERT_OK(task_page_alloc(task, &vaddr, &paddr, 1));
-            ASSERT_OK(
-                map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false));
+            if (task_page_alloc(task, &vaddr, &paddr, 1) != OK) {
+                return 0;
+            }
+            if (map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false) != OK) {
+                return 0;
+            }
             size_t offset_in_segment = (vaddr - phdr->p_vaddr) + phdr->p_offset;
             read_file(task->file, offset_in_segment, (void *) tmp_page,
                       PAGE_SIZE);

@@ -75,6 +75,7 @@ static void init_task_struct(struct task *task, const char *name,
     list_init(&task->watchers);
 }
 
+/// Execute a ELF file. Returns an task ID on success or an error on failure.
 task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     TRACE("launching %s...", file->name);
     struct task *task = task_alloc(vm_task->tid);
@@ -101,11 +102,14 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     // Create a new task for the server.
     error_t err = task_create(task->tid, file->name, ehdr->e_entry, task_self(),
                               TASK_ALL_CAPS);
-    ASSERT_OK(err);
+    if (err != OK) {
+        return err;
+    }
 
     return task->tid;
 }
 
+/// Execute a ELF file. Returns an task ID on success or an error on failure.
 task_t task_spawn_by_cmdline(const char *name_with_cmdline) {
     char *name = strdup(name_with_cmdline);
 

@@ -54,7 +54,7 @@ static void spawn_servers(void) {
             size_t len = strlen(file->name);
             if (!strncmp(file->name, startups, len)
                 && (startups[len] == '\0' || startups[len] == ' ')) {
-                task_spawn(file, "");
+                ASSERT_OK(task_spawn(file, ""));
                 num_launched++;
                 break;
             }
