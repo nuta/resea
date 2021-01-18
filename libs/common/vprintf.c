@@ -200,8 +200,9 @@ void printf_with_context(struct vprintf_context *ctx, const char *fmt, ...) {
 
 /// The symbol table. embed-symbols.py fills the symbol table and set `magic` to
 /// SYMBOL_TABLE_MAGIC.
-static struct symbol_table symbol_table = {
+static const struct symbol_table symbol_table = {
     .magic = SYMBOL_TABLE_EMPTY,
+    // FIXME: clang optimizes this into a constant!
     .num_symbols = CONFIG_NUM_SYMBOLS,
 };
 
