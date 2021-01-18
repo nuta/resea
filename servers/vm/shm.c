@@ -16,9 +16,9 @@ int shm_check_available(void) {
     return i;
 }
 
-error_t shm_create(struct task* task, size_t size, int* slot) {
+error_t shm_create(struct task *task, size_t size, int *slot) {
     *slot = shm_check_available();
-    if (slot < 0) {
+    if (*slot < 0) {
         return ERR_UNAVAILABLE;
     }
 
@@ -36,12 +36,12 @@ error_t shm_create(struct task* task, size_t size, int* slot) {
     return OK;
 }
 
-error_t shm_map(struct task* task, int shm_id, bool writable, vaddr_t* vaddr) {
+error_t shm_map(struct task *task, int shm_id, bool writable, vaddr_t *vaddr) {
     struct shm* shm = shm_lookup(shm_id);
     if (shm == NULL) {
         return ERR_NOT_FOUND;
     }
-    
+
     *vaddr = virt_page_alloc(task, shm->len);
     int flag = (writable) ? MAP_TYPE_READWRITE : MAP_TYPE_READONLY;
     error_t err = map_page(task, *vaddr, shm->paddr, flag, true);

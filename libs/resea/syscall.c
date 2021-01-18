@@ -1,4 +1,5 @@
 #include <arch/syscall.h>
+#include <resea/syscall.h>
 #include <message.h>
 #include <types.h>
 
