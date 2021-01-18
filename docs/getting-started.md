@@ -17,9 +17,9 @@ $ pip3 install -r tools/requirements.txt
 
 ### Ubuntu 20.04
 ```
-$ apt install llvm-8 lld-8 clang-8 qemu bochs grub2 xorriso mtools \
-    python3 python3-dev python3-pip python3-setuptools \
-    gcc-arm-none-eabi
+$ apt install llvm lld clang qemu bochs grub2 xorriso mtools \
+    python3 python3-dev python3-pip python3-setuptools gcc-arm-none-eabi \
+    clang-format clang-tidy sparse
 $ pip3 install --user -r tools/requirements.txt
 $ cargo install cargo-xbuild
 ```
