@@ -7,3 +7,6 @@ edition = "2018"
 [lib]
 path = "main.rs"
 crate-type = ["staticlib"]
+
+[dependencies]
+resea = { path = "../../../libs/resea/rust" }

@@ -119,7 +119,7 @@ CFLAGS += -DBOOTELF_PATH='"$(boot_elf)"'
 CFLAGS += -DBOOTFS_PATH='"$(bootfs_bin)"'
 CFLAGS += -DAUTOSTARTS='"$(autostarts)"'
 
-CARGOFLAGS +=-Z build-std=core --quiet
+CARGOFLAGS +=-Z build-std=core,alloc --quiet
 RUSTFLAGS += -C lto -Z emit-stack-sizes -Z external-macro-backtrace
 
 ifdef CONFIG_BUILD_RELEASE
@@ -205,6 +205,14 @@ website:
 book:
 	mdbook serve
 
+.PHONY: rustdoc
+rustdoc:
+	$(PROGRESS) "CARGO" $(BUILD_DIR)/rustdoc
+	PROGRAM_NAME= cargo doc \
+		--workspace \
+		--manifest-path libs/resea/rust/Cargo.toml \
+		--target-dir $(BUILD_DIR)/rustdoc
+
 #
 #  Build Rules
 #
@@ -278,7 +286,12 @@ $(BUILD_DIR)/include/config.h: .config $(BUILD_DIR)/Kconfig.autogen tools/config
 $(BUILD_DIR)/include/idl.h: tools/genidl.py $(wildcard *.idl */*.idl */*/*.idl)
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
-	./tools/genidl.py --idl interface.idl -o $@
+	./tools/genidl.py --lang c --idl interface.idl -o $@
+
+libs/resea/rust/idl/mod.rs: tools/genidl.py $(wildcard *.idl */*.idl */*/*.idl)
+	$(PROGRESS) "GEN" $@
+	mkdir -p $(@D)
+	./tools/genidl.py --lang rust --idl interface.idl -o $(@D)
 
 # JSON compilation database.
 # https://clang.llvm.org/docs/JSONCompilationDatabase.html
@@ -364,8 +377,8 @@ $(BUILD_DIR)/%.elf: $(BUILD_DIR)/%.debug.elf ./tools/embed-bootelf-header.py
 	$(OBJCOPY) --strip-all-gnu --strip-debug $< $@
 	./tools/embed-bootelf-header.py --name=$(name) $(@)
 
-# Use
-$(BUILD_DIR)/rust/%.a:
+FORCE:
+$(BUILD_DIR)/rust/%.a: FORCE
 	$(PROGRESS) "CARGO" $(server_dir)
 	mkdir -p $(BUILD_DIR)/rust/$(name)
 	PROGRAM_NAME="$(name)" \

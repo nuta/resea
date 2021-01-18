@@ -3,6 +3,7 @@ import sys
 import argparse
 import jinja2
 import markdown
+from pathlib import Path
 from glob import glob
 from lark import Lark
 from lark.exceptions import LarkError
@@ -491,6 +492,10 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
     with open(args.out, "w") as f:
         f.write(text)
 
+def rust_generator(args, idl):
+    # TODO:
+    with open(Path(args.out) / "mod.rs", "w") as f:
+        f.write("")
 
 def html_generator(args, idl):
     renderer = jinja2.Environment()
@@ -603,16 +608,18 @@ def main():
     parser = argparse.ArgumentParser(
         description="The message definitions generator.")
     parser.add_argument("--idl", required=True, help="The IDL file.")
-    parser.add_argument("--lang", choices=["c", "html"], default="c",
+    parser.add_argument("--lang", choices=["c", "rust", "html"], default="c",
                         help="The output language.")
     parser.add_argument("-o", dest="out", required=True,
-                        help="The output directory.")
+                        help="The output file (for c/html) or directory (for rust).")
     args = parser.parse_args()
 
     try:
         idl = IDLParser().parse(args.idl)
         if args.lang == "c":
             c_generator(args, idl)
+        elif args.lang == "rust":
+            rust_generator(args, idl)
         elif args.lang == "html":
             html_generator(args, idl)
     except ParseError as e:

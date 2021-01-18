@@ -1,3 +1,0 @@
-menu "Hello World from Rust"
-	depends on HELLO_FROM_RUST_SERVER
-endmenu
