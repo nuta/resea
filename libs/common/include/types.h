@@ -89,6 +89,14 @@ typedef __builtin_va_list va_list;
         __typeof__(b) __b = (b);                                               \
         (__a < __b) ? __a : __b;                                               \
     })
+#define OK_OR_RETURN(expr)                                                     \
+    ({                                                                         \
+        error_t any_or_err = (expr);                                           \
+        if (IS_ERROR(any_or_err)) {                                            \
+            return any_or_err;                                                 \
+        }                                                                      \
+        any_or_err;                                                            \
+    })
 
 // Error values. Don't forget to update `error_names` as well!
 typedef int error_t;
