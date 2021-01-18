@@ -9,7 +9,7 @@
 static uint8_t __src_page[PAGE_SIZE] __aligned(PAGE_SIZE);
 static uint8_t __dst_page[PAGE_SIZE] __aligned(PAGE_SIZE);
 
-static paddr_t vaddr2paddr(struct task *task, vaddr_t vaddr) {
+static paddr_t vaddr2paddr(struct task *task, vaddr_t vaddr, bool write) {
     LIST_FOR_EACH (area, &task->page_areas, struct page_area, next) {
         if (area->vaddr <= vaddr
             && vaddr < area->vaddr + area->num_pages * PAGE_SIZE) {
@@ -18,8 +18,9 @@ static paddr_t vaddr2paddr(struct task *task, vaddr_t vaddr) {
     }
 
     // The page is not mapped. Try filling it with pager.
-    return handle_page_fault(
-        task, vaddr, 0, EXP_PF_USER | EXP_PF_WRITE /* FIXME: strip PF_WRITE */);
+    unsigned fault = EXP_PF_USER;
+    fault |= write ? EXP_PF_WRITE : 0;
+    return handle_page_fault(task, vaddr, 0, fault);
 }
 
 error_t handle_ool_recv(struct message *m) {
@@ -117,7 +118,7 @@ error_t handle_ool_send(struct message *m) {
             src_ptr = (void *) src_buf;
         } else {
             paddr_t src_paddr =
-                vaddr2paddr(src_task, ALIGN_DOWN(src_buf, PAGE_SIZE));
+                vaddr2paddr(src_task, ALIGN_DOWN(src_buf, PAGE_SIZE), false);
             if (!src_paddr) {
                 task_kill(src_task);
                 return DONT_REPLY;
@@ -133,7 +134,7 @@ error_t handle_ool_send(struct message *m) {
             dst_ptr = (void *) dst_buf;
         } else {
             paddr_t dst_paddr =
-                vaddr2paddr(dst_task, ALIGN_DOWN(dst_buf, PAGE_SIZE));
+                vaddr2paddr(dst_task, ALIGN_DOWN(dst_buf, PAGE_SIZE), true);
             if (!dst_paddr) {
                 task_kill(dst_task);
                 return ERR_UNAVAILABLE;
