@@ -42,7 +42,7 @@ struct task *task_lookup(task_t tid) {
     return task;
 }
 
-/// Initializes a task struct.
+/// Initializes a task and enqueue it into the run-queue.
 error_t task_create(struct task *task, const char *name, vaddr_t ip,
                     struct task *pager, unsigned flags) {
     if (task->state != TASK_UNUSED) {
@@ -282,17 +282,15 @@ error_t task_unlisten_irq(unsigned irq) {
 
 /// Maps a memory page in the task's virtual memory space. `kpage` is a memory
 /// page which provides a memory page for arch-specific page table structures.
-///
-/// Please note that this is the most DANGEROUS operation in system calls. A
-/// user task can map the whole physical memory space including the kernel data
-/// area.
 __mustuse error_t vm_map(struct task *task, vaddr_t vaddr, paddr_t paddr,
                          paddr_t kpage, unsigned flags) {
     DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(kpage, PAGE_SIZE));
 
-    // Prevent corrupting kernel memory.
+    // Prevent corrupting kernel memory. Note that the user is still able to
+    // bypass this check to access the kernel memory by mapping the page table
+    // structures.
     if (is_kernel_addr_range(vaddr, PAGE_SIZE)) {
         WARN_DBG("vaddr %p points to a kernel memory area", vaddr);
         return ERR_NOT_ACCEPTABLE;

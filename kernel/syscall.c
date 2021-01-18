@@ -37,6 +37,7 @@ static void strncpy_from_user(char *dst, __user const char *src, size_t len) {
     dst[len] = '\0';
 }
 
+/// Creates a task.
 static error_t sys_task_create(task_t tid, __user const char *name, vaddr_t ip,
                                task_t pager, unsigned flags) {
     if (!CAPABLE(CURRENT, CAP_TASK)) {
@@ -155,6 +156,7 @@ static error_t sys_irq_release(int irq) {
     return task_unlisten_irq(irq);
 }
 
+/// Resolves the physical memory address mapped from `vaddr`.
 static paddr_t resolve_paddr(vaddr_t vaddr) {
     if (CURRENT->tid == INIT_TASK) {
         return vaddr;
@@ -163,6 +165,12 @@ static paddr_t resolve_paddr(vaddr_t vaddr) {
     }
 }
 
+/// Maps a memory page in the task's virtual memory space. `kpage` is a memory
+/// page which provides a memory page for arch-specific page table structures.
+///
+/// Please note that this is the most DANGEROUS operation in system calls. A
+/// user task can map the whole physical memory space including the kernel data
+/// area.
 static error_t sys_vm_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
                           unsigned flags) {
     if (!CAPABLE(CURRENT, CAP_MAP)) {
@@ -205,6 +213,7 @@ static error_t sys_vm_map(task_t tid, vaddr_t vaddr, vaddr_t src, vaddr_t kpage,
     return vm_map(task, vaddr, paddr, kpage_paddr, flags);
 }
 
+/// Unmaps a memory page from the task's virtual memory space.
 static error_t sys_vm_unmap(task_t tid, vaddr_t vaddr) {
     if (!CAPABLE(CURRENT, CAP_MAP)) {
         return ERR_NOT_PERMITTED;
