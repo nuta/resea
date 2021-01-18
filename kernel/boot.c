@@ -134,7 +134,7 @@ __noreturn void kmain(struct bootinfo *bootinfo) {
 
     // Copy the bootinfo struct to the boot elf header.
 #ifndef CONFIG_NOMMU
-    // FIXME: bootelf->bootinfo could exist in ROM.
+    // FIXME: Support NOMMU: bootelf->bootinfo could exist in ROM.
     memcpy(&bootelf->bootinfo, bootinfo, sizeof(*bootinfo));
 #endif
 
