@@ -2,6 +2,7 @@
 /.config
 /.config.*
 /build
+/target
 /book
 *.iso
 *.bin
