@@ -142,7 +142,7 @@ error_t handle_ool_send(struct message *m) {
 
             // Temporarily map the pages into the our address space.
             OK_OR_RETURN(map_page(vm_task, (vaddr_t) __dst_page, dst_paddr,
-                         MAP_TYPE_READWRITE, true));
+                                  MAP_TYPE_READWRITE, true));
             dst_ptr = &__dst_page[dst_off];
         }
 

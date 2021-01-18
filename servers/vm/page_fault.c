@@ -72,7 +72,8 @@ paddr_t handle_page_fault(struct task *task, vaddr_t vaddr, vaddr_t ip,
         if (task_page_alloc(task, &vaddr, &paddr, 1) != OK) {
             return 0;
         }
-        if (map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false) != OK) {
+        if (map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false)
+            != OK) {
             return 0;
         }
         memset((void *) tmp_page, 0, PAGE_SIZE);
@@ -96,7 +97,8 @@ paddr_t handle_page_fault(struct task *task, vaddr_t vaddr, vaddr_t ip,
         if (task_page_alloc(task, &vaddr, &paddr, 1) != OK) {
             return 0;
         }
-        if (map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false) != OK) {
+        if (map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false)
+            != OK) {
             return 0;
         }
         memset((void *) tmp_page, 0, PAGE_SIZE);
@@ -126,7 +128,8 @@ paddr_t handle_page_fault(struct task *task, vaddr_t vaddr, vaddr_t ip,
             if (task_page_alloc(task, &vaddr, &paddr, 1) != OK) {
                 return 0;
             }
-            if (map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false) != OK) {
+            if (map_page(vm_task, tmp_page, paddr, MAP_TYPE_READWRITE, false)
+                != OK) {
                 return 0;
             }
             size_t offset_in_segment = (vaddr - phdr->p_vaddr) + phdr->p_offset;
