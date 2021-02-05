@@ -16,6 +16,19 @@ SECTIONS {
         *(.text);
         *(.text.*);
         __text_end = .;
+    }
+
+    .got : ALIGN(0x1000) {
+        . = ALIGN(8);
+        __got = .;
+        *(.got);
+        __got_end = .;
+        __plt = .;
+        *(.got.plt);
+        __plt_end = .;
+        __plt2 = .;
+        *(.plt.got);
+        __plt2_end = .;
     } :text
 
     .rodata : ALIGN(0x1000) {

@@ -10,7 +10,8 @@ start:
     mov rbp, 0
 
     // Initialize the user library and run main().
-    call resea_init
+    lea rax, [rip + resea_init]
+    call rax
 
     // Somehow task_exit returned!
 .global halt

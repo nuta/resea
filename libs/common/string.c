@@ -123,3 +123,5 @@ __weak void memmove(void *dst, const void *src, size_t len) {
         }
     }
 }
+
+int foobar() {return 123;}

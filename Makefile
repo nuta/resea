@@ -140,6 +140,11 @@ RUSTFLAGS += $(if $(CONFIG_OPT_LEVEL_2), -C opt-level=2)
 RUSTFLAGS += $(if $(CONFIG_OPT_LEVEL_3), -C opt-level=3)
 RUSTFLAGS += $(if $(CONFIG_OPT_LEVEL_S), -C opt-level=s)
 
+# ifdef CONFIG_PIE
+USER_CFLAGS += -fPIE
+USER_LDFLAGS += -pie
+# endif
+
 # Disable sparse(1), a C source code analyzer if $(C) is not set.
 ifeq ($(C),)
 # `:` is a valid command: it do nothing and always exits with 0.
@@ -253,13 +258,13 @@ $(BUILD_DIR)/kernel/__name__.o: $(BUILD_DIR)/kernel/__name__.c
 $(BUILD_DIR)/%.o: %.c Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	$(CC) $(CFLAGS) $(USER_CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 	$(SPARSE) $(CFLAGS) $<
 
 $(BUILD_DIR)/%.o: %.S Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	$(CC) $(CFLAGS) $(USER_CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 #
 #  Auto-generated files.
@@ -347,12 +352,13 @@ $(foreach server, $(boot_task_name) $(servers), \
 %/__name__.o: %/__name__.c $(autogen_files)
 	$(PROGRESS) "CC" $@
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $(@) $<
+	echo $(CC) $(USER_CFLAGS) -c -o $(@) $<
+	$(CC) $(CFLAGS) $(USER_CFLAGS) -c -o $(@) $<
 
 $(BUILD_DIR)/%.debug.elf: tools/nm2symbols.py \
 		tools/embed-symbols.py libs/resea/arch/$(ARCH)/user.ld Makefile
 	$(PROGRESS) "LD" $(@)
-	$(LD) $(LDFLAGS) --script=libs/resea/arch/$(ARCH)/user.ld \
+	$(LD) $(LDFLAGS) $(USER_LDFLAGS) --script=libs/resea/arch/$(ARCH)/user.ld \
 		-Map $(@:.debug.elf=.map) -o $(@).tmp $(objs)
 	$(NM) $(@).tmp | ./tools/nm2symbols.py > $(BUILD_DIR)/$(name).symbols
 	$(PROGRESS) "SYMBOLS" $(BUILD_DIR)/$(name).debug.elf
