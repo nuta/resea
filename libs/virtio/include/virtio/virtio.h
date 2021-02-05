@@ -43,6 +43,8 @@ struct virtio_virtq {
     void *buffers;
     /// The size of a buffer entry.
     size_t buffer_size;
+    /// The next descriptor indioces. -1 if the next descriptor does not exist.
+    int *next_indices;
     union {
         struct virtio_virtq_legacy legacy;
         struct virtio_virtq_modern modern;
@@ -69,6 +71,8 @@ struct virtio_ops {
     void (*virtq_push_desc)(struct virtio_virtq *vq, int index);
     void (*virtq_kick_desc)(struct virtio_virtq *vq, int index);
     void (*virtq_notify)(struct virtio_virtq *vq);
+    int (*get_next_index)(struct virtio_virtq *vq, int index);
+    void *(*get_buffer)(struct virtio_virtq *vq, int index);
 };
 
 error_t virtio_find_device(int device_type, struct virtio_ops **ops,

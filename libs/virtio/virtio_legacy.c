@@ -194,6 +194,15 @@ static uint64_t read_device_config(offset_t offset, size_t size) {
     return io_read8(bar0_io, VIRTIO_REG_DEVICE_CONFIG_BASE + offset);
 }
 
+static int get_next_index(struct virtio_virtq *vq, int index) {
+    NYI();
+    return -1;
+}
+
+static void *get_buffer(struct virtio_virtq *vq, int index) {
+    return vq->buffers + index * vq->buffer_size;
+}
+
 struct virtio_ops virtio_legacy_ops = {
     .read_device_features = read_device_features,
     .negotiate_feature = negotiate_feature,
@@ -208,6 +217,8 @@ struct virtio_ops virtio_legacy_ops = {
     .virtq_push_desc = virtq_push_desc,
     .virtq_kick_desc = virtq_kick_desc,
     .virtq_notify = virtq_notify,
+    .get_next_index = get_next_index,
+    .get_buffer = get_buffer,
 };
 
 /// Looks for and initializes a virtio device with the given device type. It

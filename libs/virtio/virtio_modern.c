@@ -165,9 +165,15 @@ static void virtq_init(unsigned index) {
     set_device_paddr(dma_daddr(device_dma));
     VIRTIO_COMMON_CFG_WRITE16(queue_enable, 1);
 
+    int *next_indices = malloc(sizeof(int) * num_descs);
+    for (size_t i = 0; i < num_descs; i++) {
+        next_indices[i] = -1;
+    }
+
     virtqs[index].index = index;
     virtqs[index].descs_dma = descs_dma;
     virtqs[index].num_descs = num_descs;
+    virtqs[index].next_indices = next_indices;
     virtqs[index].modern.descs =
         (struct virtq_packed_desc *) dma_buf(descs_dma);
     virtqs[index].modern.queue_notify_off = queue_notify_off;
@@ -195,6 +201,11 @@ static int virtq_alloc(struct virtio_virtq *vq, size_t len, uint16_t flags,
 
     if (!is_desc_free(vq, desc)) {
         return -1;
+    }
+
+    vq->next_indices[index] = -1;
+    if (prev_desc != VIRTQ_ALLOC_NO_PREV) {
+        vq->next_indices[prev_desc] = index;
     }
 
     flags &= ~(1 << VIRTQ_DESC_F_AVAIL_SHIFT);
@@ -315,6 +326,15 @@ static uint64_t read_device_config(offset_t offset, size_t size) {
         default:
             UNREACHABLE();
     }
+}
+
+static int get_next_index(struct virtio_virtq *vq, int index) {
+    ASSERT(index < vq->num_descs);
+    return vq->next_indices[index];
+}
+
+static void *get_buffer(struct virtio_virtq *vq, int index) {
+    return vq->buffers + index * vq->buffer_size;
 }
 
 struct virtio_ops virtio_modern_ops = {
