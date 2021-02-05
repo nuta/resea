@@ -352,22 +352,57 @@ struct virtio_ops virtio_modern_ops = {
     .virtq_push_desc = virtq_push_desc,
     .virtq_kick_desc = virtq_kick_desc,
     .virtq_notify = virtq_notify,
+    .get_next_index = get_next_index,
+    .get_buffer = get_buffer,
 };
+
+static uint16_t get_transitional_device_id(int device_type) {
+    switch (device_type) {
+        case VIRTIO_DEVICE_NET: return 0x1000;
+        default: return 0;
+    }
+}
 
 /// Looks for and initializes a virtio device with the given device type. It
 /// sets the IRQ vector to `irq` on success.
 error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops,
                                   uint8_t *irq) {
-    // Search the PCI bus for a virtio device...
+    // Search the PCI bus for a virtio device.
+    //
+    // "Devices MUST have the PCI Vendor ID 0x1AF4. Devices MUST either have the
+    // PCI Device ID calculated by adding 0x1040 to the Virtio Device ID ... or
+    // have the Transitional PCI Device ID"
+    //
+    // From "4.1.2.1 Device Requirements: PCI Device Discovery"
     dm_server = ipc_lookup("dm");
-    struct message m;
-    m.type = DM_ATTACH_PCI_DEVICE_MSG;
-    m.dm_attach_pci_device.vendor_id = 0x1af4;
-    m.dm_attach_pci_device.device_id = 0x1000;
-    ASSERT_OK(ipc_call(dm_server, &m));
-    handle_t pci_device = m.dm_attach_pci_device_reply.handle;
+    uint16_t device_ids[] = {
+        0x1040 + device_type,
+        get_transitional_device_id(device_type),
+        0,
+    };
 
-    // TODO: Determine the device type and compare it with `device_type`.
+    handle_t pci_device = 0;
+    for (int i = 0; device_ids[i] != 0; i++) {
+        struct message m;
+        m.type = DM_ATTACH_PCI_DEVICE_MSG;
+        m.dm_attach_pci_device.vendor_id = 0x1af4;
+        m.dm_attach_pci_device.device_id = device_ids[i];
+        error_t err = ipc_call(dm_server, &m);
+        switch (err) {
+            case OK:
+                break;
+            case ERR_NOT_FOUND:
+                continue;
+            default: return err;
+        }
+
+        pci_device = m.dm_attach_pci_device_reply.handle;
+        break;
+    }
+
+    if (!pci_device) {
+        return ERR_NOT_FOUND;
+    }
 
     // Walk capabilities list. A capability consists of the following fields
     // (from "4.1.4 Virtio Structure PCI Capabilities"):
@@ -467,6 +502,7 @@ error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops,
     *ops = &virtio_modern_ops;
 
     // Enable PCI bus master.
+    struct message m;
     m.type = DM_PCI_ENABLE_BUS_MASTER_MSG;
     m.dm_pci_enable_bus_master.handle = pci_device;
     ASSERT_OK(ipc_call(dm_server, &m));
