@@ -236,6 +236,20 @@ static error_t virtq_pop_desc(struct virtio_virtq *vq, int *index,
         return ERR_NOT_FOUND;
     }
 
+    // Skip until the next chain.
+    int num_in_chain = 1;
+    int id = desc->id;
+    while (vq->next_indices[id] != -1) {
+        num_in_chain++;
+        id = vq->next_indices[id];
+    }
+
+    vq->modern.next_used = vq->modern.next_used + num_in_chain;
+    if (vq->modern.next_used >= vq->num_descs) {
+        vq->modern.used_wrap_counter ^= 1;
+        vq->modern.next_used = 0;
+    }
+
     *index = from_le16(desc->id);
     *len = from_le32(desc->len);
     return OK;
@@ -252,17 +266,11 @@ static void virtq_push_desc(struct virtio_virtq *vq, int index) {
     struct virtq_packed_desc *desc = &vq->modern.descs[index];
     uint16_t flags =
         VIRTQ_DESC_F_WRITE
-        | (!vq->modern.used_wrap_counter << VIRTQ_DESC_F_AVAIL_SHIFT)
-        | (vq->modern.used_wrap_counter << VIRTQ_DESC_F_USED_SHIFT);
+        | (!vq->modern.avail_wrap_counter << VIRTQ_DESC_F_AVAIL_SHIFT)
+        | (vq->modern.avail_wrap_counter << VIRTQ_DESC_F_USED_SHIFT);
 
     desc->len = into_le32(vq->buffer_size);
     desc->flags = into_le16(flags);
-
-    vq->modern.next_used++;
-    if (vq->modern.next_used == vq->num_descs) {
-        vq->modern.used_wrap_counter ^= 1;
-        vq->modern.next_used = 0;
-    }
 }
 
 /// Allocates queue buffers. If `writable` is true, the buffers are initialized
