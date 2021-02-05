@@ -10,6 +10,7 @@
 //  "5 Device Types"
 //
 #define VIRTIO_DEVICE_NET 1
+#define VIRTIO_DEVICE_GPU 16
 
 //
 //  "2.1 Device Status Field"

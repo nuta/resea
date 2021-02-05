@@ -37,6 +37,10 @@ QEMUFLAGS += -object filter-dump,id=fiter1,netdev=net1,file=virtio.pcap
 QEMUFLAGS += -netdev user,id=net1,hostfwd=tcp:127.0.0.1:1234-:80
 endif
 
+ifneq ($(VIRTIO_GPU),)
+QEMUFLAGS +=-vga none -device virtio-gpu,packed=on
+endif
+
 .PHONY: run
 run: $(kernel_image)
 	cp $(kernel_image) $(BUILD_DIR)/resea.qemu.elf

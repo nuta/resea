@@ -30,6 +30,7 @@
 
 - [Device Drivers](drivers/README.md)
   - [Virtio-net](drivers/virtio-net.md)
+  - [Virtio-gpu](drivers/virtio-gpu.md)
   - [Intel e1000 Network Card](drivers/e1000.md)
   - [IDE Hard Disk](drivers/ide.md)
   - [RAM Disk](drivers/ramdisk.md)

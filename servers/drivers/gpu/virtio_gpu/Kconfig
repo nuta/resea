@@ -1,0 +1,6 @@
+menu "virtio-gpu"
+	depends on VIRTIO_GPU_SERVER
+
+    config VIRTIO_GPU_DEMO
+        bool "Render image patterns to demonstrate virtio-gpu"
+endmenu
