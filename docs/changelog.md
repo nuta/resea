@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.9.0 (Mar 11, 2021)
+- Shared memory API (by @arpitvaghela)
+- Add virtio-gpu driver
+- Rust: Support `alloc` crate
+- Some bug fixes and trivial improvements
+
 ## v0.8.0 (Dec 24, 2020)
 - x64: Hardware-assisted hypervisor support (like Linux KVM)
 - Add hypervisor implementation [hv](https://resea.org/docs/servers/hv.html)
