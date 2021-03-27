@@ -394,12 +394,12 @@ static inline void asm_wrfsbase(uint64_t fsbase) {
     __asm__ __volatile__("wrfsbase %0" :: "r"(fsbase));
 }
 
-static inline void asm_xsave(void *xsave) {
-    __asm__ __volatile__("xsave (%0)" :: "r"(xsave) : "memory");
+static inline void asm_xsave(void *xsave, uint64_t save_mask) {
+    __asm__ __volatile__("xsave64 (%0)" :: "r"(xsave), "a"(save_mask), "d"(save_mask >> 32) : "memory");
 }
 
-static inline void asm_xrstor(void *xsave) {
-    __asm__ __volatile__("xrstor (%0)" :: "r"(xsave) : "memory");
+static inline void asm_xrstor(void *xsave, uint64_t restore_mask) {
+    __asm__ __volatile__("xrstor64 (%0)" :: "r"(xsave), "a"(restore_mask), "d"(restore_mask >> 32) : "memory");
 }
 
 static inline uint64_t asm_xgetbv(uint32_t xcr) {

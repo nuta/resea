@@ -105,8 +105,9 @@ void arch_task_switch(struct task *prev, struct task *next) {
     update_tss_iomap(next);
     // Save and restore FPU registers. This may be expensive operation: I
     // think we should implement "lazy FPU switching".
-    asm_xsave(prev->arch.xsave);
-    asm_xrstor(next->arch.xsave);
+    uint64_t xsave_mask = asm_xgetbv(0);
+    asm_xsave(prev->arch.xsave, xsave_mask);
+    asm_xrstor(next->arch.xsave, xsave_mask);
 
     // Restore registers (resume the next thread).
     switch_context(&prev->arch.rsp, &next->arch.rsp);
