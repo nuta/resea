@@ -52,6 +52,12 @@ struct virtio_virtq {
     };
 };
 
+struct virtio_chain_entry {
+    paddr_t addr;
+    uint32_t len;
+    bool device_writable;
+};
+
 #define VIRTQ_ALLOC_NO_PREV -1
 
 struct virtio_ops {
@@ -62,18 +68,11 @@ struct virtio_ops {
     uint8_t (*read_isr_status)(void);
     void (*virtq_init)(unsigned index);
     struct virtio_virtq *(*virtq_get)(unsigned index);
-    uint16_t (*virtq_size)(void);
-    void (*virtq_allocate_buffers)(struct virtio_virtq *vq, size_t buffer_size,
-                                   bool writable_from_device);
-    int (*virtq_alloc)(struct virtio_virtq *vq, size_t len, uint16_t flags,
-                       int prev_desc);
-    error_t (*virtq_pop_desc)(struct virtio_virtq *vq, int *index,
-                              size_t *size);
-    void (*virtq_push_desc)(struct virtio_virtq *vq, int index);
-    void (*virtq_kick_desc)(struct virtio_virtq *vq, int index);
+    error_t (*virtq_push)(struct virtio_virtq *vq,
+                          struct virtio_chain_entry *chain, int n);
+    int (*virtq_pop)(struct virtio_virtq *vq, struct virtio_chain_entry *chain,
+                     int n, size_t *total_len);
     void (*virtq_notify)(struct virtio_virtq *vq);
-    int (*get_next_index)(struct virtio_virtq *vq, int index);
-    void *(*get_buffer)(struct virtio_virtq *vq, int index);
 };
 
 error_t virtio_find_device(int device_type, struct virtio_ops **ops,

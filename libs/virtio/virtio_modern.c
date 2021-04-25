@@ -187,109 +187,20 @@ static void activate(void) {
     write_device_status(read_device_status() | VIRTIO_STATUS_DRIVER_OK);
 }
 
-/// Allocates a descriptor for the ouput to the device (e.g. TX virtqueue in
-/// virtio-net). If `prev_desc` is set, it checks if it's the previously
-/// allocated decriptor to ensure that they forms a descriptor chain.
-static int virtq_alloc(struct virtio_virtq *vq, size_t len, uint16_t flags,
-                       int prev_desc) {
-    int index = vq->modern.next_avail;
-    struct virtq_packed_desc *desc = &vq->modern.descs[index];
-
-    ASSERT((prev_desc != VIRTQ_ALLOC_NO_PREV
-            || prev_desc != ((index == 0) ? vq->num_descs - 1 : index - 1))
-           && "(prev_desc + 1) == (next_desc) does not hold");
-
-    if (!is_desc_free(vq, desc)) {
-        return -1;
-    }
-
-    vq->next_indices[index] = -1;
-    if (prev_desc != VIRTQ_ALLOC_NO_PREV) {
-        vq->next_indices[prev_desc] = index;
-    }
-
-    flags &= ~(1 << VIRTQ_DESC_F_AVAIL_SHIFT);
-    flags &= ~(1 << VIRTQ_DESC_F_USED_SHIFT);
-    flags |= (vq->modern.avail_wrap_counter << VIRTQ_DESC_F_AVAIL_SHIFT)
-             | (!vq->modern.avail_wrap_counter << VIRTQ_DESC_F_USED_SHIFT);
-
-    desc->flags = into_le16(flags);
-    desc->len = into_le32(len);
-    desc->id = into_le16(index);
-
-    vq->modern.next_avail++;
-    if (vq->modern.next_avail == vq->num_descs) {
-        vq->modern.avail_wrap_counter ^= 1;
-        vq->modern.next_avail = 0;
-    }
-
-    return index;
+/// Enqueues a chain of descriptors into the virtq. Don't forget to call
+/// `notify` to start processing the enqueued request.
+static error_t virtq_push(struct virtio_virtq *vq,
+                          struct virtio_chain_entry *chain, int n) {
+    NYI();
 }
 
-/// Returns the next descriptor which is already filled by the device. If the
-/// buffer is input from the device, call `virtq_push_desc` once you've handled
-/// the input.
-static error_t virtq_pop_desc(struct virtio_virtq *vq, int *index,
-                              size_t *len) {
-    struct virtq_packed_desc *desc = &vq->modern.descs[vq->modern.next_used];
-    if (!is_desc_used(vq, desc)) {
-        return ERR_NOT_FOUND;
-    }
-
-    // Skip until the next chain.
-    int num_in_chain = 1;
-    int id = desc->id;
-    while (vq->next_indices[id] != -1) {
-        num_in_chain++;
-        id = vq->next_indices[id];
-    }
-
-    vq->modern.next_used = vq->modern.next_used + num_in_chain;
-    if (vq->modern.next_used >= vq->num_descs) {
-        vq->modern.used_wrap_counter ^= 1;
-        vq->modern.next_used = 0;
-    }
-
-    *index = from_le16(desc->id);
-    *len = from_le32(desc->len);
-    return OK;
-}
-
-/// Adds the given head index of a decriptor chain to the avail ring and asks
-/// the device to process it.
-static void virtq_kick_desc(struct virtio_virtq *vq, int index) {
-    virtq_notify(vq);
-}
-
-/// Makes the descriptor available for input from the device.
-static void virtq_push_desc(struct virtio_virtq *vq, int index) {
-    struct virtq_packed_desc *desc = &vq->modern.descs[index];
-    uint16_t flags =
-        VIRTQ_DESC_F_WRITE
-        | (!vq->modern.avail_wrap_counter << VIRTQ_DESC_F_AVAIL_SHIFT)
-        | (vq->modern.avail_wrap_counter << VIRTQ_DESC_F_USED_SHIFT);
-
-    desc->len = into_le32(vq->buffer_size);
-    desc->flags = into_le16(flags);
-}
-
-/// Allocates queue buffers. If `writable` is true, the buffers are initialized
-/// as input ones from the device (e.g. RX virqueue in virtio-net).
-static void virtq_allocate_buffers(struct virtio_virtq *vq, size_t buffer_size,
-                                   bool writable) {
-    dma_t dma = dma_alloc(buffer_size * vq->num_descs, DMA_ALLOC_FROM_DEVICE);
-    vq->buffers_dma = dma;
-    vq->buffers = dma_buf(dma);
-    vq->buffer_size = buffer_size;
-
-    uint16_t flags = writable ? (VIRTQ_DESC_F_AVAIL | VIRTQ_DESC_F_WRITE) : 0;
-    for (int i = 0; i < vq->num_descs; i++) {
-        vq->modern.descs[i].id = into_le16(i);
-        vq->modern.descs[i].addr =
-            into_le64(dma_daddr(dma) + (buffer_size * i));
-        vq->modern.descs[i].len = into_le32(buffer_size);
-        vq->modern.descs[i].flags = into_le16(flags);
-    }
+/// Pops a descriptor chain processed by the device. Returns the number of
+/// descriptors in the chain and fills `chain` with the popped descriptors.
+///
+/// If no chains in the used ring, it returns ERR_EMPTY.
+static int virtq_pop(struct virtio_virtq *vq, struct virtio_chain_entry *chain,
+                     int n, size_t *total_len) {
+    NYI();
 }
 
 /// Checks and enables features. It aborts if any of the features is not
@@ -341,10 +252,6 @@ static int get_next_index(struct virtio_virtq *vq, int index) {
     return vq->next_indices[index];
 }
 
-static void *get_buffer(struct virtio_virtq *vq, int index) {
-    return vq->buffers + index * vq->buffer_size;
-}
-
 struct virtio_ops virtio_modern_ops = {
     .read_device_features = read_device_features,
     .negotiate_feature = negotiate_feature,
@@ -353,21 +260,17 @@ struct virtio_ops virtio_modern_ops = {
     .read_isr_status = read_isr_status,
     .virtq_init = virtq_init,
     .virtq_get = virtq_get,
-    .virtq_size = virtq_size,
-    .virtq_allocate_buffers = virtq_allocate_buffers,
-    .virtq_alloc = virtq_alloc,
-    .virtq_pop_desc = virtq_pop_desc,
-    .virtq_push_desc = virtq_push_desc,
-    .virtq_kick_desc = virtq_kick_desc,
+    .virtq_push = virtq_push,
+    .virtq_pop = virtq_pop,
     .virtq_notify = virtq_notify,
-    .get_next_index = get_next_index,
-    .get_buffer = get_buffer,
 };
 
 static uint16_t get_transitional_device_id(int device_type) {
     switch (device_type) {
-        case VIRTIO_DEVICE_NET: return 0x1000;
-        default: return 0;
+        case VIRTIO_DEVICE_NET:
+            return 0x1000;
+        default:
+            return 0;
     }
 }
 
@@ -401,7 +304,8 @@ error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops,
                 break;
             case ERR_NOT_FOUND:
                 continue;
-            default: return err;
+            default:
+                return err;
         }
 
         pci_device = m.dm_attach_pci_device_reply.handle;
@@ -501,7 +405,8 @@ error_t virtio_modern_find_device(int device_type, struct virtio_ops **ops,
 
     if (!common_cfg_io || !device_cfg_io || !notify_struct_io
         || !isr_struct_io) {
-        WARN_DBG("missing a BAR for the device access");
+        TRACE(
+            "missing a BAR for the device access, falling back to the legacy driver....");
         return ERR_NOT_FOUND;
     }
 

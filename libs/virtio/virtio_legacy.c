@@ -74,14 +74,22 @@ static void virtq_init(unsigned index) {
     memset(dma_buf(virtq_dma), 0, virtq_size);
 
     vaddr_t base = (vaddr_t) dma_buf(virtq_dma);
-    virtqs[index].index = index;
-    virtqs[index].num_descs = num_descs;
-    virtqs[index].legacy.virtq_dma = virtq_dma;
-    virtqs[index].legacy.next_avail_index = 0;
-    virtqs[index].legacy.last_used_index = 0;
-    virtqs[index].legacy.descs = (struct virtq_desc *) base;
-    virtqs[index].legacy.avail = (struct virtq_avail *) (base + avail_ring_off);
-    virtqs[index].legacy.used = (struct virtq_used *) (base + used_ring_off);
+    struct virtio_virtq *vq = &virtqs[index];
+    vq->index = index;
+    vq->num_descs = num_descs;
+    vq->legacy.virtq_dma = virtq_dma;
+    vq->legacy.next_avail_index = 0;
+    vq->legacy.last_used_index = 0;
+    vq->legacy.descs = (struct virtq_desc *) base;
+    vq->legacy.avail = (struct virtq_avail *) (base + avail_ring_off);
+    vq->legacy.used = (struct virtq_used *) (base + used_ring_off);
+
+    // Add descriptors into the free list.
+    vq->legacy.free_head = 0;
+    vq->legacy.num_free_descs = num_descs;
+    for (size_t i = 0; i < num_descs; i++) {
+        vq->legacy.descs[i].next = (i + 1 == num_descs) ? 0 : i + 1;
+    }
 
     paddr_t paddr = dma_daddr(virtq_dma);
     ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
@@ -92,81 +100,115 @@ static void activate(void) {
     write_device_status(read_device_status() | VIRTIO_STATUS_DRIVER_OK);
 }
 
-/// Allocates a descriptor for the ouput to the device (e.g. TX virtqueue in
-/// virtio-net). If `VIRTQ_DESC_F_NEXT` is set in `flags`, it allocates the next
-/// descriptor (i.e. constructs a descriptor chain). If `prev_desc` is set, it
-/// reuses the previously allocated descriptor.
-static int virtq_alloc(struct virtio_virtq *vq, size_t len, uint16_t flags,
-                       int prev_desc) {
-    int desc_index = vq->legacy.next_avail_index % vq->num_descs;
-    struct virtq_desc *desc = &vq->legacy.descs[desc_index];
+/// Enqueues a chain of descriptors into the virtq. Don't forget to call
+/// `notify` to start processing the enqueued request.
+static error_t virtq_push(struct virtio_virtq *vq,
+                          struct virtio_chain_entry *chain, int n) {
+    DEBUG_ASSERT(n > 0);
+    if (n > vq->legacy.num_free_descs) {
+        // Try freeing used descriptors.
+        while (vq->legacy.last_used_index != vq->legacy.used->index) {
+            struct virtq_used_elem *used_elem =
+                &vq->legacy.used->ring[vq->legacy.last_used_index];
 
-    // TODO: FIXME: Check if the descriptor is available.
+            // Count the number of descriptors in the chain.
+            int num_freed = 0;
+            int next_desc_index = used_elem->id;
+            while (true) {
+                struct virtq_desc *desc = &vq->legacy.descs[next_desc_index];
+                num_freed++;
 
-    // TODO: Use `descs[prev->desc]->next` if prev_desc != VIRTQ_ALLOC_NO_PREV.
-    ASSERT(prev_desc == VIRTQ_ALLOC_NO_PREV && "not yet implemented");
+                if ((desc->flags & VIRTQ_DESC_F_NEXT) == 0) {
+                    break;
+                }
 
-    desc->len = into_le32(len);
-    desc->flags = flags;
-    desc->next = 0;  // TODO:
+                next_desc_index = desc->next;
+            }
 
-    vq->legacy.next_avail_index++;
-    return desc_index;
+            // Enqueue the chain back into the free list.
+            vq->legacy.free_head = used_elem->id;
+            vq->legacy.num_free_descs += num_freed;
+            vq->legacy.last_used_index++;
+        }
+    }
+
+    if (n > vq->legacy.num_free_descs) {
+        return ERR_NO_MEMORY;
+    }
+
+    int head_index = vq->legacy.free_head;
+    int desc_index = head_index;
+    struct virtq_desc *desc = NULL;
+    for (int i = 0; i < n; i++) {
+        struct virtio_chain_entry *e = &chain[i];
+        desc = &vq->legacy.descs[desc_index];
+        desc->addr = into_le64(e->addr);
+        desc->len = into_le32(e->len);
+        desc->flags =
+            (e->device_writable ? VIRTQ_DESC_F_WRITE : 0) | VIRTQ_DESC_F_NEXT;
+        desc_index = desc->next;
+    }
+
+    // Update the last entry in the chain.
+    DEBUG_ASSERT(desc != NULL);
+    int unused_next = desc->next;
+    desc->next = 0;
+    desc->flags &= ~VIRTQ_DESC_F_NEXT;
+
+    vq->legacy.free_head = unused_next;
+    vq->legacy.num_free_descs -= n;
+
+    // Append the chain into the avail ring.
+    vq->legacy.avail->ring[vq->legacy.avail->index % vq->num_descs] =
+        head_index;
+    mb();
+    vq->legacy.avail->index++;
+    return OK;
 }
 
-/// Returns the next descriptor which is already used by the device. If the
-/// buffer is input from the device, call `virtq_push_desc` once you've handled
-/// the input.
-static error_t virtq_pop_desc(struct virtio_virtq *vq, int *index,
-                              size_t *len) {
+/// Pops a descriptor chain processed by the device. Returns the number of
+/// descriptors in the chain and fills `chain` with the popped descriptors.
+///
+/// If no chains in the used ring, it returns ERR_EMPTY.
+static int virtq_pop(struct virtio_virtq *vq, struct virtio_chain_entry *chain,
+                     int n, size_t *total_len) {
     if (vq->legacy.last_used_index == vq->legacy.used->index) {
         return ERR_EMPTY;
     }
 
     struct virtq_used_elem *used_elem =
         &vq->legacy.used->ring[vq->legacy.last_used_index];
-    *index = used_elem->id;
-    *len = used_elem->len;
-    vq->legacy.last_used_index++;
-    return OK;
-}
 
-/// Adds the given head index of a decriptor chain to the avail ring and asks
-/// the device to process it.
-static void virtq_kick_desc(struct virtio_virtq *vq, int index) {
-    vq->legacy.avail->ring[vq->legacy.avail->index % vq->num_descs] = index;
-    mb();
-    vq->legacy.avail->index++;
-    virtq_notify(vq);
-}
+    *total_len = used_elem->len;
+    int next_desc_index = used_elem->id;
+    struct virtq_desc *desc = NULL;
+    int i = 0;
+    while (i < n) {
+        desc = &vq->legacy.descs[next_desc_index];
+        chain[i].addr = desc->addr;
+        chain[i].len = desc->len;
+        chain[i].device_writable = (desc->flags & VIRTQ_DESC_F_WRITE) != 0;
+        i++;
 
-/// Makes the descriptor available for input from the device.
-static void virtq_push_desc(struct virtio_virtq *vq, int index) {
-    virtq_kick_desc(vq, index);
-}
+        bool has_next = (desc->next & VIRTQ_DESC_F_NEXT) != 0;
+        if (!has_next) {
+            break;
+        }
 
-/// Allocates queue buffers. If `writable` is true, the buffers are initialized
-/// as input ones from the device (e.g. RX virqueue in virtio-net).
-static void virtq_allocate_buffers(struct virtio_virtq *vq, size_t buffer_size,
-                                   bool writable) {
-    dma_t dma = dma_alloc(buffer_size * vq->num_descs, DMA_ALLOC_FROM_DEVICE);
-    vq->buffers_dma = dma;
-    vq->buffers = dma_buf(dma);
-    vq->buffer_size = buffer_size;
-
-    uint16_t flags = writable ? VIRTQ_DESC_F_WRITE : 0;
-    for (int i = 0; i < vq->num_descs; i++) {
-        vq->legacy.descs[i].addr =
-            into_le64(dma_daddr(dma) + (buffer_size * i));
-        vq->legacy.descs[i].len = into_le32(buffer_size);
-        vq->legacy.descs[i].flags = flags;
-        vq->legacy.descs[i].next = 0;
-
-        if (writable) {
-            vq->legacy.avail->ring[i] = i;
-            vq->legacy.avail->index++;
+        if (i >= n && has_next) {
+            // `n` is too short.
+            return ERR_NO_MEMORY;
         }
     }
+
+    // Prepend the popped descriptors into the free list.
+    DEBUG_ASSERT(desc != NULL);
+    desc->next = vq->legacy.free_head;
+    vq->legacy.free_head = used_elem->id;
+    vq->legacy.num_free_descs += i;
+
+    vq->legacy.last_used_index++;
+    return i;
 }
 
 /// Checks and enables features. It aborts if any of the features is not
@@ -194,15 +236,6 @@ static uint64_t read_device_config(offset_t offset, size_t size) {
     return io_read8(bar0_io, VIRTIO_REG_DEVICE_CONFIG_BASE + offset);
 }
 
-static int get_next_index(struct virtio_virtq *vq, int index) {
-    NYI();
-    return -1;
-}
-
-static void *get_buffer(struct virtio_virtq *vq, int index) {
-    return vq->buffers + index * vq->buffer_size;
-}
-
 struct virtio_ops virtio_legacy_ops = {
     .read_device_features = read_device_features,
     .negotiate_feature = negotiate_feature,
@@ -211,14 +244,9 @@ struct virtio_ops virtio_legacy_ops = {
     .read_isr_status = read_isr_status,
     .virtq_init = virtq_init,
     .virtq_get = virtq_get,
-    .virtq_allocate_buffers = virtq_allocate_buffers,
-    .virtq_alloc = virtq_alloc,
-    .virtq_pop_desc = virtq_pop_desc,
-    .virtq_push_desc = virtq_push_desc,
-    .virtq_kick_desc = virtq_kick_desc,
+    .virtq_push = virtq_push,
+    .virtq_pop = virtq_pop,
     .virtq_notify = virtq_notify,
-    .get_next_index = get_next_index,
-    .get_buffer = get_buffer,
 };
 
 /// Looks for and initializes a virtio device with the given device type. It

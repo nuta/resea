@@ -50,6 +50,8 @@ struct virtio_virtq_legacy {
     dma_t virtq_dma;
     int next_avail_index;
     int last_used_index;
+    int free_head;
+    int num_free_descs;
     struct virtq_desc *descs;
     struct virtq_avail *avail;
     struct virtq_used *used;

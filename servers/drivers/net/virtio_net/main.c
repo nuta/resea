@@ -13,7 +13,10 @@
 static task_t tcpip_task;
 static struct virtio_virtq *tx_virtq = NULL;
 static struct virtio_virtq *rx_virtq = NULL;
+static dma_t tx_buffers_dma = NULL;
+static dma_t rx_buffers_dma = NULL;
 static struct virtio_ops *virtio = NULL;
+static int tx_ring_index = 0;
 
 static void read_macaddr(uint8_t *mac) {
     offset_t base = offsetof(struct virtio_net_config, mac);
@@ -22,25 +25,58 @@ static void read_macaddr(uint8_t *mac) {
     }
 }
 
-static struct virtio_net_buffer *virtq_net_buffer(struct virtio_virtq *vq,
-                                                  unsigned index) {
-    return &((struct virtio_net_buffer *) vq->buffers)[index];
+static struct virtio_net_buffer *get_buffer(dma_t dma, unsigned index,
+                                            paddr_t *paddr) {
+    offset_t offset = sizeof(struct virtio_net_buffer) * index;
+    *paddr = dma_daddr(dma) + offset;
+    return &((struct virtio_net_buffer *) dma_buf(dma))[index];
+}
+
+static struct virtio_net_buffer *get_buffer_by_paddr(dma_t dma, paddr_t paddr) {
+    DEBUG_ASSERT(paddr >= dma_daddr(dma));
+
+    offset_t offset = paddr - dma_daddr(dma);
+    return (struct virtio_net_buffer *) (dma_buf(dma) + offset);
 }
 
 static void receive(const void *payload, size_t len);
 void driver_handle_interrupt(void) {
     uint8_t status = virtio->read_isr_status();
     if (status & 1) {
-        int index;
-        size_t len;
-        while (virtio->virtq_pop_desc(rx_virtq, &index, &len) == OK) {
-            struct virtio_net_buffer *buf = virtq_net_buffer(rx_virtq, index);
-            receive((const void *) buf->payload, len - sizeof(buf->header));
-            buf->header.num_buffers = 1;
-            virtio->virtq_push_desc(rx_virtq, index);
-        }
+        struct virtio_chain_entry chain[1];
+        size_t total_len;
+        while (true) {
+            int n = virtio->virtq_pop(rx_virtq, chain, 1, &total_len);
+            if (n == ERR_EMPTY) {
+                break;
+            }
 
-        virtio->virtq_notify(rx_virtq);
+            if (IS_ERROR(n)) {
+                WARN_DBG("virtq_pop returned an error: %s", err2str(n));
+                break;
+            }
+
+            if (n != 1) {
+                WARN_DBG("virtq_pop returned unexpected # of descs: %d", n);
+                break;
+            }
+
+            // Process the received packet.
+            struct virtio_net_buffer *buf =
+                get_buffer_by_paddr(rx_buffers_dma, chain[0].addr);
+            receive((const void *) buf->payload,
+                    total_len - sizeof(buf->header));
+
+            // Enqueue the buffer back into the virtq.
+            //
+            // chain[0].addr is not modified by the device. We don't need to
+            // update it.
+            buf->header.num_buffers = 1;
+            chain[0].len = sizeof(struct virtio_net_buffer);
+            chain[0].device_writable = true;
+            virtio->virtq_push(rx_virtq, chain, 1);
+            virtio->virtq_notify(rx_virtq);
+        }
     }
 }
 
@@ -60,18 +96,11 @@ static void transmit(void) {
     ASSERT_OK(async_recv(tcpip_task, &m));
     ASSERT(m.type == NET_TX_MSG);
 
-    // Allocate a desc for the transmission.
-    size_t len = m.net_tx.payload_len;
-    int index =
-        virtio->virtq_alloc(tx_virtq, sizeof(struct virtio_net_header) + len, 0,
-                            VIRTQ_ALLOC_NO_PREV);
-    if (index < 0) {
-        WARN("failed to alloc a desc for TX");
-        return;
-    }
-
     // Fill the request.
-    struct virtio_net_buffer *buf = virtq_net_buffer(tx_virtq, index);
+    int index = tx_ring_index++ % tx_virtq->num_descs;
+    size_t len = m.net_tx.payload_len;
+    paddr_t paddr;
+    struct virtio_net_buffer *buf = get_buffer(tx_buffers_dma, index, &paddr);
     ASSERT(len <= sizeof(buf->payload));
     buf->header.flags = 0;
     buf->header.gso_type = VIRTIO_NET_HDR_GSO_NONE;
@@ -81,8 +110,16 @@ static void transmit(void) {
     buf->header.num_buffers = 0;
     memcpy((uint8_t *) &buf->payload, m.net_tx.payload, len);
 
+    // Construct a descriptor chain for the reqeust.
+    struct virtio_chain_entry chain[1];
+    chain[0].addr = paddr;
+    chain[0].len = sizeof(struct virtio_net_header) + len;
+    chain[0].device_writable = false;
+
     // Kick the device.
-    virtio->virtq_kick_desc(tx_virtq, index);
+    OOPS_OK(virtio->virtq_push(tx_virtq, chain, 1));
+    virtio->virtq_notify(tx_virtq);
+
     free(m.net_tx.payload);
 }
 
@@ -97,20 +134,29 @@ void main(void) {
 
     virtio->virtq_init(VIRTIO_NET_QUEUE_RX);
     virtio->virtq_init(VIRTIO_NET_QUEUE_TX);
-
-    // Allocate TX buffers.
-    tx_virtq = virtio->virtq_get(VIRTIO_NET_QUEUE_TX);
-    virtio->virtq_allocate_buffers(tx_virtq, sizeof(struct virtio_net_buffer),
-                                   false);
-
-    // Allocate RX buffers.
     rx_virtq = virtio->virtq_get(VIRTIO_NET_QUEUE_RX);
-    virtio->virtq_allocate_buffers(rx_virtq, sizeof(struct virtio_net_buffer),
-                                   true);
+    tx_virtq = virtio->virtq_get(VIRTIO_NET_QUEUE_TX);
+
+    // Allocate TX/RX buffers.
+    tx_buffers_dma =
+        dma_alloc(sizeof(struct virtio_net_buffer) * tx_virtq->num_descs,
+                  DMA_ALLOC_FROM_DEVICE);
+    rx_buffers_dma =
+        dma_alloc(sizeof(struct virtio_net_buffer) * rx_virtq->num_descs,
+                  DMA_ALLOC_FROM_DEVICE);
+
+    // Fill the RX virtq.
     for (int i = 0; i < rx_virtq->num_descs; i++) {
-        struct virtio_net_buffer *buf = virtq_net_buffer(rx_virtq, i);
+        struct virtio_chain_entry chain[1];
+        paddr_t paddr;
+        struct virtio_net_buffer *buf = get_buffer(rx_buffers_dma, i, &paddr);
         buf->header.num_buffers = 1;
+        chain[0].addr = paddr;
+        chain[0].len = sizeof(struct virtio_net_buffer);
+        chain[0].device_writable = true;
+        virtio->virtq_push(rx_virtq, chain, 1);
     }
+    virtio->virtq_notify(rx_virtq);
 
     // Start listening for interrupts.
     ASSERT_OK(irq_acquire(irq));
