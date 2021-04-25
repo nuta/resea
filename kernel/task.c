@@ -351,7 +351,7 @@ void handle_irq(unsigned irq) {
     }
 }
 
-/// The page fault handler. It calls a pager and updates the page table.
+/// The page fault handler. It calls a pager to ask to update the page table.
 void handle_page_fault(vaddr_t addr, vaddr_t ip, unsigned fault) {
     if (CURRENT->pager == NULL) {
         PANIC("page fault in the init task: addr=%p, ip=%p", addr, ip);
