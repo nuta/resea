@@ -109,7 +109,8 @@ static error_t virtq_push(struct virtio_virtq *vq,
         // Try freeing used descriptors.
         while (vq->legacy.last_used_index != vq->legacy.used->index) {
             struct virtq_used_elem *used_elem =
-                &vq->legacy.used->ring[vq->legacy.last_used_index];
+                &vq->legacy.used
+                     ->ring[vq->legacy.last_used_index % vq->num_descs];
 
             // Count the number of descriptors in the chain.
             int num_freed = 0;
@@ -177,7 +178,7 @@ static int virtq_pop(struct virtio_virtq *vq, struct virtio_chain_entry *chain,
     }
 
     struct virtq_used_elem *used_elem =
-        &vq->legacy.used->ring[vq->legacy.last_used_index];
+        &vq->legacy.used->ring[vq->legacy.last_used_index % vq->num_descs];
 
     *total_len = used_elem->len;
     int next_desc_index = used_elem->id;
