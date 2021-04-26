@@ -18,10 +18,10 @@ static task_t tcpip_server;
     "<body>"                                                                   \
     "<h1>Hello from WebAPI server!</h1>"                                       \
     "</body>"                                                                  \
-    "</html>"
+    "</html>\n"
 
-/// Sends a HTTP response. This function assumes `payload` is a null-terminated
-/// string.
+/// Sends a HTTP response. This function assumes `payload` is a
+/// null-terminated string.
 static void write_response(struct client *client, const char *status,
                            const char *payload) {
     int buf_size = 1024;
