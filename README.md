@@ -50,5 +50,4 @@ We accept bug reports, feature requests, and patches on
 
 License
 -------
-[CC0](https://creativecommons.org/publicdomain/zero/1.0/) or
-[MIT](https://opensource.org/licenses/MIT). Choose whichever you prefer.
+See [LICENSE.md](https://github.com/nuta/nuta/blob/main/LICENSE.md).
