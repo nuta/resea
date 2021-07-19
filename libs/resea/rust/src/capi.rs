@@ -62,4 +62,6 @@ extern "C" {
     pub fn sys_console_write(buf: *const u8, len: size_t) -> error_t;
     pub fn sys_console_read(buf: *mut u8, len: size_t) -> c_int;
     pub fn sys_kdebug(cmd: *const u8, cmd_len: size_t, buf: *mut u8, buf_len: size_t) -> error_t;
+
+    pub fn ipc_call(dst: task_t, m: *mut Message) -> error_t;
 }

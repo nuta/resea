@@ -735,11 +735,37 @@ pub trait {{ ns_name | camelcase }}ClientExt {{ "{" }}
 {% for msg in messages %}
     /// {{ msg.doc | remove_newlines }}
     fn {{ msg.name }}(&self, {{ msg | method_args_def }}
-    ) -> {{ msg | method_rets_def }} {}
+    ) -> {{ msg | method_rets_def }} {
+        unsafe {
+            let mut buf: Message = core::mem::MaybeUninit::zeroed().assume_init();
+            let mut m = core::mem::transmute::<&mut Message, &mut raw::{{ msg | msg_name }}Msg>(&mut buf);
+            *m = raw::{{ msg | msg_name }}Msg {
+                header: Header {
+                    message_type: raw::{{ msg.name | upper }}_MSG,
+                },
+                {% for arg in msg.args.fields %}
+                  {{ arg.name }}: {{ arg.name }}.into(),
+                {% endfor %}
+            };
+
+            let err = capi::ipc_call(self.server_task(), &mut m as *mut _);
+            if err < 0 {
+                return Err(err.into());
+            }
+
+            let r = core::mem::transmute::<&Message, &raw::{{ msg | msg_name }}ReplyMsg>(&buf);
+            Ok({{ msg | msg_name }}Response {
+            {% for ret in msg.rets.fields %}
+                {{ ret.name }}: r.{{ ret.name }}.into(),
+            {% endfor %}
+            })
+        }
+    }
 {% endfor %}
 {{ "}" }}
 
 {% for msg in messages %}
+{%- if not msg.oneway %}
 pub struct {{ msg | msg_name }}Response {{ "{" }}
 {%- if msg.rets.ool %}
     {%- if msg.rets.ool.is_str %}
@@ -752,6 +778,7 @@ pub struct {{ msg | msg_name }}Response {{ "{" }}
     pub {{ field | raw_field_def(msg.namespace) }},
 {%- endfor %}
 {{ "}" }}
+{% endif %}
 {% endfor %}
 
 //
@@ -760,6 +787,8 @@ pub struct {{ msg | msg_name }}Response {{ "{" }}
 pub mod raw {
 
 {% for msg in messages %}
+pub const {{ msg.name | upper }}_MSG: c_int = {{ msg.args_id }};
+
 /// {{ msg.doc | remove_newlines }}
 #[derive(Debug)]
 #[repr(C)]
@@ -777,6 +806,9 @@ pub struct {{ msg | msg_name }}Msg {{ "{" }}
 {%- endfor %}
 {{ "}" }}
 
+{%- if not msg.oneway %}
+pub const {{ msg.name | upper }}_REPLY_MSG: c_int = {{ msg.rets_id }};
+
 #[derive(Debug)]
 #[repr(C)]
 pub struct {{ msg | msg_name }}ReplyMsg {{ "{" }}
@@ -792,6 +824,7 @@ pub struct {{ msg | msg_name }}ReplyMsg {{ "{" }}
     pub {{ field | raw_field_def(msg.namespace) }},
 {%- endfor %}
 {{ "}" }}
+{% endif %}
 
 {% endfor %}
 }
