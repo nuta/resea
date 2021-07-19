@@ -288,7 +288,7 @@ $(BUILD_DIR)/include/idl.h: tools/genidl.py $(wildcard *.idl */*.idl */*/*.idl)
 	mkdir -p $(@D)
 	./tools/genidl.py --lang c --idl interface.idl -o $@
 
-libs/resea/rust/idl/mod.rs: tools/genidl.py $(wildcard *.idl */*.idl */*/*.idl)
+libs/resea/rust/src/stubs/mod.rs: tools/genidl.py $(wildcard *.idl */*.idl */*/*.idl)
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
 	./tools/genidl.py --lang rust --idl interface.idl -o $(@D)

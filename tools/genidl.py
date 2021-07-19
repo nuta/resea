@@ -3,11 +3,21 @@ import sys
 import argparse
 import jinja2
 import markdown
+import subprocess
 from pathlib import Path
 from glob import glob
 from lark import Lark
 from lark.exceptions import LarkError
 from colorama import Fore, Back, Style
+
+
+def camelcase(snake_case):
+    return "".join(map(lambda s: s.title(), snake_case.split("_")))
+
+
+def rustfmt(text):
+    return text
+    # return subprocess.check_output(["rustfmt"], input=text, text=True)
 
 
 class ParseError(Exception):
@@ -492,10 +502,314 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
     with open(args.out, "w") as f:
         f.write(text)
 
+
 def rust_generator(args, idl):
-    # TODO:
+    user_types = {}
+    raw_builtins = dict(
+        str="&str",
+        bytes="&[u8]",
+        char="c_char",
+        bool="c_bool",
+        int="c_int",
+        uint="c_unsigned",
+        int8="i8",
+        int16="i16",
+        int32="i32",
+        int64="i64",
+        uint8="u8",
+        uint16="u16",
+        uint32="u32",
+        uint64="u64",
+        task="task_t",
+        size="size_t",
+        offset="offset_t",
+        notifications="notifications_t",
+        vaddr="vaddr_t",
+        paddr="paddr_t",
+        gpaddr="gpaddr_t",
+        trap_frame="trap_frame_t",
+        hv_frame="hv_frame_t",
+        handle="handle_t",
+        exception_type="enum exception_type",
+    )
+
+    ref_builtins = dict(
+        str="&str",
+        bytes="&[u8]",
+        char="char",
+        bool="bool",
+        int="isize",
+        uint="usize",
+        int8="i8",
+        int16="i16",
+        int32="i32",
+        int64="i64",
+        uint8="u8",
+        uint16="u16",
+        uint32="u32",
+        uint64="u64",
+        size="usize",
+        offset="isize",
+        notifications="Notifications",
+        vaddr="VAddr",
+        paddr="PAddr",
+        gpaddr="GuestPAddr",
+        trap_frame="TrapFrame",
+        hv_frame="HvFrame",
+        exception_type="ExceptionType",
+        task="&Task",
+        handle="&Handle",
+    )
+
+    owned_builtins = dict(
+        str="String",
+        bytes="Vec<u8>",
+        char="char",
+        bool="bool",
+        int="isize",
+        uint="usize",
+        int8="i8",
+        int16="i16",
+        int32="i32",
+        int64="i64",
+        uint8="u8",
+        uint16="u16",
+        uint32="u32",
+        uint64="u64",
+        task="Task",
+        size="usize",
+        offset="isize",
+        notifications="Notifications",
+        vaddr="VAddr",
+        paddr="PAddr",
+        gpaddr="GuestPAddr",
+        trap_frame="TrapFrame",
+        hv_frame="HvFrame",
+        handle="Handle",
+        exception_type="ExceptionType",
+    )
+
+    def msg_type(fields):
+        flags = ""
+        if fields["ool"]:
+            flags += "| MSG_OOL"
+            if fields["ool"]["is_str"]:
+                flags += "| MSG_STR"
+        return flags
+
+    def do_resolve_type(ns, type_, table):
+        prefix = f"{ns}_".lstrip("_")
+        if type_["name"] in user_types:
+            if user_types[type_["name"]] == "enum":
+                return f"enum {prefix}{type_['name']}"
+            elif user_types[type_["name"]] == "typedef":
+                return f"{prefix}{type_['name']}_t"
+            else:
+                assert False  # unreachable
+        else:
+            resolved_type = table.get(type_["name"])
+            if resolved_type is None:
+                raise ParseError(
+                    f"Uknown data type: '{type_['name']}'"
+                )
+            return resolved_type
+
+    def resolve_raw_type(ns, type_):
+        return do_resolve_type(ns, type_, raw_builtins)
+
+    def resolve_ref_type(ns, type_):
+        return do_resolve_type(ns, type_, ref_builtins)
+
+    def resolve_owned_type(ns, type_):
+        return do_resolve_type(ns, type_, owned_builtins)
+
+    def raw_field_def(field, ns):
+        type_ = field["type"]
+        def_ = f"{field['name']}: {resolve_raw_type(ns, type_)}"
+        if type_["nr"]:
+            def_ += f"[{type_['nr']}]"
+        return def_
+
+    def field_def(field, ns):
+        type_ = field["type"]
+        def_ = f"{field['name']}: "
+        if type_["nr"]:
+            def_ += resolve_owned_type(ns, type_)
+        else:
+            nr = type_['nr']
+            def_ += f"[{resolve_owned_type(ns, type_)}; {nr}]"
+        return def_
+
+    def const_def(c):
+        TODO
+
+    def type_def(t):
+        TODO
+
+    def method_args_def(msg):
+        args = []
+        ns = msg['namespace']
+        ool = msg['args']['ool']
+        inlines = msg['args']['inlines']
+        if ool:
+            args.append(
+                f"{ool['name']}: {resolve_ref_type(ns, ool['type'])}")
+        for x in inlines:
+            args.append(
+                f"{x['name']}: {resolve_ref_type(ns, x['type'])}")
+        return ", ".join(args)
+
+    def method_rets_def(msg):
+        if msg['oneway']:
+            return "Result<()>"
+        else:
+            return f"Result<{camelcase(msg['name'])}Response>"
+
+    def namespace_name(ns):
+        if not ns:
+            return "kernel"
+        return ns
+
+    renderer = jinja2.Environment()
+    renderer.filters["method_args_def"] = method_args_def
+    renderer.filters["method_rets_def"] = method_rets_def
+    renderer.filters["field_def"] = field_def
+    renderer.filters["raw_field_def"] = raw_field_def
+    renderer.filters["const_def"] = const_def
+    renderer.filters["type_def"] = type_def
+    renderer.filters["camelcase"] = camelcase
+    renderer.filters["remove_newlines"] = lambda text: text.replace("\n", " ")
+    renderer.filters["msg_name"] = lambda m: camelcase(m['name'])
+    renderer.filters["namespace_name"] = namespace_name
+    renderer.filters["msg_str"] = lambda m: f"{m['namespace']}.".lstrip(
+        ".") + m['name']
+    mod_template = renderer.from_string("""\
+{% for ns in namespaces.keys() %}
+pub mod {{ ns | namespace_name }};
+{% endfor %}
+
+""")
+
+    ns_template = renderer.from_string("""\
+//! {{ doc  | remove_newlines }}
+
+pub type c_char = i8;
+pub type c_bool = u8;
+pub type c_int = i32;
+pub type c_unsigned = u32;
+
+
+#[derive(Debug)]
+#[repr(C)]
+pub struct OoLString {{ "{" }}
+    pub c_str: *mut u8,
+    pub len: size_t,
+{{ "}" }}
+
+#[derive(Debug)]
+#[repr(C)]
+pub struct OoLBytes {{ "{" }}
+    pub ptr: *mut u8,
+    pub len: size_t,
+{{ "}" }}
+
+/// The message header.
+#[derive(Debug)]
+#[repr(C)]
+pub struct Header {{ "{" }}
+    /// The type of message. If it's negative, this field represents an error
+    /// (error_t).
+    pub message_type: c_int,
+    /// The sender task of this message.
+    pub src: task_t,
+{{ "}" }}
+
+pub struct Client {
+
+}
+
+//
+//  Client
+//
+pub trait {{ ns_name | camelcase }}ClientExt {{ "{" }}
+{% for msg in messages %}
+    /// {{ msg.doc | remove_newlines }}
+    fn {{ msg.name }}(&self, {{ msg | method_args_def }}
+    ) -> {{ msg | method_rets_def }} {}
+{% endfor %}
+{{ "}" }}
+
+{% for msg in messages %}
+pub struct {{ msg | msg_name }}Response {{ "{" }}
+{%- if msg.rets.ool %}
+    {%- if msg.rets.ool.is_str %}
+    pub {{ msg.rets.ool.name }}: String,
+    {% else %}
+    pub {{ msg.rets.ool.name }}: Vec<u8>,
+    {% endif %}
+{% endif %}
+{%- for field in msg.rets.inlines %}
+    pub {{ field | raw_field_def(msg.namespace) }},
+{%- endfor %}
+{{ "}" }}
+{% endfor %}
+
+//
+//  Messages
+//
+pub mod raw {
+
+{% for msg in messages %}
+/// {{ msg.doc | remove_newlines }}
+#[derive(Debug)]
+#[repr(C)]
+pub struct {{ msg | msg_name }}Msg {{ "{" }}
+    header_private: Header,
+{%- if msg.args.ool %}
+    {%- if msg.args.ool.is_str %}
+    pub {{ msg.args.ool.name }}: OoLString,
+    {% else %}
+    pub {{ msg.args.ool.name }}: OoLBytes,
+    {% endif %}
+{% endif %}
+{%- for field in msg.args.inlines %}
+    pub {{ field | raw_field_def(msg.namespace) }},
+{%- endfor %}
+{{ "}" }}
+
+#[derive(Debug)]
+#[repr(C)]
+pub struct {{ msg | msg_name }}ReplyMsg {{ "{" }}
+    header_private: Header,
+{%- if msg.rets.ool %}
+    {%- if msg.rets.ool.is_str %}
+    pub {{ msg.rets.ool.name }}: OoLString,
+    {% else %}
+    pub {{ msg.rets.ool.name }}: OoLBytes,
+    {% endif %}
+{% endif %}
+{%- for field in msg.rets.inlines %}
+    pub {{ field | raw_field_def(msg.namespace) }},
+{%- endfor %}
+{{ "}" }}
+
+{% endfor %}
+}
+""")
+
+    msgid_max = next_msg_id - 1
+    Path(args.out).mkdir(exist_ok=True, parents=True)
+
     with open(Path(args.out) / "mod.rs", "w") as f:
-        f.write("")
+        f.write(rustfmt(mod_template.render(msgid_max=msgid_max, **idl)))
+
+    for (ns_name, ns) in idl["namespaces"].items():
+        ns_name = namespace_name(ns_name)
+        if ns_name != "discovery" and ns_name != "fs":
+            continue
+        with open(Path(args.out) / f"{ns_name}.rs", "w") as f:
+            f.write(rustfmt(ns_template.render(ns_name=ns_name, **ns)))
+
 
 def html_generator(args, idl):
     renderer = jinja2.Environment()
