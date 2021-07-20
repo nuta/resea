@@ -38,6 +38,7 @@ mod allocator;
 pub mod capi;
 mod lang_items;
 pub mod print;
+mod stub_helpers;
 
 // Automatically generated.
 pub mod stubs;

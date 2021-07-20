@@ -4,6 +4,7 @@ import argparse
 import jinja2
 import markdown
 import subprocess
+import shutil
 from pathlib import Path
 from glob import glob
 from lark import Lark
@@ -563,7 +564,7 @@ def rust_generator(args, idl):
 
     owned_builtins = dict(
         str="String",
-        bytes="Vec<u8>",
+        bytes="Bytes",
         char="char",
         bool="bool",
         int="isize",
@@ -630,14 +631,14 @@ def rust_generator(args, idl):
             def_ += f"[{type_['nr']}]"
         return def_
 
-    def field_def(field, ns):
+    def owned_field_def(field, ns):
         type_ = field["type"]
         def_ = f"{field['name']}: "
         if type_["nr"]:
-            def_ += resolve_owned_type(ns, type_)
-        else:
             nr = type_['nr']
             def_ += f"[{resolve_owned_type(ns, type_)}; {nr}]"
+        else:
+            def_ += resolve_owned_type(ns, type_)
         return def_
 
     def const_def(c):
@@ -673,7 +674,7 @@ def rust_generator(args, idl):
     renderer = jinja2.Environment()
     renderer.filters["method_args_def"] = method_args_def
     renderer.filters["method_rets_def"] = method_rets_def
-    renderer.filters["field_def"] = field_def
+    renderer.filters["owned_field_def"] = owned_field_def
     renderer.filters["raw_field_def"] = raw_field_def
     renderer.filters["const_def"] = const_def
     renderer.filters["type_def"] = type_def
@@ -685,44 +686,29 @@ def rust_generator(args, idl):
         ".") + m['name']
     mod_template = renderer.from_string("""\
 {% for ns in namespaces.keys() %}
-pub mod {{ ns | namespace_name }};
+// pub mod {{ ns | namespace_name }};
 {% endfor %}
 
+pub mod fs;
 """)
 
     ns_template = renderer.from_string("""\
 //! {{ doc  | remove_newlines }}
+use crate::capi::*;
+use crate::stub_helpers::*;
 
-pub type c_char = i8;
-pub type c_bool = u8;
-pub type c_int = i32;
-pub type c_unsigned = u32;
-
-
-#[derive(Debug)]
-#[repr(C)]
-pub struct OoLString {{ "{" }}
-    pub c_str: *mut u8,
-    pub len: size_t,
-{{ "}" }}
-
-#[derive(Debug)]
-#[repr(C)]
-pub struct OoLBytes {{ "{" }}
-    pub ptr: *mut u8,
-    pub len: size_t,
-{{ "}" }}
+pub type Result<T> = ::core::result::Result<T, c_int>;
 
 /// The message header.
 #[derive(Debug)]
 #[repr(C)]
-pub struct Header {{ "{" }}
+pub struct Header {
     /// The type of message. If it's negative, this field represents an error
     /// (error_t).
     pub message_type: c_int,
     /// The sender task of this message.
     pub src: task_t,
-{{ "}" }}
+}
 
 pub struct Client {
 
@@ -731,7 +717,7 @@ pub struct Client {
 //
 //  Client
 //
-pub trait {{ ns_name | camelcase }}ClientExt {{ "{" }}
+pub trait {{ ns_name | camelcase }}: ClientBase {{ "{" }}
 {% for msg in messages %}
     /// {{ msg.doc | remove_newlines }}
     fn {{ msg.name }}(&self, {{ msg | method_args_def }}
@@ -740,15 +726,16 @@ pub trait {{ ns_name | camelcase }}ClientExt {{ "{" }}
             let mut buf: Message = core::mem::MaybeUninit::zeroed().assume_init();
             let mut m = core::mem::transmute::<&mut Message, &mut raw::{{ msg | msg_name }}Msg>(&mut buf);
             *m = raw::{{ msg | msg_name }}Msg {
-                header: Header {
+                header_private: Header {
                     message_type: raw::{{ msg.name | upper }}_MSG,
+                    src: 0 /* unused */,
                 },
                 {% for arg in msg.args.fields %}
-                  {{ arg.name }}: {{ arg.name }}.into(),
+                  {{ arg.name }}: IntoPayload::into_payload({{ arg.name }}),
                 {% endfor %}
             };
 
-            let err = capi::ipc_call(self.server_task(), &mut m as *mut _);
+            let err = ipc_call(self.server_task(), m as *mut _ as *mut Message);
             if err < 0 {
                 return Err(err.into());
             }
@@ -756,7 +743,7 @@ pub trait {{ ns_name | camelcase }}ClientExt {{ "{" }}
             let r = core::mem::transmute::<&Message, &raw::{{ msg | msg_name }}ReplyMsg>(&buf);
             Ok({{ msg | msg_name }}Response {
             {% for ret in msg.rets.fields %}
-                {{ ret.name }}: r.{{ ret.name }}.into(),
+                {{ ret.name }}: FromPayload::from_payload(r.{{ ret.name }}),
             {% endfor %}
             })
         }
@@ -769,13 +756,13 @@ pub trait {{ ns_name | camelcase }}ClientExt {{ "{" }}
 pub struct {{ msg | msg_name }}Response {{ "{" }}
 {%- if msg.rets.ool %}
     {%- if msg.rets.ool.is_str %}
-    pub {{ msg.rets.ool.name }}: String,
+    pub {{ msg.rets.ool.name }}: OoLString,
     {% else %}
-    pub {{ msg.rets.ool.name }}: Vec<u8>,
+    pub {{ msg.rets.ool.name }}: OoLBytes,
     {% endif %}
 {% endif %}
 {%- for field in msg.rets.inlines %}
-    pub {{ field | raw_field_def(msg.namespace) }},
+    pub {{ field | owned_field_def(msg.namespace) }},
 {%- endfor %}
 {{ "}" }}
 {% endif %}
@@ -785,6 +772,7 @@ pub struct {{ msg | msg_name }}Response {{ "{" }}
 //  Messages
 //
 pub mod raw {
+pub use super::*;
 
 {% for msg in messages %}
 pub const {{ msg.name | upper }}_MSG: c_int = {{ msg.args_id }};
@@ -796,9 +784,9 @@ pub struct {{ msg | msg_name }}Msg {{ "{" }}
     header_private: Header,
 {%- if msg.args.ool %}
     {%- if msg.args.ool.is_str %}
-    pub {{ msg.args.ool.name }}: OoLString,
+    pub {{ msg.args.ool.name }}: RawOoLString,
     {% else %}
-    pub {{ msg.args.ool.name }}: OoLBytes,
+    pub {{ msg.args.ool.name }}: RawOoLBytes,
     {% endif %}
 {% endif %}
 {%- for field in msg.args.inlines %}
@@ -815,9 +803,9 @@ pub struct {{ msg | msg_name }}ReplyMsg {{ "{" }}
     header_private: Header,
 {%- if msg.rets.ool %}
     {%- if msg.rets.ool.is_str %}
-    pub {{ msg.rets.ool.name }}: OoLString,
+    pub {{ msg.rets.ool.name }}: RawOoLString,
     {% else %}
-    pub {{ msg.rets.ool.name }}: OoLBytes,
+    pub {{ msg.rets.ool.name }}: RawOoLBytes,
     {% endif %}
 {% endif %}
 {%- for field in msg.rets.inlines %}
@@ -830,17 +818,19 @@ pub struct {{ msg | msg_name }}ReplyMsg {{ "{" }}
 }
 """)
 
-    msgid_max = next_msg_id - 1
-    Path(args.out).mkdir(exist_ok=True, parents=True)
+    out_dir = Path(args.out)
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(exist_ok=False, parents=True)
 
-    with open(Path(args.out) / "mod.rs", "w") as f:
-        f.write(rustfmt(mod_template.render(msgid_max=msgid_max, **idl)))
+    with open(out_dir / "mod.rs", "w") as f:
+        f.write(rustfmt(mod_template.render(**idl)))
 
     for (ns_name, ns) in idl["namespaces"].items():
         ns_name = namespace_name(ns_name)
         if ns_name != "discovery" and ns_name != "fs":
             continue
-        with open(Path(args.out) / f"{ns_name}.rs", "w") as f:
+        with open(out_dir / f"{ns_name}.rs", "w") as f:
             f.write(rustfmt(ns_template.render(ns_name=ns_name, **ns)))
 
 
