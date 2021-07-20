@@ -688,10 +688,9 @@ pub mod fs;
 
     ns_template = renderer.from_string("""\
 //! {{ doc  | remove_newlines }}
+use crate::result::Result;
 use crate::capi::*;
 use crate::stub_helpers::*;
-
-pub type Result<T> = ::core::result::Result<T, c_int>;
 
 /// The message header.
 #[derive(Debug)]
@@ -704,10 +703,6 @@ pub struct Header {
     pub src: task_t,
 }
 
-pub struct Client {
-
-}
-
 //
 //  Client
 //
@@ -718,7 +713,7 @@ pub trait {{ ns_name | camelcase }}: ClientBase {{ "{" }}
     ) -> {{ msg | method_rets_def }} {
         unsafe {
             let mut buf: Message = core::mem::MaybeUninit::zeroed().assume_init();
-            let mut m = core::mem::transmute::<&mut Message, &mut raw::{{ msg | msg_name }}Msg>(&mut buf);
+            let m = core::mem::transmute::<&mut Message, &mut raw::{{ msg | msg_name }}Msg>(&mut buf);
             *m = raw::{{ msg | msg_name }}Msg {
                 header_private: Header {
                     message_type: raw::{{ msg.name | upper }}_MSG,
@@ -734,7 +729,9 @@ pub trait {{ ns_name | camelcase }}: ClientBase {{ "{" }}
                 return Err(err.into());
             }
 
+            #[allow(unused)]
             let r = core::mem::transmute::<&Message, &raw::{{ msg | msg_name }}ReplyMsg>(&buf);
+
             Ok({{ msg | msg_name }}Response {
             {%- for ret in msg.rets.fields %}
                 {{ ret.name }}: FromPayload::from_payload(r.{{ ret.name }}),
@@ -775,7 +772,7 @@ pub mod raw {
     #[derive(Debug)]
     #[repr(C)]
     pub struct {{ msg | msg_name }}Msg {{ "{" }}
-        header_private: Header,
+        pub(super) header_private: Header,
     {%- if msg.args.ool %}
         {%- if msg.args.ool.is_str %}
         pub {{ msg.args.ool.name }}: RawOoLString,
@@ -795,7 +792,7 @@ pub mod raw {
     #[derive(Debug)]
     #[repr(C)]
     pub struct {{ msg | msg_name }}ReplyMsg {{ "{" }}
-        header_private: Header,
+        pub(super) header_private: Header,
     {%- if msg.rets.ool %}
         {%- if msg.rets.ool.is_str %}
         pub {{ msg.rets.ool.name }}: RawOoLString,

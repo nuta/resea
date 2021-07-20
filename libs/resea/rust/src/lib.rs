@@ -34,10 +34,16 @@ extern crate alloc;
 pub use alloc::*;
 pub use core::*;
 
-mod allocator;
 pub mod capi;
-mod lang_items;
+pub mod cstring;
+pub mod ipc;
+pub mod prelude;
 pub mod print;
+pub mod result;
+pub mod task;
+
+mod allocator;
+mod lang_items;
 mod stub_helpers;
 
 // Automatically generated.

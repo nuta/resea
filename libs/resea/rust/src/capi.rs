@@ -37,7 +37,7 @@ impl Handle {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct RawOoLString {
     pub c_str: *mut u8,
@@ -50,11 +50,11 @@ impl RawOoLString {
     }
 
     pub unsafe fn from_str(str: &str) -> RawOoLString {
-        RawOoLString::from_raw_parts(str.as_mut_ptr(), str.len() as size_t)
+        RawOoLString::from_raw_parts(str.as_ptr() as *mut _, str.len() as size_t)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct RawOoLBytes {
     pub ptr: *mut u8,
@@ -67,7 +67,7 @@ impl RawOoLBytes {
     }
 
     pub unsafe fn from_slice(slice: &[u8]) -> RawOoLBytes {
-        RawOoLBytes::from_raw_parts(slice.as_mut_ptr(), slice.len() as size_t)
+        RawOoLBytes::from_raw_parts(slice.as_ptr() as *mut _, slice.len() as size_t)
     }
 }
 
@@ -97,6 +97,17 @@ impl Drop for OoLBytes {
     fn drop(&mut self) {
         todo!();
     }
+}
+
+#[macro_export]
+macro_rules! try_capi {
+    ($expr:expr) => {{
+        let ret_or_err: $crate::capi::error_t = $expr;
+        if ret_or_err < 0 {
+            return Err(ret_or_err.into());
+        }
+        ret_or_err
+    }};
 }
 
 /// A message.
@@ -143,4 +154,5 @@ extern "C" {
     pub fn sys_kdebug(cmd: *const u8, cmd_len: size_t, buf: *mut u8, buf_len: size_t) -> error_t;
 
     pub fn ipc_call(dst: task_t, m: *mut Message) -> error_t;
+    pub fn ipc_lookup(name: *const u8) -> task_t;
 }
