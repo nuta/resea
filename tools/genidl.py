@@ -3,7 +3,6 @@ import sys
 import argparse
 import jinja2
 import markdown
-import subprocess
 import shutil
 from pathlib import Path
 from glob import glob
@@ -14,11 +13,6 @@ from colorama import Fore, Back, Style
 
 def camelcase(snake_case):
     return "".join(map(lambda s: s.title(), snake_case.split("_")))
-
-
-def rustfmt(text):
-    return text
-    # return subprocess.check_output(["rustfmt"], input=text, text=True)
 
 
 class ParseError(Exception):
@@ -730,9 +724,9 @@ pub trait {{ ns_name | camelcase }}: ClientBase {{ "{" }}
                     message_type: raw::{{ msg.name | upper }}_MSG,
                     src: 0 /* unused */,
                 },
-                {% for arg in msg.args.fields %}
-                  {{ arg.name }}: IntoPayload::into_payload({{ arg.name }}),
-                {% endfor %}
+                {%- for arg in msg.args.fields %}
+                {{ arg.name }}: IntoPayload::into_payload({{ arg.name }}),
+                {%- endfor %}
             };
 
             let err = ipc_call(self.server_task(), m as *mut _ as *mut Message);
@@ -742,9 +736,9 @@ pub trait {{ ns_name | camelcase }}: ClientBase {{ "{" }}
 
             let r = core::mem::transmute::<&Message, &raw::{{ msg | msg_name }}ReplyMsg>(&buf);
             Ok({{ msg | msg_name }}Response {
-            {% for ret in msg.rets.fields %}
+            {%- for ret in msg.rets.fields %}
                 {{ ret.name }}: FromPayload::from_payload(r.{{ ret.name }}),
-            {% endfor %}
+            {%- endfor %}
             })
         }
     }
@@ -757,64 +751,64 @@ pub struct {{ msg | msg_name }}Response {{ "{" }}
 {%- if msg.rets.ool %}
     {%- if msg.rets.ool.is_str %}
     pub {{ msg.rets.ool.name }}: OoLString,
-    {% else %}
+    {%- else %}
     pub {{ msg.rets.ool.name }}: OoLBytes,
-    {% endif %}
+    {%- endif %}
 {% endif %}
 {%- for field in msg.rets.inlines %}
     pub {{ field | owned_field_def(msg.namespace) }},
 {%- endfor %}
 {{ "}" }}
-{% endif %}
+{%- endif %}
 {% endfor %}
 
 //
 //  Messages
 //
 pub mod raw {
-pub use super::*;
+    pub use super::*;
 
-{% for msg in messages %}
-pub const {{ msg.name | upper }}_MSG: c_int = {{ msg.args_id }};
+    {%- for msg in messages %}
+    pub const {{ msg.name | upper }}_MSG: c_int = {{ msg.args_id }};
 
-/// {{ msg.doc | remove_newlines }}
-#[derive(Debug)]
-#[repr(C)]
-pub struct {{ msg | msg_name }}Msg {{ "{" }}
-    header_private: Header,
-{%- if msg.args.ool %}
-    {%- if msg.args.ool.is_str %}
-    pub {{ msg.args.ool.name }}: RawOoLString,
-    {% else %}
-    pub {{ msg.args.ool.name }}: RawOoLBytes,
-    {% endif %}
-{% endif %}
-{%- for field in msg.args.inlines %}
-    pub {{ field | raw_field_def(msg.namespace) }},
+    /// {{ msg.doc | remove_newlines }}
+    #[derive(Debug)]
+    #[repr(C)]
+    pub struct {{ msg | msg_name }}Msg {{ "{" }}
+        header_private: Header,
+    {%- if msg.args.ool %}
+        {%- if msg.args.ool.is_str %}
+        pub {{ msg.args.ool.name }}: RawOoLString,
+        {%- else %}
+        pub {{ msg.args.ool.name }}: RawOoLBytes,
+        {%- endif %}
+    {%- endif %}
+    {%- for field in msg.args.inlines %}
+        pub {{ field | raw_field_def(msg.namespace) }},
+    {%- endfor %}
+    {{ "}" }}
+
+    {%- if not msg.oneway %}
+
+    pub const {{ msg.name | upper }}_REPLY_MSG: c_int = {{ msg.rets_id }};
+
+    #[derive(Debug)]
+    #[repr(C)]
+    pub struct {{ msg | msg_name }}ReplyMsg {{ "{" }}
+        header_private: Header,
+    {%- if msg.rets.ool %}
+        {%- if msg.rets.ool.is_str %}
+        pub {{ msg.rets.ool.name }}: RawOoLString,
+        {%- else %}
+        pub {{ msg.rets.ool.name }}: RawOoLBytes,
+        {%- endif %}
+    {%- endif %}
+    {%- for field in msg.rets.inlines %}
+        pub {{ field | raw_field_def(msg.namespace) }},
+    {%- endfor %}
+    {{ "}" }}
+    {%- endif %}
 {%- endfor %}
-{{ "}" }}
-
-{%- if not msg.oneway %}
-pub const {{ msg.name | upper }}_REPLY_MSG: c_int = {{ msg.rets_id }};
-
-#[derive(Debug)]
-#[repr(C)]
-pub struct {{ msg | msg_name }}ReplyMsg {{ "{" }}
-    header_private: Header,
-{%- if msg.rets.ool %}
-    {%- if msg.rets.ool.is_str %}
-    pub {{ msg.rets.ool.name }}: RawOoLString,
-    {% else %}
-    pub {{ msg.rets.ool.name }}: RawOoLBytes,
-    {% endif %}
-{% endif %}
-{%- for field in msg.rets.inlines %}
-    pub {{ field | raw_field_def(msg.namespace) }},
-{%- endfor %}
-{{ "}" }}
-{% endif %}
-
-{% endfor %}
 }
 """)
 
@@ -824,14 +818,14 @@ pub struct {{ msg | msg_name }}ReplyMsg {{ "{" }}
     out_dir.mkdir(exist_ok=False, parents=True)
 
     with open(out_dir / "mod.rs", "w") as f:
-        f.write(rustfmt(mod_template.render(**idl)))
+        f.write(mod_template.render(**idl))
 
     for (ns_name, ns) in idl["namespaces"].items():
         ns_name = namespace_name(ns_name)
         if ns_name != "discovery" and ns_name != "fs":
             continue
         with open(out_dir / f"{ns_name}.rs", "w") as f:
-            f.write(rustfmt(ns_template.render(ns_name=ns_name, **ns)))
+            f.write(ns_template.render(ns_name=ns_name, **ns))
 
 
 def html_generator(args, idl):
