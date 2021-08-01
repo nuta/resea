@@ -29,6 +29,7 @@ void __ubsan_handle_sub_overflow(void);
 void __ubsan_handle_mul_overflow(void);
 void __ubsan_handle_divrem_overflow(void);
 void __ubsan_handle_negate_overflow(void);
+void __ubsan_handle_float_cast_overflow(void);
 void __ubsan_handle_pointer_overflow(void);
 void __ubsan_handle_out_of_bounds(void);
 void __ubsan_handle_shift_out_of_bounds(void);

@@ -35,6 +35,9 @@ void __ubsan_handle_divrem_overflow(void) {
 void __ubsan_handle_negate_overflow(void) {
     report_ubsan_event("negate overflow");
 }
+void __ubsan_handle_float_cast_overflow(void) {
+    report_ubsan_event("float cast overflow");
+}
 void __ubsan_handle_pointer_overflow(void) {
     report_ubsan_event("pointer overflow");
 }
