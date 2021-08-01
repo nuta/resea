@@ -47,7 +47,7 @@ kernel_image := $(BUILD_DIR)/resea.elf
 bootfs_bin   := $(BUILD_DIR)/bootfs.bin
 builtin_libs := common resea unittest
 all_servers  := $(shell tools/scan-servers-dir.py --names)
-all_libs     := $(notdir $(wildcard libs/*))
+all_libs     := $(shell tools/scan-libs-dir.py --names)
 servers      := \
 	$(sort $(foreach server, $(all_servers), \
 		$(if $(value $(shell echo CONFIG_$(server)_SERVER | \
@@ -305,13 +305,13 @@ $(BUILD_DIR)/compile_commands.json: $(kernel_objs)
 #  Libs build rules
 #
 define lib-build-rule
-$(eval dir := libs/$(1))
-$(eval outfile := $(BUILD_DIR)/libs/$(1).lib.o)
+$(eval dir := $(shell tools/scan-libs-dir.py --dir $(1)))
+$(eval outfile := $(BUILD_DIR)/$(dir $(dir))$(1).lib.o)
 $(eval name :=)
 $(eval objs :=)
 $(eval cflags :=)
 $(eval build_mks :=)
-$(eval $(call visit-subdir,libs/$(1),$(BUILD_DIR)))
+$(eval $(call visit-subdir,$(dir),$(BUILD_DIR)))
 $(eval $(outfile): objs := $(objs))
 $(eval $(outfile): $(objs) $(build_mks))
 $(eval $(objs): CFLAGS += $(cflags))
