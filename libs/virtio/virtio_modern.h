@@ -1,6 +1,7 @@
 #ifndef __VIRTIO_VIRTIO_MODERN_H__
 #define __VIRTIO_VIRTIO_MODERN_H__
 
+#include "virtio_legacy.h"
 #include <driver/dma.h>
 #include <driver/io.h>
 #include <types.h>
@@ -37,29 +38,16 @@ struct virtq_event_suppress {
     uint16_t flags;
 } __packed;
 
-struct virtq_packed_desc {
-    /// The physical buffer address.
-    uint64_t addr;
-    /// The buffer Length.
-    uint32_t len;
-    /// The buffer ID.
-    uint16_t id;
-    /// Flags.
-    uint16_t flags;
-} __packed;
-
 struct virtio_virtq_modern {
-    struct virtq_packed_desc *descs;
     /// The queue notify offset for the queue.
     offset_t queue_notify_off;
-    /// The next descriptor index to be allocated.
-    int next_avail;
-    /// The next descriptor index to be used by the device.
-    int next_used;
-    /// Driver-side wrapping counter.
-    int avail_wrap_counter;
-    /// Device-side wrapping counter.
-    int used_wrap_counter;
+    int next_avail_index;
+    int last_used_index;
+    int free_head;
+    int num_free_descs;
+    struct virtq_desc *descs;
+    struct virtq_avail *avail;
+    struct virtq_used *used;
 };
 
 struct virtio_ops;

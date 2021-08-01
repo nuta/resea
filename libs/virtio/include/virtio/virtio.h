@@ -20,8 +20,7 @@
 #define VIRTIO_STATUS_DRIVER_OK 4
 #define VIRTIO_STATUS_FEAT_OK   82
 
-#define VIRTIO_F_VERSION_1   (1ull << 32)
-#define VIRTIO_F_RING_PACKED (1ull << 34)
+#define VIRTIO_F_VERSION_1 (1ull << 32)
 
 #define VIRTQ_DESC_F_NEXT          1
 #define VIRTQ_DESC_F_WRITE         2

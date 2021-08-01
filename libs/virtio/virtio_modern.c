@@ -107,26 +107,6 @@ static void virtq_notify(struct virtio_virtq *vq) {
     io_write16(notify_struct_io, vq->modern.queue_notify_off, vq->index);
 }
 
-/// Returns true if the descriptor is available for the output to the device.
-/// XXX: should we count modern.used_wrap_counter and use is_desc_used()
-/// instead?
-static bool is_desc_free(struct virtio_virtq *vq,
-                         struct virtq_packed_desc *desc) {
-    uint16_t flags = from_le16(desc->flags);
-    int avail = !!(flags & VIRTQ_DESC_F_AVAIL);
-    int used = !!(flags & VIRTQ_DESC_F_USED);
-    return avail == used;
-}
-
-/// Returns true if the descriptor has been used by the device.
-static bool is_desc_used(struct virtio_virtq *vq,
-                         struct virtq_packed_desc *desc) {
-    uint16_t flags = from_le16(desc->flags);
-    int avail = !!(flags & VIRTQ_DESC_F_AVAIL);
-    int used = !!(flags & VIRTQ_DESC_F_USED);
-    return avail == used && used == vq->modern.used_wrap_counter;
-}
-
 /// Selects the current virtqueue in the common config.
 static void virtq_select(unsigned index) {
     VIRTIO_COMMON_CFG_WRITE8(queue_select, index);
@@ -144,20 +124,20 @@ static void virtq_init(unsigned index) {
         + VIRTIO_COMMON_CFG_READ16(queue_notify_off) * notify_off_multiplier;
 
     // Allocate the descriptor area.
-    size_t descs_size = num_descs * sizeof(struct virtq_packed_desc);
+    size_t descs_size = num_descs * sizeof(struct virtq_desc);
     dma_t descs_dma =
         dma_alloc(descs_size, DMA_ALLOC_TO_DEVICE | DMA_ALLOC_FROM_DEVICE);
     memset(dma_buf(descs_dma), 0, descs_size);
 
     // Allocate the driver area.
-    dma_t driver_dma =
-        dma_alloc(sizeof(struct virtq_event_suppress), DMA_ALLOC_TO_DEVICE);
-    memset(dma_buf(driver_dma), 0, sizeof(struct virtq_event_suppress));
+    size_t avail_ring_size = num_descs * sizeof(struct virtq_avail);
+    dma_t driver_dma = dma_alloc(avail_ring_size, DMA_ALLOC_TO_DEVICE);
+    memset(dma_buf(driver_dma), 0, avail_ring_size);
 
     // Allocate the device area.
-    dma_t device_dma =
-        dma_alloc(sizeof(struct virtq_event_suppress), DMA_ALLOC_TO_DEVICE);
-    memset(dma_buf(device_dma), 0, sizeof(struct virtq_event_suppress));
+    size_t used_ring_size = num_descs * sizeof(struct virtq_used);
+    dma_t device_dma = dma_alloc(used_ring_size, DMA_ALLOC_TO_DEVICE);
+    memset(dma_buf(device_dma), 0, used_ring_size);
 
     // Register physical addresses.
     set_desc_paddr(dma_daddr(descs_dma));
@@ -170,17 +150,22 @@ static void virtq_init(unsigned index) {
         next_indices[i] = -1;
     }
 
-    virtqs[index].index = index;
-    virtqs[index].descs_dma = descs_dma;
-    virtqs[index].num_descs = num_descs;
-    virtqs[index].next_indices = next_indices;
-    virtqs[index].modern.descs =
-        (struct virtq_packed_desc *) dma_buf(descs_dma);
-    virtqs[index].modern.queue_notify_off = queue_notify_off;
-    virtqs[index].modern.next_avail = 0;
-    virtqs[index].modern.next_used = 0;
-    virtqs[index].modern.avail_wrap_counter = 1;
-    virtqs[index].modern.used_wrap_counter = 1;
+    struct virtio_virtq *vq = &virtqs[index];
+    vq->index = index;
+    vq->num_descs = num_descs;
+    vq->modern.queue_notify_off = queue_notify_off;
+    vq->modern.next_avail_index = 0;
+    vq->modern.last_used_index = 0;
+    vq->modern.descs = (struct virtq_desc *) dma_buf(descs_dma);
+    vq->modern.avail = (struct virtq_avail *) dma_buf(driver_dma);
+    vq->modern.used = (struct virtq_used *) dma_buf(device_dma);
+
+    // Add descriptors into the free list.
+    vq->modern.free_head = 0;
+    vq->modern.num_free_descs = num_descs;
+    for (size_t i = 0; i < num_descs; i++) {
+        vq->modern.descs[i].next = (i + 1 == num_descs) ? 0 : i + 1;
+    }
 }
 
 static void activate(void) {
@@ -191,7 +176,67 @@ static void activate(void) {
 /// `notify` to start processing the enqueued request.
 static error_t virtq_push(struct virtio_virtq *vq,
                           struct virtio_chain_entry *chain, int n) {
-    NYI();
+    DEBUG_ASSERT(n > 0);
+    if (n > vq->modern.num_free_descs) {
+        // Try freeing used descriptors.
+        while (vq->modern.last_used_index != vq->modern.used->index) {
+            struct virtq_used_elem *used_elem =
+                &vq->modern.used
+                     ->ring[vq->modern.last_used_index % vq->num_descs];
+
+            // Count the number of descriptors in the chain.
+            int num_freed = 0;
+            int next_desc_index = used_elem->id;
+            while (true) {
+                struct virtq_desc *desc = &vq->modern.descs[next_desc_index];
+                num_freed++;
+
+                if ((desc->flags & VIRTQ_DESC_F_NEXT) == 0) {
+                    break;
+                }
+
+                next_desc_index = desc->next;
+            }
+
+            // Enqueue the chain back into the free list.
+            vq->modern.free_head = used_elem->id;
+            vq->modern.num_free_descs += num_freed;
+            vq->modern.last_used_index++;
+        }
+    }
+
+    if (n > vq->modern.num_free_descs) {
+        return ERR_NO_MEMORY;
+    }
+
+    int head_index = vq->modern.free_head;
+    int desc_index = head_index;
+    struct virtq_desc *desc = NULL;
+    for (int i = 0; i < n; i++) {
+        struct virtio_chain_entry *e = &chain[i];
+        desc = &vq->modern.descs[desc_index];
+        desc->addr = into_le64(e->addr);
+        desc->len = into_le32(e->len);
+        desc->flags =
+            (e->device_writable ? VIRTQ_DESC_F_WRITE : 0) | VIRTQ_DESC_F_NEXT;
+        desc_index = desc->next;
+    }
+
+    // Update the last entry in the chain.
+    DEBUG_ASSERT(desc != NULL);
+    int unused_next = desc->next;
+    desc->next = 0;
+    desc->flags &= ~VIRTQ_DESC_F_NEXT;
+
+    vq->modern.free_head = unused_next;
+    vq->modern.num_free_descs -= n;
+
+    // Append the chain into the avail ring.
+    vq->modern.avail->ring[vq->modern.avail->index % vq->num_descs] =
+        head_index;
+    mb();
+    vq->modern.avail->index++;
+    return OK;
 }
 
 /// Pops a descriptor chain processed by the device. Returns the number of
@@ -200,13 +245,53 @@ static error_t virtq_push(struct virtio_virtq *vq,
 /// If no chains in the used ring, it returns ERR_EMPTY.
 static int virtq_pop(struct virtio_virtq *vq, struct virtio_chain_entry *chain,
                      int n, size_t *total_len) {
-    NYI();
+    if (vq->modern.last_used_index == vq->modern.used->index) {
+        return ERR_EMPTY;
+    }
+
+    struct virtq_used_elem *used_elem =
+        &vq->modern.used->ring[vq->modern.last_used_index % vq->num_descs];
+
+    *total_len = used_elem->len;
+    int next_desc_index = used_elem->id;
+    struct virtq_desc *desc = NULL;
+    int num_popped = 0;
+    while (num_popped < n) {
+        desc = &vq->modern.descs[next_desc_index];
+        chain[num_popped].addr = desc->addr;
+        chain[num_popped].len = desc->len;
+        chain[num_popped].device_writable =
+            (desc->flags & VIRTQ_DESC_F_WRITE) != 0;
+
+        num_popped++;
+
+        bool has_next = (desc->flags & VIRTQ_DESC_F_NEXT) != 0;
+        if (!has_next) {
+            break;
+        }
+
+        if (num_popped >= n && has_next) {
+            // `n` is too short.
+            return ERR_NO_MEMORY;
+        }
+
+        next_desc_index = desc->next;
+    }
+
+    // Prepend the popped descriptors into the free list.
+    DEBUG_ASSERT(desc != NULL);
+    desc->next = vq->modern.free_head;
+    vq->modern.free_head = used_elem->id;
+    vq->modern.num_free_descs += num_popped;
+
+    vq->modern.last_used_index++;
+    return num_popped;
 }
 
 /// Checks and enables features. It aborts if any of the features is not
 /// supported.
 static void negotiate_feature(uint64_t features) {
-    features |= VIRTIO_F_VERSION_1 | VIRTIO_F_RING_PACKED;
+    features |= VIRTIO_F_VERSION_1;
 
     // Abort if the device does not support features we need.
     ASSERT((read_device_features() & features) == features);
@@ -245,11 +330,6 @@ static uint64_t read_device_config(offset_t offset, size_t size) {
         default:
             UNREACHABLE();
     }
-}
-
-static int get_next_index(struct virtio_virtq *vq, int index) {
-    ASSERT(index < vq->num_descs);
-    return vq->next_indices[index];
 }
 
 struct virtio_ops virtio_modern_ops = {
