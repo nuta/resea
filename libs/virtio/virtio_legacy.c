@@ -183,33 +183,37 @@ static int virtq_pop(struct virtio_virtq *vq, struct virtio_chain_entry *chain,
     *total_len = used_elem->len;
     int next_desc_index = used_elem->id;
     struct virtq_desc *desc = NULL;
-    int i = 0;
-    while (i < n) {
+    int num_popped = 0;
+    while (num_popped < n) {
         desc = &vq->legacy.descs[next_desc_index];
-        chain[i].addr = desc->addr;
-        chain[i].len = desc->len;
-        chain[i].device_writable = (desc->flags & VIRTQ_DESC_F_WRITE) != 0;
-        i++;
+        chain[num_popped].addr = desc->addr;
+        chain[num_popped].len = desc->len;
+        chain[num_popped].device_writable =
+            (desc->flags & VIRTQ_DESC_F_WRITE) != 0;
 
-        bool has_next = (desc->next & VIRTQ_DESC_F_NEXT) != 0;
+        num_popped++;
+
+        bool has_next = (desc->flags & VIRTQ_DESC_F_NEXT) != 0;
         if (!has_next) {
             break;
         }
 
-        if (i >= n && has_next) {
+        if (num_popped >= n && has_next) {
             // `n` is too short.
             return ERR_NO_MEMORY;
         }
+
+        next_desc_index = desc->next;
     }
 
     // Prepend the popped descriptors into the free list.
     DEBUG_ASSERT(desc != NULL);
     desc->next = vq->legacy.free_head;
     vq->legacy.free_head = used_elem->id;
-    vq->legacy.num_free_descs += i;
+    vq->legacy.num_free_descs += num_popped;
 
     vq->legacy.last_used_index++;
-    return i;
+    return num_popped;
 }
 
 /// Checks and enables features. It aborts if any of the features is not
