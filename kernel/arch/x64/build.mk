@@ -6,7 +6,7 @@ QEMU  ?= qemu-system-x86_64
 BOCHS ?= bochs
 
 CFLAGS += --target=x86_64 -mcmodel=large -fno-omit-frame-pointer
-CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
+KERNEL_CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 
 QEMUFLAGS += -m 512 -cpu IvyBridge,rdtscp -rtc base=utc -serial mon:stdio
 QEMUFLAGS += -no-reboot -boot d -device isa-debug-exit -d guest_errors,unimp
@@ -38,7 +38,7 @@ QEMUFLAGS += -netdev user,id=net1,hostfwd=tcp:127.0.0.1:1234-:80
 endif
 
 ifneq ($(VIRTIO_GPU),)
-QEMUFLAGS +=-vga none -device virtio-gpu,packed=on
+QEMUFLAGS +=-vga none -device virtio-gpu,disable-legacy=off,disable-modern=on
 endif
 
 .PHONY: run

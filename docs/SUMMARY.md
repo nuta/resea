@@ -50,6 +50,9 @@
   - [Unit Testing](userspace/unit-test.md)
   - [Writing a Library](userspace/writing-a-library.md)
 
+- [Userspace Libraries](libraries/README.md)
+  - [libc (POSIX compatibility layer)](libraries/libc.md)
+
 - [Kernel Development](kernel/README.md)
   - [Debugging](kernel/debugging.md)
 

@@ -1,6 +1,11 @@
 # License
 
-This software is dual-licensed: Apache license version 2.0 and MIT license.
+This software is dual-licensed by Apache license version 2.0 and MIT license
+*unless* they have explicit notes in the source code (see *Third-party Libraries*).
+
+## Third-party Libraries
+Some third-party libraries are ported into Resea. They're isolated in the
+`libs/third_party` directory and they have their own licenses.
 
 ## Apache license version 2.0
 

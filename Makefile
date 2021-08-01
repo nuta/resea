@@ -64,17 +64,22 @@ autogen_files := $(BUILD_DIR)/include/config.h $(BUILD_DIR)/include/idl.h
 # $(2): The build dir.
 define visit-subdir
 $(eval objs-y :=)
+$(eval external-objs-y :=)
 $(eval libs-y :=)
 $(eval build_dir := $(2)/$(1))
 $(eval subdirs-y :=)
 $(eval cflags-y :=)
 $(eval global-cflags-y :=)
+$(eval global-includes-y :=)
+$(eval third-party-build :=)
 $(eval include $(1)/build.mk)
 $(eval build_mks += $(1)/build.mk)
 $(eval objs += $(addprefix $(2)/$(1)/, $(objs-y)))
+$(eval external-objs += $(external-objs-y))
 $(eval libs += $(libs-y))
 $(eval cflags += $(cflags-y))
 $(eval CFLAGS += $(global-cflags-y))
+$(eval INCLUDES += $(global-includes-y))
 $(eval $(foreach subdir, $(subdirs-y), \
 	$(eval $(call visit-subdir,$(1)/$(subdir),$(2)))))
 endef
@@ -94,30 +99,36 @@ OBJCOPY    := $(LLVM_PREFIX)llvm-objcopy$(LLVM_SUFFIX)
 CLANG_TIDY := $(LLVM_PREFIX)clang-tidy$(LLVM_SUFFIX)
 PROGRESS   := printf "  \\033[1;96m%8s\\033[0m  \\033[1;m%s\\033[0m\\n"
 PYTHON3    ?= python3
+DOCKER     ?= docker
 CARGO      ?= cargo
 SPARSE     ?= sparse
 
 GIT_REVISION  := $(shell git rev-parse --short HEAD)
 
 CFLAGS += -g3 -std=c11 -ffreestanding -fno-builtin -nostdlib -nostdinc
-CFLAGS += -Wall -Wextra
-CFLAGS += -Werror=implicit-function-declaration
-CFLAGS += -Werror=int-conversion
-CFLAGS += -Werror=incompatible-pointer-types
-CFLAGS += -Werror=shift-count-overflow
-CFLAGS += -Werror=switch
-CFLAGS += -Werror=return-type
-CFLAGS += -Werror=pointer-integer-compare
-CFLAGS += -Werror=tautological-constant-out-of-range-compare
-CFLAGS += -Wno-unused-parameter
 CFLAGS += -fstack-size-section
-CFLAGS += -Ilibs/common/include -Ilibs/common/arch/$(ARCH)
-CFLAGS += -I$(BUILD_DIR)/include
-CFLAGS += -Ikernel/arch/$(ARCH)/machines/$(MACHINE)/include
 CFLAGS += -DVERSION='"$(VERSION)"' -DGIT_REVISION='"$(GIT_REVISION)"'
 CFLAGS += -DBOOTELF_PATH='"$(boot_elf)"'
 CFLAGS += -DBOOTFS_PATH='"$(bootfs_bin)"'
 CFLAGS += -DAUTOSTARTS='"$(autostarts)"'
+
+WERRORS += -Wall -Wextra
+WERRORS += -Werror=implicit-function-declaration
+WERRORS += -Werror=int-conversion
+WERRORS += -Werror=incompatible-pointer-types
+WERRORS += -Werror=shift-count-overflow
+WERRORS += -Werror=switch
+WERRORS += -Werror=return-type
+WERRORS += -Werror=pointer-integer-compare
+WERRORS += -Werror=tautological-constant-out-of-range-compare
+WERRORS += -Wno-unused-parameter
+
+INCLUDES += -Ilibs/common/include
+INCLUDES += -Ilibs/common/arch/$(ARCH)
+INCLUDES += -I$(BUILD_DIR)/include
+INCLUDES += -Ikernel/arch/$(ARCH)/machines/$(MACHINE)/include
+
+KERNEL_CFLAGS += $(WERRORS)
 
 CARGOFLAGS +=-Z build-std=core,alloc --quiet
 RUSTFLAGS += -C lto -Z emit-stack-sizes -Z external-macro-backtrace
@@ -235,15 +246,15 @@ $(bootfs_bin): $(bootfs_files) tools/mkbootfs.py
 $(BUILD_DIR)/kernel/%.o: %.c Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
+	$(CC) $(CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
-	$(SPARSE) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL $<
+	$(SPARSE) $(CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL $<
 
 
 $(BUILD_DIR)/kernel/%.o: %.S Makefile $(boot_elf) $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
+	$(CC) $(CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 $(BUILD_DIR)/kernel/__name__.c: $(autogen_files)
@@ -253,7 +264,7 @@ $(BUILD_DIR)/kernel/__name__.c: $(autogen_files)
 
 $(BUILD_DIR)/kernel/__name__.o: $(BUILD_DIR)/kernel/__name__.c
 	$(PROGRESS) "CC" $<
-	$(CC) $(CFLAGS) -DKERNEL -c -o $@ $(@:.o=.c)
+	$(CC) $(CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES) -DKERNEL -c -o $@ $(@:.o=.c)
 
 #
 #  Userland build rules
@@ -261,13 +272,13 @@ $(BUILD_DIR)/kernel/__name__.o: $(BUILD_DIR)/kernel/__name__.c
 $(BUILD_DIR)/%.o: %.c Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
-	$(SPARSE) $(CFLAGS) $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	$(SPARSE) $(CFLAGS) $(INCLUDES) $<
 
 $(BUILD_DIR)/%.o: %.S Makefile $(autogen_files)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 #
 #  Auto-generated files.
@@ -311,10 +322,13 @@ $(eval name :=)
 $(eval objs :=)
 $(eval cflags :=)
 $(eval build_mks :=)
+$(eval third-party-build :=)
 $(eval $(call visit-subdir,$(dir),$(BUILD_DIR)))
 $(eval $(outfile): objs := $(objs))
 $(eval $(outfile): $(objs) $(build_mks))
 $(eval $(objs): CFLAGS += $(cflags))
+$(eval $(objs): CFLAGS += $(if $(third-party-build),, $(WERRORS)))
+$(eval $(objs): INCLUDES $(if $(third-party-build), :=, += $(INCLUDES)))
 endef
 $(foreach lib, $(all_libs), \
 	$(eval $(call lib-build-rule,$(lib))))
@@ -330,13 +344,14 @@ define server-build-rule
 $(eval server_dir := $(shell tools/scan-servers-dir.py --dir $(1)))
 $(eval name :=)
 $(eval objs :=)
+$(eval external-objs :=)
 $(eval libs := $(builtin_libs))
 $(eval cflags :=)
 $(eval build_mks :=)
 $(eval rust :=)
 $(eval objs += $(BUILD_DIR)/$(1)/__name__.o)
 $(eval $(call visit-subdir,$(server_dir),$(BUILD_DIR)))
-$(eval objs += $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(lib).lib.o))
+$(eval objs += $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(lib).lib.o) $(external-objs))
 $(eval $(BUILD_DIR)/$(1)/__name__.c: name := $(name))
 $(eval $(BUILD_DIR)/$(1).elf: name := $(name))
 $(eval $(BUILD_DIR)/$(1).debug.elf: name := $(name))
@@ -346,7 +361,7 @@ $(eval $(BUILD_DIR)/$(1).debug.elf: objs += $(if $(rust), $(BUILD_DIR)/rust/$(na
 $(eval $(BUILD_DIR)/$(1).debug.elf: $(objs) $(if $(rust), $(BUILD_DIR)/rust/$(name).a) $(build_mks))
 $(eval $(objs): CFLAGS += $(cflags))
 $(foreach lib, $(all_libs),
-	$(eval $(objs): CFLAGS += -Ilibs/$(lib)/include))
+	$(eval $(objs): INCLUDES += -Ilibs/$(lib)/include))
 endef
 $(foreach server, $(boot_task_name) $(servers), \
 	$(eval $(call server-build-rule,$(server))))
@@ -360,7 +375,7 @@ $(foreach server, $(boot_task_name) $(servers), \
 %/__name__.o: %/__name__.c $(autogen_files)
 	$(PROGRESS) "CC" $@
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $(@) $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $(@) $<
 
 $(BUILD_DIR)/%.debug.elf: tools/nm2symbols.py \
 		tools/embed-symbols.py libs/resea/arch/$(ARCH)/user.ld Makefile
