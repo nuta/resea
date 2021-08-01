@@ -17,21 +17,30 @@ static uint32_t display_width = 0;
 static uint32_t display_height = 0;
 static int next_resource_id = 1;
 static int display_resource_id = -1;
+static dma_t req_buffers_dma = NULL;
+static dma_t resp_buffers_dma = NULL;
+static int next_buffer_index = 0;
 static uint32_t *framebuffer = NULL;
 enum driver_state driver_state = LOOKING_FOR_DISPLAY;
 
 static void execute_command(struct virtio_gpu_ctrl_hdr *cmd, size_t len) {
-    int req_index =
-        virtio->virtq_alloc(ctrlq, len, VIRTQ_DESC_F_NEXT, VIRTQ_ALLOC_NO_PREV);
-    int resp_index = virtio->virtq_alloc(ctrlq, VIRTIO_GPU_CTRLQ_ENTRY_MAX_SIZE,
-                                         VIRTQ_DESC_F_WRITE, req_index);
-    if (req_index < 0 || resp_index < 0) {
-        WARN("failed to alloc a desc");
-        return;
-    }
+    ASSERT(len <= VIRTIO_GPU_CTRLQ_ENTRY_MAX_SIZE);
 
-    memcpy(virtio->get_buffer(ctrlq, req_index), cmd, len);
-    virtio->virtq_kick_desc(ctrlq, resp_index);
+    int index = next_buffer_index++ % ctrlq->num_descs;
+    offset_t off = index * VIRTIO_GPU_CTRLQ_ENTRY_MAX_SIZE;
+
+    memcpy(dma_buf(req_buffers_dma) + off, cmd, len);
+
+    struct virtio_chain_entry chain[2];
+    chain[0].addr = dma_daddr(req_buffers_dma) + off;
+    chain[0].len = len;
+    chain[0].device_writable = false;
+    chain[1].addr = dma_daddr(resp_buffers_dma) + off;
+    chain[1].len = VIRTIO_GPU_CTRLQ_ENTRY_MAX_SIZE;
+    chain[1].device_writable = true;
+
+    virtio->virtq_push(ctrlq, chain, 2);
+    virtio->virtq_notify(ctrlq);
 }
 
 static void initialize_display(uint32_t width, uint32_t height) {
@@ -163,7 +172,8 @@ static void handle_display_info(struct virtio_gpu_resp_display_info *r) {
     for (int i = 0; i < VIRTIO_GPU_MAX_SCANOUTS; i++) {
         struct virtio_gpu_display_one *pmode = &r->pmodes[i];
         if (pmode->enabled) {
-            TRACE("found a display: resolution=%dx%d", pmode->r.width, pmode->r.height);
+            TRACE("found a display: resolution=%dx%d", pmode->r.width,
+                  pmode->r.height);
             initialize_display(pmode->r.width, pmode->r.height);
             break;
         }
@@ -173,22 +183,31 @@ static void handle_display_info(struct virtio_gpu_resp_display_info *r) {
 static void handle_interrupt(void) {
     uint8_t status = virtio->read_isr_status();
     if (status & 1) {
-        int index;
-        size_t len;
         TRACE("IRQ");
-        while (virtio->virtq_pop_desc(ctrlq, &index, &len) == OK) {
-            int resp_index = virtio->get_next_index(ctrlq, index);
-            TRACE("resp_index=%d", resp_index);
-            struct virtio_gpu_ctrl_hdr *hdr = virtio->get_buffer(ctrlq, resp_index);
+        struct virtio_chain_entry chain[2];
+        size_t total_len;
+        while (true) {
+            int n = virtio->virtq_pop(ctrlq, chain, 2, &total_len);
+            if (n == ERR_EMPTY) {
+                break;
+            }
+
+            ASSERT(n == 2);
+            offset_t off = chain[1].addr - dma_daddr(resp_buffers_dma);
+            struct virtio_gpu_ctrl_hdr *hdr =
+                (struct virtio_gpu_ctrl_hdr *) (dma_buf(resp_buffers_dma)
+                                                + off);
             switch (hdr->type) {
                 case VIRTIO_GPU_RESP_OK_NODATA:
                     handle_ok_nodata();
                     break;
                 case VIRTIO_GPU_RESP_OK_DISPLAY_INFO:
-                    handle_display_info((struct virtio_gpu_resp_display_info *) hdr);
+                    handle_display_info(
+                        (struct virtio_gpu_resp_display_info *) hdr);
                     break;
                 default:
-                    WARN_DBG("unknown response from the device: type=0x%x", hdr->type);
+                    WARN_DBG("unknown response from the device: type=0x%x",
+                             hdr->type);
             }
         }
     }
@@ -202,13 +221,17 @@ static void init(void) {
 
     virtio->virtq_init(VIRTIO_GPU_QUEUE_CTRL);
     virtio->virtq_init(VIRTIO_GPU_QUEUE_CURSOR);
-
     ctrlq = virtio->virtq_get(VIRTIO_GPU_QUEUE_CTRL);
-    virtio->virtq_allocate_buffers(ctrlq, VIRTIO_GPU_CTRLQ_ENTRY_MAX_SIZE,
-                                   false);
+    virtio->activate();
+
+    req_buffers_dma =
+        dma_alloc(VIRTIO_GPU_CTRLQ_ENTRY_MAX_SIZE * ctrlq->num_descs,
+                  DMA_ALLOC_FROM_DEVICE);
+    resp_buffers_dma =
+        dma_alloc(VIRTIO_GPU_CTRLQ_ENTRY_MAX_SIZE * ctrlq->num_descs,
+                  DMA_ALLOC_FROM_DEVICE);
 
     ASSERT_OK(irq_acquire(irq));
-    virtio->activate();
 
     // We've finished virtio device initialization. For virito-gpu, we need some
     // extra initialization steps...
@@ -225,22 +248,14 @@ static void init(void) {
 #ifdef CONFIG_VIRTIO_GPU_DEMO
 static uint32_t pick_color(int y) {
     uint32_t colors[] = {
-	    0xff0000,
-	    0x800000,
-	    0xffff00,
-	    0x808000,
-	    0x00ff00,
-	    0x008000,
-	    0x00ffff,
-	    0x008080,
-	    0x0000ff,
-	    0x000080,
-	    0xff00ff,
-	    0x800080,
+        0xff0000, 0x800000, 0xffff00, 0x808000, 0x00ff00, 0x008000,
+        0x00ffff, 0x008080, 0x0000ff, 0x000080, 0xff00ff, 0x800080,
     };
 
     return colors[y % (sizeof(colors) / sizeof(uint32_t))];
 }
+
+void cairo_demo(uint32_t *framebuffer, uint32_t width, uint32_t height);
 
 static void draw_demo(void) {
     if (driver_state != DISPLAY_ENABLED) {
@@ -248,11 +263,12 @@ static void draw_demo(void) {
     }
 
     TRACE("drawing a demo image");
-    for (uint32_t y =  0; y < display_height; y++) {
-        for (uint32_t x = 0; x < display_width; x++) {
-            framebuffer[y * display_width + x] = pick_color(y >> 4);
-        }
-    }
+    cairo_demo(framebuffer, display_width, display_height);
+    // for (uint32_t y = 0; y < display_height; y++) {
+    //     for (uint32_t x = 0; x < display_width; x++) {
+    //         framebuffer[y * display_width + x] = pick_color(y >> 4);
+    //     }
+    // }
 
     start_flushing_scanout();
 }
@@ -278,12 +294,9 @@ void main(void) {
                 }
 
 #ifdef CONFIG_VIRTIO_GPU_DEMO
-                if (m.notifications.data & NOTIFY_TIMER) {
-                    draw_demo();
-                    timer_set(100);
-                }
+                draw_demo();
+                timer_set(100);
 #endif
-
                 break;
             default:
                 TRACE("unknown message %d", m.type);
