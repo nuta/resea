@@ -34,17 +34,8 @@
 struct virtio_virtq {
     /// The virtqueue index.
     unsigned index;
-    /// Descriptors.
-    dma_t descs_dma;
     /// The number of descriptors.
     int num_descs;
-    /// Static buffers referenced from descriptors.
-    dma_t buffers_dma;
-    void *buffers;
-    /// The size of a buffer entry.
-    size_t buffer_size;
-    /// The next descriptor indioces. -1 if the next descriptor does not exist.
-    int *next_indices;
     union {
         struct virtio_virtq_legacy legacy;
         struct virtio_virtq_modern modern;
