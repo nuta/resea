@@ -57,14 +57,14 @@ autostarts   := \
 		$(if $(filter-out m, $(value $(shell echo CONFIG_$(server)_SERVER | \
 			tr  '[:lower:]' '[:upper:]'))), $(server),)))
 bootfs_files  := $(foreach name, $(servers), $(BUILD_DIR)/$(name).elf)
-autogen_files := $(BUILD_DIR)/include/config.h $(BUILD_DIR)/include/idl.h
+all_autogen_files := $(BUILD_DIR)/include/config.h $(BUILD_DIR)/include/idl.h
 
 # Visits the soruce directory recursively and fills $(cflags), $(objs) and $(libs).
 # $(1): The target source dir.
 # $(2): The build dir.
 define visit-subdir
 $(eval objs-y :=)
-$(eval external-objs-y :=)
+$(eval autogen-files-y :=)
 $(eval libs-y :=)
 $(eval build_dir := $(2)/$(1))
 $(eval subdirs-y :=)
@@ -74,8 +74,9 @@ $(eval global-includes-y :=)
 $(eval third-party-build :=)
 $(eval include $(1)/build.mk)
 $(eval build_mks += $(1)/build.mk)
-$(eval objs += $(addprefix $(2)/$(1)/, $(objs-y)))
-$(eval external-objs += $(external-objs-y))
+$(eval objs     += $(addprefix $(2)/$(1)/, $(objs-y)))
+$(eval all_objs += $(addprefix $(2)/$(1)/, $(objs-y)))
+$(eval autogen-files += $(autogen-files-y))
 $(eval libs += $(libs-y))
 $(eval cflags += $(cflags-y))
 $(eval CFLAGS += $(global-cflags-y))
@@ -85,6 +86,7 @@ $(eval $(foreach subdir, $(subdirs-y), \
 endef
 
 # Enumerate kernel object files.
+all_objs :=
 objs :=
 $(eval $(call visit-subdir,kernel,$(BUILD_DIR)/kernel))
 $(eval $(call visit-subdir,libs/common,$(BUILD_DIR)/kernel))
@@ -94,6 +96,7 @@ endif # ifeq ($(load_config), y)
 
 CC         := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
 LD         := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
+AR         := $(LLVM_PREFIX)ar$(LLVM_SUFFIX)
 NM         := $(LLVM_PREFIX)llvm-nm$(LLVM_SUFFIX)
 OBJCOPY    := $(LLVM_PREFIX)llvm-objcopy$(LLVM_SUFFIX)
 CLANG_TIDY := $(LLVM_PREFIX)clang-tidy$(LLVM_SUFFIX)
@@ -243,7 +246,7 @@ $(bootfs_bin): $(bootfs_files) tools/mkbootfs.py
 	$(PROGRESS) "MKBOOTFS" $@
 	$(PYTHON3) tools/mkbootfs.py -o $@ $(bootfs_files)
 
-$(BUILD_DIR)/kernel/%.o: %.c Makefile $(autogen_files)
+$(BUILD_DIR)/kernel/%.o: %.c Makefile
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
@@ -251,13 +254,13 @@ $(BUILD_DIR)/kernel/%.o: %.c Makefile $(autogen_files)
 	$(SPARSE) $(CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL $<
 
 
-$(BUILD_DIR)/kernel/%.o: %.S Makefile $(boot_elf) $(autogen_files)
+$(BUILD_DIR)/kernel/%.o: %.S Makefile $(boot_elf)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/kernel/__name__.c: $(autogen_files)
+$(BUILD_DIR)/kernel/__name__.c:
 	$(PROGRESS) "GEN" $@
 	mkdir -p $(@D)
 	echo "const char *__program_name(void) { return \"kernel\"; }" > $(@)
@@ -269,13 +272,13 @@ $(BUILD_DIR)/kernel/__name__.o: $(BUILD_DIR)/kernel/__name__.c
 #
 #  Userland build rules
 #
-$(BUILD_DIR)/%.o: %.c Makefile $(autogen_files)
+$(BUILD_DIR)/%.o: %.c Makefile
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 	$(SPARSE) $(CFLAGS) $(INCLUDES) $<
 
-$(BUILD_DIR)/%.o: %.S Makefile $(autogen_files)
+$(BUILD_DIR)/%.o: %.S Makefile
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
@@ -317,25 +320,38 @@ $(BUILD_DIR)/compile_commands.json: $(kernel_objs)
 #
 define lib-build-rule
 $(eval dir := $(shell tools/scan-libs-dir.py --dir $(1)))
-$(eval outfile := $(BUILD_DIR)/$(dir $(dir))$(1).lib.o)
+$(eval outfile := $(BUILD_DIR)/libs/$(notdir $(1)).lib.o)
+$(eval outfile_a := $(BUILD_DIR)/libs/$(notdir $(1)).a)
 $(eval name :=)
 $(eval objs :=)
+$(eval libs :=)
 $(eval cflags :=)
 $(eval build_mks :=)
+$(eval autogen-files :=)
 $(eval third-party-build :=)
 $(eval $(call visit-subdir,$(dir),$(BUILD_DIR)))
+$(eval lib_o := $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(notdir $(lib)).lib.o))
 $(eval $(outfile): objs := $(objs))
-$(eval $(outfile): $(objs) $(build_mks))
+$(eval $(outfile): lib_o := $(lib_o))
+$(eval $(outfile_a): lib_o := $(lib_o))
+$(eval all_autogen_files += $(autogen-files))
+$(eval $(outfile): $(objs) $(build_mks) $(all_autogen_files) $(lib_o))
+$(eval $(outfile_a): $(outfile) $(build_mks) $(all_autogen_files) $(lib_o))
 $(eval $(objs): CFLAGS += $(cflags))
 $(eval $(objs): CFLAGS += $(if $(third-party-build),, $(WERRORS)))
 $(eval $(objs): INCLUDES $(if $(third-party-build), :=, += $(INCLUDES)))
 endef
+
 $(foreach lib, $(all_libs), \
 	$(eval $(call lib-build-rule,$(lib))))
 
 $(BUILD_DIR)/libs/%.lib.o:
 	$(PROGRESS) "LD" $(@)
 	$(LD) -r -o $(@) $(objs)
+
+$(BUILD_DIR)/libs/%.a:
+	$(PROGRESS) "AR" $(@)
+	$(AR) crs $(@) $(@:.a=.lib.o) $(lib_o)
 
 #
 #  Server build rules
@@ -344,21 +360,21 @@ define server-build-rule
 $(eval server_dir := $(shell tools/scan-servers-dir.py --dir $(1)))
 $(eval name :=)
 $(eval objs :=)
-$(eval external-objs :=)
 $(eval libs := $(builtin_libs))
 $(eval cflags :=)
 $(eval build_mks :=)
+$(eval autogen-files :=)
 $(eval rust :=)
 $(eval objs += $(BUILD_DIR)/$(1)/__name__.o)
 $(eval $(call visit-subdir,$(server_dir),$(BUILD_DIR)))
-$(eval objs += $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(lib).lib.o) $(external-objs))
+$(eval objs += $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(notdir $(lib)).a))
 $(eval $(BUILD_DIR)/$(1)/__name__.c: name := $(name))
 $(eval $(BUILD_DIR)/$(1).elf: name := $(name))
 $(eval $(BUILD_DIR)/$(1).debug.elf: name := $(name))
 $(eval $(BUILD_DIR)/$(1).debug.elf: server_dir := $(server_dir))
 $(eval $(BUILD_DIR)/$(1).debug.elf: objs := $(objs))
 $(eval $(BUILD_DIR)/$(1).debug.elf: objs += $(if $(rust), $(BUILD_DIR)/rust/$(name).a))
-$(eval $(BUILD_DIR)/$(1).debug.elf: $(objs) $(if $(rust), $(BUILD_DIR)/rust/$(name).a) $(build_mks))
+$(eval $(BUILD_DIR)/$(1).debug.elf: $(objs) $(if $(rust), $(BUILD_DIR)/rust/$(name).a) $(build_mks) $(all_autogen_files))
 $(eval $(objs): CFLAGS += $(cflags))
 $(foreach lib, $(all_libs),
 	$(eval $(objs): INCLUDES += -Ilibs/$(lib)/include))
@@ -372,8 +388,8 @@ $(foreach server, $(boot_task_name) $(servers), \
 	echo "#include <types.h>" > $(@)
 	echo "const char *__program_name(void) { return \"$(name)\"; }" >> $(@)
 
-%/__name__.o: %/__name__.c $(autogen_files)
-	$(PROGRESS) "CC" $@
+%/__name__.o: %/__name__.c
+	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $(@) $<
 
@@ -413,6 +429,8 @@ $(BUILD_DIR)/rust/%.a: FORCE
 			'' \
 		| ./tools/textedit.py -f "(.a:|$(server_dir)/)" \
 		> $(BUILD_DIR)/rust/$(name).deps
+
+$(all_objs): $(all_autogen_files)
 
 # Build dependencies generated by clang and Cargo.
 -include $(shell find $(BUILD_DIR) -name "*.deps" 2>/dev/null)
