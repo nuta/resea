@@ -1,11 +1,19 @@
+#include <errno.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#undef errno
+extern int errno;
+
 int printf(const char *fmt, ...);
 
+#define UNIMPLEMENTED()                                                        \
+    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n",          \
+           __FILE__, __LINE__, __func__);
+
 int gettimeofday(struct timeval *tp, void *tzp) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return 0;
 }
 
@@ -13,50 +21,42 @@ void _exit(int status) {
 }
 
 int open(const char *name, int flags, int mode) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return -1;
 }
 
 int close(int file) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return -1;
 }
 
 int read(int file, char *ptr, int len) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return len;
 }
 
 int write(int file, char *ptr, int len) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return len;
 }
 
 int fstat(int file, struct stat *st) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return 0;
 }
 
 int lseek(int file, int ptr, int dir) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return 0;
 }
 
 int getpid(void) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return 1;
 }
 
 int kill(int pid, int sig) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return 0;
 }
 
@@ -84,7 +84,116 @@ void *sbrk(int incr) {
 }
 
 int isatty(int file) {
-    printf("\x1b[93mnewlib: %s:%d: %s() is not implemented\x1b[0m\n", __FILE__,
-           __LINE__, __func__);
+    UNIMPLEMENTED();
     return 1;
+}
+
+int getentropy(void *ptr, size_t n) {
+    return -1;
+}
+
+int link(char *old, char *new) {
+    errno = EMLINK;
+    return -1;
+}
+
+void __muloti4(void) {
+    UNIMPLEMENTED();
+}
+
+void regcomp(void) {
+    UNIMPLEMENTED();
+}
+
+void regfree(void) {
+    UNIMPLEMENTED();
+}
+
+void regexec(void) {
+    UNIMPLEMENTED();
+}
+
+void _jp2uc_l(void) {
+    UNIMPLEMENTED();
+}
+
+void _uc2jp_l(void) {
+    UNIMPLEMENTED();
+}
+
+void sigprocmask(void) {
+    UNIMPLEMENTED();
+}
+
+void unlink(void) {
+    UNIMPLEMENTED();
+}
+
+void fcntl(void) {
+    UNIMPLEMENTED();
+}
+
+int mkdir(const char *path, mode_t mode) {
+    UNIMPLEMENTED();
+    return 0;
+}
+
+int stat(const char *__restrict path, struct stat *__restrict sbuf) {
+    UNIMPLEMENTED();
+    return 0;
+}
+
+void times(void) {
+    UNIMPLEMENTED();
+}
+
+void execve(void) {
+    UNIMPLEMENTED();
+}
+
+void fork(void) {
+    UNIMPLEMENTED();
+}
+
+void wait(void) {
+    UNIMPLEMENTED();
+}
+
+void _init(void) {
+    UNIMPLEMENTED();
+}
+
+void _fini(void) {
+    UNIMPLEMENTED();
+}
+
+void sqrtl(void) {
+    UNIMPLEMENTED();
+}
+
+void __muldc3(void) {
+    UNIMPLEMENTED();
+}
+
+void __mulsc3(void) {
+    UNIMPLEMENTED();
+}
+
+void _fe_dfl_env(void) {
+    UNIMPLEMENTED();
+}
+
+void __fe_dfl_env(void) {
+    UNIMPLEMENTED();
+}
+
+void *mmap(void *addr, size_t length, int prot, int flags, int fd,
+           off_t offset) {
+    UNIMPLEMENTED();
+    return NULL;
+}
+
+int munmap(void *addr, size_t length) {
+    UNIMPLEMENTED();
+    return 0;
 }
