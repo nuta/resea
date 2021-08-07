@@ -139,8 +139,8 @@ paddr_t handle_page_fault(struct task *task, vaddr_t vaddr, vaddr_t ip,
         }
     }
 
-    WARN("invalid memory access (addr=%p), killing %s...", vaddr_original,
-         task->name);
+    WARN("invalid memory access (addr=%p, IP=%p), killing %s...",
+         vaddr_original, ip, task->name);
     return 0;
 }
 

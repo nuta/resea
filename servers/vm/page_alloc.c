@@ -167,7 +167,7 @@ void task_page_free(struct task *task, paddr_t paddr) {
         }
     }
 
-    WARN("failed to free paddr=%p in %s (double free?)", paddr, task->name);
+    OOPS("failed to free paddr=%p in %s (double free?)", paddr, task->name);
 }
 
 /// Frees all memory areas allocated for the task.
