@@ -183,7 +183,6 @@ static void handle_display_info(struct virtio_gpu_resp_display_info *r) {
 static void handle_interrupt(void) {
     uint8_t status = virtio->read_isr_status();
     if (status & 1) {
-        TRACE("IRQ");
         struct virtio_chain_entry chain[2];
         size_t total_len;
         while (true) {
