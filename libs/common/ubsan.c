@@ -50,3 +50,6 @@ void __ubsan_handle_shift_out_of_bounds(void) {
 void __ubsan_handle_builtin_unreachable(void) {
     report_ubsan_event("builtin unreachable");
 }
+void __ubsan_handle_invalid_builtin(void) {
+    report_ubsan_event("invalid builtin");
+}
