@@ -1,6 +1,6 @@
 Resea
 =====
-![Integrated Tests](https://github.com/nuta/resea/workflows/Integrated%20Tests/badge.svg)
+[![Integrated Tests](https://github.com/nuta/resea/workflows/Integrated%20Tests/badge.svg)](https://github.com/nuta/resea/actions/workflows/integrated_tests.yml)
 [![Gitter chat](https://badges.gitter.im/resea/community.svg)](https://gitter.im/resea/community)
 
 ![screenshot](https://gist.githubusercontent.com/nuta/42b36c50df15142ac25c3a5420607f2a/raw/e6c05de775f4649f6ba29638fd3ed8f40ea2f74f/screenshot.png)
