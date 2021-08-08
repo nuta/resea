@@ -112,9 +112,10 @@ void *malloc(size_t size) {
         ASSERT(chunk->magic == MALLOC_FREE);
 
         struct malloc_chunk *allocated = NULL;
-        if (chunk->capacity > size + MALLOC_FRAME_LEN) {
-            allocated = split(chunk, bin_idx < 0 ? size : (1 << bin_idx));
-        } else if (chunk->capacity >= size) {
+        size_t chunk_size = bin_idx < 0 ? size : (1 << bin_idx);
+        if (chunk->capacity > chunk_size + MALLOC_FRAME_LEN) {
+            allocated = split(chunk, chunk_size);
+        } else if (chunk->capacity >= chunk_size) {
             allocated = chunk;
             // Remove chunk from the linked list.
             if (prev) {
@@ -179,14 +180,15 @@ void *realloc(void *ptr, size_t size) {
     }
 
     struct malloc_chunk *chunk = get_chunk_from_ptr(ptr);
-    if (chunk->capacity <= size) {
+    size_t prev_size = chunk->size;
+    if (size <= chunk->capacity) {
         // There's enough room. Keep using the current chunk.
         return ptr;
     }
 
     // There's not enough room. Allocate a new space and copy old data.
     void *new_ptr = malloc(size);
-    memcpy(new_ptr, ptr, chunk->size);
+    memcpy(new_ptr, ptr, prev_size);
     free(ptr);
     return new_ptr;
 }
