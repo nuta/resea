@@ -206,6 +206,7 @@ cairo_all_objs := $(addprefix $(BUILD_DIR)/libs/third_party/cairo/, $(objs-y))
 
 $(cairo_all_sources): $(cairo_dir) $(pixman_dir) $(libpng_dir) $(freetype_dir)
 $(cairo_all_objs): CFLAGS += $(LIBC_CFLAGS) $(ZLIB_CFLAGS)
+$(cairo_all_objs): SANITIZER :=
 
 $(cairo_dir):
 	$(PROGRESS) DOWNLOAD $(cairo_tarball_url)

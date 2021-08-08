@@ -141,7 +141,7 @@ RUST_BUILD := release
 CFLAGS += -flto
 else
 RUST_BUILD := debug
-CFLAGS += -fsanitize=undefined
+SANITIZER += -fsanitize=undefined
 RUSTFLAGS += -C debug_assertions=no
 endif
 
@@ -249,15 +249,15 @@ $(bootfs_bin): $(bootfs_files) tools/mkbootfs.py
 $(BUILD_DIR)/kernel/%.o: %.c Makefile
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
+	$(CC) $(CFLAGS) $(SANITIZER) $(KERNEL_CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
-	$(SPARSE) $(CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL $<
+	$(SPARSE) $(CFLAGS) $(SANITIZER) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL $<
 
 
 $(BUILD_DIR)/kernel/%.o: %.S Makefile $(boot_elf)
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
+	$(CC) $(CFLAGS) $(SANITIZER) $(KERNEL_CFLAGS) $(INCLUDES) -Ikernel -Ikernel/arch/$(ARCH) -DKERNEL \
 		-c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 $(BUILD_DIR)/kernel/__name__.c:
@@ -267,7 +267,7 @@ $(BUILD_DIR)/kernel/__name__.c:
 
 $(BUILD_DIR)/kernel/__name__.o: $(BUILD_DIR)/kernel/__name__.c
 	$(PROGRESS) "CC" $<
-	$(CC) $(CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES) -DKERNEL -c -o $@ $(@:.o=.c)
+	$(CC) $(CFLAGS) $(SANITIZER) $(KERNEL_CFLAGS) $(INCLUDES) -DKERNEL -c -o $@ $(@:.o=.c)
 
 #
 #  Userland build rules
@@ -275,13 +275,13 @@ $(BUILD_DIR)/kernel/__name__.o: $(BUILD_DIR)/kernel/__name__.c
 $(BUILD_DIR)/%.o: %.c Makefile
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
-	$(SPARSE) $(CFLAGS) $(INCLUDES) $<
+	$(CC) $(CFLAGS) $(SANITIZER) $(INCLUDES) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	$(SPARSE) $(CFLAGS) $(SANITIZER) $(INCLUDES) $<
 
 $(BUILD_DIR)/%.o: %.S Makefile
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+	$(CC) $(CFLAGS) $(SANITIZER) $(INCLUDES) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 #
 #  Auto-generated files.
@@ -391,7 +391,7 @@ $(foreach server, $(boot_task_name) $(servers), \
 %/__name__.o: %/__name__.c
 	$(PROGRESS) "CC" $<
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $(@) $<
+	$(CC) $(CFLAGS) $(SANITIZER) $(INCLUDES) -c -o $(@) $<
 
 $(BUILD_DIR)/%.debug.elf: tools/nm2symbols.py \
 		tools/embed-symbols.py libs/resea/arch/$(ARCH)/user.ld Makefile
