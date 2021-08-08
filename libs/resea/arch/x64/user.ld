@@ -23,38 +23,43 @@ SECTIONS {
         *(.rodata.*);
     } :text
 
+    ASSERT ((. < 0x02fff000), "too big .text / .rodata")
+
     __cmdline = 0x02fff000;
 
     . = 0x03000000;
     .data : ALIGN(0x1000) {
         *(.data);
         *(.data.*);
-
-        . = ALIGN(16);
-        __stack = .;
-        . += 0x4000;
-        __stack_end = .;
     } :data
+
+    ASSERT ((. < 0x04000000), "too big .data")
 
     . = 0x04000000;
     __zeroed_pages = .;
+
     .bss : ALIGN(0x1000) {
+        __stack = .;
+        . += 0x200000;
+        __stack_end = .;
+
         __heap = .;
-        . += 0x100000;
+        . += 0x08000000;
         __heap_end = .;
 
-        . = ALIGN(0x1000);
         __bss = .;
         *(.bss);
         *(.bss.*);
         __bss_end = .;
     } :bss
 
-    . = 0x05000000;
+    ASSERT ((. < 0x10000000), "too big .bss")
+
+    . = 0x10000000;
     __zeroed_pages_end = .;
     __straight_mapping = .;
-
     __free_vaddr = .;
-    . = 0x0a000000;
+
+    . = 0xa0000000000;
     __free_vaddr_end = .;
 }

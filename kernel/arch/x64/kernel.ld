@@ -5,8 +5,8 @@ LMA_OFFSET = 0xffff800000000000;
 
 MEMORY {
     boot_ram (rwx): ORIGIN = 0x0000000000100000, LENGTH = 0x0001000
-    ram (rwx):      ORIGIN = 0xffff800000101000, LENGTH = 0x2fff000
-    lma_ram (rwx):  ORIGIN = 0x0000000000101000, LENGTH = 0x2fff000
+    ram (rwx):      ORIGIN = 0xffff800000101000, LENGTH = 0x3eff000
+    lma_ram (rwx):  ORIGIN = 0x0000000000101000, LENGTH = 0x3eff000
 }
 
 SECTIONS {
