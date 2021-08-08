@@ -96,7 +96,7 @@ endif # ifeq ($(load_config), y)
 
 CC         := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
 LD         := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
-AR         := $(LLVM_PREFIX)ar$(LLVM_SUFFIX)
+AR         := $(LLVM_PREFIX)llvm-ar$(LLVM_SUFFIX)
 NM         := $(LLVM_PREFIX)llvm-nm$(LLVM_SUFFIX)
 OBJCOPY    := $(LLVM_PREFIX)llvm-objcopy$(LLVM_SUFFIX)
 CLANG_TIDY := $(LLVM_PREFIX)clang-tidy$(LLVM_SUFFIX)
