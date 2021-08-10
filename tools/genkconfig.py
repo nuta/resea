@@ -105,6 +105,7 @@ def main():
         "servers/drivers/net": "Network Drivers",
         "servers/drivers/rtc": "Real Time Clock Drivers",
         "servers/drivers/gpu": "GPU Drivers",
+        "servers/drivers/input": "Input Drivers",
         "servers/experimental": "Experimental Apps/Servers/Drivers",
     }
 
