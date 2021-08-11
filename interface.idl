@@ -135,6 +135,12 @@ namespace net {
     oneway tx(payload: bytes);
 }
 
+/// A mouse input device interface.
+namespace mouse {
+    /// Input from the mouse.
+    oneway input(x_delta: int, y_delta: int, clicked_l: bool, clicked_r: bool);
+}
+
 namespace rtc {
     rpc read() -> (year: uint32, month: uint8, day: uint8, day_of_week: uint8, hour: uint8, minute: uint8, second: uint8);
 }

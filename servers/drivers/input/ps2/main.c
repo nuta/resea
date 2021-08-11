@@ -1,6 +1,7 @@
 #include "keymap.h"
 #include "ps2.h"
 #include <driver/io.h>
+#include <driver/irq.h>
 #include <resea/ipc.h>
 #include <resea/printf.h>
 
