@@ -1,8 +1,15 @@
+#include "gui.h"
 #include <resea/ipc.h>
 #include <resea/printf.h>
 #include <resea/timer.h>
+#include <string.h>
+
+struct backend backend = {
+
+};
 
 void main(void) {
+    gui_init(&backend);
     TRACE("ready");
 
     ASSERT_OK(ipc_serve("gui"));
@@ -16,7 +23,7 @@ void main(void) {
         ASSERT_OK(err);
 
         switch (m.type) {
-            case NOTIFICATIONS_MSG:
+            case MOUSE_INPUT_MSG:
                 break;
         }
     }

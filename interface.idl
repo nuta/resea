@@ -138,7 +138,7 @@ namespace net {
 /// A mouse input device interface.
 namespace mouse {
     /// Input from the mouse.
-    oneway input(x_delta: int, y_delta: int, clicked_l: bool, clicked_r: bool);
+    oneway input(x_delta: int, y_delta: int, clicked_left: bool, clicked_right: bool);
 }
 
 namespace rtc {

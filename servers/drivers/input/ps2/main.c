@@ -6,6 +6,7 @@
 #include <resea/printf.h>
 
 static io_t ps2_io;
+static task_t gui_server;
 static struct modifiers_state modifiers;
 
 static void handle_keyboard_irq(void) {
@@ -83,6 +84,14 @@ static void handle_mouse_irq(void) {
             TRACE("mouse: x=%d, y=%d%s%s", x, y, left_pressed ? " [LEFT]" : "",
                   right_pressed ? "[RIGHT]" : "");
 
+            struct message m;
+            m.type = MOUSE_INPUT_MSG;
+            m.mouse_input.x_delta = x;
+            m.mouse_input.y_delta = y;
+            m.mouse_input.clicked_left = left_pressed;
+            m.mouse_input.clicked_right = right_pressed;
+            ipc_send(gui_server, &m);
+
             mouse_byte_pos = 0;
             break;
         }
@@ -141,6 +150,7 @@ void main(void) {
 
     init_device();
 
+    gui_server = ipc_lookup("gui");
     ASSERT_OK(ipc_serve("kbd"));
     ASSERT_OK(ipc_serve("mouse"));
 
