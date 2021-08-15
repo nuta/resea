@@ -80,6 +80,7 @@ void main(void) {
     page_alloc_init();
     task_init();
     page_fault_init();
+    shm_init();
     spawn_servers();
 
     timer_set(5000);
@@ -319,35 +320,57 @@ void main(void) {
             }
             case SHM_CREATE_MSG: {
                 struct task *task = task_lookup(m.src);
-                ASSERT(task);
-                int slot;
-                err = shm_create(task, m.shm_create.size, &slot);
+                if (!task) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                vaddr_t vaddr;
+                error_t err = shm_create(task, m.shm_create.size, &vaddr);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
                 }
+
                 m.type = SHM_CREATE_REPLY_MSG;
-                m.shm_create_reply.shm_id = slot;
+                m.shm_create_reply.vaddr = vaddr;
                 ipc_reply(m.src, &m);
                 break;
             }
             case SHM_MAP_MSG: {
                 struct task *task = task_lookup(m.src);
-                error_t err;
+                if (!task) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                struct task *owner = task_lookup(m.shm_map.owner);
+                if (!task) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
                 vaddr_t vaddr;
-                err =
-                    shm_map(task, m.shm_map.shm_id, m.shm_map.writable, &vaddr);
+                error_t err = shm_map(task, owner, m.shm_map.vaddr,
+                                      m.shm_map.writable, &vaddr);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
                 }
+
                 m.type = SHM_MAP_REPLY_MSG;
                 m.shm_map_reply.vaddr = vaddr;
                 ipc_reply(m.src, &m);
                 break;
             }
             case SHM_CLOSE_MSG: {
-                shm_close(m.shm_close.shm_id);
+                struct task *task = task_lookup(m.src);
+                if (!task) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                shm_close(task, m.shm_close.vaddr);
                 m.type = SHM_CLOSE_REPLY_MSG;
                 ipc_reply(m.src, &m);
                 break;

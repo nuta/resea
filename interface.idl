@@ -150,13 +150,13 @@ namespace time {
 }
 
 namespace shm {
-    rpc create(size: size) ->  (shm_id: int);
-    rpc map(shm_id: int, writable: bool)   ->  (vaddr: vaddr);
-    rpc close(shm_id: int) ->  ();
+    rpc create(size: size) -> (vaddr: vaddr);
+    rpc map(owner: task, vaddr: vaddr, writable: bool) -> (vaddr: vaddr);
+    rpc close(vaddr: vaddr) -> ();
 }
 
 namespace shm_test {
-    rpc read()  ->  (shm_id: int);
+    rpc read() -> (handle: handle);
 }
 
 include "servers/*/interface.idl";

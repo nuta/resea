@@ -1,69 +1,96 @@
 #include "shm.h"
 #include "page_alloc.h"
 #include "page_fault.h"
+#include "task.h"
+#include <list.h>
+#include <resea/malloc.h>
 #include <string.h>
 
-static struct shm shared_mems[NUM_SHARED_MEMS_MAX];
+static list_t mappings;
 
-int shm_check_available(void) {
-    int i;
-    for (i = 0; i < NUM_SHARED_MEMS_MAX && shared_mems[i].inuse; i++);
-    
-    if (i == NUM_SHARED_MEMS_MAX) {
-        return -1;
+static struct shm_mapping *lookup(struct task *task, vaddr_t vaddr) {
+    LIST_FOR_EACH (m, &mappings, struct shm_mapping, next) {
+        if (m->task == task && m->vaddr == vaddr) {
+            return m;
+        }
     }
 
-    return i;
+    return NULL;
 }
 
-error_t shm_create(struct task *task, size_t size, int *slot) {
-    *slot = shm_check_available();
-    if (*slot < 0) {
-        return ERR_UNAVAILABLE;
-    }
+error_t shm_create(struct task *task, size_t size, vaddr_t *vaddr) {
+    size = ALIGN_UP(size, PAGE_SIZE);
 
     paddr_t paddr = 0;
-    vaddr_t vaddr;
-    error_t err = task_page_alloc(task, &vaddr, &paddr, size);
+    error_t err = task_page_alloc(task, vaddr, &paddr, size);
     if (err != OK) {
         return err;
     }
 
-    shared_mems[*slot].inuse = true;
-    shared_mems[*slot].shm_id = *slot;
-    shared_mems[*slot].len = size;
-    shared_mems[*slot].paddr = paddr;
+    struct shm *shm = malloc(sizeof(*shm));
+    shm->size = size;
+    shm->paddr = paddr;
+    shm->ref_count = 1;
+
+    struct shm_mapping *m = malloc(sizeof(*m));
+    m->shm = shm;
+    m->task = task;
+    m->vaddr = *vaddr;
+    list_push_back(&mappings, &m->next);
+
     return OK;
 }
 
-error_t shm_map(struct task *task, int shm_id, bool writable, vaddr_t *vaddr) {
-    struct shm* shm = shm_lookup(shm_id);
-    if (shm == NULL) {
+error_t shm_map(struct task *task, struct task *owner, vaddr_t vaddr_in_owner,
+                bool writable, vaddr_t *vaddr) {
+    struct shm_mapping *owner_m = lookup(owner, vaddr_in_owner);
+    if (!owner_m) {
         return ERR_NOT_FOUND;
     }
 
-    *vaddr = virt_page_alloc(task, shm->len);
+    struct shm *shm = owner_m->shm;
     int flag = (writable) ? MAP_TYPE_READWRITE : MAP_TYPE_READONLY;
+
+    *vaddr = virt_page_alloc(task, shm->size);
     error_t err = map_page(task, *vaddr, shm->paddr, flag, true);
-    return err;
-}
-
-void shm_close(int shm_id) {
-    struct shm* shm = shm_lookup(shm_id);
-    if (shm != NULL) {
-        shm->inuse = false;
+    if (err != OK) {
+        return err;
     }
+
+    struct shm_mapping *m = malloc(sizeof(*m));
+    m->shm = shm;
+    m->task = task;
+    m->vaddr = *vaddr;
+    list_push_back(&mappings, &m->next);
+
+    return OK;
 }
 
-struct shm* shm_lookup(int shm_id) {
-    int i;
-    for (i = 0; i < NUM_SHARED_MEMS_MAX; i++) {
-        if (shared_mems[i].shm_id == shm_id) {
-            if (shared_mems[i].inuse == false) {
-                return NULL;
-            }
-            return &shared_mems[i];
+void shm_close(struct task *task, vaddr_t vaddr) {
+    struct shm_mapping *m = lookup(task, vaddr);
+    if (!m) {
+        return;
+    }
+
+    struct shm *shm = m->shm;
+    DEBUG_ASSERT(shm->ref_count > 0);
+
+    m->shm->ref_count--;
+    if (m->shm->ref_count == 0) {
+        // The shared memory area is no longer used. Free it.
+        DEBUG_ASSERT(IS_ALIGNED(m->shm->size, PAGE_SIZE));
+
+        for (offset_t off = 0; off < m->shm->size; off += PAGE_SIZE) {
+            task_page_free(task, m->shm->paddr + off);
         }
+
+        free(m->shm);
     }
-    return NULL;
+
+    free(m);
+    list_remove(&m->next);
+}
+
+void shm_init(void) {
+    list_init(&mappings);
 }
