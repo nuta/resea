@@ -19,9 +19,10 @@ struct shm_mapping {
     vaddr_t vaddr;
 };
 
-error_t shm_create(struct task *task, size_t size, vaddr_t *vaddr);
-error_t shm_map(struct task *task, struct task *owner, vaddr_t vaddr_in_owner,
-                bool writable, vaddr_t *vaddr);
+error_t shm_create(struct task *task, size_t size, handle_t *handle,
+                   vaddr_t *vaddr);
+error_t shm_map(handle_t handle, struct task *task, bool writable,
+                vaddr_t *vaddr);
 void shm_close(struct task *task, vaddr_t vaddr);
 void shm_init(void);
 

@@ -26,7 +26,7 @@ typedef uintmax_t uintptr_t;
 typedef intmax_t ptrdiff_t;
 typedef uintmax_t offset_t;
 typedef int task_t;
-typedef int handle_t;
+typedef long handle_t;
 typedef int msec_t;
 
 #define INT8_MIN   -128
@@ -100,26 +100,27 @@ typedef __builtin_va_list va_list;
 
 // Error values. Don't forget to update `error_names` as well!
 typedef int error_t;
-#define IS_ERROR(err)      ((err) < 0)
-#define IS_OK(err)         ((err) >= 0)
-#define OK                 (0)
-#define ERR_NO_MEMORY      (-1)
-#define ERR_NOT_PERMITTED  (-2)
-#define ERR_WOULD_BLOCK    (-3)
-#define ERR_ABORTED        (-4)
-#define ERR_TOO_LARGE      (-5)
-#define ERR_TOO_SMALL      (-6)
-#define ERR_NOT_FOUND      (-7)
-#define ERR_INVALID_ARG    (-8)
-#define ERR_INVALID_TASK   (-9)
-#define ERR_ALREADY_EXISTS (-10)
-#define ERR_UNAVAILABLE    (-11)
-#define ERR_NOT_ACCEPTABLE (-12)
-#define ERR_EMPTY          (-13)
-#define DONT_REPLY         (-14)
-#define ERR_IN_USE         (-15)
-#define ERR_TRY_AGAIN      (-16)
-#define ERR_END            (-17)
+#define IS_ERROR(err)        ((err) < 0)
+#define IS_OK(err)           ((err) >= 0)
+#define OK                   (0)
+#define ERR_NO_MEMORY        (-1)
+#define ERR_NOT_PERMITTED    (-2)
+#define ERR_WOULD_BLOCK      (-3)
+#define ERR_ABORTED          (-4)
+#define ERR_TOO_LARGE        (-5)
+#define ERR_TOO_SMALL        (-6)
+#define ERR_NOT_FOUND        (-7)
+#define ERR_INVALID_ARG      (-8)
+#define ERR_INVALID_TASK     (-9)
+#define ERR_ALREADY_EXISTS   (-10)
+#define ERR_UNAVAILABLE      (-11)
+#define ERR_NOT_ACCEPTABLE   (-12)
+#define ERR_EMPTY            (-13)
+#define DONT_REPLY           (-14)
+#define ERR_IN_USE           (-15)
+#define ERR_TRY_AGAIN        (-16)
+#define ERR_UNEXPECTED_REPLY (-17)
+#define ERR_END              (-18)
 
 // System call numbers.
 #define SYS_NOP           1

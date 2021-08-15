@@ -3,6 +3,7 @@
 #include <driver/io.h>
 #include <driver/irq.h>
 #include <endian.h>
+#include <ipc_client/shm.h>
 #include <resea/async.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
@@ -22,6 +23,10 @@ static dma_t resp_buffers_dma = NULL;
 static int next_buffer_index = 0;
 static uint32_t *framebuffer = NULL;
 enum driver_state driver_state = LOOKING_FOR_DISPLAY;
+
+static handle_t shm_handle;
+static void *shm_framebuffer = NULL;
+size_t framebuffer_size;
 
 static void execute_command(struct virtio_gpu_ctrl_hdr *cmd, size_t len) {
     ASSERT(len <= VIRTIO_GPU_CTRLQ_ENTRY_MAX_SIZE);
@@ -67,12 +72,14 @@ static void initialize_display(uint32_t width, uint32_t height) {
 }
 
 static void initialize_framebuffer(void) {
-    size_t len = display_height * display_width * sizeof(uint32_t);
-    dma_t framebuffer_dma = dma_alloc(len, DMA_ALLOC_TO_DEVICE);
+    framebuffer_size = display_height * display_width * sizeof(uint32_t);
+    dma_t framebuffer_dma = dma_alloc(framebuffer_size, DMA_ALLOC_TO_DEVICE);
     framebuffer = (uint32_t *) dma_buf(framebuffer_dma);
-    memset(framebuffer, 0 /* fill with black */, len);
+    memset(framebuffer, 0 /* fill with black */, framebuffer_size);
 
-    TRACE("attaching the framebuffer (%d KiB)", len / 1024);
+    ASSERT_OK(shm_create(framebuffer_size, &shm_handle, &shm_framebuffer));
+
+    TRACE("attaching the framebuffer (%d KiB)", framebuffer_size / 1024);
     struct virtio_gpu_resource_attach_backing cmd;
     cmd.hdr.type = VIRTIO_GPU_CMD_RESOURCE_ATTACH_BACKING;
     cmd.hdr.flags = 0;
@@ -82,7 +89,7 @@ static void initialize_framebuffer(void) {
     cmd.resource_id = display_resource_id;
     cmd.nr_entries = 1;
     cmd.entries[0].addr = dma_daddr(framebuffer_dma);
-    cmd.entries[0].length = len;
+    cmd.entries[0].length = framebuffer_size;
     cmd.entries[0].padding = 0;
     execute_command((struct virtio_gpu_ctrl_hdr *) &cmd, sizeof(cmd));
     driver_state = ATTACHING_FRAMEBUFFER;
@@ -212,6 +219,11 @@ static void handle_interrupt(void) {
     }
 }
 
+static void switch_front_buffer(int index) {
+    // TODO: Switch the buffer by sending a command.
+    memcpy(framebuffer, shm_framebuffer, framebuffer_size);
+}
+
 /// Looks for and initializes a virtio-gpu device.
 static void init(void) {
     uint8_t irq;
@@ -291,11 +303,23 @@ void main(void) {
                 if (m.notifications.data & NOTIFY_IRQ) {
                     handle_interrupt();
                 }
-
-#ifdef CONFIG_VIRTIO_GPU_DEMO
-                draw_demo();
-                timer_set(100);
-#endif
+                break;
+            case GPU_SET_DEFAULT_MODE_MSG:
+                m.type = GPU_SET_DEFAULT_MODE_REPLY_MSG;
+                m.gpu_set_default_mode_reply.num_buffers = 1;
+                m.gpu_set_default_mode_reply.width = display_width;
+                m.gpu_set_default_mode_reply.height = display_height;
+                ipc_reply(m.src, &m);
+                break;
+            case GPU_GET_BUFFER_MSG:
+                m.type = GPU_GET_BUFFER_REPLY_MSG;
+                m.gpu_get_buffer_reply.shm_handle = shm_handle;
+                ipc_reply(m.src, &m);
+                break;
+            case GPU_SWITCH_FRONT_BUFFER_MSG:
+                m.type = GPU_SWITCH_FRONT_BUFFER_REPLY_MSG;
+                switch_front_buffer(m.gpu_switch_front_buffer.index);
+                ipc_reply(m.src, &m);
                 break;
             default:
                 TRACE("unknown message %d", m.type);

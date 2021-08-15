@@ -326,13 +326,16 @@ void main(void) {
                 }
 
                 vaddr_t vaddr;
-                error_t err = shm_create(task, m.shm_create.size, &vaddr);
+                handle_t handle;
+                error_t err =
+                    shm_create(task, m.shm_create.size, &handle, &vaddr);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;
                 }
 
                 m.type = SHM_CREATE_REPLY_MSG;
+                m.shm_create_reply.handle = handle;
                 m.shm_create_reply.vaddr = vaddr;
                 ipc_reply(m.src, &m);
                 break;
@@ -344,15 +347,9 @@ void main(void) {
                     break;
                 }
 
-                struct task *owner = task_lookup(m.shm_map.owner);
-                if (!task) {
-                    ipc_reply_err(m.src, ERR_NOT_FOUND);
-                    break;
-                }
-
                 vaddr_t vaddr;
-                error_t err = shm_map(task, owner, m.shm_map.vaddr,
-                                      m.shm_map.writable, &vaddr);
+                error_t err =
+                    shm_map(m.shm_map.handle, task, m.shm_map.writable, &vaddr);
                 if (err != OK) {
                     ipc_reply_err(m.src, err);
                     break;

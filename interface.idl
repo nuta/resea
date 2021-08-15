@@ -141,6 +141,12 @@ namespace mouse {
     oneway input(x_delta: int, y_delta: int, clicked_left: bool, clicked_right: bool);
 }
 
+namespace gpu {
+    rpc set_default_mode() -> (num_buffers: int, width: size, height: size);
+    rpc get_buffer(index: int) -> (shm_handle: handle);
+    rpc switch_front_buffer(index: int) -> ();
+}
+
 namespace rtc {
     rpc read() -> (year: uint32, month: uint8, day: uint8, day_of_week: uint8, hour: uint8, minute: uint8, second: uint8);
 }
@@ -149,9 +155,10 @@ namespace time {
     rpc gettimeofday() -> (unixtime: uint64);
 }
 
+/// The shared memory mechanism.
 namespace shm {
-    rpc create(size: size) -> (vaddr: vaddr);
-    rpc map(owner: task, vaddr: vaddr, writable: bool) -> (vaddr: vaddr);
+    rpc create(size: size) -> (handle: handle, vaddr: vaddr);
+    rpc map(handle: handle, writable: bool) -> (vaddr: vaddr);
     rpc close(vaddr: vaddr) -> ();
 }
 

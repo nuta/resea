@@ -8,6 +8,25 @@
 
 static list_t mappings;
 
+static handle_t into_shm_handle(task_t owner_tid, vaddr_t owner_vaddr) {
+    DEBUG_ASSERT(owner_tid < PAGE_SIZE);
+    DEBUG_ASSERT(IS_ALIGNED(owner_vaddr, PAGE_SIZE));
+    return owner_vaddr | owner_tid;
+}
+
+static error_t from_shm_handle(handle_t handle, task_t *owner_tid,
+                               vaddr_t *owner_vaddr) {
+    *owner_vaddr = handle & ~(PAGE_SIZE - 1);
+    *owner_tid = handle & (PAGE_SIZE - 1);
+
+    bool valid =
+        (*owner_tid < PAGE_SIZE) && IS_ALIGNED(*owner_vaddr, PAGE_SIZE);
+    if (!valid) {
+        return ERR_INVALID_ARG;
+    }
+    return OK;
+}
+
 static struct shm_mapping *lookup(struct task *task, vaddr_t vaddr) {
     LIST_FOR_EACH (m, &mappings, struct shm_mapping, next) {
         if (m->task == task && m->vaddr == vaddr) {
@@ -18,7 +37,8 @@ static struct shm_mapping *lookup(struct task *task, vaddr_t vaddr) {
     return NULL;
 }
 
-error_t shm_create(struct task *task, size_t size, vaddr_t *vaddr) {
+error_t shm_create(struct task *task, size_t size, handle_t *handle,
+                   vaddr_t *vaddr) {
     size = ALIGN_UP(size, PAGE_SIZE);
 
     paddr_t paddr = 0;
@@ -38,11 +58,24 @@ error_t shm_create(struct task *task, size_t size, vaddr_t *vaddr) {
     m->vaddr = *vaddr;
     list_push_back(&mappings, &m->next);
 
+    *handle = into_shm_handle(task->tid, *vaddr);
     return OK;
 }
 
-error_t shm_map(struct task *task, struct task *owner, vaddr_t vaddr_in_owner,
-                bool writable, vaddr_t *vaddr) {
+error_t shm_map(handle_t handle, struct task *task, bool writable,
+                vaddr_t *vaddr) {
+    task_t owner_tid;
+    vaddr_t vaddr_in_owner;
+    error_t err;
+    if ((err = from_shm_handle(handle, &owner_tid, &vaddr_in_owner)) != OK) {
+        return err;
+    }
+
+    struct task *owner = task_lookup(owner_tid);
+    if (!owner) {
+        return ERR_NOT_FOUND;
+    }
+
     struct shm_mapping *owner_m = lookup(owner, vaddr_in_owner);
     if (!owner_m) {
         return ERR_NOT_FOUND;
@@ -52,7 +85,7 @@ error_t shm_map(struct task *task, struct task *owner, vaddr_t vaddr_in_owner,
     int flag = (writable) ? MAP_TYPE_READWRITE : MAP_TYPE_READONLY;
 
     *vaddr = virt_page_alloc(task, shm->size);
-    error_t err = map_page(task, *vaddr, shm->paddr, flag, true);
+    err = map_page(task, *vaddr, shm->paddr, flag, true);
     if (err != OK) {
         return err;
     }
