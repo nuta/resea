@@ -16,13 +16,19 @@
 //    }
 //
 #define LIST_CONTAINER(head, container, field)                                 \
-    ((container *) ((vaddr_t)(head) -offsetof(container, field)))
+    ((container *) ((vaddr_t) (head) -offsetof(container, field)))
 #define LIST_FOR_EACH(elem, list, container, field)                            \
     for (container *elem = LIST_CONTAINER((list)->next, container, field),     \
                    *__next = NULL;                                             \
          (&elem->field != (list)                                               \
           && (__next = LIST_CONTAINER(elem->field.next, container, field)));   \
          elem = __next)
+#define LIST_FOR_EACH_REV(elem, list, container, field)                        \
+    for (container *elem = LIST_CONTAINER((list)->prev, container, field),     \
+                   *__prev = NULL;                                             \
+         (&elem->field != (list)                                               \
+          && (__prev = LIST_CONTAINER(elem->field.prev, container, field)));   \
+         elem = __prev)
 
 struct list_head {
     struct list_head *prev;

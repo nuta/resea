@@ -7,19 +7,33 @@
 struct canvas;
 struct surface;
 
-struct surface_ops {
-    void (*render)(struct surface *surface);
+typedef struct canvas *canvas_t;
+typedef struct surface *surface_t;
+
+struct canvas_ops;
+struct canvas {
+    struct canvas_ops *ops;
+    void *user_data;
 };
 
+struct canvas_ops {
+    void (*copy_from_other)(canvas_t canvas, canvas_t src, int x, int y);
+};
+
+struct surface_ops;
 struct surface {
     list_elem_t next;
     struct surface_ops *ops;
     void *user_data;
-    struct canvas *canvas;
+    canvas_t canvas;
     int screen_x;
     int screen_y;
     int width;
     int height;
+};
+
+struct surface_ops {
+    void (*render)(struct surface *surface);
 };
 
 struct os_ops {
@@ -29,16 +43,14 @@ struct os_ops {
     struct canvas *(*create_framebuffer_canvas)(int screen_width,
                                                 int screen_height,
                                                 handle_t shm_handle);
-    void (*copy_canvas)(struct canvas *dst, struct canvas *src, int x, int y);
 };
 
-struct canvas {
-    struct canvas_ops *ops;
-    void *user_data;
-};
-
-enum cursor_type {
+enum cursor_shape {
     CURSOR_POINTER,
+};
+
+struct cursor_data {
+    enum cursor_shape shape;
 };
 
 void gui_render(void);
