@@ -1,16 +1,56 @@
 #include "canvas.h"
+#include <cairo-ft.h>
+#include <cairo.h>
+#include <ft2build.h>
+#include <math.h>
+#include <stdint.h>
 
-struct canvas {};
+#include FT_FREETYPE_H
 
-canvas_t canvas_create(int width, int height) {
+#define ASSERT(expr)
+
+struct canvas {
+    cairo_t *cr;
+    cairo_surface_t *surface;
+};
+
+static canvas_t canvas_create_from_surface(cairo_surface_t *surface) {
+    cairo_t *cr = cairo_create(surface);
+    ASSERT(cr != NULL);
+
     struct canvas *canvas = malloc(sizeof(*canvas));
+    canvas->cr = cr;
+    canvas->surface = surface;
     return canvas;
 }
 
+canvas_t canvas_create(int width, int height) {
+    cairo_surface_t *surface =
+        cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+    ASSERT(surface != NULL);
+
+    return canvas_create_from_surface(surface);
+}
+
 canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
-                                   void *framebuffer) {
-    struct canvas *canvas = malloc(sizeof(*canvas));
-    return canvas;
+                                   void *framebuffer,
+                                   enum canvas_format format) {
+    cairo_format_t cairo_format;
+    switch (format) {
+        case CANVAS_FORMAT_ARGB32:
+            cairo_format = CAIRO_FORMAT_ARGB32;
+            break;
+        default:
+            // TODO: Return an error instead.
+            cairo_format = CAIRO_FORMAT_RGB24;
+    }
+
+    int stride = cairo_format_stride_for_width(format, screen_width);
+    cairo_surface_t *surface = cairo_image_surface_create_for_data(
+        framebuffer, cairo_format, screen_width, screen_height, stride);
+    ASSERT(surface != NULL);
+
+    return canvas_create_from_surface(surface);
 }
 
 void canvas_draw_cursor(canvas_t canvas, enum cursor_shape shape) {

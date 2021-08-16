@@ -60,8 +60,8 @@ static void init(void) {
         void *framebuffer;
         ASSERT_OK(shm_map(shm_handle, true, &framebuffer));
 
-        framebuffers[i] =
-            canvas_create_from_buffer(screen_width, screen_height, framebuffer);
+        framebuffers[i] = canvas_create_from_buffer(
+            screen_width, screen_height, framebuffer, CANVAS_FORMAT_ARGB32);
     }
 
     gui_init(&os_ops);
