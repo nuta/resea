@@ -53,6 +53,9 @@ static void init(void) {
 
         framebuffers[i] = canvas_create_from_buffer(
             screen_width, screen_height, framebuffer, CANVAS_FORMAT_ARGB32);
+
+        DBG("w=%d, h=%d", screen_width, screen_height);
+        memset(framebuffer, 0xff, screen_width * screen_height * 4);
     }
 
     gui_init(screen_width, screen_height, &os_ops);

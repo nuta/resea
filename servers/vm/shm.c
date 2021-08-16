@@ -85,9 +85,11 @@ error_t shm_map(handle_t handle, struct task *task, bool writable,
     int flag = (writable) ? MAP_TYPE_READWRITE : MAP_TYPE_READONLY;
 
     *vaddr = virt_page_alloc(task, shm->size);
-    err = map_page(task, *vaddr, shm->paddr, flag, true);
-    if (err != OK) {
-        return err;
+    for (offset_t off = 0; off < shm->size; off += PAGE_SIZE) {
+        err = map_page(task, *vaddr + off, shm->paddr + off, flag, true);
+        if (err != OK) {
+            return err;
+        }
     }
 
     struct shm_mapping *m = malloc(sizeof(*m));
