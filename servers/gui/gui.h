@@ -22,6 +22,9 @@ struct surface {
 struct backend {
     backend_canvas_t (*get_back_buffer)(void);
     void (*swap_buffer)(void);
+    backend_canvas_t (*create_framebuffer_canvas)(unsigned screen_width,
+                                                  unsigned screen_height,
+                                                  handle_t shm_handle);
     void (*copy_canvas)(backend_canvas_t dst, backend_canvas_t src, int x,
                         int y);
 };
