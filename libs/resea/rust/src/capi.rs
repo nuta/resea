@@ -6,7 +6,7 @@ pub type c_int = i32;
 pub type c_unsigned = u32;
 pub type error_t = c_int;
 pub type task_t = c_int;
-pub type handle_t = c_int;
+pub type handle_t = c_long;
 pub type msec_t = c_int;
 pub type notifications_t = u8;
 
