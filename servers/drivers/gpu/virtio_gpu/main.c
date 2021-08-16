@@ -223,7 +223,6 @@ static void handle_interrupt(void) {
 static void switch_front_buffer(int index) {
     // TODO: Switch the buffer by sending a command.
     memcpy(framebuffer, shm_framebuffer, framebuffer_size);
-    memset(framebuffer, 0xaa, framebuffer_size);
     start_flushing_scanout();
 }
 
