@@ -17,7 +17,12 @@ canvas_t get_back_buffer(void) {
     return framebuffers[front_buffer_index];
 }
 
+void *shm_framebuffer;
 void swap_buffer(void) {
+    DBG("w=%d, h=%d", screen_width, screen_height);
+    memset(shm_framebuffer, 0xff, screen_width * screen_height * 4);
+    *((uint32_t *) shm_framebuffer) = 0xabcd1234;
+
     struct message m;
     m.type = GPU_SWITCH_FRONT_BUFFER_MSG;
     m.gpu_switch_front_buffer.index = front_buffer_index;
@@ -50,12 +55,9 @@ static void init(void) {
 
         void *framebuffer;
         ASSERT_OK(shm_map(shm_handle, true, &framebuffer));
-
+        shm_framebuffer = framebuffer;
         framebuffers[i] = canvas_create_from_buffer(
             screen_width, screen_height, framebuffer, CANVAS_FORMAT_ARGB32);
-
-        DBG("w=%d, h=%d", screen_width, screen_height);
-        memset(framebuffer, 0xff, screen_width * screen_height * 4);
     }
 
     gui_init(screen_width, screen_height, &os_ops);

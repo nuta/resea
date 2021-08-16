@@ -82,4 +82,5 @@ void canvas_copy(canvas_t dst, canvas_t src, int x, int y) {
     cairo_set_source_surface(dst->cr, src->surface, 0, 0);
     cairo_rectangle(dst->cr, x, y, copy_width, copy_height);
     cairo_fill(dst->cr);
+    cairo_surface_flush(dst->cr);
 }

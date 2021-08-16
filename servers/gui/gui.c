@@ -45,7 +45,6 @@ void gui_render(void) {
 
 void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
                     bool clicked_right) {
-    DBG("(%d, %d)", x_delta, y_delta);
     struct cursor_data *data = cursor_surface->user_data;
     cursor_surface->screen_x =
         MIN(MAX(0, cursor_surface->screen_x + x_delta), screen_width - 5);

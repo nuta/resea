@@ -41,6 +41,7 @@ error_t shm_create(struct task *task, size_t size, handle_t *handle,
                    vaddr_t *vaddr) {
     size = ALIGN_UP(size, PAGE_SIZE);
 
+    *vaddr = 0;
     paddr_t paddr = 0;
     error_t err = task_page_alloc(task, vaddr, &paddr, size / PAGE_SIZE);
     if (err != OK) {
