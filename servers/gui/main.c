@@ -35,7 +35,7 @@ static void init(void) {
     gpu_server = ipc_lookup("gpu");
 
     struct message m;
-    m.type = GPU_SWITCH_FRONT_BUFFER_MSG;
+    m.type = GPU_SET_DEFAULT_MODE_MSG;
     ASSERT_OK(ipc_call(gpu_server, &m));
 
     screen_height = m.gpu_set_default_mode_reply.height;
@@ -43,7 +43,6 @@ static void init(void) {
     num_framebuffers = m.gpu_set_default_mode_reply.num_buffers;
     framebuffers =
         (struct canvas **) malloc(sizeof(*framebuffers) * num_framebuffers);
-    DBG("num_framebuffers=%d", num_framebuffers);
     for (size_t i = 0; i < num_framebuffers; i++) {
         m.type = GPU_GET_BUFFER_MSG;
         ASSERT_OK(ipc_call(gpu_server, &m));
