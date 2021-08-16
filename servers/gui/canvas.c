@@ -78,8 +78,7 @@ void canvas_copy(canvas_t dst, canvas_t src, int x, int y) {
     int copy_height = MIN(cairo_image_surface_get_height(src->surface),
                           cairo_image_surface_get_height(dst->surface) - y);
 
-    cairo_translate(dst->cr, 0, 0);
-    cairo_set_source_surface(dst->cr, src->surface, 0, 0);
+    cairo_set_source_surface(dst->cr, src->surface, x, y);
     cairo_rectangle(dst->cr, x, y, copy_width, copy_height);
     cairo_fill(dst->cr);
     cairo_surface_flush(dst->surface);

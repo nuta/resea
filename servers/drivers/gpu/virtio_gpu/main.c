@@ -222,7 +222,6 @@ static void handle_interrupt(void) {
 
 static void switch_front_buffer(int index) {
     // TODO: Switch the buffer by sending a command.
-    DBG("copy = %d (%x)", framebuffer_size, *((uint32_t *) shm_framebuffer));
     memcpy(framebuffer, shm_framebuffer, framebuffer_size);
     start_flushing_scanout();
 }
