@@ -21,6 +21,8 @@ static struct surface *surface_create(int width, int height,
     surface->screen_y = 0;
     surface->width = width;
     surface->height = height;
+
+    list_push_back(&surfaces, &surface->next);
     return surface;
 }
 
@@ -36,6 +38,7 @@ static struct surface_ops cursor_ops = {
 void gui_render(void) {
     struct canvas *screen = os->get_back_buffer();
     LIST_FOR_EACH_REV (s, &surfaces, struct surface, next) {
+        DBG("render");
         s->ops->render(s);
         canvas_copy(screen, s->canvas, s->screen_x, s->screen_y);
     }
@@ -50,6 +53,8 @@ void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
         MIN(MAX(0, cursor_surface->screen_x + x_delta), screen_width - 5);
     cursor_surface->screen_y =
         MIN(MAX(0, cursor_surface->screen_y + y_delta), screen_height - 5);
+
+    DBG("moved to %d %d", cursor_surface->screen_x, cursor_surface->screen_y);
 }
 
 void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {

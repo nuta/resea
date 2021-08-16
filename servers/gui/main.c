@@ -19,10 +19,6 @@ canvas_t get_back_buffer(void) {
 
 void *shm_framebuffer;
 void swap_buffer(void) {
-    DBG("w=%d, h=%d", screen_width, screen_height);
-    memset(shm_framebuffer, 0xff, screen_width * screen_height * 4);
-    *((uint32_t *) shm_framebuffer) = 0xabcd1234;
-
     struct message m;
     m.type = GPU_SWITCH_FRONT_BUFFER_MSG;
     m.gpu_switch_front_buffer.index = front_buffer_index;

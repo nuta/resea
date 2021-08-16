@@ -66,7 +66,7 @@ canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
 }
 
 void canvas_draw_cursor(canvas_t canvas, enum cursor_shape shape) {
-    cairo_set_source_rgb(canvas->cr, 255, 0, 0);
+    cairo_set_source_rgb(canvas->cr, 255, 100, 100);
     cairo_rectangle(canvas->cr, 0, 0, 10, 10);
     cairo_fill(canvas->cr);
     cairo_surface_flush(canvas->surface);
@@ -82,5 +82,5 @@ void canvas_copy(canvas_t dst, canvas_t src, int x, int y) {
     cairo_set_source_surface(dst->cr, src->surface, 0, 0);
     cairo_rectangle(dst->cr, x, y, copy_width, copy_height);
     cairo_fill(dst->cr);
-    cairo_surface_flush(dst->cr);
+    cairo_surface_flush(dst->surface);
 }
