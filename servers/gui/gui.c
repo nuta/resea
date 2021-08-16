@@ -23,6 +23,8 @@ static struct surface *surface_create(int width, int height,
 }
 
 void cursor_render(struct surface *surface) {
+    struct cursor_data *data = surface->user_data;
+    canvas_draw_cursor(surface->canvas, data->shape);
 }
 
 static struct surface_ops cursor_ops = {
@@ -43,6 +45,7 @@ void gui_init(struct os_ops *os_ops) {
     os = os_ops;
     list_init(&surfaces);
 
+    // Initialize the mouse cursor.
     struct cursor_data *cursor_data = malloc(sizeof(*cursor_data));
     cursor_data->shape = CURSOR_POINTER;
     cursor_surface = surface_create(15, 15, &cursor_ops, cursor_data);
