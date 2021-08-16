@@ -4,12 +4,6 @@
 #include <list.h>
 #include <types.h>
 
-struct canvas;
-struct surface;
-
-typedef struct canvas *canvas_t;
-typedef struct surface *surface_t;
-
 struct canvas_ops;
 struct canvas {
     struct canvas_ops *ops;
@@ -17,7 +11,8 @@ struct canvas {
 };
 
 struct canvas_ops {
-    void (*copy_from_other)(canvas_t canvas, canvas_t src, int x, int y);
+    void (*copy_from_other)(struct canvas *canvas, struct canvas *src, int x,
+                            int y);
 };
 
 struct surface_ops;
@@ -25,7 +20,7 @@ struct surface {
     list_elem_t next;
     struct surface_ops *ops;
     void *user_data;
-    canvas_t canvas;
+    struct canvas *canvas;
     int screen_x;
     int screen_y;
     int width;
