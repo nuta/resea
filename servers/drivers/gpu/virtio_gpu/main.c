@@ -163,6 +163,7 @@ static void handle_ok_nodata(void) {
             INFO("successfully enabled the display!");
             driver_state = DISPLAY_ENABLED;
             start_flushing_scanout();
+            ASSERT_OK(ipc_serve("gpu"));
             break;
         case TRANSFERING_TO_HOST:
             flush_scanout();
