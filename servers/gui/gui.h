@@ -31,6 +31,8 @@ struct cursor_data {
 };
 
 void gui_render(void);
-void gui_init(struct os_ops *os_ops);
+void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
+                    bool clicked_right);
+void gui_init(int screen_width_, int screen_height_, struct os_ops *os_);
 
 #endif

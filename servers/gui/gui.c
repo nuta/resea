@@ -7,6 +7,8 @@ static struct os_ops *os = NULL;
 /// comes first.
 static list_t surfaces;
 struct surface *cursor_surface = NULL;
+int screen_width;
+int screen_height;
 
 static struct surface *surface_create(int width, int height,
                                       struct surface_ops *ops,
@@ -41,8 +43,20 @@ void gui_render(void) {
     os->swap_buffer();
 }
 
-void gui_init(struct os_ops *os_ops) {
-    os = os_ops;
+void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
+                    bool clicked_right) {
+    DBG("(%d, %d)", x_delta, y_delta);
+    struct cursor_data *data = cursor_surface->user_data;
+    cursor_surface->screen_x =
+        MIN(MAX(0, cursor_surface->screen_x + x_delta), screen_width - 5);
+    cursor_surface->screen_y =
+        MIN(MAX(0, cursor_surface->screen_y + y_delta), screen_height - 5);
+}
+
+void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
+    os = os_;
+    screen_width = screen_width_;
+    screen_height = screen_height_;
     list_init(&surfaces);
 
     // Initialize the mouse cursor.

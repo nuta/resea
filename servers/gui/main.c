@@ -26,15 +26,6 @@ void swap_buffer(void) {
     front_buffer_index = (front_buffer_index + 1) % num_framebuffers;
 }
 
-struct canvas *create_canvas(int width, int height) {
-    NYI();
-}
-
-struct canvas *create_framebuffer_canvas(int screen_width, int screen_height,
-                                         handle_t shm_handle) {
-    NYI();
-}
-
 static struct os_ops os_ops = {
     .get_back_buffer = get_back_buffer,
     .swap_buffer = swap_buffer,
@@ -64,17 +55,18 @@ static void init(void) {
             screen_width, screen_height, framebuffer, CANVAS_FORMAT_ARGB32);
     }
 
-    gui_init(&os_ops);
+    gui_init(screen_width, screen_height, &os_ops);
     ASSERT_OK(ipc_serve("gui"));
 }
 
 void main(void) {
     init();
-    TRACE("ready");
 
     // The mainloop: receive and handle messages.
     INFO("ready");
     while (true) {
+        gui_render();
+
         struct message m;
         bzero(&m, sizeof(m));
         error_t err = ipc_recv(IPC_ANY, &m);
@@ -82,6 +74,9 @@ void main(void) {
 
         switch (m.type) {
             case MOUSE_INPUT_MSG:
+                gui_move_mouse(m.mouse_input.x_delta, m.mouse_input.y_delta,
+                               m.mouse_input.clicked_left,
+                               m.mouse_input.clicked_right);
                 break;
         }
     }
