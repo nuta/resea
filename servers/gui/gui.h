@@ -4,32 +4,44 @@
 #include <list.h>
 #include <types.h>
 
-typedef void *backend_canvas_t;
+struct canvas;
+struct surface;
 
-struct canvas {
-    backend_canvas_t backend_canvas;
+struct surface_ops {
+    void (*render)(struct surface *surface);
 };
-
-struct window {};
 
 struct surface {
-    struct canvas canvas;
+    list_elem_t next;
+    struct surface_ops *ops;
+    void *user_data;
+    struct canvas *canvas;
     int screen_x;
     int screen_y;
-    list_elem_t next;
+    int width;
+    int height;
 };
 
-struct backend {
-    backend_canvas_t (*get_back_buffer)(void);
+struct os_ops {
+    struct canvas *(*get_back_buffer)(void);
     void (*swap_buffer)(void);
-    backend_canvas_t (*create_framebuffer_canvas)(unsigned screen_width,
-                                                  unsigned screen_height,
-                                                  handle_t shm_handle);
-    void (*copy_canvas)(backend_canvas_t dst, backend_canvas_t src, int x,
-                        int y);
+    struct canvas *(*create_canvas)(int width, int height);
+    struct canvas *(*create_framebuffer_canvas)(int screen_width,
+                                                int screen_height,
+                                                handle_t shm_handle);
+    void (*copy_canvas)(struct canvas *dst, struct canvas *src, int x, int y);
+};
+
+struct canvas {
+    struct canvas_ops *ops;
+    void *user_data;
+};
+
+enum cursor_type {
+    CURSOR_POINTER,
 };
 
 void gui_render(void);
-void gui_init(struct backend *b);
+void gui_init(struct os_ops *os_ops);
 
 #endif

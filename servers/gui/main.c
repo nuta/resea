@@ -10,9 +10,9 @@ static int front_buffer_index = 0;
 static unsigned screen_height;
 static unsigned screen_width;
 static size_t num_framebuffers;
-static backend_canvas_t *framebuffers = NULL;
+static struct canvas **framebuffers = NULL;
 
-backend_canvas_t get_back_buffer(void) {
+struct canvas *get_back_buffer(void) {
     return framebuffers[front_buffer_index];
 }
 
@@ -25,9 +25,20 @@ void swap_buffer(void) {
     front_buffer_index = (front_buffer_index + 1) % num_framebuffers;
 }
 
-static struct backend backend = {
+struct canvas *create_canvas(int width, int height) {
+    NYI();
+}
+
+struct canvas *create_framebuffer_canvas(int screen_width, int screen_height,
+                                         handle_t shm_handle) {
+    NYI();
+}
+
+static struct os_ops os_ops = {
     .get_back_buffer = get_back_buffer,
     .swap_buffer = swap_buffer,
+    .create_canvas = create_canvas,
+    .create_framebuffer_canvas = create_framebuffer_canvas,
 };
 
 static void init(void) {
@@ -41,16 +52,16 @@ static void init(void) {
     screen_width = m.gpu_set_default_mode_reply.width;
     num_framebuffers = m.gpu_set_default_mode_reply.num_buffers;
     framebuffers =
-        (backend_canvas_t *) malloc(sizeof(*framebuffers) * num_framebuffers);
-    for (int i = 0; i < num_framebuffers; i++) {
+        (struct canvas **) malloc(sizeof(*framebuffers) * num_framebuffers);
+    for (size_t i = 0; i < num_framebuffers; i++) {
         m.type = GPU_GET_BUFFER_MSG;
         ASSERT_OK(ipc_call(gpu_server, &m));
 
-        framebuffers[i] = backend.create_framebuffer_canvas(
+        framebuffers[i] = create_framebuffer_canvas(
             screen_width, screen_height, m.gpu_get_buffer_reply.shm_handle);
     }
 
-    gui_init(&backend);
+    gui_init(&os_ops);
     ASSERT_OK(ipc_serve("gui"));
 }
 

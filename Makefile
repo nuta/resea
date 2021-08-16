@@ -124,6 +124,7 @@ WERRORS += -Werror=switch
 WERRORS += -Werror=return-type
 WERRORS += -Werror=pointer-integer-compare
 WERRORS += -Werror=tautological-constant-out-of-range-compare
+WERRORS += -Werror=visibility
 WERRORS += -Wno-unused-parameter
 
 INCLUDES += -Ilibs/common/include
@@ -364,6 +365,7 @@ $(eval libs := $(builtin_libs))
 $(eval cflags :=)
 $(eval build_mks :=)
 $(eval autogen-files :=)
+$(eval third-party-build :=)
 $(eval rust :=)
 $(eval objs += $(BUILD_DIR)/$(1)/__name__.o)
 $(eval $(call visit-subdir,$(server_dir),$(BUILD_DIR)))
@@ -375,6 +377,7 @@ $(eval $(BUILD_DIR)/$(1).debug.elf: server_dir := $(server_dir))
 $(eval $(BUILD_DIR)/$(1).debug.elf: objs := $(objs))
 $(eval $(BUILD_DIR)/$(1).debug.elf: objs += $(if $(rust), $(BUILD_DIR)/rust/$(name).a))
 $(eval $(BUILD_DIR)/$(1).debug.elf: $(objs) $(if $(rust), $(BUILD_DIR)/rust/$(name).a) $(build_mks) $(all_autogen_files))
+$(eval $(objs): CFLAGS += $(if $(third-party-build),, $(WERRORS)))
 $(eval $(objs): CFLAGS += $(cflags))
 $(foreach lib, $(all_libs),
 	$(eval $(objs): INCLUDES += -Ilibs/$(lib)/include))

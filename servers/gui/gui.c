@@ -1,23 +1,22 @@
 #include "gui.h"
 
-static list_t surfaces;
-static struct backend *backend = NULL;
+static struct os_ops *os = NULL;
 
-static void render_surface(struct surface *s) {
-}
+/// The list of surfaces ordered by the Z index. The frontmost one (i.e. cursor)
+/// comes first.
+static list_t surfaces;
 
 void gui_render(void) {
-    backend_canvas_t buffer = backend->get_back_buffer();
+    struct canvas *screen = os->get_back_buffer();
     LIST_FOR_EACH (s, &surfaces, struct surface, next) {
-        render_surface(s);
-        backend->copy_canvas(buffer, s->canvas.backend_canvas, s->screen_x,
-                             s->screen_y);
+        s->ops->render(s);
+        os->copy_canvas(screen, s->canvas, s->screen_x, s->screen_y);
     }
 
-    backend->swap_buffer();
+    os->swap_buffer();
 }
 
-void gui_init(struct backend *b) {
-    backend = b;
+void gui_init(struct os_ops *os_ops) {
+    os = os_ops;
     list_init(&surfaces);
 }
