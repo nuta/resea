@@ -70,6 +70,7 @@ canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
 void canvas_draw_cursor(canvas_t canvas, enum cursor_shape shape) {
     cairo_set_source_surface(canvas->cr, icons[ICON_POINTER], 0, 0);
     cairo_rectangle(canvas->cr, 0, 0, 48, 48);
+    cairo_fill(canvas->cr);
     cairo_surface_flush(canvas->surface);
 }
 
@@ -116,5 +117,9 @@ void canvas_init(void *(*get_icon_png)(enum icon_type icon,
 
         icons[type] = cairo_image_surface_create_from_png_stream(
             embedded_read_func, &closure);
+        printf("cursor size: %dx%d [%x, %x, %x, %x]\n",
+               cairo_image_surface_get_width(icons[ICON_POINTER]),
+               cairo_image_surface_get_height(icons[ICON_POINTER]),
+               file_data[0], file_data[1], file_data[2], file_data[3]);
     }
 }

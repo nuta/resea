@@ -19,10 +19,11 @@ def main():
 
     entries = bytes()
     file_contents = bytes()
-    file_off = 16 # size of the fs header
-    num_entries = 0
-    for path in Path(args.dir).glob("*"):
-        name = str(Path(path).stem)
+    paths = list(Path(args.dir).glob("*"))
+    num_entries = len(paths)
+    file_off = 16 + num_entries * 64
+    for path in paths:
+        name = str(Path(path).name)
         if len(name) >= 48:
             sys.exit(f"too long file name: {name}")
 

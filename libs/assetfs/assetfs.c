@@ -1,4 +1,5 @@
 #include <assetfs.h>
+#include <resea/printf.h>
 #include <string.h>
 
 error_t assetfs_open(struct assetfs *fs, void *image, size_t image_size) {
@@ -30,5 +31,6 @@ struct assetfs_file *assetfs_open_file(struct assetfs *fs, const char *name) {
 }
 
 void *assetfs_file_data(struct assetfs *fs, struct assetfs_file *file) {
+    DBG("offset: %d", file->offset);
     return fs->image + file->offset;
 }

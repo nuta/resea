@@ -63,7 +63,7 @@ void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
     // Initialize the mouse cursor.
     struct cursor_data *cursor_data = malloc(sizeof(*cursor_data));
     cursor_data->shape = CURSOR_POINTER;
-    cursor_surface = surface_create(15, 15, &cursor_ops, cursor_data);
+    cursor_surface = surface_create(48, 48, &cursor_ops, cursor_data);
 
     canvas_init(os->get_icon_png);
 }

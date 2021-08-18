@@ -23,6 +23,7 @@ void *get_icon_png(enum icon_type icon, unsigned *file_size) {
     switch (icon) {
         case ICON_POINTER:
             name = "pointer.png";
+            break;
         default:
             UNREACHABLE();
     }
