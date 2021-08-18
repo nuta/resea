@@ -31,6 +31,5 @@ struct assetfs_file *assetfs_open_file(struct assetfs *fs, const char *name) {
 }
 
 void *assetfs_file_data(struct assetfs *fs, struct assetfs_file *file) {
-    DBG("offset: %d", file->offset);
     return fs->image + file->offset;
 }
