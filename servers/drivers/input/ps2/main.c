@@ -76,10 +76,8 @@ static void handle_mouse_irq(void) {
             data[2] = read_data_reg();
             bool left_pressed = (data[0] & MOUSE_BYTE1_LEFT_BUTTON) != 0;
             bool right_pressed = (data[0] & MOUSE_BYTE1_RIGHT_BUTTON) != 0;
-            int x = (data[0] & MOUSE_BYTE1_X_SIGNED) ? (int8_t) data[1]
-                                                     : (uint8_t) data[1];
-            int y = (data[0] & MOUSE_BYTE1_Y_SIGNED) ? (int8_t) data[2]
-                                                     : (uint8_t) data[2];
+            int x = (int8_t) data[1];
+            int y = -((int8_t) data[2]);
 
             TRACE("mouse: x=%d, y=%d%s%s", x, y, left_pressed ? " [LEFT]" : "",
                   right_pressed ? "[RIGHT]" : "");
@@ -164,7 +162,7 @@ void main(void) {
             case NOTIFICATIONS_MSG:
                 if (m.notifications.data & NOTIFY_IRQ) {
                     handle_mouse_irq();
-                    handle_keyboard_irq();
+                    // handle_keyboard_irq();
                 }
             default:
                 TRACE("unknown message %s", msgtype2str(m.type));
