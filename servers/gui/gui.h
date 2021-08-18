@@ -5,6 +5,10 @@
 #include <list.h>
 #include <types.h>
 
+enum icon_type {
+    ICON_POINTER,
+};
+
 struct surface_ops;
 struct surface {
     list_elem_t next;
@@ -24,6 +28,7 @@ struct surface_ops {
 struct os_ops {
     canvas_t (*get_back_buffer)(void);
     void (*swap_buffer)(void);
+    uint8_t *(*get_icon_png)(enum icon_type icon);
 };
 
 struct cursor_data {
