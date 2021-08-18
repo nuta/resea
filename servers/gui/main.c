@@ -18,7 +18,7 @@ static struct assetfs icons;
 extern char _binary_build_servers_gui_icons_o_data_start[];
 extern char _binary_build_servers_gui_icons_o_data_size[];
 
-uint8_t *get_icon_png(enum icon_type icon) {
+void *get_icon_png(enum icon_type icon, unsigned *file_size) {
     char *name;
     switch (icon) {
         case ICON_POINTER:
@@ -29,6 +29,7 @@ uint8_t *get_icon_png(enum icon_type icon) {
 
     struct assetfs_file *file = assetfs_open_file(&icons, name);
     ASSERT(file != NULL);
+    *file_size = file->size;
     return assetfs_file_data(&icons, file);
 }
 

@@ -26,6 +26,8 @@ struct canvas {
     cairo_surface_t *surface;
 };
 
+static cairo_surface_t *icons[NUM_ICON_TYPES];
+
 static canvas_t canvas_create_from_surface(cairo_surface_t *surface) {
     cairo_t *cr = cairo_create(surface);
     ASSERT(dst->cr != NULL);
@@ -66,9 +68,8 @@ canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
 }
 
 void canvas_draw_cursor(canvas_t canvas, enum cursor_shape shape) {
-    cairo_set_source_rgb(canvas->cr, 255, 100, 100);
-    cairo_rectangle(canvas->cr, 0, 0, 10, 10);
-    cairo_fill(canvas->cr);
+    cairo_set_source_surface(canvas->cr, icons[ICON_POINTER], 0, 0);
+    cairo_rectangle(canvas->cr, 0, 0, 48, 48);
     cairo_surface_flush(canvas->surface);
 }
 
@@ -82,4 +83,38 @@ void canvas_copy(canvas_t dst, canvas_t src, int x, int y) {
     cairo_rectangle(dst->cr, x, y, copy_width, copy_height);
     cairo_fill(dst->cr);
     cairo_surface_flush(dst->surface);
+}
+
+struct read_func_closure {
+    uint8_t *file_data;
+    unsigned file_size;
+    unsigned offset;
+};
+
+static cairo_status_t embedded_read_func(void *closure, unsigned char *data,
+                                         unsigned int len) {
+    struct read_func_closure *c = (struct read_func_closure *) closure;
+    if (c->offset + len > c->file_size) {
+        return CAIRO_STATUS_READ_ERROR;
+    }
+
+    memcpy(data, &c->file_data[c->offset], len);
+    c->offset += len;
+    return CAIRO_STATUS_SUCCESS;
+}
+
+void canvas_init(void *(*get_icon_png)(enum icon_type icon,
+                                       unsigned *file_size)) {
+    for (int type = 0; type < NUM_ICON_TYPES; type++) {
+        unsigned file_size;
+        uint8_t *file_data = get_icon_png(type, &file_size);
+        struct read_func_closure closure = {
+            .file_data = file_data,
+            .file_size = file_size,
+            .offset = 0,
+        };
+
+        icons[type] = cairo_image_surface_create_from_png_stream(
+            embedded_read_func, &closure);
+    }
 }

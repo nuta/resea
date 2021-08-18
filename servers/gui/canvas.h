@@ -9,6 +9,11 @@ enum cursor_shape {
     CURSOR_POINTER,
 };
 
+enum icon_type {
+    ICON_POINTER = 0,
+    NUM_ICON_TYPES = 1,
+};
+
 struct canvas;
 typedef struct canvas *canvas_t;
 
@@ -18,5 +23,7 @@ canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
                                    enum canvas_format format);
 void canvas_draw_cursor(canvas_t canvas, enum cursor_shape shape);
 void canvas_copy(canvas_t dst, canvas_t src, int x, int y);
+void canvas_init(void *(*get_icon_png)(enum icon_type icon,
+                                       unsigned *file_size));
 
 #endif
