@@ -25,11 +25,14 @@ struct os_ops {
     canvas_t (*get_back_buffer)(void);
     void (*swap_buffer)(void);
     void *(*get_icon_png)(enum icon_type icon, unsigned *file_size);
+    void *(*open_asset_file)(const char *name, unsigned *file_size);
 };
 
 struct cursor_data {
     enum cursor_shape shape;
 };
+
+struct wallpaper_data {};
 
 void gui_render(void);
 void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,

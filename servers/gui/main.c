@@ -14,9 +14,19 @@ static unsigned screen_width;
 static size_t num_framebuffers;
 static struct canvas **framebuffers = NULL;
 
-static struct assetfs icons;
-extern char _binary_build_servers_gui_icons_o_data_start[];
-extern char _binary_build_servers_gui_icons_o_data_size[];
+static struct assetfs assets;
+extern char _binary_build_servers_gui_assets_o_data_start[];
+extern char _binary_build_servers_gui_assets_o_data_size[];
+
+void *open_asset_file(const char *name, unsigned *file_size) {
+    struct assetfs_file *file = assetfs_open_file(&assets, name);
+    if (!file) {
+        PANIC("asset not found \"%s\"", name);
+    }
+
+    *file_size = file->size;
+    return assetfs_file_data(&assets, file);
+}
 
 void *get_icon_png(enum icon_type icon, unsigned *file_size) {
     char *name;
@@ -28,10 +38,7 @@ void *get_icon_png(enum icon_type icon, unsigned *file_size) {
             UNREACHABLE();
     }
 
-    struct assetfs_file *file = assetfs_open_file(&icons, name);
-    ASSERT(file != NULL);
-    *file_size = file->size;
-    return assetfs_file_data(&icons, file);
+    return open_asset_file(name, file_size);
 }
 
 canvas_t get_back_buffer(void) {
@@ -52,6 +59,7 @@ static struct os_ops os_ops = {
     .get_back_buffer = get_back_buffer,
     .swap_buffer = swap_buffer,
     .get_icon_png = get_icon_png,
+    .open_asset_file = open_asset_file,
 };
 
 static void init(void) {
@@ -78,8 +86,8 @@ static void init(void) {
             screen_width, screen_height, framebuffer, CANVAS_FORMAT_ARGB32);
     }
 
-    assetfs_open(&icons, _binary_build_servers_gui_icons_o_data_start,
-                 (size_t) _binary_build_servers_gui_icons_o_data_size);
+    assetfs_open(&assets, _binary_build_servers_gui_assets_o_data_start,
+                 (size_t) _binary_build_servers_gui_assets_o_data_size);
 
     gui_init(screen_width, screen_height, &os_ops);
     ASSERT_OK(ipc_serve("gui"));

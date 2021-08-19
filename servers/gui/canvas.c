@@ -27,6 +27,11 @@ struct canvas {
 };
 
 static cairo_surface_t *icons[NUM_ICON_TYPES];
+static FT_Library ft_lib;
+static FT_Face ft_ui_regular_face;
+static FT_Face ft_ui_bold_face;
+static cairo_font_face_t *ui_regular_font = NULL;
+static cairo_font_face_t *ui_bold_font = NULL;
 
 static canvas_t canvas_create_from_surface(cairo_surface_t *surface) {
     cairo_t *cr = cairo_create(surface);
@@ -67,6 +72,51 @@ canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
     return canvas_create_from_surface(surface);
 }
 
+void canvas_draw_wallpaper(canvas_t canvas) {
+    cairo_set_source_rgb(canvas->cr, .8, .6, .5);
+    cairo_rectangle(canvas->cr, 0, 0,
+                    cairo_image_surface_get_width(canvas->surface),
+                    cairo_image_surface_get_height(canvas->surface));
+    cairo_fill(canvas->cr);
+}
+
+void canvas_draw_window(canvas_t canvas, struct window_data *window) {
+    int width = cairo_image_surface_get_width(canvas->surface);
+    int height = cairo_image_surface_get_height(canvas->surface);
+
+    // Window frame.
+    double radius = 10.;
+    double degrees = M_PI / 180.;
+    cairo_new_sub_path(canvas->cr);
+    cairo_arc(canvas->cr, width - radius, radius, radius, -90 * degrees,
+              0 * degrees);
+    cairo_arc(canvas->cr, width - radius, height - radius, radius, 0 * degrees,
+              90 * degrees);
+    cairo_arc(canvas->cr, radius, height - radius, radius, 90 * degrees,
+              180 * degrees);
+    cairo_arc(canvas->cr, radius, radius, radius, 180 * degrees, 270 * degrees);
+    cairo_close_path(canvas->cr);
+
+    cairo_set_source_rgb(canvas->cr, .97, .97, .97);
+    cairo_fill(canvas->cr);
+
+    // Close button.
+    cairo_arc(canvas->cr, 10, 10, 7, 0, 2 * M_PI);
+    cairo_set_source_rgb(canvas->cr, .3, .3, .95);
+    cairo_fill(canvas->cr);
+
+    // Window title.
+    const char *title = "Console";
+    cairo_text_extents_t extents;
+    cairo_set_font_face(canvas->cr, ui_bold_font);
+    cairo_set_font_size(canvas->cr, 15);
+    cairo_text_extents(canvas->cr, title, &extents);
+    cairo_set_source_rgb(canvas->cr, .1, .1, .1);
+    cairo_move_to(canvas->cr, width / 2 - extents.width / 2,
+                  extents.height + 7);
+    cairo_show_text(canvas->cr, title);
+}
+
 void canvas_draw_cursor(canvas_t canvas, enum cursor_shape shape) {
     cairo_set_source_surface(canvas->cr, icons[ICON_POINTER], 0, 0);
     cairo_rectangle(canvas->cr, 0, 0, 48, 48);
@@ -105,7 +155,25 @@ static cairo_status_t embedded_read_func(void *closure, unsigned char *data,
 }
 
 void canvas_init(void *(*get_icon_png)(enum icon_type icon,
-                                       unsigned *file_size)) {
+                                       unsigned *file_size),
+                 void *(*open_asset_file)(const char *name,
+                                          unsigned *file_size)) {
+    unsigned font_size;
+    uint8_t *font_file;
+
+    FT_Init_FreeType(&ft_lib);
+
+    // Open a font file.
+    font_file = open_asset_file("ui-regular.ttf", &font_size);
+    FT_New_Memory_Face(ft_lib, font_file, font_size, 0, &ft_ui_regular_face);
+    ui_regular_font =
+        cairo_ft_font_face_create_for_ft_face(ft_ui_regular_face, 0);
+
+    // Open a font file.
+    font_file = open_asset_file("ui-bold.ttf", &font_size);
+    FT_New_Memory_Face(ft_lib, font_file, font_size, 0, &ft_ui_bold_face);
+    ui_bold_font = cairo_ft_font_face_create_for_ft_face(ft_ui_bold_face, 0);
+
     for (int type = 0; type < NUM_ICON_TYPES; type++) {
         unsigned file_size;
         uint8_t *file_data = get_icon_png(type, &file_size);
@@ -117,6 +185,7 @@ void canvas_init(void *(*get_icon_png)(enum icon_type icon,
 
         icons[type] = cairo_image_surface_create_from_png_stream(
             embedded_read_func, &closure);
+
         printf("cursor size: %dx%d [%x, %x, %x, %x]\n",
                cairo_image_surface_get_width(icons[ICON_POINTER]),
                cairo_image_surface_get_height(icons[ICON_POINTER]),
