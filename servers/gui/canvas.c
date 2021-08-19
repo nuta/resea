@@ -81,8 +81,8 @@ void canvas_draw_wallpaper(canvas_t canvas) {
 }
 
 void canvas_draw_window(canvas_t canvas, struct window_data *window) {
-    int width = cairo_image_surface_get_width(canvas->surface);
-    int height = cairo_image_surface_get_height(canvas->surface);
+    int width = cairo_image_surface_get_width(canvas->surface) - 3;
+    int height = cairo_image_surface_get_height(canvas->surface) - 3;
 
     // Window frame.
     double radius = 10.;
@@ -99,6 +99,16 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window) {
 
     cairo_set_source_rgb(canvas->cr, .97, .97, .97);
     cairo_fill(canvas->cr);
+
+    cairo_arc(canvas->cr, width - radius, radius, radius, -90 * degrees,
+              0 * degrees);
+    cairo_arc(canvas->cr, width - radius, height - radius, radius, 0 * degrees,
+              90 * degrees);
+    cairo_arc(canvas->cr, radius, height - radius, radius, 90 * degrees,
+              180 * degrees);
+    cairo_set_line_width(canvas->cr, 3);
+    cairo_set_source_rgb(canvas->cr, .55, .55, .55);
+    cairo_stroke(canvas->cr);
 
     // Close button.
     cairo_arc(canvas->cr, 10, 10, 7, 0, 2 * M_PI);
