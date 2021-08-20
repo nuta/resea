@@ -77,6 +77,7 @@ static void window_global_mouse_move(struct surface *surface, int screen_x,
 static bool window_mouse_down(struct surface *surface, int x, int y) {
     struct window_data *data = surface->user_data;
 
+    DBG("window down: %d, %d", x, y);
     if (y < WINDOW_TITLE_HEIGHT && x > 15 /* close button */) {
         data->being_moved = true;
         data->prev_cursor_x = get_cursor_x();
@@ -145,14 +146,16 @@ void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
         }
 
         if (overlaps) {
-            int local_x = s->screen_x - cursor_x;
-            int local_y = s->screen_y - cursor_y;
+            int local_x = cursor_x - s->screen_x;
+            int local_y = cursor_y - s->screen_y;
 
             if (mouse_down && !consumed_mouse_down && s->ops->mouse_down) {
                 consumed_mouse_down = s->ops->mouse_down(s, local_x, local_y);
             }
         }
     }
+
+    prev_clicked_left = clicked_left;
 }
 
 void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
