@@ -10,7 +10,7 @@ enum cursor_shape {
 };
 
 enum icon_type {
-    ICON_POINTER = 0,
+    ICON_CURSOR = 0,
     NUM_ICON_TYPES = 1,
 };
 

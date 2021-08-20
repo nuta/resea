@@ -31,8 +31,8 @@ void *open_asset_file(const char *name, unsigned *file_size) {
 void *get_icon_png(enum icon_type icon, unsigned *file_size) {
     char *name;
     switch (icon) {
-        case ICON_POINTER:
-            name = "pointer.png";
+        case ICON_CURSOR:
+            name = "cursor.png";
             break;
         default:
             UNREACHABLE();

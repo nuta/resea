@@ -83,6 +83,7 @@ void canvas_draw_wallpaper(canvas_t canvas) {
 void canvas_draw_window(canvas_t canvas, struct window_data *window) {
     int width = cairo_image_surface_get_width(canvas->surface) - 3;
     int height = cairo_image_surface_get_height(canvas->surface) - 3;
+    int title_height = 23;
 
     // Window frame.
     double radius = 10.;
@@ -100,6 +101,7 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window) {
     cairo_set_source_rgb(canvas->cr, .97, .97, .97);
     cairo_fill(canvas->cr);
 
+    // Window shadow.
     cairo_arc(canvas->cr, width - radius, radius, radius, -90 * degrees,
               0 * degrees);
     cairo_arc(canvas->cr, width - radius, height - radius, radius, 0 * degrees,
@@ -110,8 +112,23 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window) {
     cairo_set_source_rgb(canvas->cr, .55, .55, .55);
     cairo_stroke(canvas->cr);
 
+    // Title bar background.
+    cairo_arc(canvas->cr, width - radius, radius, radius, -90 * degrees,
+              0 * degrees);
+    cairo_line_to(canvas->cr, width, title_height);
+    // cairo_arc(canvas->cr, width - radius, title_height - radius, radius,
+    //           0 * degrees, 90 * degrees);
+    cairo_line_to(canvas->cr, 0, title_height);
+    // cairo_arc(canvas->cr, radius, title_height - radius, radius, 90 *
+    // degrees,
+    //           180 * degrees);
+    cairo_arc(canvas->cr, radius, radius, radius, 180 * degrees, 270 * degrees);
+    cairo_close_path(canvas->cr);
+    cairo_set_source_rgb(canvas->cr, .8, .8, .8);
+    cairo_fill(canvas->cr);
+
     // Close button.
-    cairo_arc(canvas->cr, 10, 10, 7, 0, 2 * M_PI);
+    cairo_arc(canvas->cr, 15, 11, 7, 0, 2 * M_PI);
     cairo_set_source_rgb(canvas->cr, .3, .3, .95);
     cairo_fill(canvas->cr);
 
@@ -119,7 +136,7 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window) {
     const char *title = "Console";
     cairo_text_extents_t extents;
     cairo_set_font_face(canvas->cr, ui_bold_font);
-    cairo_set_font_size(canvas->cr, 15);
+    cairo_set_font_size(canvas->cr, title_height - 10);
     cairo_text_extents(canvas->cr, title, &extents);
     cairo_set_source_rgb(canvas->cr, .1, .1, .1);
     cairo_move_to(canvas->cr, width / 2 - extents.width / 2,
@@ -128,8 +145,8 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window) {
 }
 
 void canvas_draw_cursor(canvas_t canvas, enum cursor_shape shape) {
-    cairo_set_source_surface(canvas->cr, icons[ICON_POINTER], 0, 0);
-    cairo_rectangle(canvas->cr, 0, 0, 48, 48);
+    cairo_set_source_surface(canvas->cr, icons[ICON_CURSOR], 0, 0);
+    cairo_rectangle(canvas->cr, 0, 0, ICON_SIZE, ICON_SIZE);
     cairo_fill(canvas->cr);
     cairo_surface_flush(canvas->surface);
 }
@@ -197,8 +214,8 @@ void canvas_init(void *(*get_icon_png)(enum icon_type icon,
             embedded_read_func, &closure);
 
         printf("cursor size: %dx%d [%x, %x, %x, %x]\n",
-               cairo_image_surface_get_width(icons[ICON_POINTER]),
-               cairo_image_surface_get_height(icons[ICON_POINTER]),
-               file_data[0], file_data[1], file_data[2], file_data[3]);
+               cairo_image_surface_get_width(icons[ICON_CURSOR]),
+               cairo_image_surface_get_height(icons[ICON_CURSOR]), file_data[0],
+               file_data[1], file_data[2], file_data[3]);
     }
 }

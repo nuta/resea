@@ -82,7 +82,8 @@ void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
     // Mouse cursor.
     struct cursor_data *cursor_data = malloc(sizeof(*cursor_data));
     cursor_data->shape = CURSOR_POINTER;
-    cursor_surface = surface_create(48, 48, &cursor_ops, cursor_data);
+    cursor_surface =
+        surface_create(ICON_SIZE, ICON_SIZE, &cursor_ops, cursor_data);
 
     // Window.
     struct window_data *window_data = malloc(sizeof(*window_data));
