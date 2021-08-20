@@ -77,7 +77,6 @@ static void window_global_mouse_move(struct surface *surface, int screen_x,
 static bool window_mouse_down(struct surface *surface, int x, int y) {
     struct window_data *data = surface->user_data;
 
-    DBG("window down: %d, %d", x, y);
     if (y < WINDOW_TITLE_HEIGHT && x > 15 /* close button */) {
         data->being_moved = true;
         data->prev_cursor_x = get_cursor_x();
