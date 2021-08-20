@@ -34,9 +34,9 @@ static void cursor_render(struct surface *surface) {
 
 static struct surface_ops cursor_ops = {
     .render = cursor_render,
-    .on_mouse_move = NULL,
-    .on_hover = NULL,
-    .on_clicked_left = NULL,
+    .global_mouse_move = NULL,
+    .global_mouse_up = NULL,
+    .mouse_down = NULL,
 };
 
 static void wallpaper_render(struct surface *surface) {
@@ -46,15 +46,19 @@ static void wallpaper_render(struct surface *surface) {
 
 static struct surface_ops wallpaper_ops = {
     .render = wallpaper_render,
-    .on_mouse_move = NULL,
-    .on_hover = NULL,
-    .on_clicked_left = NULL,
+    .global_mouse_move = NULL,
+    .global_mouse_up = NULL,
+    .mouse_down = NULL,
 };
 
-static void window_mouse_move(int screen_x, int screen_y) {
+static void window_global_mouse_move(int screen_x, int screen_y) {
 }
 
-static bool window_clicked_left(int x, int y) {
+static bool window_mouse_down(int screen_x, int screen_y) {
+    return true;
+}
+
+static bool window_global_mouse_up(int screen_x, int screen_y) {
     return true;
 }
 
@@ -65,9 +69,9 @@ static void window_render(struct surface *surface) {
 
 static struct surface_ops window_ops = {
     .render = window_render,
-    .on_mouse_move = window_mouse_move,
-    .on_hover = NULL,
-    .on_clicked_left = window_clicked_left,
+    .global_mouse_move = window_global_mouse_move,
+    .global_mouse_up = window_global_mouse_up,
+    .mouse_down = window_mouse_down,
 };
 
 void gui_render(void) {
@@ -92,25 +96,27 @@ void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
 
     // Notify surfaces mouse events from the foremost one until any of them
     // consume the event.
-    bool clicked_left_event = !clicked_left && prev_clicked_left;
-    bool consumed_clicked_left = false;
+    bool mouse_down = !clicked_left && prev_clicked_left;
+    bool consumed_mouse_down = false;
     LIST_FOR_EACH (s, &surfaces, struct surface, next) {
         bool overlaps =
             s->screen_x <= cursor_x && cursor_x < s->screen_x + s->width
             && s->screen_y <= cursor_y && cursor_y < s->screen_y + s->height;
 
+        if (s->ops->global_mouse_move) {
+            s->ops->global_mouse_move(cursor_x, cursor_y);
+        }
+
+        if (s->ops->global_mouse_up) {
+            s->ops->global_mouse_up(cursor_x, cursor_y);
+        }
+
         if (overlaps) {
             int local_x = s->screen_x - cursor_x;
             int local_y = s->screen_y - cursor_y;
 
-            if (s->ops->on_hover) {
-                s->ops->on_hover(local_x, local_y);
-            }
-
-            if (clicked_left_event && !consumed_clicked_left
-                && s->ops->on_clicked_left) {
-                consumed_clicked_left =
-                    s->ops->on_clicked_left(local_x, local_y);
+            if (mouse_down && !consumed_mouse_down && s->ops->mouse_down) {
+                consumed_mouse_down = s->ops->mouse_down(local_x, local_y);
             }
         }
     }

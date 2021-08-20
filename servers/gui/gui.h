@@ -22,14 +22,14 @@ struct surface_ops {
     void (*render)(struct surface *surface);
     /// Called when the cursor is moved. `screen_x` and `screen_y` are global
     /// cursor position.
-    void (*on_mouse_move)(int screen_x, int screen_y);
-    /// Called when the cursor is on the surface. `x` and `y` are surface-local
-    /// cursor position. If the callback returns `true`, it stop propagating
-    void (*on_hover)(int x, int y);
-    /// Called on a mouse click. `x` and `y` are surface-local cursor position.
-    /// If the callback returns `true`, gui stops propagating the clicked event
-    /// to remaining surfaces behind it (like `Event.stopPropagation` in Web).
-    bool (*on_clicked_left)(int x, int y);
+    void (*global_mouse_move)(int screen_x, int screen_y);
+    /// Called when the left button is up.`screen_x` and `screen_y` are global
+    /// cursor position. If the callback returns `true`, the event propagation
+    /// stops.
+    bool (*global_mouse_up)(int screen_x, int screen_y);
+    /// Called on a left button is down. `x` and `y` are surface-local cursor
+    /// position. If the callback returns `true`, the event propagation stops.
+    bool (*mouse_down)(int x, int y);
 };
 
 struct os_ops {
