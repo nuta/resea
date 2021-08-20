@@ -22,14 +22,16 @@ struct surface_ops {
     void (*render)(struct surface *surface);
     /// Called when the cursor is moved. `screen_x` and `screen_y` are global
     /// cursor position.
-    void (*global_mouse_move)(int screen_x, int screen_y);
+    void (*global_mouse_move)(struct surface *surface, int screen_x,
+                              int screen_y);
     /// Called when the left button is up.`screen_x` and `screen_y` are global
     /// cursor position. If the callback returns `true`, the event propagation
     /// stops.
-    bool (*global_mouse_up)(int screen_x, int screen_y);
+    bool (*global_mouse_up)(struct surface *surface, int screen_x,
+                            int screen_y);
     /// Called on a left button is down. `x` and `y` are surface-local cursor
     /// position. If the callback returns `true`, the event propagation stops.
-    bool (*mouse_down)(int x, int y);
+    bool (*mouse_down)(struct surface *surface, int x, int y);
 };
 
 struct os_ops {

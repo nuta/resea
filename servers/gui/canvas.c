@@ -83,7 +83,6 @@ void canvas_draw_wallpaper(canvas_t canvas) {
 void canvas_draw_window(canvas_t canvas, struct window_data *window) {
     int width = cairo_image_surface_get_width(canvas->surface) - 3;
     int height = cairo_image_surface_get_height(canvas->surface) - 3;
-    int title_height = 23;
 
     // Window frame.
     double radius = 10.;
@@ -115,13 +114,8 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window) {
     // Title bar background.
     cairo_arc(canvas->cr, width - radius, radius, radius, -90 * degrees,
               0 * degrees);
-    cairo_line_to(canvas->cr, width, title_height);
-    // cairo_arc(canvas->cr, width - radius, title_height - radius, radius,
-    //           0 * degrees, 90 * degrees);
-    cairo_line_to(canvas->cr, 0, title_height);
-    // cairo_arc(canvas->cr, radius, title_height - radius, radius, 90 *
-    // degrees,
-    //           180 * degrees);
+    cairo_line_to(canvas->cr, width, WINDOW_TITLE_HEIGHT);
+    cairo_line_to(canvas->cr, 0, WINDOW_TITLE_HEIGHT);
     cairo_arc(canvas->cr, radius, radius, radius, 180 * degrees, 270 * degrees);
     cairo_close_path(canvas->cr);
     cairo_set_source_rgb(canvas->cr, .8, .8, .8);
@@ -136,7 +130,7 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window) {
     const char *title = "Console";
     cairo_text_extents_t extents;
     cairo_set_font_face(canvas->cr, ui_bold_font);
-    cairo_set_font_size(canvas->cr, title_height - 10);
+    cairo_set_font_size(canvas->cr, WINDOW_TITLE_HEIGHT - 10);
     cairo_text_extents(canvas->cr, title, &extents);
     cairo_set_source_rgb(canvas->cr, .1, .1, .1);
     cairo_move_to(canvas->cr, width / 2 - extents.width / 2,
