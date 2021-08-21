@@ -54,9 +54,6 @@ static uint8_t read_data_reg(void) {
 #define MOUSE_BYTE1_Y_OVERFLOW   (1 << 7)
 
 static void handle_mouse_irq(void) {
-    static int mouse_byte_pos = 0;
-    static uint8_t data[3];
-
     uint8_t status = read_status_reg();
     bool mouse_input = (status & (1 << 5)) != 1;
     if (!mouse_input) {
@@ -64,56 +61,65 @@ static void handle_mouse_irq(void) {
         return;
     }
 
-    switch (mouse_byte_pos) {
-        case 0:
-            data[0] = read_data_reg();
-            if ((data[0] & MOUSE_BYTE1_ALWAYS_1) == 0) {
-                // Invalid data, just ignore it.
-                WARN("invalid first byte: data=%x, status=%x", data[0], status);
-                return;
-            }
-            mouse_byte_pos++;
-            break;
-        case 1:
-            data[1] = read_data_reg();
-            mouse_byte_pos++;
-            break;
-        case 2: {
-            mouse_byte_pos = 0;
-            bool overflowed = (data[0] & MOUSE_BYTE1_X_OVERFLOW) != 0
-                              || (data[0] & MOUSE_BYTE1_Y_OVERFLOW) != 0;
-            if (overflowed) {
-                TRACE("overflowed (first_byte=%x)", data[0]);
+    int i = 0;
+    uint8_t data[3];
+    bool done = false;
+    while (!done) {
+        switch (i) {
+            case 0:
+                data[0] = read_data_reg();
+                if ((data[0] & MOUSE_BYTE1_ALWAYS_1) == 0) {
+                    // Invalid data, just ignore it.
+                    WARN("invalid first byte: data=%x, status=%x", data[0],
+                         status);
+                    done = true;
+                    break;
+                }
+                i++;
+                break;
+            case 1:
+                data[1] = read_data_reg();
+                i++;
+                break;
+            case 2: {
+                i = 0;
+                bool overflowed = (data[0] & MOUSE_BYTE1_X_OVERFLOW) != 0
+                                  || (data[0] & MOUSE_BYTE1_Y_OVERFLOW) != 0;
+                if (overflowed) {
+                    TRACE("overflowed (first_byte=%x)", data[0]);
+                    done = true;
+                    break;
+                }
+
+                data[2] = read_data_reg();
+                bool left_pressed = (data[0] & MOUSE_BYTE1_LEFT_BUTTON) != 0;
+                bool right_pressed = (data[0] & MOUSE_BYTE1_RIGHT_BUTTON) != 0;
+                int32_t x_raw = (data[0] & MOUSE_BYTE1_X_SIGNED)
+                                    ? (((uint32_t) data[1]) | 0xffffff00)
+                                    : data[1];
+                int32_t y_raw = (data[0] & MOUSE_BYTE1_Y_SIGNED)
+                                    ? (((uint32_t) data[2]) | 0xffffff00)
+                                    : data[2];
+                int x = x_raw;
+                int y = -y_raw;
+
+                DBG("mouse: data=[%x, %d, %d], x=%d, y=%d%s%s", data[0],
+                    data[1], data[2], x, y, left_pressed ? " [LEFT]" : "",
+                    right_pressed ? "[RIGHT]" : "");
+
+                struct message m;
+                m.type = MOUSE_INPUT_MSG;
+                m.mouse_input.x_delta = x;
+                m.mouse_input.y_delta = y;
+                m.mouse_input.clicked_left = left_pressed;
+                m.mouse_input.clicked_right = right_pressed;
+                ipc_send(gui_server, &m);
+                done = true;
                 break;
             }
-
-            data[2] = read_data_reg();
-            bool left_pressed = (data[0] & MOUSE_BYTE1_LEFT_BUTTON) != 0;
-            bool right_pressed = (data[0] & MOUSE_BYTE1_RIGHT_BUTTON) != 0;
-            int32_t x_raw = (data[0] & MOUSE_BYTE1_X_SIGNED)
-                                ? (((uint32_t) data[1]) | 0xffffff00)
-                                : data[1];
-            int32_t y_raw = (data[0] & MOUSE_BYTE1_Y_SIGNED)
-                                ? (((uint32_t) data[2]) | 0xffffff00)
-                                : data[2];
-            int x = x_raw;
-            int y = -y_raw;
-
-            DBG("mouse: data=[%x, %d, %d], x=%d, y=%d%s%s", data[0], data[1],
-                data[2], x, y, left_pressed ? " [LEFT]" : "",
-                right_pressed ? "[RIGHT]" : "");
-
-            struct message m;
-            m.type = MOUSE_INPUT_MSG;
-            m.mouse_input.x_delta = x;
-            m.mouse_input.y_delta = y;
-            m.mouse_input.clicked_left = left_pressed;
-            m.mouse_input.clicked_right = right_pressed;
-            ipc_send(gui_server, &m);
-            break;
+            default:
+                UNREACHABLE();
         }
-        default:
-            UNREACHABLE();
     }
 }
 
@@ -183,6 +189,7 @@ void main(void) {
                     handle_mouse_irq();
                     // handle_keyboard_irq();
                 }
+                break;
             default:
                 TRACE("unknown message %s", msgtype2str(m.type));
         }
