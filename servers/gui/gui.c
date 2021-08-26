@@ -12,11 +12,11 @@ int screen_width;
 int screen_height;
 
 int get_cursor_x(void) {
-    return cursor_surface->screen_x;
+    return cursor_surface->x;
 }
 
 int get_cursor_y(void) {
-    return cursor_surface->screen_y;
+    return cursor_surface->y;
 }
 
 static struct surface *surface_create(int width, int height,
@@ -26,8 +26,8 @@ static struct surface *surface_create(int width, int height,
     surface->canvas = canvas_create(width, height);
     surface->ops = ops;
     surface->user_data = user_data;
-    surface->screen_x = 0;
-    surface->screen_y = 0;
+    surface->x = 0;
+    surface->y = 0;
     surface->width = width;
     surface->height = height;
 
@@ -37,7 +37,7 @@ static struct surface *surface_create(int width, int height,
 
 static void cursor_render(struct surface *surface) {
     struct cursor_data *data = surface->user_data;
-    canvas_draw_cursor(surface->canvas, data->shape);
+    canvas_draw_cursor(surface->canvas, data);
 }
 
 static struct surface_ops cursor_ops = {
@@ -49,7 +49,7 @@ static struct surface_ops cursor_ops = {
 
 static void wallpaper_render(struct surface *surface) {
     struct wallpaper_data *data = surface->user_data;
-    canvas_draw_wallpaper(surface->canvas);
+    canvas_draw_wallpaper(surface->canvas, data);
 }
 
 static struct surface_ops wallpaper_ops = {
@@ -67,8 +67,8 @@ static void window_global_mouse_move(struct surface *surface, int screen_x,
         // The title bar is being dragged. Move the window position.
         int x_diff = screen_x - data->prev_cursor_x;
         int y_diff = screen_y - data->prev_cursor_y;
-        surface->screen_x += x_diff;
-        surface->screen_y += y_diff;
+        surface->x += x_diff;
+        surface->y += y_diff;
         data->prev_cursor_x = screen_x;
         data->prev_cursor_y = screen_y;
     }
@@ -78,9 +78,23 @@ static bool window_mouse_down(struct surface *surface, int x, int y) {
     struct window_data *data = surface->user_data;
 
     if (y < WINDOW_TITLE_HEIGHT && x > 15 /* close button */) {
+        // Move this window.
         data->being_moved = true;
         data->prev_cursor_x = get_cursor_x();
         data->prev_cursor_y = get_cursor_y();
+    } else if (y > WINDOW_TITLE_HEIGHT) {
+        // Click a widget.
+        LIST_FOR_EACH (widget, &data->widgets, struct widget, next) {
+            int widget_y = y - WINDOW_TITLE_HEIGHT;
+            int widget_x = x;
+            if (widget->y <= widget_y && widget_y < widget->y + widget->height
+                && widget->x <= widget_x
+                && widget_x < widget->x + widget->width) {
+                widget->ops->mouse_down(widget, widget_x - widget->x,
+                                        widget_y - widget->y);
+                break;
+            }
+        }
     }
 
     return true;
@@ -95,7 +109,22 @@ static bool window_global_mouse_up(struct surface *surface, int screen_x,
 
 static void window_render(struct surface *surface) {
     struct window_data *data = surface->user_data;
-    canvas_draw_window(surface->canvas, data);
+    int widgets_left, widgets_top;
+    canvas_draw_window(surface->canvas, data, &widgets_left, &widgets_top);
+    LIST_FOR_EACH (widget, &data->widgets, struct widget, next) {
+        int x = widgets_left + widget->x;
+        int y = widgets_top + widget->y;
+        int max_width = surface->width - x;
+        int max_height = surface->height - y;
+        if (max_width <= 0 || max_height <= 0) {
+            WARN("widget position (%d, %d) exceeds the surface size (%d, %d)",
+                 x, y, surface->width, surface->height);
+            continue;
+        }
+
+        widget->ops->render(widget, surface->canvas, x, y, max_width,
+                            max_height);
+    }
 }
 
 static struct surface_ops window_ops = {
@@ -105,11 +134,36 @@ static struct surface_ops window_ops = {
     .mouse_down = window_mouse_down,
 };
 
+struct widget_ops text_widget_ops = {
+    .render = widget_text_render,
+    .mouse_down = NULL,
+    .mouse_up = NULL,
+};
+
+static struct widget *widget_create(struct widget_ops *ops, void *data) {
+    struct widget *w = malloc(sizeof(*w));
+    w->ops = ops;
+    w->data = data;
+    w->x = 0;
+    w->y = 0;
+    w->height = 0;
+    w->width = 0;
+    list_nullify(&w->next);
+    return w;
+}
+
+static struct widget *widget_text_create(void) {
+    struct text_widget *data = malloc(sizeof(*data));
+    data->body = strdup("");
+    // data->color = ; TODO:
+    return widget_create(&text_widget_ops, data);
+}
+
 void gui_render(void) {
     struct canvas *screen = os->get_back_buffer();
     LIST_FOR_EACH_REV (s, &surfaces, struct surface, next) {
         s->ops->render(s);
-        canvas_copy(screen, s->canvas, s->screen_x, s->screen_y);
+        canvas_copy(screen, s->canvas, s->x, s->y);
     }
 
     os->swap_buffer();
@@ -120,10 +174,10 @@ void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
     static bool prev_clicked_left = false;
 
     // Move the cursor.
-    int cursor_x = cursor_surface->screen_x =
-        MIN(MAX(0, cursor_surface->screen_x + x_delta), screen_width - 5);
-    int cursor_y = cursor_surface->screen_y =
-        MIN(MAX(0, cursor_surface->screen_y + y_delta), screen_height - 5);
+    int cursor_x = cursor_surface->x =
+        MIN(MAX(0, cursor_surface->x + x_delta), screen_width - 5);
+    int cursor_y = cursor_surface->y =
+        MIN(MAX(0, cursor_surface->y + y_delta), screen_height - 5);
 
     // Notify surfaces mouse events from the foremost one until any of them
     // consume the event.
@@ -132,9 +186,8 @@ void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
     bool consumed_mouse_down = false;
     bool consumed_mouse_up = false;
     LIST_FOR_EACH (s, &surfaces, struct surface, next) {
-        bool overlaps =
-            s->screen_x <= cursor_x && cursor_x < s->screen_x + s->width
-            && s->screen_y <= cursor_y && cursor_y < s->screen_y + s->height;
+        bool overlaps = s->x <= cursor_x && cursor_x < s->x + s->width
+                        && s->y <= cursor_y && cursor_y < s->y + s->height;
 
         if (s->ops->global_mouse_move) {
             s->ops->global_mouse_move(s, cursor_x, cursor_y);
@@ -145,8 +198,8 @@ void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
         }
 
         if (overlaps) {
-            int local_x = cursor_x - s->screen_x;
-            int local_y = cursor_y - s->screen_y;
+            int local_x = cursor_x - s->x;
+            int local_y = cursor_y - s->y;
 
             if (mouse_down && !consumed_mouse_down && s->ops->mouse_down) {
                 consumed_mouse_down = s->ops->mouse_down(s, local_x, local_y);
@@ -174,8 +227,8 @@ void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
     struct surface *window_surface = surface_create(
         screen_width / 2, screen_height / 2, &window_ops, window_data);
     window_data->being_moved = false;
-    window_surface->screen_x = 50;
-    window_surface->screen_y = 50;
+    window_surface->x = 50;
+    window_surface->y = 50;
 
     // Wallpaper.
     struct wallpaper_data *wallpaper_data = malloc(sizeof(*wallpaper_data));

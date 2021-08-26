@@ -89,14 +89,14 @@ struct surface {
     struct surface_ops *ops;
     void *user_data;
     canvas_t canvas;
-    int screen_x;
-    int screen_y;
+    int x;
+    int y;
     int width;
     int height;
 };
 
 struct surface_ops {
-    /// Called when the surface need to render the contents into its canvas.
+    /// Renders the contents into its canvas.
     void (*render)(struct surface *surface);
     /// Called when the cursor is moved. `screen_x` and `screen_y` are global
     /// cursor position.
@@ -112,27 +112,42 @@ struct surface_ops {
     bool (*mouse_down)(struct surface *surface, int x, int y);
 };
 
-enum widget_type {
-    WIDGET_TEXT,
-    WIDGET_BUTTON,
-};
-
-struct widget_header {
-    enum widget_type type;
-    struct widget_header *next;
-    int x;
-    int y;
-};
-
 struct text_widget {
-    struct widget_header header;
+    /// A NUL-terminated string. Allocated in the heap (malloc).
     const char *body;
+    /// The text color.
     color_t color;
 };
 
 struct button_widget {
-    struct widget_header header;
     struct text_widget *text;
+};
+
+struct widget_ops;
+struct widget {
+    list_elem_t next;
+    struct widget_ops *ops;
+    void *data;
+    // The window-local x-axis position (0 points to the immediately under the
+    // window title bar).
+    int x;
+    // The window-local y-axis position (0 points to the immediately under the
+    // window title bar).
+    int y;
+    int height;
+    int width;
+};
+
+struct widget_ops {
+    /// Renders the contents into its canvas.
+    void (*render)(struct widget *widget, canvas_t canvas, int x, int y,
+                   int max_width, int max_height);
+    /// Called on a left button is down. `x` and `y` are widget-local cursor
+    /// position.
+    void (*mouse_down)(struct widget *widget, int x, int y);
+    /// Called on a left button is up. `x` and `y` are widget-local cursor
+    /// position.
+    void (*mouse_up)(struct widget *widget, int x, int y);
 };
 
 #define WINDOW_TITLE_HEIGHT 23
@@ -140,7 +155,7 @@ struct window_data {
     bool being_moved;
     int prev_cursor_x;
     int prev_cursor_y;
-    struct surface *surface;
+    list_t widgets;
 };
 
 struct cursor_data {
@@ -149,21 +164,24 @@ struct cursor_data {
 
 struct wallpaper_data {};
 
-struct widgets_data {
-    list_t widgets;
-};
-
 canvas_t canvas_create(int width, int height);
 canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
                                    void *framebuffer,
                                    enum canvas_format format);
-void canvas_draw_wallpaper(canvas_t canvas);
-void canvas_draw_window(canvas_t canvas, struct window_data *window);
-void canvas_draw_cursor(canvas_t canvas, enum cursor_shape shape);
+void canvas_draw_wallpaper(canvas_t canvas, struct wallpaper_data *wallpaper);
+void canvas_draw_window(canvas_t canvas, struct window_data *window,
+                        int *widgets_left, int *widgets_top);
+void canvas_draw_cursor(canvas_t canvas, struct cursor_data *cursor);
+void canvas_draw_text(struct widget *widget, canvas_t canvas, int x, int y,
+                      int max_width, int max_height);
+void canvas_draw_button(canvas_t canvas, struct button_widget *button);
 void canvas_copy(canvas_t dst, canvas_t src, int x, int y);
 void canvas_init(void *(*get_icon_png)(enum icon_type icon,
                                        unsigned *file_size),
                  void *(*open_asset_file)(const char *name,
                                           unsigned *file_size));
+
+void widget_text_render(struct widget *widget, canvas_t canvas, int x, int y,
+                        int max_width, int max_height);
 
 #endif

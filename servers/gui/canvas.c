@@ -76,7 +76,7 @@ canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
     return canvas_create_from_surface(surface);
 }
 
-void canvas_draw_wallpaper(canvas_t canvas) {
+void canvas_draw_wallpaper(canvas_t canvas, struct wallpaper_data *wallpaper) {
     cairo_set_source_rgb(canvas->cr, .8, .6, .5);
     cairo_rectangle(canvas->cr, 0, 0,
                     cairo_image_surface_get_width(canvas->surface),
@@ -84,7 +84,8 @@ void canvas_draw_wallpaper(canvas_t canvas) {
     cairo_fill(canvas->cr);
 }
 
-void canvas_draw_window(canvas_t canvas, struct window_data *window) {
+void canvas_draw_window(canvas_t canvas, struct window_data *window,
+                        int *widgets_left, int *widgets_top) {
     int width = cairo_image_surface_get_width(canvas->surface) - 3;
     int height = cairo_image_surface_get_height(canvas->surface) - 3;
 
@@ -140,9 +141,12 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window) {
     cairo_move_to(canvas->cr, width / 2 - extents.width / 2,
                   extents.height + 7);
     cairo_show_text(canvas->cr, title);
+
+    *widgets_left = 5;
+    *widgets_top = WINDOW_TITLE_HEIGHT;
 }
 
-void canvas_draw_cursor(canvas_t canvas, enum cursor_shape shape) {
+void canvas_draw_cursor(canvas_t canvas, struct cursor_data *cursor) {
     cairo_set_source_surface(canvas->cr, icons[ICON_CURSOR], 0, 0);
     cairo_rectangle(canvas->cr, 0, 0, ICON_SIZE, ICON_SIZE);
     cairo_fill(canvas->cr);
@@ -216,4 +220,21 @@ void canvas_init(void *(*get_icon_png)(enum icon_type icon,
                cairo_image_surface_get_height(icons[ICON_CURSOR]), file_data[0],
                file_data[1], file_data[2], file_data[3]);
     }
+}
+
+void widget_text_render(struct widget *widget, canvas_t canvas, int x, int y,
+                        int max_width, int max_height) {
+    struct text_widget *text = widget->data;
+
+    // Update the widget size.
+    cairo_text_extents_t extents;
+    cairo_text_extents(canvas->cr, text->body, &extents);
+    widget->height = extents.height;
+    widget->width = extents.width;
+
+    // Render the text.
+    cairo_set_font_face(canvas->cr, ui_regular_font);
+    cairo_set_font_size(canvas->cr, 10);
+    cairo_set_source_rgb(canvas->cr, .1, .1, .1);
+    cairo_show_text(canvas->cr, text->body);
 }
