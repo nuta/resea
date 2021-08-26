@@ -67,6 +67,9 @@ static inline void list_push_back(list_t *list, list_elem_t *new_tail) {
 // Represents a color in RGBA.
 typedef uint32_t color_t;
 
+struct canvas;
+typedef struct canvas *canvas_t;
+
 enum canvas_format {
     CANVAS_FORMAT_ARGB32,
 };
@@ -80,7 +83,34 @@ enum icon_type {
     NUM_ICON_TYPES = 1,
 };
 
-#define WINDOW_TITLE_HEIGHT 23
+struct surface_ops;
+struct surface {
+    list_elem_t next;
+    struct surface_ops *ops;
+    void *user_data;
+    canvas_t canvas;
+    int screen_x;
+    int screen_y;
+    int width;
+    int height;
+};
+
+struct surface_ops {
+    /// Called when the surface need to render the contents into its canvas.
+    void (*render)(struct surface *surface);
+    /// Called when the cursor is moved. `screen_x` and `screen_y` are global
+    /// cursor position.
+    void (*global_mouse_move)(struct surface *surface, int screen_x,
+                              int screen_y);
+    /// Called when the left button is up.`screen_x` and `screen_y` are global
+    /// cursor position. If the callback returns `true`, the event propagation
+    /// stops.
+    bool (*global_mouse_up)(struct surface *surface, int screen_x,
+                            int screen_y);
+    /// Called on a left button is down. `x` and `y` are surface-local cursor
+    /// position. If the callback returns `true`, the event propagation stops.
+    bool (*mouse_down)(struct surface *surface, int x, int y);
+};
 
 enum widget_type {
     WIDGET_TEXT,
@@ -105,10 +135,7 @@ struct button_widget {
     struct text_widget *text;
 };
 
-struct widget_surface_data {
-    struct widget_header *widgets;
-};
-
+#define WINDOW_TITLE_HEIGHT 23
 struct window_data {
     bool being_moved;
     int prev_cursor_x;
@@ -116,8 +143,15 @@ struct window_data {
     struct surface *surface;
 };
 
-struct canvas;
-typedef struct canvas *canvas_t;
+struct cursor_data {
+    enum cursor_shape shape;
+};
+
+struct wallpaper_data {};
+
+struct widgets_data {
+    list_t widgets;
+};
 
 canvas_t canvas_create(int width, int height);
 canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
