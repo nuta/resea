@@ -1,9 +1,11 @@
 #ifndef __GUI_H__
 #define __GUI_H__
 
-#include "canvas.h"
 #include <list.h>
 #include <types.h>
+
+//
+#include "canvas.h"
 
 struct surface_ops;
 struct surface {

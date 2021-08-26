@@ -82,9 +82,9 @@ static void handle_mouse_irq(void) {
     static int state = 0;
     static uint8_t data[3];
 
-    bool send_mouse_event = false;
     int x = 0;
     int y = 0;
+    bool send_mouse_event = false;
     bool left_pressed = false;
     bool right_pressed = false;
     while (true) {

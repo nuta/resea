@@ -1,10 +1,71 @@
 #ifndef __RENDERER_H__
 #define __RENDERER_H__
 
-// FIXME: include <types.h>
-typedef char bool;
-#define true 1
-#define false 0
+// -----------------------------------------------------------------------------
+// FIXME: include <list.h> instead
+#ifndef __LIST_H__
+#    define LIST_CONTAINER(head, container, field)                             \
+        ((container *) ((vaddr_t) (head) -offsetof(container, field)))
+#    define LIST_FOR_EACH(elem, list, container, field)                        \
+        for (container *elem = LIST_CONTAINER((list)->next, container, field), \
+                       *__next = NULL;                                         \
+             (&elem->field != (list)                                           \
+              && (__next =                                                     \
+                      LIST_CONTAINER(elem->field.next, container, field)));    \
+             elem = __next)
+
+struct list_head {
+    struct list_head *prev;
+    struct list_head *next;
+};
+
+typedef struct list_head list_t;
+typedef struct list_head list_elem_t;
+
+// Inserts a new element between `prev` and `next`.
+static inline void list_insert(list_elem_t *prev, list_elem_t *next,
+                               list_elem_t *new) {
+    new->prev = prev;
+    new->next = next;
+    next->prev = new;
+    prev->next = new;
+}
+
+// Initializes a list.
+static inline void list_init(list_t *list) {
+    list->prev = list;
+    list->next = list;
+}
+
+// Invalidates a list element.
+static inline void list_nullify(list_elem_t *elem) {
+    elem->prev = NULL;
+    elem->next = NULL;
+}
+
+// Removes a element from the list.
+static inline void list_remove(list_elem_t *elem) {
+    if (!elem->next) {
+        // The element is not in a list.
+        return;
+    }
+
+    elem->prev->next = elem->next;
+    elem->next->prev = elem->prev;
+
+    // Invalidate the element as they're no longer in the list.
+    list_nullify(elem);
+}
+
+// Appends a element into the list.
+static inline void list_push_back(list_t *list, list_elem_t *new_tail) {
+    list_insert(list->prev, list, new_tail);
+}
+#endif
+// -----------------------------------------------------------------------------
+
+// Represents a color in RGBA.
+typedef uint32_t color_t;
 
 enum canvas_format {
     CANVAS_FORMAT_ARGB32,
@@ -21,10 +82,38 @@ enum icon_type {
 
 #define WINDOW_TITLE_HEIGHT 23
 
+enum widget_type {
+    WIDGET_TEXT,
+    WIDGET_BUTTON,
+};
+
+struct widget_header {
+    enum widget_type type;
+    struct widget_header *next;
+    int x;
+    int y;
+};
+
+struct text_widget {
+    struct widget_header header;
+    const char *body;
+    color_t color;
+};
+
+struct button_widget {
+    struct widget_header header;
+    struct text_widget *text;
+};
+
+struct widget_surface_data {
+    struct widget_header *widgets;
+};
+
 struct window_data {
     bool being_moved;
     int prev_cursor_x;
     int prev_cursor_y;
+    struct surface *surface;
 };
 
 struct canvas;

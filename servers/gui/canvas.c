@@ -1,9 +1,13 @@
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+// canvas.h depends on stdint
 #include "canvas.h"
 #include <cairo-ft.h>
 #include <cairo.h>
 #include <ft2build.h>
 #include <math.h>
-#include <stdint.h>
 
 #include FT_FREETYPE_H
 
