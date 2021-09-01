@@ -14,7 +14,7 @@
 struct message {
     /// The type of message. If it's negative, this field represents an error
     /// (error_t).
-    int type;
+    msg_type_t type;
     /// The sender task of this message.
     task_t src;
     /// The message contents. Note that it's a union, not struct!

@@ -1,0 +1,11 @@
+/// The GUI window system.
+namespace gui {
+    rpc window_create(title: str, width: int, height: int) -> (window: handle);
+
+    rpc text_create(window: handle, x: int, y: int, body: str) -> (text: handle);
+
+    rpc button_create(window: handle, x: int, y: int, label: str) -> (button: handle);
+    rpc button_set_label(button: handle, label: str) -> ();
+
+    oneway on_button_click(button: handle, x: int, y: int) -> ();
+}

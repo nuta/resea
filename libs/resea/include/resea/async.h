@@ -14,6 +14,6 @@ struct async_message {
 error_t async_send(task_t dst, struct message *m);
 error_t async_recv(task_t src, struct message *m);
 bool async_is_empty(task_t dst);
-error_t async_reply(task_t dst);
+void async_reply(task_t dst);
 
 #endif

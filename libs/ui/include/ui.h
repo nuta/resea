@@ -3,11 +3,12 @@
 
 #include <types.h>
 
-typedef int ui_event_t;
+typedef handle_t ui_window_t;
+__failable ui_window_t ui_window_create(const char *title, int width,
+                                        int height);
 
 typedef handle_t ui_text_t;
-__failable ui_text_t ui_text_create(void);
-error_t ui_text_set_visibility(ui_text_t text, bool visible);
+__failable ui_text_t ui_text_create(ui_window_t window);
 error_t ui_text_set_position(ui_text_t text, int x, int y);
 error_t ui_text_set_body(ui_text_t text, const char *body);
 error_t ui_text_set_size(ui_text_t text, enum ui_text_size size);
@@ -15,19 +16,10 @@ error_t ui_text_set_rgba(ui_text_t text, uint8_t r, uint8_t g, uint8_t b,
                          uint8_t a);
 
 typedef handle_t ui_button_t;
-__failable ui_button_t ui_button_create(void);
-error_t ui_buttton_set_visibility(ui_button_t button, bool visible);
-error_t ui_buttton_set_position(ui_button_t button, int x, int y);
-error_t ui_buttton_set_size(ui_button_t button, int x, int y);
-error_t ui_button_set_text(ui_button_t button, ui_text_t text);
+__failable ui_button_t ui_button_create(ui_window_t window, int x, int y,
+                                        const char *label);
+error_t ui_button_set_label(ui_button_t button, const char *label);
 error_t ui_button_on_click(ui_button_t button,
-                           void (*callback)(ui_event_t ev, ui_button_t button));
-
-typedef handle_t ui_window_t;
-__failable ui_window_t ui_window_create(void);
-error_t ui_window_set_size(ui_window_t window, int width, int height);
-error_t ui_window_set_title(ui_window_t window, const char *title);
-error_t ui_window_add_text(ui_window_t window, ui_text_t text);
-error_t ui_window_add_button(ui_window_t window, ui_button_t button);
+                           void (*callback)(ui_button_t button, int x, int y));
 
 #endif

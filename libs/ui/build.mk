@@ -1,2 +1,2 @@
 name := ui
-objs-y += ui.o
+objs-y += init.o window.o text.o button.o

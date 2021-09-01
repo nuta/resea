@@ -28,6 +28,7 @@ typedef uintmax_t offset_t;
 typedef int task_t;
 typedef long handle_t;
 typedef int msec_t;
+typedef int msg_type_t;
 
 #define INT8_MIN   -128
 #define INT16_MIN  -32768
@@ -71,6 +72,8 @@ typedef __builtin_va_list va_list;
 #define __noreturn            __attribute__((noreturn))
 #define __weak                __attribute__((weak))
 #define __mustuse             __attribute__((warn_unused_result))
+/// Indicates the value is never NULL.
+#define __nonnull
 /// Indicates the argument or return value is nullable.
 #define __nullable
 /// Indicates the return value can be `error_t`. Use `IS_OK`.

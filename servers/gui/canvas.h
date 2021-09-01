@@ -74,6 +74,12 @@ enum canvas_format {
     CANVAS_FORMAT_ARGB32,
 };
 
+enum cursor_state {
+    CURSOR_STATE_NORMAL,
+    CURSOR_STATE_CLICKING,
+    CURSOR_STATE_DRAGGING,
+};
+
 enum cursor_shape {
     CURSOR_POINTER,
 };
@@ -87,6 +93,11 @@ enum surface_type {
     SURFACE_WINDOW,
     SURFACE_CURSOR,
     SURFACE_WALLPAPER,
+
+    /// A text (window widget).
+    SURFACE_TEXT,
+    /// A button (window widget).
+    SURFACE_BUTTON,
 };
 
 struct surface_ops;
@@ -100,35 +111,46 @@ struct surface {
     int y;
     int width;
     int height;
-    bool mouse_down;
 };
 
 struct surface_ops {
     /// Renders the contents into its canvas.
-    void (*render)(struct surface *surface);
-    /// Called when the cursor is moved. `screen_x` and `screen_y` are global
-    /// cursor position.
-    void (*global_mouse_move)(struct surface *surface, int screen_x,
-                              int screen_y);
-    /// Called when the left button is up.`screen_x` and `screen_y` are global
-    /// cursor position. If the callback returns `true`, the event propagation
-    /// stops.
-    bool (*global_mouse_up)(struct surface *surface, int screen_x,
-                            int screen_y);
+    void (*render)(struct surface *surface, int x, int y, int max_width,
+                   int max_height);
     /// Called on a left button is down. `x` and `y` are surface-local cursor
     /// position. If the callback returns `true`, the event propagation stops.
     bool (*mouse_down)(struct surface *surface, int x, int y);
-    /// Called on a left button is up. `x` and `y` are surface-local cursor
-    /// position. If the callback returns `true`, the event propagation stops.
-    bool (*mouse_up)(struct surface *surface, int x, int y);
-    /// Called on a left button is up outside the surface. Unlike
-    /// `global_mouse_up`, this callback won't be called if the surface didn't
-    /// received a corresponding mouse_down event. `x` and `y` are surface-local
-    /// cursor position.
-    void (*mouse_outside_up)(struct surface *surface);
+    /// Called on a left button is up. `screen_x` and `screen_y` are
+    /// screen-global cursor position.
+    ///
+    /// Please prefer using `click` and `drag_end`. `mouse_up` is called
+    /// regardless of the cursor position: it should be used for, for example,
+    /// restoring appearances on the surface changes in `mouse_down`.
+    void (*mouse_up)(struct surface *surface, int screen_x, int screen_y);
+    /// Called on mouse clicks (just before `mouse_up`). The window system
+    /// defines a "click" as follows:
+    ///
+    ///   - The elapsed time between mouse_down/mouse_up is less than a
+    ///     threshold.
+    ///   - The cursor didn't moved significantly between mouse_down/mouse_up.
+    ///
+    ///  `x` and `y` are surface-local cursor positions.
+    bool (*clicked)(struct surface *surface, int x, int y);
+    /// Called when the surface is started being dragging. `x` and `y` are
+    /// surface-local cursor positions.
+    ///
+    /// Returns the surface being dragged (which will receive `drag_move` and
+    /// `drag_end` events).
+    struct surface *(*drag_start)(struct surface *surface, int x, int y);
+    /// Called when the surface is being dragged. `screen_x` and
+    /// `screen_y` are screen-global cursor positions.
+    void (*drag_move)(struct surface *surface, int screen_x, int screen_y);
+    /// Called when the surface is dropped. `screen_x` and
+    /// `screen_y` are screen-global cursor positions.
+    void (*drag_end)(struct surface *surface, int screen_x, int screen_y);
 };
 
-struct text_widget {
+struct text_data {
     /// A NUL-terminated string. Allocated in the heap (malloc).
     char *body;
     /// The text color.
@@ -145,66 +167,27 @@ enum button_state {
     BUTTON_STATE_ACTIVE,
 };
 
-struct button_widget {
+struct button_data {
     enum button_state state;
     /// A NUL-terminated string. Allocated in the heap (malloc).
     char *label;
 };
 
-enum widget_type {
-    WIDGET_TEXT,
-    WIDGET_BUTTON,
-};
-
-struct widget_ops;
-struct widget {
-    list_elem_t next;
-    enum widget_type type;
-    struct widget_ops *ops;
-    void *data;
-    /// The window-local x-axis position (0 points to the immediately under the
-    /// window title bar).
-    int x;
-    /// The window-local y-axis position (0 points to the immediately under the
-    /// window title bar).
-    int y;
-    int height;
-    int width;
-    bool mouse_down;
-};
-
-struct widget_ops {
-    /// Renders the contents into its canvas.
-    void (*render)(struct widget *widget, canvas_t canvas, int x, int y,
-                   int max_width, int max_height);
-    /// Called on a left button is down. `x` and `y` are widget-local cursor
-    /// position.
-    void (*mouse_down)(struct widget *widget, int x, int y);
-    /// Called on a left button is up. `x` and `y` are widget-local cursor
-    /// position.
-    void (*mouse_up)(struct widget *widget, int x, int y);
-    /// Called on a left button is up outside the widget. `x` and `y` are
-    /// widget-local cursor position.
-    void (*mouse_outside_up)(struct widget *widget);
-    /// Called on mouse clicks (just before `mouse_up`). The window system
-    /// defines a "click" as follows:
-    ///
-    ///   - The elapsed time between mouse_down/mouse_up is less than a
-    ///     threshold.
-    ///   - The cursor didn't moved significantly between mouse_down/mouse_up.
-    ///
-    ///  `x` and `y` are widget-local cursor position.
-    void (*clicked)(struct widget *widget, int x, int y);
+enum window_drag_target {
+    WINDOW_DRAG_IGNORED,
+    WINDOW_DRAG_TITLE_BAR,
+    WINDOW_DRAG_CHILD,
 };
 
 #define WINDOW_TITLE_HEIGHT 23
 struct window_data {
     /// A NUL-terminated string. Allocated in the heap (malloc).
     char *title;
-    bool being_moved;
+    enum window_drag_target dragging_target;
+    struct surface *dragging_child;
     int prev_cursor_x;
     int prev_cursor_y;
-    list_t widgets;
+    list_t children;
 };
 
 struct cursor_data {
@@ -227,9 +210,9 @@ void canvas_init(void *(*get_icon_png)(enum icon_type icon,
                  void *(*open_asset_file)(const char *name,
                                           unsigned *file_size));
 
-void widget_text_render(struct widget *widget, canvas_t canvas, int x, int y,
-                        int max_width, int max_height);
-void widget_button_render(struct widget *widget, canvas_t canvas, int x, int y,
-                          int max_width, int max_height);
+void text_render(struct surface *surface, int x, int y, int max_width,
+                 int max_height);
+void button_render(struct surface *surface, int x, int y, int max_width,
+                   int max_height);
 
 #endif

@@ -71,6 +71,7 @@ void main(void) {
                     switch (m.type) {
                         case BENCHMARK_NOP_MSG:
                             INFO("received a async message!");
+                            break;
                     }
                 }
         }

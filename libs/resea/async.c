@@ -37,7 +37,7 @@ error_t async_recv(task_t src, struct message *m) {
     return ipc_call(src, m);
 }
 
-error_t async_reply(task_t dst) {
+void async_reply(task_t dst) {
     bool sent = false;
     LIST_FOR_EACH (am, get_queue(dst), struct async_message, next) {
         if (am->dst == dst) {
@@ -53,9 +53,9 @@ error_t async_reply(task_t dst) {
         }
     }
 
-    // Return ER_NOT_FOUND if there're no messages asynchronously sent to `dst`
+    // Return ERR_TRY_AGAIN if there're no messages asynchronously sent to `dst`
     // in the queue.
-    return (sent) ? OK : ERR_NOT_FOUND;
+    ipc_reply_err(dst, ERR_TRY_AGAIN);
 }
 
 bool async_is_empty(task_t dst) {

@@ -227,15 +227,16 @@ void canvas_init(void *(*get_icon_png)(enum icon_type icon,
     }
 }
 
-void widget_text_render(struct widget *widget, canvas_t canvas, int x, int y,
-                        int max_width, int max_height) {
-    struct text_widget *text = widget->data;
+void text_render(struct surface *surface, int x, int y, int max_width,
+                 int max_height) {
+    struct text_data *text = surface->data;
+    canvas_t canvas = surface->canvas;
 
     // Update the widget size.
     cairo_text_extents_t extents;
     cairo_text_extents(canvas->cr, text->body, &extents);
-    widget->height = extents.height;
-    widget->width = extents.width;
+    surface->height = extents.height;
+    surface->width = extents.width;
 
     // Render the text.
     cairo_move_to(canvas->cr, x, y + extents.height);
@@ -245,9 +246,10 @@ void widget_text_render(struct widget *widget, canvas_t canvas, int x, int y,
     cairo_show_text(canvas->cr, text->body);
 }
 
-void widget_button_render(struct widget *widget, canvas_t canvas, int x, int y,
-                          int max_width, int max_height) {
-    struct button_widget *button = widget->data;
+void button_render(struct surface *surface, int x, int y, int max_width,
+                   int max_height) {
+    struct button_data *button = surface->data;
+    canvas_t canvas = surface->canvas;
 
     // Update the widget size.
     cairo_text_extents_t extents;
@@ -255,8 +257,8 @@ void widget_button_render(struct widget *widget, canvas_t canvas, int x, int y,
 
     int rectangle_height = extents.height + BUTTON_TOPDOWN_PADDING * 2;
     int rectangle_width = extents.width + BUTTON_SIDE_PADDING * 2;
-    widget->height = rectangle_height;
-    widget->width = rectangle_width;
+    surface->height = rectangle_height;
+    surface->width = rectangle_width;
 
     // Render the background.
     cairo_rounded_rectangle(canvas->cr, x, y, rectangle_width,
