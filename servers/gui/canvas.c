@@ -138,15 +138,14 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window,
     cairo_fill(canvas->cr);
 
     // Window title.
-    const char *title = "Console";
     cairo_text_extents_t extents;
     cairo_set_font_face(canvas->cr, ui_bold_font);
     cairo_set_font_size(canvas->cr, WINDOW_TITLE_HEIGHT - 10);
-    cairo_text_extents(canvas->cr, title, &extents);
+    cairo_text_extents(canvas->cr, window->title, &extents);
     cairo_set_source_rgb(canvas->cr, .1, .1, .1);
     cairo_move_to(canvas->cr, width / 2 - extents.width / 2,
                   extents.height + 7);
-    cairo_show_text(canvas->cr, title);
+    cairo_show_text(canvas->cr, window->title);
 
     *widgets_left = 5;
     *widgets_top = WINDOW_TITLE_HEIGHT;

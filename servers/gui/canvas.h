@@ -100,6 +100,7 @@ struct surface {
     int y;
     int width;
     int height;
+    bool mouse_down;
 };
 
 struct surface_ops {
@@ -117,6 +118,14 @@ struct surface_ops {
     /// Called on a left button is down. `x` and `y` are surface-local cursor
     /// position. If the callback returns `true`, the event propagation stops.
     bool (*mouse_down)(struct surface *surface, int x, int y);
+    /// Called on a left button is up. `x` and `y` are surface-local cursor
+    /// position. If the callback returns `true`, the event propagation stops.
+    bool (*mouse_up)(struct surface *surface, int x, int y);
+    /// Called on a left button is up outside the surface. Unlike
+    /// `global_mouse_up`, this callback won't be called if the surface didn't
+    /// received a corresponding mouse_down event. `x` and `y` are surface-local
+    /// cursor position.
+    void (*mouse_outside_up)(struct surface *surface);
 };
 
 struct text_widget {
@@ -128,7 +137,16 @@ struct text_widget {
 
 #define BUTTON_TOPDOWN_PADDING 7
 #define BUTTON_SIDE_PADDING    10
+
+enum button_state {
+    /// The cursor is not on the button.
+    BUTTON_STATE_NORMAL,
+    /// The button is being clicked.
+    BUTTON_STATE_ACTIVE,
+};
+
 struct button_widget {
+    enum button_state state;
     /// A NUL-terminated string. Allocated in the heap (malloc).
     char *label;
 };
@@ -152,6 +170,7 @@ struct widget {
     int y;
     int height;
     int width;
+    bool mouse_down;
 };
 
 struct widget_ops {
@@ -164,6 +183,18 @@ struct widget_ops {
     /// Called on a left button is up. `x` and `y` are widget-local cursor
     /// position.
     void (*mouse_up)(struct widget *widget, int x, int y);
+    /// Called on a left button is up outside the widget. `x` and `y` are
+    /// widget-local cursor position.
+    void (*mouse_outside_up)(struct widget *widget);
+    /// Called on mouse clicks (just before `mouse_up`). The window system
+    /// defines a "click" as follows:
+    ///
+    ///   - The elapsed time between mouse_down/mouse_up is less than a
+    ///     threshold.
+    ///   - The cursor didn't moved significantly between mouse_down/mouse_up.
+    ///
+    ///  `x` and `y` are widget-local cursor position.
+    void (*clicked)(struct widget *widget, int x, int y);
 };
 
 #define WINDOW_TITLE_HEIGHT 23

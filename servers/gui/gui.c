@@ -31,6 +31,7 @@ static struct surface *surface_create(int width, int height,
     surface->y = 0;
     surface->width = width;
     surface->height = height;
+    surface->mouse_down = false;
 
     list_push_back(&surfaces, &surface->next);
     return surface;
@@ -44,6 +45,13 @@ void *surface_get_data(struct surface *surface, enum surface_type type) {
     }
 
     return surface->data;
+}
+
+void *surface_get_data_or_panic(struct surface *surface,
+                                enum surface_type type) {
+    void *data = surface_get_data(surface, type);
+    ASSERT(data != NULL);
+    return data;
 }
 
 static void cursor_render(struct surface *surface) {
@@ -96,27 +104,37 @@ static void window_global_mouse_move(struct surface *surface, int screen_x,
     }
 }
 
-static bool window_mouse_down(struct surface *surface, int x, int y) {
-    struct window_data *data = surface_get_data(surface, SURFACE_WINDOW);
-    if (!data) {
-        return false;
-    }
+static bool in_window_widget_pos(struct window_data *window,
+                                 struct widget *widget, int surface_x,
+                                 int surface_y, int *widget_x, int *widget_y) {
+    *widget_y = surface_y - WINDOW_TITLE_HEIGHT;
+    *widget_x = surface_x;
+    int in_widget =
+        widget->y <= *widget_y && *widget_y < widget->y + widget->height
+        && widget->x <= *widget_x && *widget_x < widget->x + widget->width;
+    return in_widget;
+}
 
-    if (y < WINDOW_TITLE_HEIGHT && x > 15 /* close button */) {
+static bool window_mouse_down(struct surface *surface, int surface_x,
+                              int surface_y) {
+    struct window_data *window =
+        surface_get_data_or_panic(surface, SURFACE_WINDOW);
+
+    if (surface_y < WINDOW_TITLE_HEIGHT && surface_x > 15 /* close button */) {
         // Move this window.
-        data->being_moved = true;
-        data->prev_cursor_x = get_cursor_x();
-        data->prev_cursor_y = get_cursor_y();
-    } else if (y > WINDOW_TITLE_HEIGHT) {
+        window->being_moved = true;
+        window->prev_cursor_x = get_cursor_x();
+        window->prev_cursor_y = get_cursor_y();
+    } else if (surface_y > WINDOW_TITLE_HEIGHT) {
         // Click a widget.
-        LIST_FOR_EACH (widget, &data->widgets, struct widget, next) {
-            int widget_y = y - WINDOW_TITLE_HEIGHT;
-            int widget_x = x;
-            if (widget->y <= widget_y && widget_y < widget->y + widget->height
-                && widget->x <= widget_x && widget_x < widget->x + widget->width
-                && widget->ops->mouse_down) {
+        LIST_FOR_EACH (widget, &window->widgets, struct widget, next) {
+            int widget_x, widget_y;
+            if (widget->ops->mouse_down
+                && in_window_widget_pos(window, widget, surface_x, surface_y,
+                                        &widget_x, &widget_y)) {
                 widget->ops->mouse_down(widget, widget_x - widget->x,
                                         widget_y - widget->y);
+                widget->mouse_down = true;
                 break;
             }
         }
@@ -134,6 +152,36 @@ static bool window_global_mouse_up(struct surface *surface, int screen_x,
 
     data->being_moved = false;
     return true;
+}
+
+static bool window_mouse_up(struct surface *surface, int surface_x,
+                            int surface_y) {
+    struct window_data *window =
+        surface_get_data_or_panic(surface, SURFACE_WINDOW);
+    LIST_FOR_EACH (widget, &window->widgets, struct widget, next) {
+        int widget_x, widget_y;
+        if (widget->ops->mouse_up
+            && in_window_widget_pos(window, widget, surface_x, surface_y,
+                                    &widget_x, &widget_y)) {
+            widget->ops->mouse_up(widget, widget_x - widget->x,
+                                  widget_y - widget->y);
+            widget->mouse_down = false;
+            break;
+        }
+    }
+
+    return true;
+}
+
+static void window_mouse_outside_up(struct surface *surface) {
+    struct window_data *window =
+        surface_get_data_or_panic(surface, SURFACE_WINDOW);
+    LIST_FOR_EACH (widget, &window->widgets, struct widget, next) {
+        if (widget->ops->mouse_up) {
+            widget->ops->mouse_outside_up(widget);
+            widget->mouse_down = false;
+        }
+    }
 }
 
 static void window_render(struct surface *surface) {
@@ -175,16 +223,8 @@ static struct surface_ops window_ops = {
     .global_mouse_move = window_global_mouse_move,
     .global_mouse_up = window_global_mouse_up,
     .mouse_down = window_mouse_down,
-};
-
-struct widget_ops text_widget_ops = {
-    .render = widget_text_render,
-};
-
-struct widget_ops button_widget_ops = {
-    .render = widget_button_render,
-    .mouse_down = NULL,
-    .mouse_up = NULL,
+    .mouse_up = window_mouse_up,
+    .mouse_outside_up = window_mouse_outside_up,
 };
 
 static __nullable struct widget *widget_create(struct surface *window,
@@ -204,6 +244,7 @@ static __nullable struct widget *widget_create(struct surface *window,
     w->y = 0;
     w->height = 0;
     w->width = 0;
+    w->mouse_down = false;
     list_push_back(&window_data->widgets, &w->next);
     return w;
 }
@@ -220,10 +261,18 @@ void *widget_get_data(struct widget *widget, enum widget_type type) {
     return widget->data;
 }
 
+void *widget_get_data_or_panic(struct widget *widget, enum widget_type type) {
+    void *data = widget_get_data(widget, type);
+    ASSERT(data != NULL);
+    return data;
+}
+
 void widget_move(struct widget *widget, int x, int y) {
     widget->x = x;
     widget->y = y;
 }
+
+extern struct widget_ops text_widget_ops;
 
 static __nullable struct widget *widget_text_create(struct surface *window) {
     struct text_widget *data = malloc(sizeof(*data));
@@ -252,8 +301,15 @@ error_t widget_text_set_body(struct widget *text_widget, const char *body) {
     return OK;
 }
 
+struct widget_ops text_widget_ops = {
+    .render = widget_text_render,
+};
+
+extern struct widget_ops button_widget_ops;
+
 static __nullable struct widget *widget_button_create(struct surface *window) {
     struct button_widget *data = malloc(sizeof(*data));
+    data->state = BUTTON_STATE_NORMAL;
     data->label = strdup("");
 
     struct widget *widget =
@@ -278,6 +334,24 @@ error_t widget_button_set_label(struct widget *button_widget,
     data->label = strdup(body);
     return OK;
 }
+
+static void widget_button_mouse_down(struct widget *widget, int x, int y) {
+    struct button_widget *button =
+        widget_get_data_or_panic(widget, WIDGET_BUTTON);
+    button->state = BUTTON_STATE_ACTIVE;
+}
+
+static void widget_button_mouse_outside_up(struct widget *widget) {
+    struct button_widget *button =
+        widget_get_data_or_panic(widget, WIDGET_BUTTON);
+    button->state = BUTTON_STATE_NORMAL;
+}
+
+struct widget_ops button_widget_ops = {
+    .render = widget_button_render,
+    .mouse_down = widget_button_mouse_down,
+    .mouse_outside_up = widget_button_mouse_outside_up,
+};
 
 void gui_render(void) {
     struct canvas *screen = os->get_back_buffer();
@@ -309,21 +383,38 @@ void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
         bool overlaps = s->x <= cursor_x && cursor_x < s->x + s->width
                         && s->y <= cursor_y && cursor_y < s->y + s->height;
 
+        // mouse move
         if (s->ops->global_mouse_move) {
             s->ops->global_mouse_move(s, cursor_x, cursor_y);
         }
 
-        if (mouse_up && !consumed_mouse_up && s->ops->global_mouse_up) {
-            consumed_mouse_up = s->ops->global_mouse_up(s, cursor_x, cursor_y);
+        // mouse up (screen-global)
+        if (mouse_up && s->ops->global_mouse_up) {
+            s->ops->global_mouse_up(s, cursor_x, cursor_y);
         }
 
         if (overlaps) {
             int local_x = cursor_x - s->x;
             int local_y = cursor_y - s->y;
 
+            // mouse down
             if (mouse_down && !consumed_mouse_down && s->ops->mouse_down) {
                 consumed_mouse_down = s->ops->mouse_down(s, local_x, local_y);
+                s->mouse_down = true;
             }
+
+            // mouse up
+            if (mouse_up && s->mouse_down && !consumed_mouse_up
+                && s->ops->mouse_up) {
+                consumed_mouse_up = s->ops->mouse_up(s, local_x, cursor_y);
+                s->mouse_down = false;
+            }
+        }
+
+        // mouse up (outside the surface)
+        if (mouse_up && s->mouse_down && s->ops->mouse_outside_up) {
+            s->ops->mouse_outside_up(s);
+            s->mouse_down = false;
         }
     }
 
