@@ -160,14 +160,17 @@ static bool window_mouse_up(struct surface *surface, int surface_x,
         surface_get_data_or_panic(surface, SURFACE_WINDOW);
     LIST_FOR_EACH (widget, &window->widgets, struct widget, next) {
         int widget_x, widget_y;
-        if (widget->ops->mouse_up
-            && in_window_widget_pos(window, widget, surface_x, surface_y,
-                                    &widget_x, &widget_y)) {
-            widget->ops->mouse_up(widget, widget_x - widget->x,
-                                  widget_y - widget->y);
-            widget->mouse_down = false;
-            break;
+        if (in_window_widget_pos(window, widget, surface_x, surface_y,
+                                 &widget_x, &widget_y)) {
+            if (widget->ops->mouse_up) {
+                widget->ops->mouse_up(widget, widget_x - widget->x,
+                                      widget_y - widget->y);
+            }
+        } else if (widget->ops->mouse_outside_up && widget->mouse_down) {
+            widget->ops->mouse_outside_up(widget);
         }
+
+        widget->mouse_down = false;
     }
 
     return true;
@@ -177,7 +180,7 @@ static void window_mouse_outside_up(struct surface *surface) {
     struct window_data *window =
         surface_get_data_or_panic(surface, SURFACE_WINDOW);
     LIST_FOR_EACH (widget, &window->widgets, struct widget, next) {
-        if (widget->ops->mouse_up) {
+        if (widget->ops->mouse_outside_up && widget->mouse_down) {
             widget->ops->mouse_outside_up(widget);
             widget->mouse_down = false;
         }
@@ -341,6 +344,12 @@ static void widget_button_mouse_down(struct widget *widget, int x, int y) {
     button->state = BUTTON_STATE_ACTIVE;
 }
 
+static void widget_button_mouse_up(struct widget *widget, int x, int y) {
+    struct button_widget *button =
+        widget_get_data_or_panic(widget, WIDGET_BUTTON);
+    button->state = BUTTON_STATE_NORMAL;
+}
+
 static void widget_button_mouse_outside_up(struct widget *widget) {
     struct button_widget *button =
         widget_get_data_or_panic(widget, WIDGET_BUTTON);
@@ -350,6 +359,7 @@ static void widget_button_mouse_outside_up(struct widget *widget) {
 struct widget_ops button_widget_ops = {
     .render = widget_button_render,
     .mouse_down = widget_button_mouse_down,
+    .mouse_up = widget_button_mouse_up,
     .mouse_outside_up = widget_button_mouse_outside_up,
 };
 
