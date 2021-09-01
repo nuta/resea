@@ -261,7 +261,14 @@ void widget_button_render(struct widget *widget, canvas_t canvas, int x, int y,
     // Render the background.
     cairo_rounded_rectangle(canvas->cr, x, y, rectangle_width,
                             rectangle_height);
-    cairo_set_source_rgb(canvas->cr, .8, .8, .8);
+    switch (button->state) {
+        case BUTTON_STATE_NORMAL:
+            cairo_set_source_rgb(canvas->cr, .8, .8, .8);
+            break;
+        case BUTTON_STATE_ACTIVE:
+            cairo_set_source_rgb(canvas->cr, .6, .6, .8);
+            break;
+    }
     cairo_fill(canvas->cr);
 
     // Render the label.
