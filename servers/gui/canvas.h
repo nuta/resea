@@ -83,11 +83,18 @@ enum icon_type {
     NUM_ICON_TYPES = 1,
 };
 
+enum surface_type {
+    SURFACE_WINDOW,
+    SURFACE_CURSOR,
+    SURFACE_WALLPAPER,
+};
+
 struct surface_ops;
 struct surface {
     list_elem_t next;
+    enum surface_type type;
     struct surface_ops *ops;
-    void *user_data;
+    void *data;
     canvas_t canvas;
     int x;
     int y;
@@ -114,25 +121,34 @@ struct surface_ops {
 
 struct text_widget {
     /// A NUL-terminated string. Allocated in the heap (malloc).
-    const char *body;
+    char *body;
     /// The text color.
     color_t color;
 };
 
+#define BUTTON_TOPDOWN_PADDING 7
+#define BUTTON_SIDE_PADDING    10
 struct button_widget {
-    struct text_widget *text;
+    /// A NUL-terminated string. Allocated in the heap (malloc).
+    char *label;
+};
+
+enum widget_type {
+    WIDGET_TEXT,
+    WIDGET_BUTTON,
 };
 
 struct widget_ops;
 struct widget {
     list_elem_t next;
+    enum widget_type type;
     struct widget_ops *ops;
     void *data;
-    // The window-local x-axis position (0 points to the immediately under the
-    // window title bar).
+    /// The window-local x-axis position (0 points to the immediately under the
+    /// window title bar).
     int x;
-    // The window-local y-axis position (0 points to the immediately under the
-    // window title bar).
+    /// The window-local y-axis position (0 points to the immediately under the
+    /// window title bar).
     int y;
     int height;
     int width;
@@ -152,6 +168,8 @@ struct widget_ops {
 
 #define WINDOW_TITLE_HEIGHT 23
 struct window_data {
+    /// A NUL-terminated string. Allocated in the heap (malloc).
+    char *title;
     bool being_moved;
     int prev_cursor_x;
     int prev_cursor_y;
@@ -172,9 +190,6 @@ void canvas_draw_wallpaper(canvas_t canvas, struct wallpaper_data *wallpaper);
 void canvas_draw_window(canvas_t canvas, struct window_data *window,
                         int *widgets_left, int *widgets_top);
 void canvas_draw_cursor(canvas_t canvas, struct cursor_data *cursor);
-void canvas_draw_text(struct widget *widget, canvas_t canvas, int x, int y,
-                      int max_width, int max_height);
-void canvas_draw_button(canvas_t canvas, struct button_widget *button);
 void canvas_copy(canvas_t dst, canvas_t src, int x, int y);
 void canvas_init(void *(*get_icon_png)(enum icon_type icon,
                                        unsigned *file_size),
@@ -183,5 +198,7 @@ void canvas_init(void *(*get_icon_png)(enum icon_type icon,
 
 void widget_text_render(struct widget *widget, canvas_t canvas, int x, int y,
                         int max_width, int max_height);
+void widget_button_render(struct widget *widget, canvas_t canvas, int x, int y,
+                          int max_width, int max_height);
 
 #endif

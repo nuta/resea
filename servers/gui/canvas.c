@@ -37,6 +37,21 @@ static FT_Face ft_ui_bold_face;
 static cairo_font_face_t *ui_regular_font = NULL;
 static cairo_font_face_t *ui_bold_font = NULL;
 
+static void cairo_rounded_rectangle(cairo_t *cr, int x, int y, int width,
+                                    int height) {
+    double radius = 10.;
+    double degrees = M_PI / 180.;
+    cairo_new_sub_path(cr);
+    cairo_arc(cr, x + width - radius, y + radius, radius, -90 * degrees,
+              0 * degrees);
+    cairo_arc(cr, x + width - radius, y + height - radius, radius, 0 * degrees,
+              90 * degrees);
+    cairo_arc(cr, x + radius, y + height - radius, radius, 90 * degrees,
+              180 * degrees);
+    cairo_arc(cr, x + radius, y + radius, radius, 180 * degrees, 270 * degrees);
+    cairo_close_path(cr);
+}
+
 static canvas_t canvas_create_from_surface(cairo_surface_t *surface) {
     cairo_t *cr = cairo_create(surface);
     ASSERT(dst->cr != NULL);
@@ -90,22 +105,13 @@ void canvas_draw_window(canvas_t canvas, struct window_data *window,
     int height = cairo_image_surface_get_height(canvas->surface) - 3;
 
     // Window frame.
-    double radius = 10.;
-    double degrees = M_PI / 180.;
-    cairo_new_sub_path(canvas->cr);
-    cairo_arc(canvas->cr, width - radius, radius, radius, -90 * degrees,
-              0 * degrees);
-    cairo_arc(canvas->cr, width - radius, height - radius, radius, 0 * degrees,
-              90 * degrees);
-    cairo_arc(canvas->cr, radius, height - radius, radius, 90 * degrees,
-              180 * degrees);
-    cairo_arc(canvas->cr, radius, radius, radius, 180 * degrees, 270 * degrees);
-    cairo_close_path(canvas->cr);
-
+    cairo_rounded_rectangle(canvas->cr, 0, 0, width, height);
     cairo_set_source_rgb(canvas->cr, .97, .97, .97);
     cairo_fill(canvas->cr);
 
     // Window shadow.
+    double radius = 10.;
+    double degrees = M_PI / 180.;
     cairo_arc(canvas->cr, width - radius, radius, radius, -90 * degrees,
               0 * degrees);
     cairo_arc(canvas->cr, width - radius, height - radius, radius, 0 * degrees,
@@ -233,8 +239,37 @@ void widget_text_render(struct widget *widget, canvas_t canvas, int x, int y,
     widget->width = extents.width;
 
     // Render the text.
+    cairo_move_to(canvas->cr, x, y + extents.height);
     cairo_set_font_face(canvas->cr, ui_regular_font);
-    cairo_set_font_size(canvas->cr, 10);
+    cairo_set_font_size(canvas->cr, 16);
     cairo_set_source_rgb(canvas->cr, .1, .1, .1);
     cairo_show_text(canvas->cr, text->body);
+}
+
+void widget_button_render(struct widget *widget, canvas_t canvas, int x, int y,
+                          int max_width, int max_height) {
+    struct button_widget *button = widget->data;
+
+    // Update the widget size.
+    cairo_text_extents_t extents;
+    cairo_text_extents(canvas->cr, button->label, &extents);
+
+    int rectangle_height = extents.height + BUTTON_TOPDOWN_PADDING * 2;
+    int rectangle_width = extents.width + BUTTON_SIDE_PADDING * 2;
+    widget->height = rectangle_height;
+    widget->width = rectangle_width;
+
+    // Render the background.
+    cairo_rounded_rectangle(canvas->cr, x, y, rectangle_width,
+                            rectangle_height);
+    cairo_set_source_rgb(canvas->cr, .8, .8, .8);
+    cairo_fill(canvas->cr);
+
+    // Render the label.
+    cairo_move_to(canvas->cr, x + BUTTON_SIDE_PADDING,
+                  y + BUTTON_TOPDOWN_PADDING + extents.height);
+    cairo_set_font_face(canvas->cr, ui_regular_font);
+    cairo_set_font_size(canvas->cr, 16);
+    cairo_set_source_rgb(canvas->cr, .1, .1, .1);
+    cairo_show_text(canvas->cr, button->label);
 }

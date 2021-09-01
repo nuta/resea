@@ -20,12 +20,13 @@ int get_cursor_y(void) {
 }
 
 static struct surface *surface_create(int width, int height,
-                                      struct surface_ops *ops,
-                                      void *user_data) {
+                                      enum surface_type type,
+                                      struct surface_ops *ops, void *data) {
     struct surface *surface = malloc(sizeof(*surface));
     surface->canvas = canvas_create(width, height);
+    surface->type = type;
     surface->ops = ops;
-    surface->user_data = user_data;
+    surface->data = data;
     surface->x = 0;
     surface->y = 0;
     surface->width = width;
@@ -35,8 +36,22 @@ static struct surface *surface_create(int width, int height,
     return surface;
 }
 
+/// Returns the surface-specific data. If the `surface` is not a `type`,
+/// NULL is returned.
+void *surface_get_data(struct surface *surface, enum surface_type type) {
+    if (surface->type != type) {
+        return NULL;
+    }
+
+    return surface->data;
+}
+
 static void cursor_render(struct surface *surface) {
-    struct cursor_data *data = surface->user_data;
+    struct cursor_data *data = surface_get_data(surface, SURFACE_CURSOR);
+    if (!data) {
+        return;
+    }
+
     canvas_draw_cursor(surface->canvas, data);
 }
 
@@ -48,7 +63,11 @@ static struct surface_ops cursor_ops = {
 };
 
 static void wallpaper_render(struct surface *surface) {
-    struct wallpaper_data *data = surface->user_data;
+    struct wallpaper_data *data = surface_get_data(surface, SURFACE_WALLPAPER);
+    if (!data) {
+        return;
+    }
+
     canvas_draw_wallpaper(surface->canvas, data);
 }
 
@@ -61,7 +80,10 @@ static struct surface_ops wallpaper_ops = {
 
 static void window_global_mouse_move(struct surface *surface, int screen_x,
                                      int screen_y) {
-    struct window_data *data = surface->user_data;
+    struct window_data *data = surface_get_data(surface, SURFACE_WINDOW);
+    if (!data) {
+        return;
+    }
 
     if (data->being_moved) {
         // The title bar is being dragged. Move the window position.
@@ -75,7 +97,10 @@ static void window_global_mouse_move(struct surface *surface, int screen_x,
 }
 
 static bool window_mouse_down(struct surface *surface, int x, int y) {
-    struct window_data *data = surface->user_data;
+    struct window_data *data = surface_get_data(surface, SURFACE_WINDOW);
+    if (!data) {
+        return false;
+    }
 
     if (y < WINDOW_TITLE_HEIGHT && x > 15 /* close button */) {
         // Move this window.
@@ -88,8 +113,8 @@ static bool window_mouse_down(struct surface *surface, int x, int y) {
             int widget_y = y - WINDOW_TITLE_HEIGHT;
             int widget_x = x;
             if (widget->y <= widget_y && widget_y < widget->y + widget->height
-                && widget->x <= widget_x
-                && widget_x < widget->x + widget->width) {
+                && widget->x <= widget_x && widget_x < widget->x + widget->width
+                && widget->ops->mouse_down) {
                 widget->ops->mouse_down(widget, widget_x - widget->x,
                                         widget_y - widget->y);
                 break;
@@ -102,13 +127,21 @@ static bool window_mouse_down(struct surface *surface, int x, int y) {
 
 static bool window_global_mouse_up(struct surface *surface, int screen_x,
                                    int screen_y) {
-    struct window_data *data = surface->user_data;
+    struct window_data *data = surface_get_data(surface, SURFACE_WINDOW);
+    if (!data) {
+        return false;
+    }
+
     data->being_moved = false;
     return true;
 }
 
 static void window_render(struct surface *surface) {
-    struct window_data *data = surface->user_data;
+    struct window_data *data = surface_get_data(surface, SURFACE_WINDOW);
+    if (!data) {
+        return;
+    }
+
     int widgets_left, widgets_top;
     canvas_draw_window(surface->canvas, data, &widgets_left, &widgets_top);
     LIST_FOR_EACH (widget, &data->widgets, struct widget, next) {
@@ -127,6 +160,16 @@ static void window_render(struct surface *surface) {
     }
 }
 
+void window_set_title(struct surface *surface, const char *title) {
+    struct window_data *data = surface_get_data(surface, SURFACE_WINDOW);
+    if (!data) {
+        return;
+    }
+
+    free(data->title);
+    data->title = strdup(title);
+}
+
 static struct surface_ops window_ops = {
     .render = window_render,
     .global_mouse_move = window_global_mouse_move,
@@ -136,27 +179,104 @@ static struct surface_ops window_ops = {
 
 struct widget_ops text_widget_ops = {
     .render = widget_text_render,
+};
+
+struct widget_ops button_widget_ops = {
+    .render = widget_button_render,
     .mouse_down = NULL,
     .mouse_up = NULL,
 };
 
-static struct widget *widget_create(struct widget_ops *ops, void *data) {
+static __nullable struct widget *widget_create(struct surface *window,
+                                               enum widget_type type,
+                                               struct widget_ops *ops,
+                                               void *data) {
+    struct window_data *window_data = surface_get_data(window, SURFACE_WINDOW);
+    if (!window_data) {
+        return NULL;
+    }
+
     struct widget *w = malloc(sizeof(*w));
+    w->type = type;
     w->ops = ops;
     w->data = data;
     w->x = 0;
     w->y = 0;
     w->height = 0;
     w->width = 0;
-    list_nullify(&w->next);
+    list_push_back(&window_data->widgets, &w->next);
     return w;
 }
 
-static struct widget *widget_text_create(void) {
+/// Returns the widget-specific data. If the `widget` is not a `type`,
+/// NULL is returned.
+void *widget_get_data(struct widget *widget, enum widget_type type) {
+    if (widget->type != type) {
+        WARN_DBG("%s: type mismatch (expected=%d, actual=%d)", type,
+                 widget->type);
+        return NULL;
+    }
+
+    return widget->data;
+}
+
+void widget_move(struct widget *widget, int x, int y) {
+    widget->x = x;
+    widget->y = y;
+}
+
+static __nullable struct widget *widget_text_create(struct surface *window) {
     struct text_widget *data = malloc(sizeof(*data));
     data->body = strdup("");
     // data->color = ; TODO:
-    return widget_create(&text_widget_ops, data);
+
+    struct widget *widget =
+        widget_create(window, WIDGET_TEXT, &text_widget_ops, data);
+    if (!widget) {
+        free(data->body);
+        free(data);
+        return NULL;
+    }
+
+    return widget;
+}
+
+error_t widget_text_set_body(struct widget *text_widget, const char *body) {
+    struct text_widget *data = widget_get_data(text_widget, WIDGET_TEXT);
+    if (!data) {
+        return ERR_INVALID_ARG;
+    }
+
+    free(data->body);
+    data->body = strdup(body);
+    return OK;
+}
+
+static __nullable struct widget *widget_button_create(struct surface *window) {
+    struct button_widget *data = malloc(sizeof(*data));
+    data->label = strdup("");
+
+    struct widget *widget =
+        widget_create(window, WIDGET_BUTTON, &button_widget_ops, data);
+    if (!widget) {
+        free(data->label);
+        free(data);
+        return NULL;
+    }
+
+    return widget;
+}
+
+error_t widget_button_set_label(struct widget *button_widget,
+                                const char *body) {
+    struct button_widget *data = widget_get_data(button_widget, WIDGET_BUTTON);
+    if (!data) {
+        return ERR_INVALID_ARG;
+    }
+
+    free(data->label);
+    data->label = strdup(body);
+    return OK;
 }
 
 void gui_render(void) {
@@ -219,21 +339,35 @@ void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
     // Mouse cursor.
     struct cursor_data *cursor_data = malloc(sizeof(*cursor_data));
     cursor_data->shape = CURSOR_POINTER;
-    cursor_surface =
-        surface_create(ICON_SIZE, ICON_SIZE, &cursor_ops, cursor_data);
+    cursor_surface = surface_create(ICON_SIZE, ICON_SIZE, SURFACE_CURSOR,
+                                    &cursor_ops, cursor_data);
 
     // Window.
     struct window_data *window_data = malloc(sizeof(*window_data));
-    struct surface *window_surface = surface_create(
-        screen_width / 2, screen_height / 2, &window_ops, window_data);
+    struct surface *window_surface =
+        surface_create(screen_width / 2, screen_height / 2, SURFACE_WINDOW,
+                       &window_ops, window_data);
     window_data->being_moved = false;
+    window_data->title = strdup("Window");
+    list_init(&window_data->widgets);
     window_surface->x = 50;
     window_surface->y = 50;
 
+    window_set_title(window_surface, "Hello");
+
+    struct widget *text = widget_text_create(window_surface);
+    widget_text_set_body(text, "Hello World!");
+    widget_move(text, 5, 5);
+
+    struct widget *button = widget_button_create(window_surface);
+    widget_button_set_label(button, "Click Me!");
+    widget_move(button, 5, 50);
+
     // Wallpaper.
     struct wallpaper_data *wallpaper_data = malloc(sizeof(*wallpaper_data));
-    wallpaper_surface = surface_create(screen_width, screen_height,
-                                       &wallpaper_ops, wallpaper_data);
+    wallpaper_surface =
+        surface_create(screen_width, screen_height, SURFACE_WALLPAPER,
+                       &wallpaper_ops, wallpaper_data);
 
     canvas_init(os->get_icon_png, os->open_asset_file);
 }

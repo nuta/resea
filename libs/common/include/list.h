@@ -42,6 +42,10 @@ static inline bool list_is_empty(list_t *list) {
     return list->next == list;
 }
 
+static inline bool list_is_null_elem(list_elem_t *elem) {
+    return elem->prev == NULL || elem->next == NULL;
+}
+
 static inline size_t list_len(list_t *list) {
     size_t len = 0;
     struct list_head *node = list->next;

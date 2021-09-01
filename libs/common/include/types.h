@@ -61,16 +61,20 @@ typedef char bool;
 #endif
 
 typedef __builtin_va_list va_list;
-#define offsetof(type, field)    __builtin_offsetof(type, field)
-#define is_constant(expr)        __builtin_constant_p(expr)
-#define va_start(ap, param)      __builtin_va_start(ap, param)
-#define va_end(ap)               __builtin_va_end(ap)
-#define va_arg(ap, type)         __builtin_va_arg(ap, type)
-#define __unused                 __attribute__((unused))
-#define __packed                 __attribute__((packed))
-#define __noreturn               __attribute__((noreturn))
-#define __weak                   __attribute__((weak))
-#define __mustuse                __attribute__((warn_unused_result))
+#define offsetof(type, field) __builtin_offsetof(type, field)
+#define is_constant(expr)     __builtin_constant_p(expr)
+#define va_start(ap, param)   __builtin_va_start(ap, param)
+#define va_end(ap)            __builtin_va_end(ap)
+#define va_arg(ap, type)      __builtin_va_arg(ap, type)
+#define __unused              __attribute__((unused))
+#define __packed              __attribute__((packed))
+#define __noreturn            __attribute__((noreturn))
+#define __weak                __attribute__((weak))
+#define __mustuse             __attribute__((warn_unused_result))
+/// Indicates the argument or return value is nullable.
+#define __nullable
+/// Indicates the return value can be `error_t`. Use `IS_OK`.
+#define __failable
 #define MEMORY_BARRIER()         __asm__ __volatile__("" ::: "memory");
 #define __aligned(aligned_to)    __attribute__((aligned(aligned_to)))
 #define ALIGN_DOWN(value, align) ((value) & ~((align) -1))
