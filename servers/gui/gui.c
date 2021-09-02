@@ -285,6 +285,20 @@ static struct surface_ops window_ops = {
     .drag_end = window_drag_end,
 };
 
+__nonnull struct surface *window_create(const char *title, int width,
+                                        int height) {
+    struct window_data *window_data = malloc(sizeof(*window_data));
+    struct surface *window_surface =
+        surface_create(width, height, SURFACE_WINDOW, &window_ops, window_data);
+    window_data->title = strdup("title");
+    window_data->dragging_target = WINDOW_DRAG_IGNORED;
+    window_data->dragging_child = NULL;
+    window_surface->x = 0;
+    window_surface->y = 0;
+    list_init(&window_data->children);
+    return window_surface;
+}
+
 extern struct surface_ops text_surface_ops;
 
 static __nullable struct surface *text_create(struct surface *window) {

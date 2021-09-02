@@ -100,8 +100,17 @@ enum surface_type {
     SURFACE_BUTTON,
 };
 
+enum gui_object_type {
+    GUI_OBJECT_SURFACE,
+};
+
+struct gui_object {
+    enum gui_object_type type;
+};
+
 struct surface_ops;
 struct surface {
+    struct gui_object header;
     list_elem_t next;
     enum surface_type type;
     struct surface_ops *ops;

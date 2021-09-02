@@ -1,6 +1,7 @@
 #include "gui.h"
 #include <assetfs.h>
 #include <ipc_client/shm.h>
+#include <resea/handle.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/printf.h>
@@ -94,7 +95,26 @@ static void init(void) {
 }
 
 static void handle_message(struct message m) {
+    task_t client = m.src;
     switch (m.type) {
+        case GUI_WINDOW_CREATE_MSG: {
+            struct surface *window = window_create(m.gui_window_create.title,
+                                                   m.gui_window_create.width,
+                                                   m.gui_window_create.height);
+            free(m.gui_window_create.title);
+
+            handle_t handle = handle_alloc(client);
+            handle_set(client, handle, window);
+
+            bzero(&m, sizeof(m));
+            m.type = GUI_WINDOW_CREATE_REPLY_MSG;
+            m.gui_window_create_reply.window = handle;
+            ipc_reply(client, &m);
+            break;
+        }
+        case GUI_BUTTON_CREATE_MSG: {
+            break;
+        }
         case MOUSE_INPUT_MSG:
             gui_move_mouse(m.mouse_input.x_delta, m.mouse_input.y_delta,
                            m.mouse_input.clicked_left,

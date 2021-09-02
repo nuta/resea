@@ -14,6 +14,9 @@ struct os_ops {
     void *(*open_asset_file)(const char *name, unsigned *file_size);
 };
 
+__nonnull struct surface *window_create(const char *title, int width,
+                                        int height);
+
 void gui_render(void);
 void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
                     bool clicked_right);
