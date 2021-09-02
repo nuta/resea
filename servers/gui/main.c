@@ -94,16 +94,38 @@ static void init(void) {
     ASSERT_OK(ipc_serve("gui"));
 }
 
+static struct surface *handle_to_surface(task_t client, handle_t handle,
+                                         enum surface_type type) {
+    struct gui_object *header = handle_get(client, handle);
+    if (!header) {
+        WARN_DBG("unallocated handle %d", handle);
+        return NULL;
+    }
+
+    if (header->type != GUI_OBJECT_SURFACE) {
+        WARN_DBG("handle %d is not a surface", handle);
+        return NULL;
+    }
+
+    struct surface *surface = (struct surface *) header;
+    if (surface->type != type) {
+        WARN_DBG("handle %d is an unexpected surface type", handle);
+        return NULL;
+    }
+
+    return surface;
+}
+
 static void handle_message(struct message m) {
     task_t client = m.src;
     switch (m.type) {
         case GUI_WINDOW_CREATE_MSG: {
-            struct surface *window = window_create(m.gui_window_create.title,
-                                                   m.gui_window_create.width,
-                                                   m.gui_window_create.height);
+            handle_t handle = handle_alloc(client);
+            struct surface *window = window_create(
+                m.gui_window_create.title, m.gui_window_create.width,
+                m.gui_window_create.height, handle);
             free(m.gui_window_create.title);
 
-            handle_t handle = handle_alloc(client);
             handle_set(client, handle, window);
 
             bzero(&m, sizeof(m));
@@ -113,6 +135,29 @@ static void handle_message(struct message m) {
             break;
         }
         case GUI_BUTTON_CREATE_MSG: {
+            struct surface *window = handle_to_surface(
+                client, m.gui_button_create.window, SURFACE_WINDOW);
+            if (!window) {
+                ipc_reply_err(client, ERR_INVALID_ARG);
+                break;
+            }
+
+            handle_t handle = handle_alloc(client);
+            struct surface *button = button_create(
+                window, m.gui_button_create.x, m.gui_button_create.y,
+                m.gui_button_create.label, handle);
+            free(m.gui_button_create.label);
+            if (!button) {
+                ipc_reply_err(client, ERR_INVALID_ARG);
+                break;
+            }
+
+            handle_set(client, handle, button);
+
+            bzero(&m, sizeof(m));
+            m.type = GUI_BUTTON_CREATE_REPLY_MSG;
+            m.gui_button_create_reply.button = handle;
+            ipc_reply(client, &m);
             break;
         }
         case MOUSE_INPUT_MSG:

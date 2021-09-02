@@ -104,6 +104,12 @@ static inline void list_remove(list_elem_t *elem) {
     list_nullify(elem);
 }
 
+// Prepends a element into the list.
+static inline void list_push_front(list_t *list, list_elem_t *new_head) {
+    DEBUG_ASSERT(!list_contains(list, new_head));
+    list_insert(list->next, list, new_head);
+}
+
 // Appends a element into the list.
 static inline void list_push_back(list_t *list, list_elem_t *new_tail) {
     DEBUG_ASSERT(!list_contains(list, new_tail));

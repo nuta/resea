@@ -3,9 +3,8 @@
 
 static struct os_ops *os = NULL;
 
-/// The list of toplevel surfaces ordered by the Z index. The frontmost one
-/// (i.e. cursor) comes first.
-static list_t toplevel_surfaces;
+/// The list of windows ordered by the Z index. The frontmost one comes first.
+static list_t window_surfaces;
 static struct surface *cursor_surface = NULL;
 static struct surface *wallpaper_surface = NULL;
 static int screen_width;
@@ -39,12 +38,14 @@ void *surface_get_data_or_panic(struct surface *surface,
 
 static struct surface *do_surface_create(enum surface_type type,
                                          struct surface_ops *ops, void *data,
-                                         canvas_t canvas) {
+                                         void *user_ctx, canvas_t canvas) {
     struct surface *surface = malloc(sizeof(*surface));
+    surface->header.type = GUI_OBJECT_SURFACE;
     surface->canvas = canvas;
     surface->type = type;
     surface->ops = ops;
     surface->data = data;
+    surface->user_ctx = user_ctx;
     surface->x = 0;
     surface->y = 0;
     surface->width = 0;
@@ -54,19 +55,19 @@ static struct surface *do_surface_create(enum surface_type type,
 
 static struct surface *surface_create(int width, int height,
                                       enum surface_type type,
-                                      struct surface_ops *ops, void *data) {
-    struct surface *surface =
-        do_surface_create(type, ops, data, canvas_create(width, height));
+                                      struct surface_ops *ops, void *data,
+                                      void *user_ctx) {
+    struct surface *surface = do_surface_create(type, ops, data, user_ctx,
+                                                canvas_create(width, height));
     surface->width = width;
     surface->height = height;
-    list_push_back(&toplevel_surfaces, &surface->next);
     return surface;
 }
 
 static __nullable struct surface *child_create(struct surface *window_surface,
                                                enum surface_type type,
                                                struct surface_ops *ops,
-                                               void *data) {
+                                               void *data, void *user_ctx) {
     struct window_data *window =
         surface_get_data(window_surface, SURFACE_WINDOW);
     if (!window) {
@@ -74,7 +75,7 @@ static __nullable struct surface *child_create(struct surface *window_surface,
     }
 
     struct surface *child =
-        do_surface_create(type, ops, data, window_surface->canvas);
+        do_surface_create(type, ops, data, user_ctx, window_surface->canvas);
     list_push_back(&window->children, &child->next);
     return child;
 }
@@ -82,6 +83,12 @@ static __nullable struct surface *child_create(struct surface *window_surface,
 void surface_move(struct surface *surface, int x, int y) {
     surface->x = x;
     surface->y = y;
+}
+
+static void surface_render(struct surface *surface, canvas_t screen, int x,
+                           int y, int max_width, int max_height) {
+    surface->ops->render(surface, x, y, max_width, max_height);
+    canvas_copy(screen, surface->canvas, surface->x, surface->y);
 }
 
 static void cursor_render(struct surface *surface, int x, int y, int max_width,
@@ -249,7 +256,7 @@ static void window_render(struct surface *surface, int x, int y, int max_width,
     }
 
     int childs_left, childs_top;
-    canvas_draw_window(surface->canvas, data, &childs_left, &childs_top);
+    canvas_draw_window(surface, &childs_left, &childs_top);
     LIST_FOR_EACH (child, &data->children, struct surface, next) {
         int x = childs_left + child->x;
         int y = childs_top + child->y;
@@ -286,28 +293,35 @@ static struct surface_ops window_ops = {
 };
 
 __nonnull struct surface *window_create(const char *title, int width,
-                                        int height) {
+                                        int height, void *user_ctx) {
+    height += WINDOW_TITLE_HEIGHT;
+    width += 300;  // FIXME:
+
     struct window_data *window_data = malloc(sizeof(*window_data));
-    struct surface *window_surface =
-        surface_create(width, height, SURFACE_WINDOW, &window_ops, window_data);
+    struct surface *window_surface = surface_create(
+        width, height, SURFACE_WINDOW, &window_ops, window_data, user_ctx);
     window_data->title = strdup("title");
     window_data->dragging_target = WINDOW_DRAG_IGNORED;
     window_data->dragging_child = NULL;
-    window_surface->x = 0;
-    window_surface->y = 0;
+    window_surface->x = 100;
+    window_surface->y = 100;
+    window_surface->height = height;
+    window_surface->width = width;
     list_init(&window_data->children);
+
+    list_push_back(&window_surfaces, &window_surface->next);
     return window_surface;
 }
 
 extern struct surface_ops text_surface_ops;
 
-static __nullable struct surface *text_create(struct surface *window) {
+__nullable struct surface *text_create(struct surface *window, void *user_ctx) {
     struct text_data *data = malloc(sizeof(*data));
     data->body = strdup("");
     // data->color = ; TODO:
 
     struct surface *child =
-        child_create(window, SURFACE_TEXT, &text_surface_ops, data);
+        child_create(window, SURFACE_TEXT, &text_surface_ops, data, user_ctx);
     if (!child) {
         free(data->body);
         free(data);
@@ -334,19 +348,22 @@ struct surface_ops text_surface_ops = {
 
 extern struct surface_ops button_surface_ops;
 
-static __nullable struct surface *button_create(struct surface *window) {
+__nullable struct surface *button_create(struct surface *window, int x, int y,
+                                         const char *label, void *user_ctx) {
     struct button_data *data = malloc(sizeof(*data));
     data->state = BUTTON_STATE_NORMAL;
-    data->label = strdup("");
+    data->label = strdup(label);
 
-    struct surface *child =
-        child_create(window, SURFACE_BUTTON, &button_surface_ops, data);
+    struct surface *child = child_create(window, SURFACE_BUTTON,
+                                         &button_surface_ops, data, user_ctx);
     if (!child) {
         free(data->label);
         free(data);
         return NULL;
     }
 
+    child->x = x;
+    child->y = y;
     return child;
 }
 
@@ -391,12 +408,14 @@ struct surface_ops button_surface_ops = {
 
 void gui_render(void) {
     struct canvas *screen = os->get_back_buffer();
-    LIST_FOR_EACH_REV (s, &toplevel_surfaces, struct surface, next) {
+
+    surface_render(wallpaper_surface, screen, 0, 0, 0, 0);
+    LIST_FOR_EACH_REV (s, &window_surfaces, struct surface, next) {
         // FIXME:
-        s->ops->render(s, 0, 0, 0, 0);
-        canvas_copy(screen, s->canvas, s->x, s->y);
+        surface_render(s, screen, 0, 0, 0, 0);
     }
 
+    surface_render(cursor_surface, screen, 0, 0, 0, 0);
     os->swap_buffer();
 }
 
@@ -432,23 +451,23 @@ void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
     }
 
     // drag move
-    if (cursor_state == CURSOR_STATE_DRAGGING && !drag_start && !drag_end) {
-        DEBUG_ASSERT(dragging_surface != NULL);
+    if (cursor_state == CURSOR_STATE_DRAGGING && !drag_start && !drag_end
+        && dragging_surface) {
         dragging_surface->ops->drag_move(dragging_surface, cursor_x, cursor_y);
     }
 
     // drag end
-    if (drag_end) {
+    if (drag_end && dragging_surface) {
         DEBUG_ASSERT(dragging_surface != NULL);
         dragging_surface->ops->drag_end(dragging_surface, cursor_x, cursor_y);
     }
 
-    // Notify toplevel_surfaces mouse events from the foremost one until any
+    // Notify window_surfaces mouse events from the foremost one until any
     // of them consume the event.
     bool consumed_mouse_down = false;
     bool consumed_clicked = false;
     bool consumed_drag_start = false;
-    LIST_FOR_EACH (s, &toplevel_surfaces, struct surface, next) {
+    LIST_FOR_EACH (s, &window_surfaces, struct surface, next) {
         bool overlaps = s->x <= cursor_x && cursor_x < s->x + s->width
                         && s->y <= cursor_y && cursor_y < s->y + s->height;
 
@@ -486,7 +505,7 @@ void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
     os = os_;
     screen_width = screen_width_;
     screen_height = screen_height_;
-    list_init(&toplevel_surfaces);
+    list_init(&window_surfaces);
 
     // Mouse cursor.
     struct cursor_data *cursor_data = malloc(sizeof(*cursor_data));
@@ -495,26 +514,26 @@ void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
                                     &cursor_ops, cursor_data);
 
     // Window.
-    struct window_data *window_data = malloc(sizeof(*window_data));
-    struct surface *window_surface =
-        surface_create(screen_width / 2, screen_height / 2, SURFACE_WINDOW,
-                       &window_ops, window_data);
-    window_data->title = strdup("Window");
-    window_data->dragging_target = WINDOW_DRAG_IGNORED;
-    window_data->dragging_child = NULL;
-    list_init(&window_data->children);
-    window_surface->x = 50;
-    window_surface->y = 50;
+    // struct window_data *window_data = malloc(sizeof(*window_data));
+    // struct surface *window_surface =
+    //     surface_create(screen_width / 2, screen_height / 2, SURFACE_WINDOW,
+    //                    &window_ops, window_data);
+    // window_data->title = strdup("Window");
+    // window_data->dragging_target = WINDOW_DRAG_IGNORED;
+    // window_data->dragging_child = NULL;
+    // list_init(&window_data->children);
+    // window_surface->x = 50;
+    // window_surface->y = 50;
 
-    window_set_title(window_surface, "Hello");
+    // window_set_title(window_surface, "Hello");
 
-    struct surface *text = text_create(window_surface);
-    text_set_body(text, "Hello World!");
-    surface_move(text, 5, 5);
+    // struct surface *text = text_create(window_surface);
+    // text_set_body(text, "Hello World!");
+    // surface_move(text, 5, 5);
 
-    struct surface *button = button_create(window_surface);
-    button_set_label(button, "Click Me!");
-    surface_move(button, 5, 50);
+    // struct surface *button = button_create(window_surface, 0, 0, "");
+    // button_set_label(button, "Click Me!");
+    // surface_move(button, 5, 50);
 
     // Wallpaper.
     struct wallpaper_data *wallpaper_data = malloc(sizeof(*wallpaper_data));

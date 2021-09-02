@@ -99,10 +99,12 @@ void canvas_draw_wallpaper(canvas_t canvas, struct wallpaper_data *wallpaper) {
     cairo_fill(canvas->cr);
 }
 
-void canvas_draw_window(canvas_t canvas, struct window_data *window,
-                        int *widgets_left, int *widgets_top) {
-    int width = cairo_image_surface_get_width(canvas->surface) - 3;
-    int height = cairo_image_surface_get_height(canvas->surface) - 3;
+void canvas_draw_window(struct surface *surface, int *widgets_left,
+                        int *widgets_top) {
+    canvas_t canvas = surface->canvas;
+    struct window_data *window = surface->data;
+    int width = surface->width - 3;
+    int height = surface->height - 3;
 
     // Window frame.
     cairo_rounded_rectangle(canvas->cr, 0, 0, width, height);

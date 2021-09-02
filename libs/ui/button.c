@@ -6,6 +6,7 @@ __failable ui_button_t ui_button_create(ui_window_t window, int x, int y,
                                         char *label) {
     struct message m;
     m.type = GUI_BUTTON_CREATE_MSG;
+    m.gui_button_create.window = window;
     m.gui_button_create.label = label;
     m.gui_button_create.x = x;
     m.gui_button_create.y = y;
@@ -18,8 +19,11 @@ __failable ui_button_t ui_button_create(ui_window_t window, int x, int y,
 }
 
 error_t ui_button_set_label(ui_button_t button, char *label) {
-    NYI();
-    return OK;
+    struct message m;
+    m.type = GUI_BUTTON_SET_LABEL_MSG;
+    m.gui_button_set_label.button = button;
+    m.gui_button_set_label.label = label;
+    return ipc_call(ui_gui_server, &m);
 }
 
 error_t ui_button_on_click(ui_button_t button,

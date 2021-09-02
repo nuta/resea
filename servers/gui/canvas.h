@@ -101,7 +101,7 @@ enum surface_type {
 };
 
 enum gui_object_type {
-    GUI_OBJECT_SURFACE,
+    GUI_OBJECT_SURFACE = 0xff1000a,
 };
 
 struct gui_object {
@@ -115,6 +115,7 @@ struct surface {
     enum surface_type type;
     struct surface_ops *ops;
     void *data;
+    void *user_ctx;
     canvas_t canvas;
     int x;
     int y;
@@ -210,8 +211,8 @@ canvas_t canvas_create_from_buffer(int screen_width, int screen_height,
                                    void *framebuffer,
                                    enum canvas_format format);
 void canvas_draw_wallpaper(canvas_t canvas, struct wallpaper_data *wallpaper);
-void canvas_draw_window(canvas_t canvas, struct window_data *window,
-                        int *widgets_left, int *widgets_top);
+void canvas_draw_window(struct surface *surface, int *widgets_left,
+                        int *widgets_top);
 void canvas_draw_cursor(canvas_t canvas, struct cursor_data *cursor);
 void canvas_copy(canvas_t dst, canvas_t src, int x, int y);
 void canvas_init(void *(*get_icon_png)(enum icon_type icon,

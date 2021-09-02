@@ -15,7 +15,9 @@ struct os_ops {
 };
 
 __nonnull struct surface *window_create(const char *title, int width,
-                                        int height);
+                                        int height, void *user_ctx);
+__nullable struct surface *button_create(struct surface *window, int x, int y,
+                                         const char *label, void *user_ctx);
 
 void gui_render(void);
 void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,
