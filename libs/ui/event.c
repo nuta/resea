@@ -41,6 +41,8 @@ void ui_handle_async(void) {
             }
             break;
         }
+        default:
+            discard_unknown_message(&m);
     }
 }
 
