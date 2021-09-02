@@ -1,5 +1,6 @@
 #include <resea/ipc.h>
 #include <resea/printf.h>
+#include <resea/task.h>
 #include <resea/timer.h>
 #include <string.h>
 #include <ui.h>
@@ -29,6 +30,7 @@ void main(void) {
                 if (m.notifications.data & NOTIFY_ASYNC) {
                     ui_handle_async();
                 }
+                break;
             default:
                 discard_unknown_message(&m);
         }

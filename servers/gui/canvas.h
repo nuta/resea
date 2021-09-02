@@ -108,6 +108,7 @@ struct gui_object {
     enum gui_object_type type;
 };
 
+struct user_ctx;
 struct surface_ops;
 struct surface {
     struct gui_object header;
@@ -115,7 +116,7 @@ struct surface {
     enum surface_type type;
     struct surface_ops *ops;
     void *data;
-    void *user_ctx;
+    struct user_ctx *user_ctx;
     canvas_t canvas;
     int x;
     int y;

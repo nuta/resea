@@ -29,7 +29,6 @@ static __nullable struct event_callback *get_callback(msg_type_t msg_type,
 void ui_handle_async(void) {
     struct message m;
     ASSERT_OK(async_recv(ui_gui_server, &m));
-
     switch (m.type) {
         case GUI_ON_BUTTON_CLICK_MSG: {
             struct event_callback *ec =

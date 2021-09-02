@@ -1,6 +1,7 @@
 #include "gui.h"
 #include <assetfs.h>
 #include <ipc_client/shm.h>
+#include <resea/async.h>
 #include <resea/handle.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
@@ -116,14 +117,24 @@ static struct surface *handle_to_surface(task_t client, handle_t handle,
     return surface;
 }
 
+static struct user_ctx *create_user_ctx(task_t client, handle_t handle) {
+    struct user_ctx *ctx = malloc(sizeof(*ctx));
+    ctx->client = client;
+    ctx->handle = handle;
+    return ctx;
+}
+
 static void handle_message(struct message m) {
     task_t client = m.src;
     switch (m.type) {
+        case ASYNC_MSG:
+            async_reply(m.src);
+            break;
         case GUI_WINDOW_CREATE_MSG: {
             handle_t handle = handle_alloc(client);
             struct surface *window = window_create(
                 m.gui_window_create.title, m.gui_window_create.width,
-                m.gui_window_create.height, handle);
+                m.gui_window_create.height, create_user_ctx(client, handle));
             free(m.gui_window_create.title);
 
             handle_set(client, handle, window);
@@ -145,7 +156,7 @@ static void handle_message(struct message m) {
             handle_t handle = handle_alloc(client);
             struct surface *button = button_create(
                 window, m.gui_button_create.x, m.gui_button_create.y,
-                m.gui_button_create.label, handle);
+                m.gui_button_create.label, create_user_ctx(client, handle));
             free(m.gui_button_create.label);
             if (!button) {
                 ipc_reply_err(client, ERR_INVALID_ARG);
@@ -160,11 +171,34 @@ static void handle_message(struct message m) {
             ipc_reply(client, &m);
             break;
         }
+        case GUI_BUTTON_SET_LABEL_MSG: {
+            struct surface *button = handle_to_surface(
+                client, m.gui_button_set_label.button, SURFACE_BUTTON);
+            if (!button) {
+                ipc_reply_err(client, ERR_INVALID_ARG);
+                break;
+            }
+
+            error_t err =
+                button_set_label(button, m.gui_button_set_label.label);
+            free(m.gui_button_set_label.label);
+            if (err != OK) {
+                ipc_reply_err(client, err);
+                break;
+            }
+
+            bzero(&m, sizeof(m));
+            m.type = GUI_BUTTON_SET_LABEL_REPLY_MSG;
+            ipc_reply(client, &m);
+            break;
+        }
         case MOUSE_INPUT_MSG:
             gui_move_mouse(m.mouse_input.x_delta, m.mouse_input.y_delta,
                            m.mouse_input.clicked_left,
                            m.mouse_input.clicked_right);
             break;
+        default:
+            discard_unknown_message(&m);
     }
 }
 

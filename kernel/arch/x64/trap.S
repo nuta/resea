@@ -26,6 +26,7 @@ syscall_entry:
     // Note that we can't re-enable interrupts until we go back into the user
     // mode or resume the next thread: the (per-thread) kernel stack is shared
     // with exception/interrupt handlers!
+    xchg bx,bx
     swapgs
 
     // Switch to the kernel stack.

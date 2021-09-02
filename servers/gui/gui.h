@@ -7,6 +7,11 @@
 //
 #include "canvas.h"
 
+struct user_ctx {
+    task_t client;
+    handle_t handle;
+};
+
 struct os_ops {
     canvas_t (*get_back_buffer)(void);
     void (*swap_buffer)(void);
@@ -18,6 +23,7 @@ __nonnull struct surface *window_create(const char *title, int width,
                                         int height, void *user_ctx);
 __nullable struct surface *button_create(struct surface *window, int x, int y,
                                          const char *label, void *user_ctx);
+error_t button_set_label(struct surface *button_data, const char *body);
 
 void gui_render(void);
 void gui_move_mouse(int x_delta, int y_delta, bool clicked_left,

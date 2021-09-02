@@ -1,4 +1,6 @@
 #include "gui.h"
+#include <resea/async.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
 
 static struct os_ops *os = NULL;
@@ -300,7 +302,7 @@ __nonnull struct surface *window_create(const char *title, int width,
     struct window_data *window_data = malloc(sizeof(*window_data));
     struct surface *window_surface = surface_create(
         width, height, SURFACE_WINDOW, &window_ops, window_data, user_ctx);
-    window_data->title = strdup("title");
+    window_data->title = strdup(title);
     window_data->dragging_target = WINDOW_DRAG_IGNORED;
     window_data->dragging_child = NULL;
     window_surface->x = 100;
@@ -395,7 +397,15 @@ static void button_mouse_up(struct surface *surface, int screen_x,
 static bool button_clicked(struct surface *surface, int x, int y) {
     struct button_data *button =
         surface_get_data_or_panic(surface, SURFACE_BUTTON);
-    DBG("clicked!");
+
+    INFO("clicked!: %d", surface->user_ctx->client);
+    struct message m;
+    m.type = GUI_ON_BUTTON_CLICK_MSG;
+    m.gui_on_button_click.button = surface->user_ctx->handle;
+    m.gui_on_button_click.x = x;
+    m.gui_on_button_click.y = y;
+    async_send(surface->user_ctx->client, &m);
+
     return true;
 }
 
@@ -511,7 +521,7 @@ void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
     struct cursor_data *cursor_data = malloc(sizeof(*cursor_data));
     cursor_data->shape = CURSOR_POINTER;
     cursor_surface = surface_create(ICON_SIZE, ICON_SIZE, SURFACE_CURSOR,
-                                    &cursor_ops, cursor_data);
+                                    &cursor_ops, cursor_data, NULL);
 
     // Window.
     // struct window_data *window_data = malloc(sizeof(*window_data));
@@ -539,7 +549,7 @@ void gui_init(int screen_width_, int screen_height_, struct os_ops *os_) {
     struct wallpaper_data *wallpaper_data = malloc(sizeof(*wallpaper_data));
     wallpaper_surface =
         surface_create(screen_width, screen_height, SURFACE_WALLPAPER,
-                       &wallpaper_ops, wallpaper_data);
+                       &wallpaper_ops, wallpaper_data, NULL);
 
     canvas_init(os->get_icon_png, os->open_asset_file);
 }
