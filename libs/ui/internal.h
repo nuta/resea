@@ -15,13 +15,12 @@ struct event_callback {
     /// The callback handler for the event.
     union {
         __nonnull void *callback;
-        (*button_onclick_callback)(handle_t button, int x, int y);
+        void (*button_onclick_callback)(handle_t button, int x, int y);
     };
 };
 
 void ui_register_event_callback(msg_type_t msg_type, handle_t object,
                                 __nonnull void *callback);
-void ui_handle_event(void);
 void ui_event_init(void);
 
 #endif

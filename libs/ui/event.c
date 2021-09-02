@@ -1,6 +1,8 @@
 #include "internal.h"
 #include <list.h>
+#include <resea/async.h>
 #include <resea/ipc.h>
+#include <resea/malloc.h>
 
 static list_t callbacks;
 
@@ -24,14 +26,15 @@ static __nullable struct event_callback *get_callback(msg_type_t msg_type,
     return NULL;
 }
 
-void ui_handle_event(void) {
+void ui_handle_async(void) {
     struct message m;
     ASSERT_OK(async_recv(ui_gui_server, &m));
 
     switch (m.type) {
         case GUI_ON_BUTTON_CLICK_MSG: {
-            struct event_callback *ec;
-            if (ec = get_callback(m.type, m.gui_on_button_click.button)) {
+            struct event_callback *ec =
+                get_callback(m.type, m.gui_on_button_click.button);
+            if (ec) {
                 ec->button_onclick_callback(m.gui_on_button_click.button,
                                             m.gui_on_button_click.x,
                                             m.gui_on_button_click.y);

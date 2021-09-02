@@ -3,7 +3,7 @@
 #include <ui.h>
 
 __failable ui_button_t ui_button_create(ui_window_t window, int x, int y,
-                                        const char *label) {
+                                        char *label) {
     struct message m;
     m.type = GUI_BUTTON_CREATE_MSG;
     m.gui_button_create.label = label;
@@ -17,13 +17,13 @@ __failable ui_button_t ui_button_create(ui_window_t window, int x, int y,
     return m.gui_button_create_reply.button;
 }
 
-error_t ui_button_set_label(ui_button_t button, const char *label) {
+error_t ui_button_set_label(ui_button_t button, char *label) {
     NYI();
     return OK;
 }
 
 error_t ui_button_on_click(ui_button_t button,
                            void (*callback)(ui_button_t button, int x, int y)) {
-    NYI();
+    ui_register_event_callback(GUI_ON_BUTTON_CLICK_MSG, button, callback);
     return OK;
 }

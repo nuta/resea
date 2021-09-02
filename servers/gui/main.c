@@ -93,6 +93,16 @@ static void init(void) {
     ASSERT_OK(ipc_serve("gui"));
 }
 
+static void handle_message(struct message m) {
+    switch (m.type) {
+        case MOUSE_INPUT_MSG:
+            gui_move_mouse(m.mouse_input.x_delta, m.mouse_input.y_delta,
+                           m.mouse_input.clicked_left,
+                           m.mouse_input.clicked_right);
+            break;
+    }
+}
+
 void main(void) {
     init();
 
@@ -105,13 +115,6 @@ void main(void) {
         bzero(&m, sizeof(m));
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
-
-        switch (m.type) {
-            case MOUSE_INPUT_MSG:
-                gui_move_mouse(m.mouse_input.x_delta, m.mouse_input.y_delta,
-                               m.mouse_input.clicked_left,
-                               m.mouse_input.clicked_right);
-                break;
-        }
+        handle_message(m);
     }
 }
