@@ -1,6 +1,5 @@
 menu "Kernel"
     source "kernel/arch/x64/Kconfig"
-    source "kernel/arch/arm/Kconfig"
     source "kernel/arch/arm64/Kconfig"
 
     config SEMIHOSTING
@@ -14,11 +13,6 @@ menu "Kernel"
     config IPC_FASTPATH
         bool "Enable IPC fastpath"
         default y
-
-    config NOMMU
-        bool "Disable virtual memory"
-        default n
-        depends on ARCH_ARM
 
     config NUM_TASKS
         int "The (maximum) number of tasks"

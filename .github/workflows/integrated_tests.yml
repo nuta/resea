@@ -20,16 +20,10 @@ jobs:
             TARGET: arm64
             EXPECTED: "Passed all tests"
           - os: ubuntu-20.04
-            TARGET: arm
-            EXPECTED: "Passed all tests"
-          - os: ubuntu-20.04
             TARGET: x64_release
             EXPECTED: "Passed all tests"
           - os: ubuntu-20.04
             TARGET: arm64_release
-            EXPECTED: "Passed all tests"
-          - os: ubuntu-20.04
-            TARGET: arm_release
             EXPECTED: "Passed all tests"
           - os: macos-latest
             TARGET: x64
