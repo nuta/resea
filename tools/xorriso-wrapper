@@ -1,3 +1,0 @@
-#!/bin/bash
-
-xorriso -report_about WARNING $* 2>&1

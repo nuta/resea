@@ -1,7 +1,0 @@
-menu "NOMMU test"
-	depends on BOOT_TASK_NOMMU_TEST
-
-    config BOOT_TASK
-        string
-        default "nommu_test"
-endmenu

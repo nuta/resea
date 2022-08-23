@@ -1,5 +1,0 @@
-[workspace]
-members = [
-    "libs/resea/rust",
-    "servers/apps/hello_from_rust",
-]

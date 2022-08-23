@@ -1,3 +1,0 @@
-menu "Kernel/Userland integrated tests"
-	depends on TEST_SERVER
-endmenu

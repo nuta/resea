@@ -1,6 +1,0 @@
-menu "Hello World"
-	depends on HELLO_SERVER
-
-    config PRINT_PERIODICALLY
-        bool "Print a message every second"
-endmenu

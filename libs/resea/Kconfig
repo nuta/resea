@@ -1,8 +1,0 @@
-menu "Standard Library"
-
-config OOL_BUFFER_LEN
-    int "The length of a ool buffer."
-    range 0 32768
-    default 16384
-
-endmenu

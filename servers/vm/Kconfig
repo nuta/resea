@@ -1,7 +1,0 @@
-menu "vm"
-	depends on BOOT_TASK_VM
-
-    config BOOT_TASK
-        string
-        default "vm"
-endmenu

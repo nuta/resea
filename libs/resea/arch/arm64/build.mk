@@ -1,1 +1,0 @@
-objs-y += start.o

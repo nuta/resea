@@ -1,9 +1,0 @@
-menu "Example Options"
-	depends on ARCH_EXAMPLE
-
-    config ARCH_DEFAULTS
-    	bool "Default confgurations for example arch."
-	    default y
-        # Add `select` below if needed.
-        # select NOMMU
-endmenu

@@ -1,24 +1,33 @@
-#ifndef __SYSCALL_H__
-#define __SYSCALL_H__
+#define __failable
+#define __user
+typedef int task_t;
+typedef int error_t;
+typedef int uaddr_t;
+typedef int paddr_t;
+typedef int notifications_t;
 
-#include <message.h>
-#include <types.h>
+struct message {
+};
 
-/// An attribute for a pointer given by the user. Don't dereference it directly:
-/// access it through safe functions such as memcpy_from_user and
-/// memcpy_to_user!
-#define __user __attribute__((noderef, address_space(1)))
+__failable task_t task_create(uaddr_t ip, uaddr_t name, task_t pager, unsigned flags);
+error_t task_destroy(task_t task);
+error_t task_exit(void);
+__failable task_t task_self(void);
 
-void memcpy_from_user(void *dst, __user const void *src, size_t len);
-void memcpy_to_user(__user void *dst, const void *src, size_t len);
-long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5);
+error_t ipc(task_t dst, task_t src, __user struct message *m, unsigned flags);
+error_t notify(task_t dst, notifications_t notifications);
 
-#ifdef CONFIG_ABI_EMU
-void abi_emu_hook(trap_frame_t *frame, enum abi_hook_type type);
-#endif
+error_t timer_set(unsigned ms);
+error_t timer_clear(unsigned ms);
 
-// Implemented in arch.
-void arch_memcpy_from_user(void *dst, __user const void *src, size_t len);
-void arch_memcpy_to_user(__user void *dst, const void *src, size_t len);
+__failable paddr_t pm_alloc(int num_pages);
+error_t pm_free(paddr_t paddr, int num_pages);
 
-#endif
+error_t vm_map(task_t task, uaddr_t uaddr, paddr_t paddr, int num_pages);
+error_t vm_unmap(task_t task, uaddr_t uaddr, int num_pages);
+
+error_t irq_acquire(int irq);
+error_t irq_release(int irq);
+
+__failable int sys_console_read(uaddr_t buf, int buf_len);
+__failable int sys_console_write(uaddr_t buf, int len);
