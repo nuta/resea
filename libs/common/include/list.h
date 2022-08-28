@@ -17,7 +17,7 @@
 //  Usage:
 //
 //    struct element {
-//        struct list_head next;
+//        struct list_elem next;
 //        int foo;
 //    };
 //
@@ -32,19 +32,19 @@
           && (__next = LIST_CONTAINER(elem->field.next, container, field)));   \
          elem = __next)
 
-struct list_head {
-    struct list_head *prev;
-    struct list_head *next;
+struct list_elem {
+    struct list_elem *prev;
+    struct list_elem *next;
 };
 
-typedef struct list_head list_t;
-typedef struct list_head list_elem_t;
+typedef struct list_elem list_t;
+typedef struct list_elem list_elem_t;
 
 bool list_is_empty(list_t *list);
 size_t list_len(list_t *list);
 bool list_contains(list_t *list, list_elem_t *elem);
 void list_remove(list_elem_t *elem);
 void list_push_back(list_t *list, list_elem_t *new_tail);
-list_t *list_pop_front(list_t *list);
+list_elem_t *list_pop_front(list_t *list);
 
 #endif

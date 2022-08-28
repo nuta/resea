@@ -21,7 +21,7 @@ bool list_is_empty(list_t *list) {
 
 size_t list_len(list_t *list) {
     size_t len = 0;
-    struct list_head *node = list->next;
+    struct list_elem *node = list->next;
     while (node != list) {
         len++;
         node = node->next;
@@ -63,14 +63,14 @@ void list_push_back(list_t *list, list_elem_t *new_tail) {
 }
 
 // Get and removes the first element from the list.
-list_t *list_pop_front(list_t *list) {
-    struct list_head *head = list->next;
+list_elem_t *list_pop_front(list_t *list) {
+    struct list_elem *head = list->next;
     if (head == list) {
         return NULL;
     }
 
     // list <-> head <-> next => list <-> next
-    struct list_head *next = head->next;
+    struct list_elem *next = head->next;
     list->next = next;
     next->prev = list;
 
