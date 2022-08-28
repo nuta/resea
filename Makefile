@@ -38,6 +38,10 @@ CFLAGS += -Werror=tautological-constant-out-of-range-compare
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -I$(top_dir)
 
+QEMUFLAGS += -serial mon:stdio
+QEMUFLAGS += $(if $(GUI),,-nographic)
+QEMUFLAGS += $(if $(GDB),-S -s,)
+
 executable := $(kernel_elf)
 dir := kernel
 include kernel/build.mk
@@ -45,7 +49,13 @@ include kernel/build.mk
 .PHONY: build
 build: $(kernel_elf)
 
-$(kernel_elf): $(objs)
+.PHONY: clean
+clean:
+	rm -rf $(BUILD_DIR)
+
+.PHONY: run
+run: $(kernel_elf)
+	$(QEMU) $(QEMUFLAGS) -kernel $(kernel_elf)
 
 $(BUILD_DIR)/%.o: %.c Makefile
 	$(PROGRESS) CC $<
