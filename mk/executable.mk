@@ -12,10 +12,11 @@ $(foreach subdir, $(subdirs-y),                                 \
 
 libs := $(libs-y)
 objs := $(objs) $(foreach lib, $(libs), $(BUILD_DIR)/libs/$(lib).o)
+cflags := $(cflags-y)
 ldflags := $(ldflags-y)
 
 $(executable): LDFLAGS += $(ldflags)
-$(executable): CFLAGS += $(foreach lib, $(libs), -Ilibs/$(lib)/include)
+$(executable): CFLAGS += $(cflags) $(foreach lib, $(libs), -Ilibs/$(lib)/include)
 $(executable): OBJS := $(objs)
 $(executable): $(objs)
 	$(PROGRESS) LD $(@)

@@ -36,6 +36,6 @@ typedef char bool;
 #define false 0
 #define NULL ((void *) 0)
 
-typedef int task_t;
+typedef int16_t task_t;
 
 #endif
