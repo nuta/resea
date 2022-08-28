@@ -11,11 +11,9 @@ $(foreach subdir, $(subdirs-y),                                 \
 )
 
 objs := $(objs)
-ldflags := $(ldflags-y)
 
-$(executable): LDFLAGS += $(ldflags)
-$(executable): OBJS := $(objs)
-$(executable): $(objs)
+$(output): OBJS := $(OBJS)
+$(output): $(objs)
 	$(PROGRESS) LD $(@)
 	mkdir -p $(@D)
-	$(LD) $(LDFLAGS) -o $(@) $(OBJS)
+	$(LD) -r -o $(@) $(OBJS)

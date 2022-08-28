@@ -46,6 +46,17 @@ executable := $(kernel_elf)
 dir := kernel
 include kernel/build.mk
 
+all_libs := $(notdir $(patsubst %/build.mk, %, $(wildcard libs/*/build.mk)))
+$(foreach lib, $(all_libs),                                     \
+	$(eval dir := libs/$(lib))                              \
+	$(eval build_dir := $(BUILD_DIR)/$(dir))                \
+	$(eval output := $(BUILD_DIR)/libs/$(lib).o)            \
+	$(eval objs-y :=)                                       \
+	$(eval ldflags-y :=)                                    \
+	$(eval subdirs-y :=)                                    \
+	$(eval include $(dir)/build.mk)                         \
+)
+
 .PHONY: build
 build: $(kernel_elf)
 
