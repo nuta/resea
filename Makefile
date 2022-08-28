@@ -24,6 +24,7 @@ kernel_elf := $(BUILD_DIR)/resea.elf
 CC       := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
 LD       := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
 PROGRESS ?= printf "  \\033[1;96m%8s\\033[0m  \\033[1;m%s\\033[0m\\n"
+DOXYGEN  ?= doxygen
 
 CFLAGS += -g3 -std=c11 -ffreestanding -fno-builtin -nostdlib -nostdinc
 CFLAGS += -Wall -Wextra
@@ -67,9 +68,13 @@ build: $(kernel_elf)
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: run
-run: $(kernel_elf)
+.PHONY: qemu
+qemu: $(kernel_elf)
 	$(QEMU) $(QEMUFLAGS) -kernel $(kernel_elf)
+
+.PHONY: doxygen
+doxygen:
+	$(DOXYGEN) Doxyfile
 
 $(BUILD_DIR)/%.o: %.c Makefile
 	$(PROGRESS) CC $<

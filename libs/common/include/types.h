@@ -37,5 +37,20 @@ typedef char bool;
 #define NULL ((void *) 0)
 
 typedef int16_t task_t;
+typedef uintmax_t size_t;
+typedef uintmax_t paddr_t;
+typedef uintmax_t vaddr_t;
+
+#define offsetof(type, field)    __builtin_offsetof(type, field)
+
+#define ALIGN_DOWN(value, align) ((value) & ~((align) -1))
+#define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)
+#define IS_ALIGNED(value, align) (((value) & ((align) -1)) == 0)
+#define STATIC_ASSERT(expr)      _Static_assert(expr, #expr);
+
+#define PAGE_SIZE 4096
+
+// TODO:
+#define DEBUG_ASSERT(...)
 
 #endif

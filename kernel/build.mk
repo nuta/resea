@@ -1,4 +1,4 @@
-objs-y += main.o task.o
+objs-y += main.o memory.o task.o
 subdirs-y += arch/$(ARCH)
 cflags-y += -Ikernel/arch/$(ARCH)/include
 libs-y += common
