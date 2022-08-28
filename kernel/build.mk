@@ -1,4 +1,4 @@
-objs-y += main.o
+objs-y += main.o task.o
 subdirs-y += arch/$(ARCH)
 libs-y += common
 
