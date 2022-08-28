@@ -1,5 +1,20 @@
 #include <list.h>
 
+// Inserts a new element between `prev` and `next`.
+static void list_insert(list_elem_t *prev, list_elem_t *next,
+                               list_elem_t *new) {
+    new->prev = prev;
+    new->next = next;
+    next->prev = new;
+    prev->next = new;
+}
+
+// Invalidates a list element.
+static void list_nullify(list_elem_t *elem) {
+    elem->prev = NULL;
+    elem->next = NULL;
+}
+
 bool list_is_empty(list_t *list) {
     return list->next == list;
 }
@@ -25,27 +40,6 @@ bool list_contains(list_t *list, list_elem_t *elem) {
     }
 
     return false;
-}
-
-// Inserts a new element between `prev` and `next`.
-void list_insert(list_elem_t *prev, list_elem_t *next,
-                               list_elem_t *new) {
-    new->prev = prev;
-    new->next = next;
-    next->prev = new;
-    prev->next = new;
-}
-
-// Initializes a list.
-void list_init(list_t *list) {
-    list->prev = list;
-    list->next = list;
-}
-
-// Invalidates a list element.
-void list_nullify(list_elem_t *elem) {
-    elem->prev = NULL;
-    elem->next = NULL;
 }
 
 // Removes a element from the list.
