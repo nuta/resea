@@ -44,6 +44,9 @@ QEMUFLAGS += $(if $(GDB),-S -s,)
 
 executable := $(kernel_elf)
 dir := kernel
+objs-y :=
+libs-y :=
+ldflags-y :=
 include kernel/build.mk
 
 all_libs := $(notdir $(patsubst %/build.mk, %, $(wildcard libs/*/build.mk)))

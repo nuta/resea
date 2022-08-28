@@ -12,7 +12,7 @@ $(foreach subdir, $(subdirs-y),                                 \
 
 objs := $(objs)
 
-$(output): OBJS := $(OBJS)
+$(output): OBJS := $(objs)
 $(output): $(objs)
 	$(PROGRESS) LD $(@)
 	mkdir -p $(@D)
