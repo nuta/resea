@@ -15,6 +15,9 @@ ifeq ($(V),)
 .SILENT:
 endif
 
+top_dir := $(shell pwd)
+kernel_elf := $(BUILD_DIR)/resea.elf
+
 #
 #  Commands
 #
@@ -23,7 +26,6 @@ LD       := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
 PROGRESS ?= printf "  \\033[1;96m%8s\\033[0m  \\033[1;m%s\\033[0m\\n"
 
 CFLAGS += -g3 -std=c11 -ffreestanding -fno-builtin -nostdlib -nostdinc
-
 CFLAGS += -Wall -Wextra
 CFLAGS += -Werror=implicit-function-declaration
 CFLAGS += -Werror=int-conversion
@@ -34,9 +36,7 @@ CFLAGS += -Werror=return-type
 CFLAGS += -Werror=pointer-integer-compare
 CFLAGS += -Werror=tautological-constant-out-of-range-compare
 CFLAGS += -Wno-unused-parameter
-
-top_dir := $(shell pwd)
-kernel_elf := $(BUILD_DIR)/resea.elf
+CFLAGS += -I$(top_dir)
 
 executable := $(kernel_elf)
 dir := kernel
