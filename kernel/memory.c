@@ -1,6 +1,6 @@
 #include "memory.h"
 
-static list_t zones;
+static list_t zones = LIST_INIT(zones);
 
 static bool is_contiguously_free(struct memory_zone *zone, size_t start, size_t num_pages) {
     for (size_t i = start; i < zone->num_pages; i++) {

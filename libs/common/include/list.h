@@ -23,6 +23,8 @@
           && (__next = LIST_CONTAINER(elem->field.next, container, field)));   \
          elem = __next)
 
+#define LIST_INIT(list) { .prev = &(list), .next = &(list) }
+
 struct list_head {
     struct list_head *prev;
     struct list_head *next;
