@@ -52,5 +52,6 @@ typedef uintmax_t vaddr_t;
 
 // TODO:
 #define DEBUG_ASSERT(...)
+#define ASSERT(...)
 
 #endif
