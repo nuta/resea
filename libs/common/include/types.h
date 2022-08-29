@@ -57,3 +57,6 @@ typedef uintmax_t uintptr_t;
 // TODO:
 #define DEBUG_ASSERT(...)
 #define ASSERT(...)
+
+#define OK 0
+#define ERR_EXISTS -1

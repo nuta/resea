@@ -38,12 +38,16 @@ void arch_vm_init(struct arch_vm *vm) {
     vm->table = pm_alloc(1, PAGE_TYPE_PAGE_TABLE, 0);
 }
 
-error_t arch_vm_map(struct arch_vm *vm, uaddr_t uaddr, paddr_t paddr, unsigned attrs) {
+error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr, unsigned attrs) {
     DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
 
-    pte_t *pte = walk(vm, uaddr, true);
+    pte_t *pte = walk(vm, vaddr, true);
     DEBUG_ASSERT(pte != NULL);
-    DEBUG_ASSERT((pte & PTE_V) == 0, "page already mapped");
+
+    if (*pte & PTE_V) {
+        return ERR_EXISTS;
+    }
 
     *pte = construct_pte(paddr, page_attrs_to_pte_flags(attrs) | PTE_V);
+    return OK;
 }
