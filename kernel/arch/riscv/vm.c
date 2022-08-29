@@ -1,5 +1,6 @@
 #include <kernel/arch.h>
 #include <kernel/memory.h>
+#include <kernel/printk.h>
 #include "vm.h"
 
 static pte_t page_attrs_to_pte_flags(unsigned attrs) {

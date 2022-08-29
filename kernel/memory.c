@@ -1,5 +1,6 @@
 #include "memory.h"
 #include "arch.h"
+#include "printk.h"
 #include <string.h>
 
 static list_t zones = LIST_INIT(zones);

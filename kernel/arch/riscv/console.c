@@ -2,8 +2,6 @@
 
 #define UART_TX 0x10000000
 
-void arch_console_write(const char *str) {
-    for (; *str != '\0'; str++) {
-        *((volatile char *) UART_TX) = *str;
-    }
+void arch_console_write(char ch) {
+    *((volatile char *) UART_TX) = ch;
 }

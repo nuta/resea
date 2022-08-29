@@ -44,6 +44,7 @@ QEMUFLAGS += $(if $(GUI),,-nographic)
 QEMUFLAGS += $(if $(GDB),-S -s,)
 
 executable := $(kernel_elf)
+name := kernel
 dir := kernel
 objs-y :=
 libs-y :=
@@ -77,6 +78,12 @@ doxygen:
 	$(DOXYGEN) Doxyfile
 
 $(BUILD_DIR)/%.o: %.c Makefile
+	$(PROGRESS) CC $<
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+
+
+$(BUILD_DIR)/%.o: $(BUILD_DIR)/%.c Makefile
 	$(PROGRESS) CC $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
