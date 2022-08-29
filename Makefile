@@ -18,6 +18,7 @@ endif
 
 top_dir := $(shell pwd)
 kernel_elf := $(BUILD_DIR)/resea.elf
+boot_elf := $(BUILD_DIR)/servers/init.elf
 
 #
 #  Commands
