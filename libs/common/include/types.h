@@ -35,6 +35,7 @@ typedef char bool;
 #define false 0
 #define NULL ((void *) 0)
 
+typedef int error_t;
 typedef int16_t task_t;
 typedef uintmax_t size_t;
 typedef uintmax_t paddr_t;
