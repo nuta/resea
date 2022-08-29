@@ -27,6 +27,8 @@ LD       := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
 PROGRESS ?= printf "  \\033[1;96m%8s\\033[0m  \\033[1;m%s\\033[0m\\n"
 DOXYGEN  ?= doxygen
 
+LDFLAGS := $(LDFLAGS)
+CFLAGS := $(CFLAGS)
 CFLAGS += -g3 -std=c11 -ffreestanding -fno-builtin -nostdlib -nostdinc
 CFLAGS += -Wall -Wextra
 CFLAGS += -Werror=implicit-function-declaration
@@ -57,14 +59,28 @@ ldflags-y :=
 include kernel/build.mk
 
 all_libs := $(notdir $(patsubst %/build.mk, %, $(wildcard libs/*/build.mk)))
-$(foreach lib, $(all_libs),                                     \
-	$(eval dir := libs/$(lib))                              \
-	$(eval build_dir := $(BUILD_DIR)/$(dir))                \
-	$(eval output := $(BUILD_DIR)/libs/$(lib).o)            \
-	$(eval objs-y :=)                                       \
-	$(eval ldflags-y :=)                                    \
-	$(eval subdirs-y :=)                                    \
-	$(eval include $(dir)/build.mk)                         \
+$(foreach lib, $(all_libs),                                       \
+	$(eval dir := libs/$(lib))                                \
+	$(eval build_dir := $(BUILD_DIR)/$(dir))                  \
+	$(eval output := $(BUILD_DIR)/libs/$(lib).o)              \
+	$(eval objs-y :=)                                         \
+	$(eval ldflags-y :=)                                      \
+	$(eval subdirs-y :=)                                      \
+	$(eval include $(dir)/build.mk)                           \
+)
+
+all_servers := $(notdir $(patsubst %/build.mk, %, $(wildcard servers/*/build.mk)))
+$(foreach server, $(all_servers),                                 \
+	$(eval dir := servers/$(server))                          \
+	$(eval build_dir := $(BUILD_DIR)/$(dir))                  \
+	$(eval executable := $(BUILD_DIR)/servers/$(server).elf)  \
+	$(eval name := $(server))                                 \
+	$(eval objs-y :=)                                         \
+	$(eval libs-y :=)                                         \
+	$(eval cflags-y :=)                                       \
+	$(eval ldflags-y :=)                                      \
+	$(eval subdirs-y :=)                                      \
+	$(eval include $(dir)/build.mk)                           \
 )
 
 .PHONY: build
@@ -86,7 +102,6 @@ $(BUILD_DIR)/%.o: %.c Makefile
 	$(PROGRESS) CC $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
-
 
 $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.c Makefile
 	$(PROGRESS) CC $<
