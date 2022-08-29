@@ -52,6 +52,21 @@ QEMUFLAGS += -serial mon:stdio
 QEMUFLAGS += $(if $(GUI),,-nographic)
 QEMUFLAGS += $(if $(GDB),-S -s,)
 
+.PHONY: build
+build: $(kernel_elf)
+
+.PHONY: clean
+clean:
+	rm -rf $(BUILD_DIR)
+
+.PHONY: qemu
+qemu: $(kernel_elf)
+	$(QEMU) $(QEMUFLAGS) -kernel $(kernel_elf)
+
+.PHONY: doxygen
+doxygen:
+	$(DOXYGEN) Doxyfile
+
 executable := $(kernel_elf)
 name := kernel
 dir := kernel
@@ -85,21 +100,6 @@ $(foreach server, $(all_servers),                                 \
 	$(eval subdirs-y :=)                                      \
 	$(eval include $(dir)/build.mk)                           \
 )
-
-.PHONY: build
-build: $(kernel_elf)
-
-.PHONY: clean
-clean:
-	rm -rf $(BUILD_DIR)
-
-.PHONY: qemu
-qemu: $(kernel_elf)
-	$(QEMU) $(QEMUFLAGS) -kernel $(kernel_elf)
-
-.PHONY: doxygen
-doxygen:
-	$(DOXYGEN) Doxyfile
 
 $(BUILD_DIR)/%.o: %.c Makefile
 	$(PROGRESS) CC $<

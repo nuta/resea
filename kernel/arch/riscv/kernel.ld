@@ -17,6 +17,8 @@ SECTIONS {
         *(.rodata .rodata.*);
         . = ALIGN(16);
         *(.srodata .srodata.*);
+        . = ALIGN(4096);
+        *(.boot_elf);
     }
 
     .data : {
