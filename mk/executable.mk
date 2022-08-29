@@ -19,8 +19,8 @@ objs := \
 cflags := $(cflags-y)
 ldflags := $(ldflags-y)
 
+$(objs): CFLAGS := $(CFLAGS) $(cflags) $(foreach lib, $(libs), -Ilibs/$(lib)/include)
 $(executable): LDFLAGS := $(LDFLAGS) $(ldflags)
-$(executable): CFLAGS := $(CFLAGS) $(cflags) $(foreach lib, $(libs), -Ilibs/$(lib)/include)
 $(executable): OBJS := $(objs)
 $(executable): $(objs)
 	$(PROGRESS) LD $(@)

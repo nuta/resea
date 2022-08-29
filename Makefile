@@ -24,6 +24,7 @@ kernel_elf := $(BUILD_DIR)/resea.elf
 #
 CC       := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
 LD       := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
+OBJCOPY  := $(LLVM_PREFIX)llvm-objcopy$(LLVM_SUFFIX)
 PROGRESS ?= printf "  \\033[1;96m%8s\\033[0m  \\033[1;m%s\\033[0m\\n"
 DOXYGEN  ?= doxygen
 
@@ -53,6 +54,7 @@ QEMUFLAGS += $(if $(GDB),-S -s,)
 executable := $(kernel_elf)
 name := kernel
 dir := kernel
+build_dir := $(BUILD_DIR)/kernel
 objs-y :=
 libs-y :=
 ldflags-y :=
@@ -109,6 +111,11 @@ $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.c Makefile
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
 $(BUILD_DIR)/%.o: %.S Makefile
+	$(PROGRESS) CC $<
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+
+$(BUILD_DIR)/%.o: $(BUILD_DIR)/%.S Makefile
 	$(PROGRESS) CC $<
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
