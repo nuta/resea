@@ -1,12 +1,22 @@
-#ifndef __MEMORY_H__
-#define __MEMORY_H__
-
+#pragma once
 #include <list.h>
 #include <types.h>
 
+// Flags for pm_alloc().
+#define PM_ALLOC_UNINITIALIZED (1 << 0)
+#define PM_ALLOC_NORMAL (0)
+
+#define PAGE_TYPE_PAGE_TABLE  0b11
+#define PAGE_TYPE_USER(task)  ((task->tid << 1) | 1)
+
+#define PAGE_READABLE   (1 << 1)
+#define PAGE_WRITABLE   (1 << 2)
+#define PAGE_EXECUTABLE (1 << 3)
+#define PAGE_USER       (1 << 4)
+
 struct page {
+    unsigned type;
     unsigned ref_count;
-    struct task *owner;
 };
 
 struct memory_zone {
@@ -16,4 +26,4 @@ struct memory_zone {
     struct page pages[0];
 };
 
-#endif
+paddr_t pm_alloc(size_t num_pages, unsigned type, unsigned flags);

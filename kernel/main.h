@@ -1,6 +1,3 @@
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#pragma once
 
 void kernel_main(void);
-
-#endif

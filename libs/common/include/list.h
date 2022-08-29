@@ -1,6 +1,4 @@
-#ifndef __LIST_H__
-#define __LIST_H__
-
+#pragma once
 #include <types.h>
 
 #define LIST_INIT(list) { .prev = &(list), .next = &(list) }
@@ -46,5 +44,3 @@ bool list_contains(list_t *list, list_elem_t *elem);
 void list_remove(list_elem_t *elem);
 void list_push_back(list_t *list, list_elem_t *new_tail);
 list_elem_t *list_pop_front(list_t *list);
-
-#endif

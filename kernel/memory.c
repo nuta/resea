@@ -1,4 +1,6 @@
 #include "memory.h"
+#include "arch.h"
+#include <string.h>
 
 static list_t zones = LIST_INIT(zones);
 
@@ -22,16 +24,21 @@ static struct page *find_page_by_paddr(paddr_t paddr) {
     return NULL;
 }
 
-paddr_t pm_alloc(struct task *task, size_t num_pages) {
+paddr_t pm_alloc(size_t num_pages, unsigned type, unsigned flags) {
     LIST_FOR_EACH (zone, &zones, struct memory_zone, next) {
         for (size_t start = 0; start < zone->num_pages; start++) {
             if (is_contiguously_free(zone, start, num_pages)) {
                 for (size_t i = 0; i < num_pages; i++) {
                     zone->pages[start + i].ref_count = 1;
-                    zone->pages[start + i].owner = task;
+                    zone->pages[start + i].type = type;
                 }
 
-                return zone->base + start * PAGE_SIZE;
+                paddr_t paddr = zone->base + start * PAGE_SIZE;
+                if (flags & PM_ALLOC_UNINITIALIZED) {
+                    memset(arch_paddr2ptr(paddr), 0, PAGE_SIZE * num_pages);
+                }
+
+                return paddr;
             }
         }
     }

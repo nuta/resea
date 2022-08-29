@@ -1,6 +1,4 @@
-#ifndef __TASK_H__
-#define __TASK_H__
-
+#pragma once
 #include <types.h>
 #include <list.h>
 #include <arch_types.h>
@@ -29,5 +27,3 @@ struct task {
 
     char name[TASK_NAME_LEN];
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __LIBS_COMMON_TYPES_H__
-#define __LIBS_COMMON_TYPES_H__
+#pragma once
 
 typedef char int8_t;
 typedef short int16_t;
@@ -40,8 +39,12 @@ typedef int16_t task_t;
 typedef uintmax_t size_t;
 typedef uintmax_t paddr_t;
 typedef uintmax_t vaddr_t;
+typedef uintmax_t uaddr_t;
+typedef uintmax_t uintptr_t;
 
 #define offsetof(type, field)    __builtin_offsetof(type, field)
+
+#define __weak                   __attribute__((weak))
 
 #define ALIGN_DOWN(value, align) ((value) & ~((align) -1))
 #define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)
@@ -53,5 +56,3 @@ typedef uintmax_t vaddr_t;
 // TODO:
 #define DEBUG_ASSERT(...)
 #define ASSERT(...)
-
-#endif
