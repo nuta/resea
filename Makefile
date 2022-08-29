@@ -1,4 +1,5 @@
 V ?=
+RELEASE ?=
 ARCH ?= riscv
 BUILD_DIR ?= build
 
@@ -38,6 +39,10 @@ CFLAGS += -Werror=pointer-integer-compare
 CFLAGS += -Werror=tautological-constant-out-of-range-compare
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -I$(top_dir)
+
+ifeq ($(RELEASE),)
+CFLAGS += -fsanitize=undefined
+endif
 
 QEMUFLAGS += -serial mon:stdio
 QEMUFLAGS += $(if $(GUI),,-nographic)

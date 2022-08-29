@@ -16,7 +16,10 @@ const char *__program_name(void);
 
 // TODO:
 static inline void backtrace(void) {}
-static inline void halt(void) {}
+static inline void halt(void) {
+    for (;;)
+        ;
+}
 
 // ANSI escape sequences (SGR).
 #define SGR_ERR      "\e[1;91m"  // Bold red.
