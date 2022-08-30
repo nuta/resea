@@ -1,7 +1,8 @@
 #pragma once
 #include <types.h>
 
-#define LIST_INIT(list) { .prev = &(list), .next = &(list) }
+#define LIST_INIT(list)                                                        \
+    { .prev = &(list), .next = &(list) }
 
 #define LIST_POP_FRONT(list, container, field)                                 \
     ({                                                                         \
@@ -10,7 +11,7 @@
     })
 
 #define LIST_CONTAINER(head, container, field)                                 \
-    ((container *) ((vaddr_t)(head) -offsetof(container, field)))
+    ((container *) ((vaddr_t) (head) -offsetof(container, field)))
 
 //  Usage:
 //
@@ -38,6 +39,7 @@ struct list_elem {
 typedef struct list_elem list_t;
 typedef struct list_elem list_elem_t;
 
+void list_init(list_t *list);
 bool list_is_empty(list_t *list);
 size_t list_len(list_t *list);
 bool list_contains(list_t *list, list_elem_t *elem);

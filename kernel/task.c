@@ -1,5 +1,6 @@
 #include "task.h"
 #include "arch.h"
+#include "printk.h"
 #include <list.h>
 
 static list_t runqueues[TASK_PRIORITY_MAX];

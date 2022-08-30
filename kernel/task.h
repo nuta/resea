@@ -1,13 +1,16 @@
 #pragma once
-#include <types.h>
-#include <list.h>
 #include <arch_types.h>
+#include <list.h>
+#include <types.h>
 
 #define TASK_PRIORITY_MAX 8
-#define TASK_NAME_LEN 16
+#define TASK_NAME_LEN     16
 
 #define TASK_RUNNABLE 1
 #define TASK_BLOCKED  2
+
+#define IDLE_TASK    (arch_cpuvar_get()->idle_task)
+#define CURRENT_TASK (arch_cpuvar_get()->current_task)
 
 struct task {
     /// The arch-specific fields.

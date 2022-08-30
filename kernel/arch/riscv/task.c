@@ -1,4 +1,4 @@
-#include <arch.h>
+#include <kernel/arch.h>
 #include <kernel/task.h>
 
 void riscv_switch(uint32_t *prev_sp, uint32_t *next_sp);
