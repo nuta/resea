@@ -7,4 +7,4 @@ QEMUFLAGS += -machine virt -bios none -d guest_errors,unimp
 
 # Append RISC-V specific C compiler flags globally (including userspace
 # programs).
-CFLAGS += --target=riscv32
+CFLAGS += --target=riscv32 -mcmodel=medany
