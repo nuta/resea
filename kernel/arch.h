@@ -36,6 +36,7 @@ struct bootinfo {
 void arch_console_write(char ch);
 void arch_vm_init(struct arch_vm *vm);
 error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
-                    unsigned attrs);
+                    size_t size, unsigned attrs);
 void *arch_paddr2ptr(paddr_t paddr);
+error_t arch_task_init(struct task *task, uaddr_t ip);
 void arch_task_switch(struct task *prev, struct task *next);

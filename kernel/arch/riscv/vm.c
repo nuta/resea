@@ -1,14 +1,14 @@
+#include "vm.h"
 #include <kernel/arch.h>
 #include <kernel/memory.h>
 #include <kernel/printk.h>
-#include "vm.h"
 
 static pte_t page_attrs_to_pte_flags(unsigned attrs) {
-    return
-        (attrs & PAGE_READABLE) ? PTE_R : 0 |
-        (attrs & PAGE_WRITABLE) ? PTE_W : 0 |
-        (attrs & PAGE_EXECUTABLE) ? PTE_X : 0 |
-        (attrs & PAGE_USER) ? PTE_U : 0;
+    return (attrs & PAGE_READABLE)         ? PTE_R
+           : 0 | (attrs & PAGE_WRITABLE)   ? PTE_W
+           : 0 | (attrs & PAGE_EXECUTABLE) ? PTE_X
+           : 0 | (attrs & PAGE_USER)       ? PTE_U
+                                           : 0;
 }
 
 static pte_t construct_pte(paddr_t paddr, pte_t flags) {
@@ -20,35 +20,61 @@ static pte_t *walk(struct arch_vm *vm, vaddr_t vaddr, bool alloc) {
 
     pte_t *table = arch_paddr2ptr(vm->table);
     for (int level = PAGE_TABLE_LEVELS - 1; level > 0; level--) {
-        int index = PAGE_TABLE_INDEX(level, vaddr);
+        int index = PTE_INDEX(level, vaddr);
         if (table[index] == 0) {
             if (!alloc) {
                 return NULL;
             }
 
-            paddr_t paddr = pm_alloc(1, PAGE_TYPE_PAGE_TABLE, 0);
+            paddr_t paddr = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
             table[index] = construct_pte(paddr, PTE_V);
         }
         table = arch_paddr2ptr(table[index]);
     }
 
-    return &table[PAGE_TABLE_INDEX(0, vaddr)];
+    return &table[PTE_INDEX(0, vaddr)];
 }
 
 void arch_vm_init(struct arch_vm *vm) {
-    vm->table = pm_alloc(1, PAGE_TYPE_PAGE_TABLE, 0);
+    vm->table = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
+
+    paddr_t kernel_text = (paddr_t) __kernel_text;
+    paddr_t kernel_text_end = (paddr_t) __kernel_text_end;
+
+    DEBUG_ASSERT(IS_ALIGNED(kernel_text, PAGE_SIZE));
+    DEBUG_ASSERT(IS_ALIGNED(kernel_text_end, PAGE_SIZE));
+
+    paddr_t kernel_data = kernel_text_end;
+    paddr_t kernel_data_size = 64 * 1024 * 1024;  // FIXME: get from memory map
+    size_t kernel_text_size = kernel_text_end - kernel_text;
+
+    arch_vm_map(vm, kernel_text, kernel_text, kernel_text_size,
+                PAGE_READABLE | PAGE_EXECUTABLE);
+    arch_vm_map(vm, kernel_data, kernel_data, kernel_data_size,
+                PAGE_READABLE | PAGE_WRITABLE);
 }
 
-error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr, unsigned attrs) {
+error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
+                    size_t size, unsigned attrs) {
+    DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
+    DEBUG_ASSERT(IS_ALIGNED(size, PAGE_SIZE));
 
-    pte_t *pte = walk(vm, vaddr, true);
-    DEBUG_ASSERT(pte != NULL);
-
-    if (*pte & PTE_V) {
-        return ERR_EXISTS;
+    for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
+        pte_t *pte = walk(vm, vaddr + offset, true);
+        if (*pte & PTE_V) {
+            return ERR_EXISTS;
+        }
     }
 
-    *pte = construct_pte(paddr, page_attrs_to_pte_flags(attrs) | PTE_V);
+    for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
+        pte_t *pte = walk(vm, vaddr + offset, true);
+        DEBUG_ASSERT(pte != NULL);
+        DEBUG_ASSERT((*pte & PTE_V) == 0);
+
+        *pte = construct_pte(paddr + offset,
+                             page_attrs_to_pte_flags(attrs) | PTE_V);
+    }
+
     return OK;
 }

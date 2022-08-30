@@ -1,11 +1,11 @@
 #include "asm.h"
+#include "vm.h"
 #include <kernel/arch.h>
 #include <kernel/main.h>
 #include <kernel/printk.h>
 
 // FIXME:
 struct cpuvar cpuvar_fixme;
-extern char __kernel_image_end[];
 
 __noreturn static void setup_smode(void) {
     struct bootinfo bootinfo;

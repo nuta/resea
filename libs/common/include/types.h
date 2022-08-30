@@ -44,17 +44,17 @@ typedef uintmax_t uaddr_t;
 typedef uintmax_t uintptr_t;
 
 typedef __builtin_va_list va_list;
-#define va_start(ap, param)      __builtin_va_start(ap, param)
-#define va_end(ap)               __builtin_va_end(ap)
-#define va_arg(ap, type)         __builtin_va_arg(ap, type)
-#define offsetof(type, field)    __builtin_offsetof(type, field)
-#define is_constant(expr)        __builtin_constant_p(expr)
+#define va_start(ap, param)   __builtin_va_start(ap, param)
+#define va_end(ap)            __builtin_va_end(ap)
+#define va_arg(ap, type)      __builtin_va_arg(ap, type)
+#define offsetof(type, field) __builtin_offsetof(type, field)
+#define is_constant(expr)     __builtin_constant_p(expr)
 
-#define __unused                 __attribute__((unused))
-#define __packed                 __attribute__((packed))
-#define __noreturn               __attribute__((noreturn))
-#define __weak                   __attribute__((weak))
-#define __mustuse                __attribute__((warn_unused_result))
+#define __unused   __attribute__((unused))
+#define __packed   __attribute__((packed))
+#define __noreturn __attribute__((noreturn))
+#define __weak     __attribute__((weak))
+#define __mustuse  __attribute__((warn_unused_result))
 
 #define ALIGN_DOWN(value, align) ((value) & ~((align) -1))
 #define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)
@@ -74,5 +74,6 @@ typedef __builtin_va_list va_list;
         (__a < __b) ? __a : __b;                                               \
     })
 
-#define OK 0
-#define ERR_EXISTS -1
+#define OK                 0
+#define ERR_EXISTS         -1
+#define ERR_TOO_MANY_TASKS -2

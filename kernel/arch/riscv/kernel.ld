@@ -6,19 +6,24 @@ SECTIONS {
     .text : {
         // This part should be first to make sure that the boot code is loaded
         // at 0x80000000.
+        __kernel_text = .;
         KEEP(*(.boot));
 
         . = ALIGN(16);
         *(.text .text.*);
+
+        . = ALIGN(4096);
+        __kernel_text_end = .;
     }
 
     .rodata : {
-        . = ALIGN(16);
         *(.rodata .rodata.*);
         . = ALIGN(16);
         *(.srodata .srodata.*);
         . = ALIGN(4096);
         *(.boot_elf);
+
+        . = ALIGN(4096);
     }
 
     .data : {
@@ -39,5 +44,7 @@ SECTIONS {
         __boot_stack = .;
     }
 
+    . = ALIGN(4096);
+    __kernel_data_end = .;
     __kernel_image_end = .;
 }

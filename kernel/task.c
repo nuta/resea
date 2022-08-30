@@ -1,8 +1,10 @@
 #include "task.h"
 #include "arch.h"
+#include "memory.h"
 #include "printk.h"
 #include <list.h>
 
+static struct task tasks[NUM_TASKS_MAX];
 static list_t runqueues[TASK_PRIORITY_MAX];
 
 static void enqueue_task(struct task *task) {
@@ -36,10 +38,56 @@ void task_switch(void) {
     arch_task_switch(prev, next);
 }
 
+static task_t get_unused_tid(void) {
+    for (task_t i = 0; i < NUM_TASKS_MAX; i++) {
+        if (tasks[i].state == TASK_UNUSED) {
+            return i + 1;
+        }
+    }
+
+    return 0;
+}
+
+static struct task *get_task_by_tid(task_t tid) {
+    if (0 < tid && tid < NUM_TASKS_MAX) {
+        return &tasks[tid - 1];
+    }
+
+    return NULL;
+}
+
+task_t task_create(const char *name, uaddr_t ip, struct task *pager,
+                   unsigned flags) {
+    task_t tid = get_unused_tid();
+    if (!tid) {
+        return ERR_TOO_MANY_TASKS;
+    }
+
+    struct task *task = get_task_by_tid(tid);
+    DEBUG_ASSERT(task != NULL);
+    task->tid = tid;
+    task->state = TASK_BLOCKED;
+    task->priority = 0;
+    task->quantum = 0;
+    task->waiting_for = 0;
+    task->pager = pager;
+    task->ref_count = 1;
+
+    error_t err = arch_task_init(task, ip);
+    if (err != OK) {
+        return err;
+    }
+
+    return OK;
+}
+
 /// Initializes the task subsystem.
 void task_init(void) {
     for (int i = 0; i < TASK_PRIORITY_MAX; i++) {
         list_init(&runqueues[i]);
     }
-}
 
+    task_t idle_task = task_create("(idle)", 0, NULL, 0);
+    IDLE_TASK = get_task_by_tid(idle_task);
+    CURRENT_TASK = IDLE_TASK;
+}

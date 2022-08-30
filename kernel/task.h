@@ -3,9 +3,11 @@
 #include <list.h>
 #include <types.h>
 
+#define NUM_TASKS_MAX     32
 #define TASK_PRIORITY_MAX 8
 #define TASK_NAME_LEN     16
 
+#define TASK_UNUSED   0
 #define TASK_RUNNABLE 1
 #define TASK_BLOCKED  2
 
@@ -34,3 +36,5 @@ struct task {
 
     char name[TASK_NAME_LEN];
 };
+
+void task_init(void);
