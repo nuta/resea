@@ -5,7 +5,8 @@
 
 static list_t zones = LIST_INIT(zones);
 
-static bool is_contiguously_free(struct memory_zone *zone, size_t start, size_t num_pages) {
+static bool is_contiguously_free(struct memory_zone *zone, size_t start,
+                                 size_t num_pages) {
     for (size_t i = start; i < zone->num_pages; i++) {
         if (zone->pages[i].ref_count != 0) {
             return false;
@@ -15,8 +16,9 @@ static bool is_contiguously_free(struct memory_zone *zone, size_t start, size_t 
 }
 
 static struct page *find_page_by_paddr(paddr_t paddr) {
-    LIST_FOR_EACH (zone, &zones, struct memory_zone, next) {
-        if (zone->base <= paddr && paddr < zone->base + zone->num_pages * PAGE_SIZE) {
+    LIST_FOR_EACH(zone, &zones, struct memory_zone, next) {
+        if (zone->base <= paddr
+            && paddr < zone->base + zone->num_pages * PAGE_SIZE) {
             size_t start = (paddr - zone->base) / PAGE_SIZE;
             return &zone->pages[start];
         }
@@ -25,8 +27,26 @@ static struct page *find_page_by_paddr(paddr_t paddr) {
     return NULL;
 }
 
+static void add_zone(paddr_t paddr, size_t size) {
+    // FIXME: paddr to vaddr
+    struct memory_zone *zone = (struct memory_zone *) paddr;
+    // TODO: Is this correct?
+    size_t num_pages = ALIGN_UP(size, PAGE_SIZE) / PAGE_SIZE;
+
+    void *end_of_header = &zone->pages[num_pages + 1];
+    size_t header_size = ((vaddr_t) end_of_header) - ((vaddr_t) zone);
+
+    zone->base = paddr + ALIGN_UP(header_size, PAGE_SIZE);
+    zone->num_pages = num_pages;
+    for (size_t i = 0; i < num_pages; i++) {
+        zone->pages[i].ref_count = 0;
+    }
+
+    list_push_back(&zones, &zone->next);
+}
+
 paddr_t pm_alloc(size_t num_pages, unsigned type, unsigned flags) {
-    LIST_FOR_EACH (zone, &zones, struct memory_zone, next) {
+    LIST_FOR_EACH(zone, &zones, struct memory_zone, next) {
         for (size_t start = 0; start < zone->num_pages; start++) {
             if (is_contiguously_free(zone, start, num_pages)) {
                 for (size_t i = 0; i < num_pages; i++) {
@@ -57,20 +77,8 @@ void pm_free(paddr_t paddr, size_t num_pages) {
     }
 }
 
-void pm_add_zone(paddr_t paddr, size_t len) {
-    // FIXME: paddr to vaddr
-    struct memory_zone *zone = (struct memory_zone *) paddr;
-    // TODO: Is this correct?
-    size_t num_pages = ALIGN_UP(len, PAGE_SIZE) / PAGE_SIZE;
-
-    void *end_of_header = &zone->pages[num_pages + 1];
-    size_t header_size = ((vaddr_t) end_of_header) - ((vaddr_t) zone);
-
-    zone->base = paddr + ALIGN_UP(header_size, PAGE_SIZE);
-    zone->num_pages = num_pages;
-    for (size_t i = 0; i < num_pages; i++) {
-        zone->pages[i].ref_count = 0;
+void memory_init(struct bootinfo *bootinfo) {
+    for (int i = 0; i < bootinfo->num_memory_maps; i++) {
+        add_zone(bootinfo->memory_maps[i].paddr, bootinfo->memory_maps[i].size);
     }
-
-    list_push_back(&zones, &zone->next);
 }

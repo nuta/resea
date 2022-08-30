@@ -4,10 +4,10 @@
 
 // Flags for pm_alloc().
 #define PM_ALLOC_UNINITIALIZED (1 << 0)
-#define PM_ALLOC_NORMAL (0)
+#define PM_ALLOC_NORMAL        (0)
 
-#define PAGE_TYPE_PAGE_TABLE  0b11
-#define PAGE_TYPE_USER(task)  ((task->tid << 1) | 1)
+#define PAGE_TYPE_PAGE_TABLE 0b11
+#define PAGE_TYPE_USER(task) ((task->tid << 1) | 1)
 
 #define PAGE_READABLE   (1 << 1)
 #define PAGE_WRITABLE   (1 << 2)
@@ -27,3 +27,6 @@ struct memory_zone {
 };
 
 paddr_t pm_alloc(size_t num_pages, unsigned type, unsigned flags);
+
+struct bootinfo;
+void memory_init(struct bootinfo *bootinfo);
