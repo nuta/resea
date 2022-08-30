@@ -78,7 +78,8 @@ void pm_free(paddr_t paddr, size_t num_pages) {
 }
 
 void memory_init(struct bootinfo *bootinfo) {
-    for (int i = 0; i < bootinfo->num_memory_maps; i++) {
-        add_zone(bootinfo->memory_maps[i].paddr, bootinfo->memory_maps[i].size);
+    struct memory_map *memory_map = &bootinfo->memory_map;
+    for (int i = 0; i < memory_map->num_entries; i++) {
+        add_zone(memory_map->entries[i].paddr, memory_map->entries[i].size);
     }
 }

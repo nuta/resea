@@ -16,17 +16,21 @@ enum memory_map_type {
     MEMORY_MAP_FREE,
 };
 
-struct memory_map {
+struct memory_map_entry {
     enum memory_map_type type;
     paddr_t paddr;
     size_t size;
 };
 
-#define NUM_MEMORY_MAPS_MAX 8
+#define NUM_MEMORY_MAP_ENTRIES_MAX 8
+
+struct memory_map {
+    struct memory_map_entry entries[NUM_MEMORY_MAP_ENTRIES_MAX];
+    int num_entries;
+};
 
 struct bootinfo {
-    struct memory_map memory_maps[NUM_MEMORY_MAPS_MAX];
-    int num_memory_maps;
+    struct memory_map memory_map;
 };
 
 void arch_console_write(char ch);

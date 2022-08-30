@@ -9,11 +9,11 @@ extern char __kernel_image_end[];
 
 __noreturn static void setup_smode(void) {
     struct bootinfo bootinfo;
-    bootinfo.memory_maps[0].paddr =
+    bootinfo.memory_map.entries[0].paddr =
         ALIGN_UP((paddr_t) __kernel_image_end, PAGE_SIZE);
-    bootinfo.memory_maps[0].size = 64 * 1024 * 1024;
-    bootinfo.memory_maps[0].type = MEMORY_MAP_FREE;
-    bootinfo.num_memory_maps = 1;
+    bootinfo.memory_map.entries[0].size = 64 * 1024 * 1024;
+    bootinfo.memory_map.entries[0].type = MEMORY_MAP_FREE;
+    bootinfo.memory_map.num_entries = 1;
 
     kernel_main(&bootinfo);
     UNREACHABLE();
