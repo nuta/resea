@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "uart.h"
 #include <kernel/arch.h>
 #include <kernel/memory.h>
 #include <kernel/printk.h>
@@ -52,7 +53,8 @@ void arch_vm_init(struct arch_vm *vm) {
                 PAGE_READABLE | PAGE_EXECUTABLE);
     arch_vm_map(vm, kernel_data, kernel_data, kernel_data_size,
                 PAGE_READABLE | PAGE_WRITABLE);
-    arch_vm_map(vm, UART0, UART0, PAGE_SIZE, PAGE_READABLE | PAGE_WRITABLE);
+    arch_vm_map(vm, UART_ADDR, UART_ADDR, PAGE_SIZE,
+                PAGE_READABLE | PAGE_WRITABLE);
 }
 
 error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
