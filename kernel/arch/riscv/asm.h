@@ -1,14 +1,14 @@
 #pragma once
 #include <types.h>
 
-#define MSTATUS_MPP_MASK (3 << 11)
-#define MSTATUS_MPP_M    (3 << 11)
-#define MSTATUS_MPP_S    (1 << 11)
-#define MSTATUS_MPP_U    (0 << 11)
+#define MSTATUS_MPP_U    (0b00 << 11)
+#define MSTATUS_MPP_S    (0b01 << 11)
+#define MSTATUS_MPP_M    (0b11 << 11)
+#define MSTATUS_MPP_MASK (0b11 << 11)
 
-#define SIE_SEIE (1 << 9)
-#define SIE_STIE (1 << 5)
 #define SIE_SSIE (1 << 1)
+#define SIE_STIE (1 << 5)
+#define SIE_SEIE (1 << 9)
 
 //  TODO: Support RV64 (XLEN > 32)
 

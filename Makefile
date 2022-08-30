@@ -48,7 +48,7 @@ ifeq ($(RELEASE),)
 CFLAGS += -fsanitize=undefined
 endif
 
-QEMUFLAGS += -serial mon:stdio
+QEMUFLAGS += -serial mon:stdio --no-reboot
 QEMUFLAGS += $(if $(GUI),,-nographic)
 QEMUFLAGS += $(if $(GDB),-S -s,)
 
