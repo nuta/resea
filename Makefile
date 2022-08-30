@@ -59,8 +59,8 @@ build: $(kernel_elf)
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: qemu
-qemu: $(kernel_elf)
+.PHONY: run
+run: $(kernel_elf)
 	$(QEMU) $(QEMUFLAGS) -kernel $(kernel_elf)
 
 .PHONY: doxygen
