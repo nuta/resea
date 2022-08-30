@@ -16,10 +16,10 @@ static pte_t construct_pte(paddr_t paddr, pte_t flags) {
     return (paddr << PTE_PADDR_SHIFT) | flags;
 }
 
-static pte_t *walk(struct arch_vm *vm, vaddr_t vaddr, bool alloc) {
+static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
     ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
 
-    pte_t *table = arch_paddr2ptr(vm->table);
+    pte_t *table = arch_paddr2ptr(root_table);
     for (int level = PAGE_TABLE_LEVELS - 1; level > 0; level--) {
         int index = PTE_INDEX(level, vaddr);
         if (table[index] == 0) {
@@ -36,8 +36,10 @@ static pte_t *walk(struct arch_vm *vm, vaddr_t vaddr, bool alloc) {
     return &table[PTE_INDEX(0, vaddr)];
 }
 
-void arch_vm_init(struct arch_vm *vm) {
-    vm->table = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
+error_t arch_vm_init(struct arch_vm *vm) {
+    // TODO: run out of memory
+    vm->user_table = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
+    vm->kernel_table = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
 
     paddr_t kernel_text = (paddr_t) __kernel_text;
     paddr_t kernel_text_end = (paddr_t) __kernel_text_end;
@@ -55,6 +57,7 @@ void arch_vm_init(struct arch_vm *vm) {
                 PAGE_READABLE | PAGE_WRITABLE);
     arch_vm_map(vm, UART_ADDR, UART_ADDR, PAGE_SIZE,
                 PAGE_READABLE | PAGE_WRITABLE);
+    return OK;
 }
 
 error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
@@ -63,15 +66,35 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(size, PAGE_SIZE));
 
+    bool is_user_page = (attrs & PAGE_USER) != 0;
+
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
-        pte_t *pte = walk(vm, vaddr + offset, true);
+        pte_t *pte = walk(vm->user_table, vaddr + offset, true);
         if (*pte & PTE_V) {
             return ERR_EXISTS;
         }
     }
 
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
-        pte_t *pte = walk(vm, vaddr + offset, true);
+        pte_t *pte = walk(vm->kernel_table, vaddr + offset, true);
+        if (*pte & PTE_V) {
+            return ERR_EXISTS;
+        }
+    }
+
+    if (is_user_page) {
+        for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
+            pte_t *pte = walk(vm->user_table, vaddr + offset, true);
+            DEBUG_ASSERT(pte != NULL);
+            DEBUG_ASSERT((*pte & PTE_V) == 0);
+
+            *pte = construct_pte(paddr + offset,
+                                 page_attrs_to_pte_flags(attrs) | PTE_V);
+        }
+    }
+
+    for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
+        pte_t *pte = walk(vm->kernel_table, vaddr + offset, true);
         DEBUG_ASSERT(pte != NULL);
         DEBUG_ASSERT((*pte & PTE_V) == 0);
 

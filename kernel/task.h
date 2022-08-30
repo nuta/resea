@@ -17,6 +17,7 @@
 struct task {
     /// The arch-specific fields.
     struct arch_task arch;
+    struct arch_vm vm;
     task_t tid;
 
     int state;

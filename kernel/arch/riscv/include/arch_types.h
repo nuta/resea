@@ -8,7 +8,8 @@ struct arch_task {
 };
 
 struct arch_vm {
-    paddr_t table;
+    paddr_t user_table;
+    paddr_t kernel_table;
 };
 
 struct arch_cpuvar {

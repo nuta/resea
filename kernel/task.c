@@ -73,8 +73,14 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
     task->pager = pager;
     task->ref_count = 1;
 
-    error_t err = arch_task_init(task, ip);
+    error_t err = arch_vm_init(&task->vm);
     if (err != OK) {
+        return err;
+    }
+
+    err = arch_task_init(task, ip);
+    if (err != OK) {
+        // TODO: free task->vm
         return err;
     }
 
