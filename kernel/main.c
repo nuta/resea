@@ -2,6 +2,6 @@
 #include "arch.h"
 #include "printk.h"
 
-void kernel_main(void) {
+void kernel_main(struct bootinfo *bootinfo) {
     printk("Booting Resea...\n");
 }

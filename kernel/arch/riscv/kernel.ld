@@ -38,4 +38,6 @@ SECTIONS {
         . = . + 256 * 1024;
         __boot_stack = .;
     }
+
+    __kernel_image_end = .;
 }

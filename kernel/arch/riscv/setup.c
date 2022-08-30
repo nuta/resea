@@ -5,11 +5,18 @@
 
 // FIXME:
 struct cpuvar cpuvar_fixme;
+extern char __kernel_image_end[];
 
-static void setup_smode(void) {
-    kernel_main();
-    for (;;)
-        ;
+__noreturn static void setup_smode(void) {
+    struct bootinfo bootinfo;
+    bootinfo.memory_maps[0].paddr =
+        ALIGN_UP((paddr_t) __kernel_image_end, PAGE_SIZE);
+    bootinfo.memory_maps[0].size = 64 * 1024 * 1024;
+    bootinfo.memory_maps[0].type = MEMORY_MAP_FREE;
+    bootinfo.num_memory_maps = 1;
+
+    kernel_main(&bootinfo);
+    UNREACHABLE();
 }
 
 __noreturn void riscv_setup(void) {
@@ -29,4 +36,5 @@ __noreturn void riscv_setup(void) {
 
     write_mepc((uint32_t) setup_smode);
     __asm__ __volatile__("mret");
+    UNREACHABLE();
 }

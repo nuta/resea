@@ -1,3 +1,4 @@
 #pragma once
+#include "arch.h"
 
-void kernel_main(void);
+void kernel_main(struct bootinfo *bootinfo);

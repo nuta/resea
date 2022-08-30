@@ -12,6 +12,23 @@ struct cpuvar {
     struct task *current_task;
 };
 
+enum memory_map_type {
+    MEMORY_MAP_FREE,
+};
+
+struct memory_map {
+    enum memory_map_type type;
+    paddr_t paddr;
+    size_t size;
+};
+
+#define NUM_MEMORY_MAPS_MAX 8
+
+struct bootinfo {
+    struct memory_map memory_maps[NUM_MEMORY_MAPS_MAX];
+    int num_memory_maps;
+};
+
 void arch_console_write(char ch);
 void arch_vm_init(struct arch_vm *vm);
 error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
