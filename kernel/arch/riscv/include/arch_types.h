@@ -3,7 +3,9 @@
 
 #define PAGE_SIZE 4096
 
-struct arch_task {};
+struct arch_task {
+    uint32_t sp;
+};
 
 struct arch_vm {
     paddr_t table;

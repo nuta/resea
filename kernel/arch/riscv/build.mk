@@ -1,4 +1,4 @@
-objs-y += boot.o setup.o console.o vm.o
+objs-y += boot.o setup.o console.o task.o vm.o switch.o
 
 ldflags-y += -T$(dir)/kernel.ld
 
