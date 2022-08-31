@@ -1,9 +1,0 @@
-  [1;96m      CC[0m  [1;mkernel/memory.c[0m
-  [1;96m      CC[0m  [1;mkernel/arch/riscv32/vm.c[0m
-  [1;96m      LD[0m  [1;mbuild/resea.elf[0m
-Booting Resea...
-[init] create task
-[init] load boot ELF
-[1;91m[init] kernel/main.c:27: ASSERTION FAILURE: IS_ALIGNED(phdr->p_filesz, PAGE_SIZE)[0m
-QEMU 7.0.0 monitor - type 'help' for more information
-(qemu) q[K
