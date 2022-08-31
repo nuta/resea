@@ -3,4 +3,4 @@
 .global boot
 boot:
     la sp, __boot_stack
-    j riscv_setup
+    j riscv32_setup

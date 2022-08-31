@@ -13,7 +13,8 @@ static pte_t page_attrs_to_pte_flags(unsigned attrs) {
 }
 
 static pte_t construct_pte(paddr_t paddr, pte_t flags) {
-    return (paddr << PTE_PADDR_SHIFT) | flags;
+    DEBUG_ASSERT((paddr & ~PTE_PADDR_MASK) == 0);
+    return paddr | flags;
 }
 
 static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
@@ -27,7 +28,8 @@ static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
                 return NULL;
             }
 
-            paddr_t paddr = pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, 0);
+            paddr_t paddr =
+                pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, PM_ALLOC_ZEROED);
             table[index] = construct_pte(paddr, PTE_V);
         }
         table = arch_paddr2ptr(PTE_PADDR(table[index]));
@@ -38,7 +40,7 @@ static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
 
 error_t arch_vm_init(struct arch_vm *vm) {
     // TODO: Handle out of memory
-    vm->table = pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, 0);
+    vm->table = pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, PM_ALLOC_ZEROED);
 
     paddr_t kernel_text = (paddr_t) __kernel_text;
     paddr_t kernel_text_end = (paddr_t) __kernel_text_end;
@@ -50,12 +52,12 @@ error_t arch_vm_init(struct arch_vm *vm) {
     paddr_t kernel_data_size = 64 * 1024 * 1024;  // FIXME: get from memory map
     size_t kernel_text_size = kernel_text_end - kernel_text;
 
-    arch_vm_map(vm, kernel_text, kernel_text, kernel_text_size,
-                PAGE_READABLE | PAGE_EXECUTABLE);
-    arch_vm_map(vm, kernel_data, kernel_data, kernel_data_size,
-                PAGE_READABLE | PAGE_WRITABLE);
-    arch_vm_map(vm, UART_ADDR, UART_ADDR, PAGE_SIZE,
-                PAGE_READABLE | PAGE_WRITABLE);
+    ASSERT_OK(arch_vm_map(vm, kernel_text, kernel_text, kernel_text_size,
+                          PAGE_READABLE | PAGE_EXECUTABLE));
+    ASSERT_OK(arch_vm_map(vm, kernel_data, kernel_data, kernel_data_size,
+                          PAGE_READABLE | PAGE_WRITABLE));
+    ASSERT_OK(arch_vm_map(vm, UART_ADDR, UART_ADDR, PAGE_SIZE,
+                          PAGE_READABLE | PAGE_WRITABLE));
     return OK;
 }
 

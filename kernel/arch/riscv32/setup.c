@@ -20,7 +20,7 @@ __noreturn static void setup_smode(void) {
     UNREACHABLE();
 }
 
-__noreturn void riscv_setup(void) {
+__noreturn void riscv32_setup(void) {
     write_medeleg(0xffff);
     write_mideleg(0xffff);
     // TODO:

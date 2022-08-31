@@ -27,6 +27,8 @@ void load_boot_elf(struct bootinfo *bootinfo) {
         ASSERT(IS_ALIGNED(phdr->p_filesz, PAGE_SIZE));
         ASSERT(phdr->p_memsz >= phdr->p_filesz);
 
+        TRACE("bootelf: %p - %p\n", phdr->p_vaddr,
+              phdr->p_vaddr + phdr->p_memsz);
         arch_vm_map(&task->vm, phdr->p_vaddr,
                     bootinfo->boot_elf + phdr->p_offset, phdr->p_filesz,
                     phdr->p_flags);
@@ -44,14 +46,17 @@ void kernel_main(struct bootinfo *bootinfo) {
     memory_init(bootinfo);
     task_init();
 
+    TRACE("create task");
     task_t idle_task = task_create("(idle)", 0, NULL, 0);
     IDLE_TASK = get_task_by_tid(idle_task);
     CURRENT_TASK = IDLE_TASK;
 
+    TRACE("load boot ELF");
     load_boot_elf(bootinfo);
+    TRACE("first switch");
     task_switch();
 
-    INFO("idle");
+    TRACE("idle");
     for (;;) {
         //
     }

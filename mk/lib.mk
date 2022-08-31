@@ -11,7 +11,9 @@ $(foreach subdir, $(subdirs-y),                                 \
 )
 
 objs := $(objs)
+cflags := $(cflags-y)
 
+$(objs): CFLAGS := $(CFLAGS) $(cflags)
 $(output): OBJS := $(objs)
 $(output): $(objs)
 	$(PROGRESS) LD $(@)

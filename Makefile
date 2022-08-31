@@ -1,6 +1,6 @@
 V ?=
 RELEASE ?=
-ARCH ?= riscv
+ARCH ?= riscv32
 BUILD_DIR ?= build
 
 ifeq ($(shell uname), Darwin)
@@ -73,6 +73,7 @@ dir := kernel
 build_dir := $(BUILD_DIR)/kernel
 objs-y :=
 libs-y :=
+cflags-y :=
 ldflags-y :=
 include kernel/build.mk
 
@@ -82,6 +83,7 @@ $(foreach lib, $(all_libs),                                       \
 	$(eval build_dir := $(BUILD_DIR)/$(dir))                  \
 	$(eval output := $(BUILD_DIR)/libs/$(lib).o)              \
 	$(eval objs-y :=)                                         \
+	$(eval cflags-y :=)                                       \
 	$(eval ldflags-y :=)                                      \
 	$(eval subdirs-y :=)                                      \
 	$(eval include $(dir)/build.mk)                           \

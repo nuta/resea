@@ -74,6 +74,13 @@ typedef __builtin_va_list va_list;
         (__a < __b) ? __a : __b;                                               \
     })
 
+#define IS_ERROR(err) ((err) < 0)
+
 #define OK                 0
 #define ERR_EXISTS         -1
 #define ERR_TOO_MANY_TASKS -2
+
+// FIXME:
+static inline const char *err2str(int err) {
+    return "";
+}

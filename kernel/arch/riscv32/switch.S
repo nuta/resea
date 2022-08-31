@@ -1,8 +1,8 @@
 /// Saves and restore callee-saved registers and stack pointers.
 ///
-/// void riscv_task_switch(uint32_t *prev_sp, uint32_t *next_sp);
-.global riscv_task_switch
-riscv_task_switch:
+/// void riscv32_task_switch(uint32_t *prev_sp, uint32_t *next_sp);
+.global riscv32_task_switch
+riscv32_task_switch:
     addi sp, sp, -13 * 8
 
     sw ra,  0  * 8(sp)

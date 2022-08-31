@@ -2,20 +2,27 @@
 #include <types.h>
 #include <vprintf.h>
 
-
 #ifdef KERNEL
 #    define printf printk
 void printk(const char *fmt, ...);
 // TODO:
 // void panic_lock(void);
-static inline void panic_lock(void) {}
+static inline void panic_lock(void) {
+}
+#else
+// TODO:
+static inline void printf(const char *fmt, ...) {
+}
+static inline void panic_lock(void) {
+}
 #endif
 
 const char *__program_name(void);
 // void halt(void);
 
 // TODO:
-static inline void backtrace(void) {}
+static inline void backtrace(void) {
+}
 static inline void halt(void) {
     for (;;)
         ;

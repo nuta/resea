@@ -11,6 +11,12 @@ $(foreach subdir, $(subdirs-y),                                 \
 	$(eval objs += $(addprefix $(build_dir)/, $(objs-y)))   \
 )
 
+# TODO:
+ifneq ($(executable),$(kernel_elf))
+ldflags += -Tlibs/resea/arch/$(ARCH)/user.ld
+libs-y += common resea
+endif
+
 libs := $(libs-y)
 objs := \
 	$(objs) \
