@@ -1,8 +1,10 @@
 #include "task.h"
+#include "asm.h"
 #include "switch.h"
 #include "trap.h"
 #include <kernel/arch.h>
 #include <kernel/memory.h>
+#include <kernel/printk.h>
 #include <kernel/task.h>
 
 error_t arch_task_init(struct task *task, uaddr_t ip) {
@@ -12,6 +14,7 @@ error_t arch_task_init(struct task *task, uaddr_t ip) {
 
     // Registeres to be restored in riscv_user_entry.
     *--sp = ip;
+    *--sp = task->vm.table;
 
     // Registers to be restored in riscv_task_switch.
     *--sp = (uint32_t) riscv_user_entry;  // ra
@@ -30,6 +33,16 @@ error_t arch_task_init(struct task *task, uaddr_t ip) {
 
     task->arch.sp = (uint32_t) sp;
     return OK;
+}
+
+__noreturn void do_riscv_user_entry(uint32_t ip, uint32_t satp) {
+    uint32_t sstatus = read_sstatus();
+    sstatus &= ~SSTATUS_SPP_MASK;
+    write_sstatus(sstatus);
+
+    write_sepc(ip);
+    __asm__ __volatile__("sret");
+    UNREACHABLE();
 }
 
 void arch_task_switch(struct task *prev, struct task *next) {

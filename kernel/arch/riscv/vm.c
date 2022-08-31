@@ -37,9 +37,8 @@ static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
 }
 
 error_t arch_vm_init(struct arch_vm *vm) {
-    // TODO: run out of memory
-    vm->user_table = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
-    vm->kernel_table = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
+    // TODO: Handle out of memory
+    vm->table = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
 
     paddr_t kernel_text = (paddr_t) __kernel_text;
     paddr_t kernel_text_end = (paddr_t) __kernel_text_end;
@@ -66,35 +65,17 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     DEBUG_ASSERT(IS_ALIGNED(paddr, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(size, PAGE_SIZE));
 
-    bool is_user_page = (attrs & PAGE_USER) != 0;
-
+    // Check if pages are already mapped.
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
-        pte_t *pte = walk(vm->user_table, vaddr + offset, true);
+        pte_t *pte = walk(vm->table, vaddr + offset, true);
         if (*pte & PTE_V) {
             return ERR_EXISTS;
         }
     }
 
+    // Map pages.
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
-        pte_t *pte = walk(vm->kernel_table, vaddr + offset, true);
-        if (*pte & PTE_V) {
-            return ERR_EXISTS;
-        }
-    }
-
-    if (is_user_page) {
-        for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
-            pte_t *pte = walk(vm->user_table, vaddr + offset, true);
-            DEBUG_ASSERT(pte != NULL);
-            DEBUG_ASSERT((*pte & PTE_V) == 0);
-
-            *pte = construct_pte(paddr + offset,
-                                 page_attrs_to_pte_flags(attrs) | PTE_V);
-        }
-    }
-
-    for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
-        pte_t *pte = walk(vm->kernel_table, vaddr + offset, true);
+        pte_t *pte = walk(vm->table, vaddr + offset, true);
         DEBUG_ASSERT(pte != NULL);
         DEBUG_ASSERT((*pte & PTE_V) == 0);
 

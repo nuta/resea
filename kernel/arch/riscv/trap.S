@@ -1,7 +1,5 @@
 .global riscv_user_entry
 riscv_user_entry:
-    sfence.vma zero, zero
-    csrw satp, a0
-    sfence.vma zero, zero
-
-    // TODO: Clear other registers
+    lw a0, 0 * 8(sp) // ip
+    lw a1, 1 * 8(sp) // satp
+    j do_riscv_user_entry
