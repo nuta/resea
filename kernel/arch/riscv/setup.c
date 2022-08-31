@@ -9,6 +9,7 @@ struct cpuvar cpuvar_fixme;
 
 __noreturn static void setup_smode(void) {
     struct bootinfo bootinfo;
+    bootinfo.boot_elf = (paddr_t) __boot_elf;
     bootinfo.memory_map.entries[0].paddr =
         ALIGN_UP((paddr_t) __kernel_image_end, PAGE_SIZE);
     bootinfo.memory_map.entries[0].size = 64 * 1024 * 1024;

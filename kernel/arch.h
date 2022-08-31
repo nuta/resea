@@ -30,6 +30,7 @@ struct memory_map {
 };
 
 struct bootinfo {
+    paddr_t boot_elf;
     struct memory_map memory_map;
 };
 

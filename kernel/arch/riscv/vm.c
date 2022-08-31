@@ -27,10 +27,10 @@ static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
                 return NULL;
             }
 
-            paddr_t paddr = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
+            paddr_t paddr = pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, 0);
             table[index] = construct_pte(paddr, PTE_V);
         }
-        table = arch_paddr2ptr(table[index]);
+        table = arch_paddr2ptr(PTE_PADDR(table[index]));
     }
 
     return &table[PTE_INDEX(0, vaddr)];
@@ -38,7 +38,7 @@ static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
 
 error_t arch_vm_init(struct arch_vm *vm) {
     // TODO: Handle out of memory
-    vm->table = pm_alloc(1, PAGE_TYPE_KERNEL, 0);
+    vm->table = pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, 0);
 
     paddr_t kernel_text = (paddr_t) __kernel_text;
     paddr_t kernel_text_end = (paddr_t) __kernel_text_end;

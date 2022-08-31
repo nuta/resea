@@ -2,11 +2,12 @@
 // Undefined Behavior Sanitizer runtime (UBSan).
 // https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 //
-#include "print_macros.h"
 #include "ubsan.h"
+#include "print_macros.h"
 
-static void report_ubsan_event(const char *event) {
-    PANIC("detected an undefined behavior: %s", event);
+static inline void report_ubsan_event(const char *event) {
+    PANIC("detected an undefined behavior: %s (ip=%p)", event,
+          __builtin_return_address(0));
 }
 
 void __ubsan_handle_type_mismatch_v1(struct ubsan_mismatch_data_v1 *data,
@@ -14,9 +15,11 @@ void __ubsan_handle_type_mismatch_v1(struct ubsan_mismatch_data_v1 *data,
     if (!ptr) {
         report_ubsan_event("NULL pointer dereference");
     } else if (data->align != 0 && (ptr & ((1 << data->align) - 1)) != 0) {
-        PANIC("pointer %p is not aligned to %d", ptr, 1 << data->align);
+        PANIC("pointer %p is not aligned to %d (ip=%p)", ptr, 1 << data->align,
+              __builtin_return_address(0));
     } else {
-        PANIC("pointer %p is not large enough for %s", ptr, data->type->name);
+        PANIC("pointer %p is not large enough for %s (ip=%p)", ptr,
+              data->type->name, __builtin_return_address(0));
     }
 }
 

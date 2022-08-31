@@ -4,6 +4,7 @@
 #define PAGE_TABLE_LEVELS       2
 #define PTE_PADDR_SHIFT         10
 #define PTE_INDEX(level, vaddr) (((vaddr) >> (12 + (level) *10)) & 0x3ff)
+#define PTE_PADDR(pte)          (((pte) >> PTE_PADDR_SHIFT) << 12)
 
 #define PTE_V (1 << 0)
 #define PTE_R (1 << 1)
@@ -18,3 +19,4 @@ extern char __kernel_text_end[];
 extern char __kernel_data[];
 extern char __kernel_data_end[];
 extern char __kernel_image_end[];
+extern char __boot_elf[];

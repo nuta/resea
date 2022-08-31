@@ -20,9 +20,10 @@ SECTIONS {
         *(.rodata .rodata.*);
         . = ALIGN(16);
         *(.srodata .srodata.*);
-        . = ALIGN(4096);
-        *(.boot_elf);
 
+        . = ALIGN(4096);
+        __boot_elf = .;
+        *(.boot_elf);
         . = ALIGN(4096);
     }
 

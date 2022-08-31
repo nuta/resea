@@ -48,7 +48,7 @@ static task_t get_unused_tid(void) {
     return 0;
 }
 
-static struct task *get_task_by_tid(task_t tid) {
+struct task *get_task_by_tid(task_t tid) {
     if (0 < tid && tid < NUM_TASKS_MAX) {
         return &tasks[tid - 1];
     }
@@ -84,7 +84,7 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
         return err;
     }
 
-    return OK;
+    return tid;
 }
 
 /// Initializes the task subsystem.
@@ -92,8 +92,4 @@ void task_init(void) {
     for (int i = 0; i < TASK_PRIORITY_MAX; i++) {
         list_init(&runqueues[i]);
     }
-
-    task_t idle_task = task_create("(idle)", 0, NULL, 0);
-    IDLE_TASK = get_task_by_tid(idle_task);
-    CURRENT_TASK = IDLE_TASK;
 }
