@@ -37,6 +37,8 @@ void load_boot_elf(struct bootinfo *bootinfo) {
                     // FIXME: check phdr->p_flags
                     PAGE_EXECUTABLE | PAGE_WRITABLE | PAGE_READABLE);
     }
+
+    task_resume(task);
 }
 
 void kernel_main(struct bootinfo *bootinfo) {

@@ -56,6 +56,12 @@ struct task *get_task_by_tid(task_t tid) {
     return NULL;
 }
 
+void task_resume(struct task *task) {
+    DEBUG_ASSERT(task->state == TASK_BLOCKED);
+    task->state = TASK_RUNNABLE;
+    enqueue_task(task);
+}
+
 task_t task_create(const char *name, uaddr_t ip, struct task *pager,
                    unsigned flags) {
     task_t tid = get_unused_tid();
