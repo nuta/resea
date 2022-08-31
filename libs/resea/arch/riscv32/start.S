@@ -1,3 +1,3 @@
-.global _start
-_start:
-    j _start
+.global start
+start:
+    j start

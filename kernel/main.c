@@ -24,20 +24,18 @@ void load_boot_elf(struct bootinfo *bootinfo) {
             continue;
         }
 
-        ASSERT(IS_ALIGNED(phdr->p_filesz, PAGE_SIZE));
         ASSERT(phdr->p_memsz >= phdr->p_filesz);
 
-        TRACE("bootelf: %p - %p\n", phdr->p_vaddr,
-              phdr->p_vaddr + phdr->p_memsz);
-        arch_vm_map(&task->vm, phdr->p_vaddr,
-                    bootinfo->boot_elf + phdr->p_offset, phdr->p_filesz,
-                    phdr->p_flags);
-        if (phdr->p_memsz > phdr->p_filesz) {
-            paddr_t paddr = pm_alloc(phdr->p_memsz - phdr->p_filesz,
-                                     PAGE_TYPE_USER(task), PM_ALLOC_ZEROED);
-            arch_vm_map(&task->vm, phdr->p_vaddr + phdr->p_filesz, paddr,
-                        phdr->p_memsz - phdr->p_filesz, phdr->p_flags);
-        }
+        TRACE("bootelf: %p (%d KiB)", phdr->p_vaddr, phdr->p_memsz / 1024);
+
+        paddr_t paddr =
+            pm_alloc(phdr->p_memsz, PAGE_TYPE_USER(task), PM_ALLOC_ZEROED);
+        memcpy(arch_paddr2ptr(paddr),
+               (void *) ((vaddr_t) header + phdr->p_offset), phdr->p_filesz);
+        arch_vm_map(&task->vm, phdr->p_vaddr, paddr,
+                    ALIGN_UP(phdr->p_memsz, PAGE_SIZE),
+                    // FIXME: check phdr->p_flags
+                    PAGE_EXECUTABLE | PAGE_WRITABLE | PAGE_READABLE);
     }
 }
 

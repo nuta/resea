@@ -13,7 +13,7 @@ $(foreach subdir, $(subdirs-y),                                 \
 
 # TODO:
 ifneq ($(executable),$(kernel_elf))
-ldflags += -Tlibs/resea/arch/$(ARCH)/user.ld
+ldflags-y += -Tlibs/resea/arch/$(ARCH)/user.ld
 libs-y += common resea
 endif
 
