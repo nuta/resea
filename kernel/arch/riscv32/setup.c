@@ -20,11 +20,17 @@ __noreturn static void setup_smode(void) {
     UNREACHABLE();
 }
 
+void trap_handler(void) {
+    PANIC("trap sepc=%p, scause=%p", read_sepc(), read_scause());
+}
+
 __noreturn void riscv32_setup(void) {
     write_medeleg(0xffff);
     write_mideleg(0xffff);
     // TODO:
     //   write_sie(read_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
+
+    write_stvec((uint32_t) trap_handler);
 
     write_satp(0);
     write_pmpaddr0(0xffffffff);

@@ -67,6 +67,16 @@ static inline void write_pmpcfg0(uint32_t value) {
     __asm__ __volatile__("csrw pmpcfg0, %0" ::"r"(value));
 }
 
+static inline void write_stvec(uint32_t value) {
+    __asm__ __volatile__("csrw stvec, %0" ::"r"(value));
+}
+
+static inline uint32_t read_sepc(void) {
+    uint32_t value;
+    __asm__ __volatile__("csrr %0, sepc" : "=r"(value));
+    return value;
+}
+
 static inline void write_sepc(uint32_t value) {
     __asm__ __volatile__("csrw sepc, %0" ::"r"(value));
 }
@@ -79,6 +89,12 @@ static inline uint32_t read_sstatus(void) {
 
 static inline void write_sstatus(uint32_t value) {
     __asm__ __volatile__("csrw sstatus, %0" ::"r"(value));
+}
+
+static inline uint32_t read_scause(void) {
+    uint32_t value;
+    __asm__ __volatile__("csrr %0, scause" : "=r"(value));
+    return value;
 }
 
 static inline void write_satp(uint32_t value) {

@@ -5,11 +5,10 @@
 #include <kernel/printk.h>
 
 static pte_t page_attrs_to_pte_flags(unsigned attrs) {
-    return (attrs & PAGE_READABLE)         ? PTE_R
-           : 0 | (attrs & PAGE_WRITABLE)   ? PTE_W
-           : 0 | (attrs & PAGE_EXECUTABLE) ? PTE_X
-           : 0 | (attrs & PAGE_USER)       ? PTE_U
-                                           : 0;
+    return ((attrs & PAGE_READABLE) ? PTE_R : 0)
+           | ((attrs & PAGE_WRITABLE) ? PTE_W : 0)
+           | ((attrs & PAGE_EXECUTABLE) ? PTE_X : 0)
+           | ((attrs & PAGE_USER) ? PTE_U : 0);
 }
 
 static pte_t construct_pte(paddr_t paddr, pte_t flags) {
@@ -30,7 +29,8 @@ static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
 
             paddr_t paddr =
                 pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, PM_ALLOC_ZEROED);
-            table[index] = construct_pte(paddr, PTE_V);
+            table[index] = construct_pte(
+                paddr, PTE_R | PTE_W | PTE_U | PTE_X | PTE_V);  // FIXME:
         }
         table = arch_paddr2ptr(PTE_PADDR(table[index]));
     }
@@ -81,8 +81,12 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
         DEBUG_ASSERT(pte != NULL);
         DEBUG_ASSERT((*pte & PTE_V) == 0);
 
+        // *pte = construct_pte(paddr + offset,
+        //                      page_attrs_to_pte_flags(attrs) | PTE_V);
         *pte = construct_pte(paddr + offset,
-                             page_attrs_to_pte_flags(attrs) | PTE_V);
+                             PTE_R | PTE_W | PTE_U | PTE_X | PTE_V);  // FIXME:
+        if (vaddr < 0x80000000)
+            INFO("*pte = %p -> %p", vaddr + offset, paddr + offset);
     }
 
     return OK;

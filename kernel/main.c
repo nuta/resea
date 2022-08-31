@@ -26,16 +26,20 @@ void load_boot_elf(struct bootinfo *bootinfo) {
 
         ASSERT(phdr->p_memsz >= phdr->p_filesz);
 
-        TRACE("bootelf: %p (%d KiB)", phdr->p_vaddr, phdr->p_memsz / 1024);
+        TRACE("bootelf: %p - %p (%d KiB)", phdr->p_vaddr,
+              phdr->p_vaddr + ALIGN_UP(phdr->p_memsz, PAGE_SIZE),
+              phdr->p_memsz / 1024);
 
         paddr_t paddr =
             pm_alloc(phdr->p_memsz, PAGE_TYPE_USER(task), PM_ALLOC_ZEROED);
+        TRACE("memcpy: [%p - %p] <- %p %x", paddr, paddr + phdr->p_filesz,
+              (void *) ((vaddr_t) header + phdr->p_offset), phdr->p_filesz);
         memcpy(arch_paddr2ptr(paddr),
                (void *) ((vaddr_t) header + phdr->p_offset), phdr->p_filesz);
-        arch_vm_map(&task->vm, phdr->p_vaddr, paddr,
-                    ALIGN_UP(phdr->p_memsz, PAGE_SIZE),
-                    // FIXME: check phdr->p_flags
-                    PAGE_EXECUTABLE | PAGE_WRITABLE | PAGE_READABLE);
+        ASSERT_OK(arch_vm_map(
+            &task->vm, phdr->p_vaddr, paddr, ALIGN_UP(phdr->p_memsz, PAGE_SIZE),
+            // FIXME: check phdr->p_flags
+            PAGE_EXECUTABLE | PAGE_WRITABLE | PAGE_READABLE | PAGE_USER));
     }
 
     task_resume(task);
