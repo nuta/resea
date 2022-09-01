@@ -15,6 +15,7 @@ riscv32_trap_handler:
     mv tp, sp
     lw sp, 4(tp) // Load kernel sp from ARCH_CPUVAR.
 
+    addi sp, sp, -4 * 32
     sw ra,  4 * 0(sp)
     sw gp,  4 * 1(sp)
     sw t0,  4 * 2(sp)
@@ -46,9 +47,7 @@ riscv32_trap_handler:
     sw t6,  4 * 28(sp)
 
     // Restore sscratch and load temporarily saved user/kernel sp.
-    csrrw tp, sscratch, a0
-//    lw a0, 4 * 29(sp)
-
+    csrw sscratch, tp
     lw a0, 0(tp)
     sw a0, 4 * 29(sp)
 
@@ -57,6 +56,7 @@ riscv32_trap_handler:
     csrr a0, sstatus
     sw a0, 4 * 31(sp)
 
+    mv a0, sp
     call riscv32_trap
 
     // Restore sepc / sstatus
