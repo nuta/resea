@@ -1,6 +1,7 @@
 #pragma once
 #include <types.h>
 
+#define MSTATUS_SUM      (1 << 18)
 #define MSTATUS_MPP_U    (0b00 << 11)
 #define MSTATUS_MPP_S    (0b01 << 11)
 #define MSTATUS_MPP_M    (0b11 << 11)

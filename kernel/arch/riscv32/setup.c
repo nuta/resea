@@ -39,6 +39,8 @@ __noreturn void riscv32_setup(void) {
     uint32_t mstatus = read_mstatus();
     mstatus &= ~MSTATUS_MPP_MASK;
     mstatus |= MSTATUS_MPP_S;
+    mstatus |= MSTATUS_SUM;
+    mstatus |= 1 << 19;  // FIXME:
     write_mstatus(mstatus);
 
     write_mepc((uint32_t) setup_smode);

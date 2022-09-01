@@ -45,9 +45,9 @@ __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
     write_sstatus(sstatus);
 
     INFO("before satp");
-    write_sepc((uint32_t) error);
-    write_satp((1ul << 31) | satp >> 12);
     INFO("ip: %x, satp: %x", ip, satp);
+    write_satp((1ul << 31) | satp >> 12);
+    INFO("after satp");
     INFO("inst[0]: %p", *((uint32_t *) ip));
     write_sepc(ip);
     __asm__ __volatile__("sret");

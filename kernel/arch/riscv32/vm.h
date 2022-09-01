@@ -4,7 +4,7 @@
 #define PAGE_TABLE_LEVELS       2
 #define PTE_PADDR_MASK          0xfffffc00
 #define PTE_INDEX(level, vaddr) (((vaddr) >> (12 + (level) *10)) & 0x3ff)
-#define PTE_PADDR(pte)          ((pte) &PTE_PADDR_MASK)
+#define PTE_PADDR(pte)          (((pte) >> 10) << 12)
 
 #define PTE_V (1 << 0)
 #define PTE_R (1 << 1)
