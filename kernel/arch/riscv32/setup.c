@@ -20,8 +20,14 @@ __noreturn static void setup_smode(void) {
     UNREACHABLE();
 }
 
-void trap_handler(void) {
-    PANIC("trap sepc=%p, scause=%p", read_sepc(), read_scause());
+void riscv32_trap_handler(void);
+void riscv32_trap(void) {
+    uint32_t tp;
+    __asm__ __volatile__("mv %0, tp" : "=r"(tp));
+    uint32_t sscratch;
+    __asm__ __volatile__("csrr %0, sscratch" : "=r"(sscratch));
+    TRACE("trap sepc=%p, scause=%p, tp=%p, sscratch=%p", read_sepc(),
+          read_scause(), tp, sscratch);
 }
 
 __noreturn void riscv32_setup(void) {
@@ -30,7 +36,9 @@ __noreturn void riscv32_setup(void) {
     // TODO:
     //   write_sie(read_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
 
-    write_stvec((uint32_t) trap_handler);
+    write_stvec((uint32_t) riscv32_trap_handler);
+    write_sscratch((uint32_t) &cpuvar_fixme);
+    write_tp((uint32_t) &cpuvar_fixme);
 
     write_satp(0);
     write_pmpaddr0(0xffffffff);

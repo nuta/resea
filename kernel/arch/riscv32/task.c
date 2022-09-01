@@ -44,17 +44,17 @@ __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
     sstatus &= ~SSTATUS_SPP_MASK;
     write_sstatus(sstatus);
 
-    INFO("before satp");
-    INFO("ip: %x, satp: %x", ip, satp);
     write_satp((1ul << 31) | satp >> 12);
-    INFO("after satp");
-    INFO("inst[0]: %p", *((uint32_t *) ip));
     write_sepc(ip);
     __asm__ __volatile__("sret");
     UNREACHABLE();
 }
 
 void arch_task_switch(struct task *prev, struct task *next) {
+    uint32_t tp;
+    __asm__ __volatile__("mv %0, tp" : "=r"(tp));
+    TRACE("tp = %p", tp);
     INFO("switch");
+    CPUVAR->arch.sp = next->arch.sp;
     riscv32_task_switch(&prev->arch.sp, &next->arch.sp);
 }

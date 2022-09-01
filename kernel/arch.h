@@ -4,6 +4,8 @@
 struct cpuvar;
 #include <arch_types.h>
 
+#define CPUVAR (arch_cpuvar_get())
+
 struct task;
 
 struct cpuvar {

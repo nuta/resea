@@ -12,6 +12,7 @@ struct arch_vm {
 };
 
 struct arch_cpuvar {
+    uint32_t sscratch;
     uint32_t sp;
 };
 

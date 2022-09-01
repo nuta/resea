@@ -102,6 +102,10 @@ static inline void write_satp(uint32_t value) {
     __asm__ __volatile__("csrw satp, %0" ::"r"(value));
 }
 
+static inline void write_sscratch(uint32_t value) {
+    __asm__ __volatile__("csrw sscratch, %0" ::"r"(value));
+}
+
 static inline void write_tp(uint32_t value) {
     __asm__ __volatile__("mv tp, %0" ::"r"(value));
 }

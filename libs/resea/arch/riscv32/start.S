@@ -1,4 +1,9 @@
 .global start
 start:
     ecall
-    j start
+    ecall
+    ecall
+    ecall
+    ecall
+1:
+    j 1b
