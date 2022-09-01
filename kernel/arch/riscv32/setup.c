@@ -51,6 +51,7 @@ struct risc32_trap_frame {
     uint32_t t5;
     uint32_t t6;
     uint32_t sp;
+    uint32_t tp;
     uint32_t sepc;
     uint32_t sstatus;
 } __packed;
