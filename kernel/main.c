@@ -32,8 +32,6 @@ void load_boot_elf(struct bootinfo *bootinfo) {
 
         paddr_t paddr =
             pm_alloc(phdr->p_memsz, PAGE_TYPE_USER(task), PM_ALLOC_ZEROED);
-        TRACE("memcpy: [%p - %p] <- %p %x", paddr, paddr + phdr->p_filesz,
-              (void *) ((vaddr_t) header + phdr->p_offset), phdr->p_filesz);
         memcpy(arch_paddr2ptr(paddr),
                (void *) ((vaddr_t) header + phdr->p_offset), phdr->p_filesz);
         ASSERT_OK(arch_vm_map(
@@ -50,14 +48,11 @@ void kernel_main(struct bootinfo *bootinfo) {
     memory_init(bootinfo);
     task_init();
 
-    TRACE("create task");
     task_t idle_task = task_create("(idle)", 0, NULL, 0);
     IDLE_TASK = get_task_by_tid(idle_task);
     CURRENT_TASK = IDLE_TASK;
 
-    TRACE("load boot ELF");
     load_boot_elf(bootinfo);
-    TRACE("first switch");
     task_switch();
 
     TRACE("idle");

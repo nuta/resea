@@ -82,8 +82,6 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
 
         *pte = construct_pte(paddr + offset,
                              page_attrs_to_pte_flags(attrs) | PTE_V);
-        // if (vaddr < 0x80000000)
-        // INFO("*pte = %p -> %p", vaddr + offset, paddr + offset);
     }
 
     return OK;
