@@ -46,7 +46,9 @@ riscv32_trap_handler:
     sw t6,  4 * 28(sp)
 
     // Restore sscratch and load temporarily saved user/kernel sp.
-    csrw sscratch, tp
+    csrrw tp, sscratch, a0
+//    lw a0, 4 * 29(sp)
+
     lw a0, 0(tp)
     sw a0, 4 * 29(sp)
 
@@ -58,7 +60,6 @@ riscv32_trap_handler:
     call riscv32_trap
 
     // Restore sepc / sstatus
-
     lw a0, 4 * 30(sp)
     csrw sepc, a0
     lw a0, 4 * 31(sp)
