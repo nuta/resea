@@ -3,6 +3,7 @@
 #include <kernel/arch.h>
 #include <kernel/main.h>
 #include <kernel/printk.h>
+#include <kernel/task.h>
 
 // FIXME:
 struct cpuvar cpuvar_fixme;
@@ -65,14 +66,18 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
     __asm__ __volatile__("csrr %0, sscratch" : "=r"(sscratch));
 
     uint32_t scause = read_scause();
+
+    TRACE("trap(%s) sepc=%p, scause=%p, tp=%p, sscratch=%p, next_sepc=%p",
+          (read_sstatus() & (1 << 8)) ? "s-mode" : "u-mode", read_sepc(),
+          read_scause(), tp, sscratch, frame->sepc);
+
     if (scause == 8) {
         frame->sepc += 4;
     } else if (scause == 0x80000001) {
         write_sip(read_sip() & ~2);
+        TRACE("timer context switch!");
+        task_switch();
     }
-
-    TRACE("trap sepc=%p, scause=%p, tp=%p, sscratch=%p, next_sepc=%p",
-          read_sepc(), read_scause(), tp, sscratch, frame->sepc);
 }
 
 __noreturn void riscv32_setup(void) {
@@ -85,7 +90,7 @@ __noreturn void riscv32_setup(void) {
     write_tp((uint32_t) &cpuvar_fixme);
 
     int hart = read_mhartid();
-    int interval = 10000000;
+    int interval = 5000000;
     write_mtvec((uint32_t) riscv32_timer_handler);
     write_mstatus(read_mstatus() | MSTATUS_MIE);
     write_mie(read_mie() | MIE_MTIE);

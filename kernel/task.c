@@ -32,8 +32,16 @@ static struct task *scheduler(struct task *current) {
 void task_switch(void) {
     struct task *prev = CURRENT_TASK;
     struct task *next = scheduler(prev);
-    DEBUG_ASSERT(next != prev);
 
+    if (next == prev) {
+        // Keep running the current task.
+        // return;
+
+        // FIXME:
+        next = IDLE_TASK;
+    }
+
+    INFO("switch to task %d", next->tid);
     CURRENT_TASK = next;
     arch_task_switch(prev, next);
 }

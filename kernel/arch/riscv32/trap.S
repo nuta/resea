@@ -1,9 +1,11 @@
+.align 4
 .global riscv32_user_entry
 riscv32_user_entry:
     lw a0, 0 * 4(sp) // ip
     lw a1, 1 * 4(sp) // satp
     j do_riscv32_user_entry
 
+.align 4
 .global riscv32_trap_handler
 riscv32_trap_handler:
     csrrw tp, sscratch, tp
@@ -14,13 +16,19 @@ riscv32_trap_handler:
     beqz a0, 1f
 
     // From s-mode
+.align 4
+2:
+    j 2b
     mv a0, sp // Keep using the current kernel stack
     j trap_common
+
+.align 4
 1:
     // From u-mode
     lw a0, 4(tp) // Load kernel sp from ARCH_CPUVAR.
     j trap_common
 
+.align 4
 trap_common:
     addi a0, a0, -4 * 33
     sw ra,  4 * 0(a0)
@@ -53,12 +61,12 @@ trap_common:
     sw t6,  4 * 28(a0)
     sw sp,  4 * 29(a0)
 
-    // Restore sscratch and load temporarily saved user/kernel sp.
+    // Restore sscratch and save saved tp
     mv sp, a0
     csrrw a0, sscratch, tp
     sw a0, 4 * 30(sp) // tp
 
-    // Restore a0 from cpuvar
+    // Save saved a0
     lw a0, 0(tp)
     sw a0, 4 * 7(sp) // a0
 
@@ -112,6 +120,7 @@ trap_common:
     sret
 
 
+.align 4
 .global riscv32_timer_handler
 riscv32_timer_handler:
     csrrw tp, mscratch, tp
