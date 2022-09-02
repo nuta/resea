@@ -57,6 +57,7 @@ struct risc32_trap_frame {
 } __packed;
 
 void riscv32_trap_handler(void);
+void riscv32_timer_handler(void);
 void riscv32_trap(struct risc32_trap_frame *frame) {
     uint32_t tp;
     __asm__ __volatile__("mv %0, tp" : "=r"(tp));
@@ -66,21 +67,35 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
     uint32_t scause = read_scause();
     if (scause == 8) {
         frame->sepc += 4;
+    } else if (scause == 0x80000001) {
+        write_sip(read_sip() & ~2);
     }
 
-    TRACE("trap sepc=%p, scause=%p, tp=%p, sscratch=%pm next_sepc=%p",
+    TRACE("trap sepc=%p, scause=%p, tp=%p, sscratch=%p, next_sepc=%p",
           read_sepc(), read_scause(), tp, sscratch, frame->sepc);
 }
 
 __noreturn void riscv32_setup(void) {
     write_medeleg(0xffff);
     write_mideleg(0xffff);
-    // TODO:
-    //   write_sie(read_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
 
     write_stvec((uint32_t) riscv32_trap_handler);
     write_sscratch((uint32_t) &cpuvar_fixme);
+    write_mscratch((uint32_t) &cpuvar_fixme);
     write_tp((uint32_t) &cpuvar_fixme);
+
+    int hart = read_mhartid();
+    int interval = 10000000;
+    write_mtvec((uint32_t) riscv32_timer_handler);
+    write_mstatus(read_mstatus() | MSTATUS_MIE);
+    write_mie(read_mie() | MIE_MTIE);
+    CPUVAR->arch.mtimecmp = CLINT_MTIMECMP(hart);
+    CPUVAR->arch.mtime = CLINT_MTIME;
+    CPUVAR->arch.interval = interval;
+
+    uint32_t *mtimecmp = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtimecmp);
+    uint32_t *mtime = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtime);
+    *mtimecmp = *mtime + interval;
 
     write_satp(0);
     write_pmpaddr0(0xffffffff);
@@ -92,6 +107,9 @@ __noreturn void riscv32_setup(void) {
     mstatus |= MSTATUS_SUM;
     mstatus |= 1 << 19;  // FIXME:
     write_mstatus(mstatus);
+
+    // TODO:
+    write_sie(read_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
 
     write_mepc((uint32_t) setup_smode);
     __asm__ __volatile__("mret");

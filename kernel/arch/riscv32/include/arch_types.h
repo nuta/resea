@@ -14,6 +14,10 @@ struct arch_vm {
 struct arch_cpuvar {
     uint32_t sscratch;
     uint32_t sp;
+    uint32_t mscratch[2];
+    uint32_t mtimecmp;
+    uint32_t mtime;
+    uint32_t interval;
 };
 
 // FIXME:

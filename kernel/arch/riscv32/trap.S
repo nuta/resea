@@ -102,3 +102,26 @@ riscv32_trap_handler:
     lw sp,  -4 * (33 - 29)(sp)
     sret
 
+
+.global riscv32_timer_handler
+riscv32_timer_handler:
+    csrrw tp, mscratch, tp
+
+    sw a0, 4 * 2(tp)
+    sw a1, 4 * 3(tp)
+
+    lw a0, 4 * 5(tp) // CLINT_MTIME
+    lw a0, (a0)
+    lw a1, 4 * 6(tp) // interval
+    add a0, a0, a1
+
+    lw a1, 4 * 4(tp) // CLINT_MTIMECMP
+    sw a0, (a1)
+
+    li a1, 2
+    csrw sip, a1
+
+    lw a0, 4 * 2(tp)
+    lw a1, 4 * 3(tp)
+    csrrw tp, mscratch, tp
+    mret

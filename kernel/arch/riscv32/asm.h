@@ -2,10 +2,13 @@
 #include <types.h>
 
 #define MSTATUS_SUM      (1 << 18)
+#define MSTATUS_MIE      (1 << 3)
 #define MSTATUS_MPP_U    (0b00 << 11)
 #define MSTATUS_MPP_S    (0b01 << 11)
 #define MSTATUS_MPP_M    (0b11 << 11)
 #define MSTATUS_MPP_MASK (0b11 << 11)
+
+#define MIE_MTIE (1 << 7)
 
 #define SSTATUS_SPP_MASK (1 << 8)
 #define SSTATUS_SPP_MASK (1 << 8)
@@ -13,6 +16,11 @@
 #define SIE_SSIE (1 << 1)
 #define SIE_STIE (1 << 5)
 #define SIE_SEIE (1 << 9)
+
+#define CLINT_PADDR 0x2000000
+#define CLINT_MTIME (CLINT_PADDR + 0xbff8)
+#define CLINT_MTIMECMP(hartid)                                                 \
+    (CLINT_PADDR + 0x4000 + sizeof(uint64_t) * (hartid))
 
 //  TODO: Support RV64 (XLEN > 32)
 
@@ -30,6 +38,30 @@ static inline void write_mstatus(uint32_t value) {
     __asm__ __volatile__("csrw mstatus, %0" ::"r"(value));
 }
 
+static inline uint32_t read_mhartid(void) {
+    uint32_t value;
+    __asm__ __volatile__("csrr %0, mhartid" : "=r"(value));
+    return value;
+}
+
+static inline uint32_t read_mie(void) {
+    uint32_t value;
+    __asm__ __volatile__("csrr %0, mie" : "=r"(value));
+    return value;
+}
+
+static inline void write_mie(uint32_t value) {
+    __asm__ __volatile__("csrw mie, %0" ::"r"(value));
+}
+
+static inline void write_mtvec(uint32_t value) {
+    __asm__ __volatile__("csrw mtvec, %0" ::"r"(value));
+}
+
+static inline void write_mscratch(uint32_t value) {
+    __asm__ __volatile__("csrw mscratch, %0" ::"r"(value));
+}
+
 static inline uint32_t read_sie(void) {
     uint32_t value;
     __asm__ __volatile__("csrr %0, sie" : "=r"(value));
@@ -38,6 +70,16 @@ static inline uint32_t read_sie(void) {
 
 static inline void write_sie(uint32_t value) {
     __asm__ __volatile__("csrw sie, %0" ::"r"(value));
+}
+
+static inline uint32_t read_sip(void) {
+    uint32_t value;
+    __asm__ __volatile__("csrr %0, sip" : "=r"(value));
+    return value;
+}
+
+static inline void write_sip(uint32_t value) {
+    __asm__ __volatile__("csrw sip, %0" ::"r"(value));
 }
 
 static inline uint32_t read_medeleg(void) {
