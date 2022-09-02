@@ -6,57 +6,66 @@ riscv32_user_entry:
 
 .global riscv32_trap_handler
 riscv32_trap_handler:
+    csrrw tp, sscratch, tp
+    sw a0, 0(tp) // Save a0
 
-// TODO: Only restore regs if it's user mode
-    // Set ARCH_CPUVAR to sp and save sp in sscratch temporarily.
-    csrrw sp, sscratch, sp
+    csrr a0, sstatus
+    andi a0, a0, 1 << 8 // SPP
+    beqz a0, 1f
 
-    sw tp, 0(sp) // Save sscratch
-    mv tp, sp
-    lw sp, 4(tp) // Load kernel sp from ARCH_CPUVAR.
+    // From s-mode
+    mv a0, sp // Keep using the current kernel stack
+    j trap_common
+1:
+    // From u-mode
+    lw a0, 4(tp) // Load kernel sp from ARCH_CPUVAR.
+    j trap_common
 
-    addi sp, sp, -4 * 33
-    sw ra,  4 * 0(sp)
-    sw gp,  4 * 1(sp)
-    sw t0,  4 * 2(sp)
-    sw t1,  4 * 3(sp)
-    sw t2,  4 * 4(sp)
-    sw s0,  4 * 5(sp)
-    sw s1,  4 * 6(sp)
-    sw a0,  4 * 7(sp)
-    sw a1,  4 * 8(sp)
-    sw a2,  4 * 9(sp)
-    sw a3,  4 * 10(sp)
-    sw a4,  4 * 11(sp)
-    sw a5,  4 * 12(sp)
-    sw a6,  4 * 13(sp)
-    sw a7,  4 * 14(sp)
-    sw s2,  4 * 15(sp)
-    sw s3,  4 * 16(sp)
-    sw s4,  4 * 17(sp)
-    sw s5,  4 * 18(sp)
-    sw s6,  4 * 19(sp)
-    sw s7,  4 * 20(sp)
-    sw s8,  4 * 21(sp)
-    sw s9,  4 * 22(sp)
-    sw s10, 4 * 23(sp)
-    sw s11, 4 * 24(sp)
-    sw t3,  4 * 25(sp)
-    sw t4,  4 * 26(sp)
-    sw t5,  4 * 27(sp)
-    sw t6,  4 * 28(sp)
+trap_common:
+    addi a0, a0, -4 * 33
+    sw ra,  4 * 0(a0)
+    sw gp,  4 * 1(a0)
+    sw t0,  4 * 2(a0)
+    sw t1,  4 * 3(a0)
+    sw t2,  4 * 4(a0)
+    sw s0,  4 * 5(a0)
+    sw s1,  4 * 6(a0)
+    sw a1,  4 * 8(a0)
+    sw a2,  4 * 9(a0)
+    sw a3,  4 * 10(a0)
+    sw a4,  4 * 11(a0)
+    sw a5,  4 * 12(a0)
+    sw a6,  4 * 13(a0)
+    sw a7,  4 * 14(a0)
+    sw s2,  4 * 15(a0)
+    sw s3,  4 * 16(a0)
+    sw s4,  4 * 17(a0)
+    sw s5,  4 * 18(a0)
+    sw s6,  4 * 19(a0)
+    sw s7,  4 * 20(a0)
+    sw s8,  4 * 21(a0)
+    sw s9,  4 * 22(a0)
+    sw s10, 4 * 23(a0)
+    sw s11, 4 * 24(a0)
+    sw t3,  4 * 25(a0)
+    sw t4,  4 * 26(a0)
+    sw t5,  4 * 27(a0)
+    sw t6,  4 * 28(a0)
+    sw sp,  4 * 29(a0)
 
     // Restore sscratch and load temporarily saved user/kernel sp.
+    mv sp, a0
     csrrw a0, sscratch, tp
-    sw a0, 4 * 29(sp) // sp
-
-    lw a0, 0(tp)
     sw a0, 4 * 30(sp) // tp
 
+    // Restore a0 from cpuvar
+    lw a0, 0(tp)
+    sw a0, 4 * 7(sp) // a0
+
     csrr a0, sepc
-    sw a0, 4 * 31(sp)
+    sw a0, 4 * 31(sp) // sepc
     csrr a0, sstatus
-    sw a0, 4 * 32(sp)
+    sw a0, 4 * 32(sp) // sstatus
 
     mv a0, sp
     call riscv32_trap
