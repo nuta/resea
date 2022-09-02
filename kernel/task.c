@@ -15,6 +15,8 @@ static struct task *scheduler(struct task *current) {
     if (current != IDLE_TASK && current->state == TASK_RUNNABLE) {
         // The current task is still runnable. Enqueue into the runqueue.
         enqueue_task(current);
+        // FIXME:
+        return IDLE_TASK;
     }
 
     // Look for the task with the highest priority. Tasks with the same priority
@@ -35,10 +37,7 @@ void task_switch(void) {
 
     if (next == prev) {
         // Keep running the current task.
-        // return;
-
-        // FIXME:
-        next = IDLE_TASK;
+        return;
     }
 
     INFO("switch to task %d", next->tid);

@@ -85,15 +85,25 @@ __noreturn void riscv32_setup(void) {
     write_mideleg(0xffff);
 
     write_stvec((uint32_t) riscv32_trap_handler);
+    write_sie(read_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
     write_sscratch((uint32_t) &cpuvar_fixme);
     write_mscratch((uint32_t) &cpuvar_fixme);
     write_tp((uint32_t) &cpuvar_fixme);
 
+    uint32_t mstatus = read_mstatus();
+    mstatus &= ~MSTATUS_MPP_MASK;
+    mstatus |= MSTATUS_MPP_S;
+    mstatus |= MSTATUS_SUM;
+    mstatus |= 1 << 19;  // FIXME:
+    write_mstatus(mstatus);
+    write_mepc((uint32_t) setup_smode);
+
+    write_satp(0);
+    write_pmpaddr0(0xffffffff);
+    write_pmpcfg0(0xf);
+
     int hart = read_mhartid();
-    int interval = 5000000;
-    write_mtvec((uint32_t) riscv32_timer_handler);
-    write_mstatus(read_mstatus() | MSTATUS_MIE);
-    write_mie(read_mie() | MIE_MTIE);
+    int interval = 1000000;
     CPUVAR->arch.mtimecmp = CLINT_MTIMECMP(hart);
     CPUVAR->arch.mtime = CLINT_MTIME;
     CPUVAR->arch.interval = interval;
@@ -102,21 +112,16 @@ __noreturn void riscv32_setup(void) {
     uint32_t *mtime = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtime);
     *mtimecmp = *mtime + interval;
 
-    write_satp(0);
-    write_pmpaddr0(0xffffffff);
-    write_pmpcfg0(0xf);
+    write_mtvec((uint32_t) riscv32_timer_handler);
+    write_mstatus(read_mstatus() | MSTATUS_MIE);
+    write_mie(read_mie() | MIE_MTIE);
 
-    uint32_t mstatus = read_mstatus();
-    mstatus &= ~MSTATUS_MPP_MASK;
-    mstatus |= MSTATUS_MPP_S;
-    mstatus |= MSTATUS_SUM;
-    mstatus |= 1 << 19;  // FIXME:
-    write_mstatus(mstatus);
-
-    // TODO:
-    write_sie(read_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
-
-    write_mepc((uint32_t) setup_smode);
     __asm__ __volatile__("mret");
     UNREACHABLE();
+}
+
+void arch_idle(void) {
+    DBG("arch_idle");
+    write_sstatus(read_sstatus() | SSTATUS_SIE);
+    __asm__ __volatile__("wfi");
 }

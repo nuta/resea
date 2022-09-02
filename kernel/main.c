@@ -57,6 +57,6 @@ void kernel_main(struct bootinfo *bootinfo) {
 
     TRACE("idle");
     for (;;) {
-        //
+        arch_idle();
     }
 }

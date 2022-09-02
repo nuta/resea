@@ -11,7 +11,7 @@
 #define MIE_MTIE (1 << 7)
 
 #define SSTATUS_SPP_MASK (1 << 8)
-#define SSTATUS_SPP_MASK (1 << 8)
+#define SSTATUS_SIE      (1 << 1)
 
 #define SIE_SSIE (1 << 1)
 #define SIE_STIE (1 << 5)

@@ -17,8 +17,8 @@ riscv32_trap_handler:
 
     // From s-mode
 .align 4
-2:
-    j 2b
+//2:
+//    j 2b
     mv a0, sp // Keep using the current kernel stack
     j trap_common
 
