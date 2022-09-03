@@ -23,11 +23,12 @@ boot_elf := $(BUILD_DIR)/servers/init.elf
 #
 #  Commands
 #
-CC       := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
-LD       := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
-OBJCOPY  := $(LLVM_PREFIX)llvm-objcopy$(LLVM_SUFFIX)
-PROGRESS ?= printf "  \\033[1;96m%8s\\033[0m  \\033[1;m%s\\033[0m\\n"
-DOXYGEN  ?= doxygen
+CC        := $(LLVM_PREFIX)clang$(LLVM_SUFFIX)
+LD        := $(LLVM_PREFIX)ld.lld$(LLVM_SUFFIX)
+OBJCOPY   := $(LLVM_PREFIX)llvm-objcopy$(LLVM_SUFFIX)
+ADDR2LINE := $(LLVM_PREFIX)llvm-addr2line$(LLVM_SUFFIX)
+PROGRESS  ?= printf "  \\033[1;96m%8s\\033[0m  \\033[1;m%s\\033[0m\\n"
+DOXYGEN   ?= doxygen
 
 LDFLAGS := $(LDFLAGS)
 CFLAGS := $(CFLAGS)

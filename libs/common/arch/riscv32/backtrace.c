@@ -23,7 +23,7 @@ void backtrace(void) {
 
         struct stack_frame *frame =
             (struct stack_frame *) (fp - sizeof(*frame));
-        WARN("    #%d: %p: %p", i, fp, frame->ra);
+        WARN("    #%d: @sym<%p>", i, frame->ra);
         fp = frame->fp;
     }
 }
