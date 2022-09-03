@@ -23,7 +23,7 @@ void backtrace(void) {
 
         struct stack_frame *frame =
             (struct stack_frame *) (fp - sizeof(*frame));
-        uint32_t caller = frame->ra - 4 /* size of jal */;
+        uint32_t caller = frame->ra - 4 /* size of an instruction */;
         WARN("    #%d: @sym<%p>", i, caller);
         fp = frame->fp;
     }
