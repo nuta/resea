@@ -140,6 +140,12 @@ static inline uint32_t read_scause(void) {
     return value;
 }
 
+static inline uint32_t read_stval(void) {
+    uint32_t value;
+    __asm__ __volatile__("csrr %0, stval" : "=r"(value));
+    return value;
+}
+
 static inline void write_satp(uint32_t value) {
     __asm__ __volatile__("csrw satp, %0" ::"r"(value));
 }

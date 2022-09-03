@@ -2,11 +2,8 @@
 .global start
 start:
     mv fp, zero
-
-    ecall
-    ecall
-    ecall
-    ecall
-    ecall
+    mv ra, zero
+    la sp, __stack
+    jal main
 1:
     j 1b

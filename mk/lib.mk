@@ -1,7 +1,7 @@
 build_dir := $(BUILD_DIR)/$(dir)
 objs := $(addprefix $(build_dir)/, $(objs-y))
 
-dir-saved = $(dir)
+dir-saved := $(dir)
 $(foreach subdir, $(subdirs-y),                                 \
 	$(eval dir := $(dir-saved)/$(subdir))                   \
 	$(eval build_dir := $(BUILD_DIR)/$(dir))                \
@@ -13,7 +13,7 @@ $(foreach subdir, $(subdirs-y),                                 \
 objs := $(objs)
 cflags := $(cflags-y)
 
-$(objs): CFLAGS := $(CFLAGS) $(cflags)
+$(objs): CFLAGS := $(CFLAGS) $(cflags) -Ilibs/common/include -I$(dir-saved)/include
 $(output): OBJS := $(objs)
 $(output): $(objs)
 	$(PROGRESS) LD $(@)

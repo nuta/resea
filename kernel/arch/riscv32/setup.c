@@ -68,12 +68,17 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
 
     uint32_t scause = read_scause();
 
-    TRACE("trap(%s) sepc=%p, scause=%p",
+    TRACE("trap(%s) sepc=%p, scause=%p, stval=%p",
           (read_sstatus() & (1 << 8)) ? "s-mode" : "u-mode", read_sepc(),
-          read_scause());
+          read_scause(), read_stval());
 
     if (scause == 8) {
         frame->sepc += 4;
+
+        TRACE("syscall: a0=%d, a1=%p, a2=%u", frame->a0, frame->a1, frame->a2);
+        for (int i = 0; i < frame->a2; i++) {
+            printf("%c", ((char *) frame->a1)[i]);
+        }
     } else if (scause == 0x80000001) {
         write_sip(read_sip() & ~2);
         TRACE("timer context switch!");
