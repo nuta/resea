@@ -4,7 +4,7 @@ cflags-y += -DKERNEL -DBOOT_ELF_PATH='"$(boot_elf)"' -Ikernel/arch/$(ARCH)/inclu
 libs-y += common
 
 $(build_dir)/boot_elf.S: $(boot_elf)
-	mkdir -p $(@D)
+	$(MKDIR) $(@D)
 	echo ".section .boot_elf"        > $@
 	echo ".global boot_elf"          >> $@
 	echo "boot_elf:"                 >> $@

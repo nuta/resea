@@ -30,9 +30,9 @@ $(executable): LDFLAGS := $(LDFLAGS) $(ldflags)
 $(executable): OBJS := $(objs)
 $(executable): $(objs)
 	$(PROGRESS) LD $(@)
-	mkdir -p $(@D)
+	$(MKDIR) $(@D)
 	$(LD) $(LDFLAGS) -o $(@) $(OBJS)
 
 $(BUILD_DIR)/program_names/$(executable_name).c:
-	mkdir -p $(@D)
+	$(MKDIR) $(@D)
 	echo 'const char *__program_name(void) { return "$(executable_name)"; }' > $(@)
