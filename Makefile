@@ -52,9 +52,9 @@ CFLAGS += -fno-omit-frame-pointer -fno-optimize-sibling-calls
 
 ifeq ($(RELEASE),)
 CFLAGS += -fsanitize=undefined
-CFLAGS += -O2
-else
 CFLAGS += -O0
+else
+CFLAGS += -O2
 endif
 
 QEMUFLAGS += -serial mon:stdio --no-reboot
