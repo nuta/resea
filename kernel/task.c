@@ -100,7 +100,6 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
     return tid;
 }
 
-/// Initializes the task subsystem.
 void task_init(void) {
     for (int i = 0; i < TASK_PRIORITY_MAX; i++) {
         list_init(&runqueues[i]);

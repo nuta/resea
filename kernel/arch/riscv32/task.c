@@ -51,10 +51,6 @@ __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
 }
 
 void arch_task_switch(struct task *prev, struct task *next) {
-    uint32_t tp;
-    __asm__ __volatile__("mv %0, tp" : "=r"(tp));
-    TRACE("tp = %p", tp);
-    INFO("switch");
     CPUVAR->arch.sp = next->arch.sp;
     riscv32_task_switch(&prev->arch.sp, &next->arch.sp);
 }
