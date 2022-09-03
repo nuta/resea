@@ -51,10 +51,9 @@ CFLAGS += -I$(top_dir)
 CFLAGS += -fno-omit-frame-pointer -fno-optimize-sibling-calls
 
 ifeq ($(RELEASE),)
-CFLAGS += -fsanitize=undefined
-CFLAGS += -O0
+CFLAGS += -O1 -fsanitize=undefined
 else
-CFLAGS += -O2
+CFLAGS += -O3
 endif
 
 QEMUFLAGS += -serial mon:stdio --no-reboot
