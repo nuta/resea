@@ -8,7 +8,7 @@
 // FIXME:
 struct cpuvar cpuvar_fixme;
 
-__noreturn static void setup_smode(void) {
+__noreturn void riscv32_setup_s_mode(void) {
     struct bootinfo bootinfo;
     bootinfo.boot_elf = (paddr_t) __boot_elf;
     bootinfo.memory_map.entries[0].paddr =
@@ -57,6 +57,7 @@ struct risc32_trap_frame {
     uint32_t sstatus;
 } __packed;
 
+void boot_s_mode(void);
 void riscv32_trap_handler(void);
 void riscv32_timer_handler(void);
 void riscv32_trap(struct risc32_trap_frame *frame) {
@@ -80,8 +81,7 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
     }
 }
 
-__noreturn void riscv32_setup(void) {
-    WARN("%s: ra=%p", __func__, __builtin_return_address(0));
+__noreturn void riscv32_setup_m_mode(void) {
     write_medeleg(0xffff);
     write_mideleg(0xffff);
 
@@ -97,7 +97,7 @@ __noreturn void riscv32_setup(void) {
     mstatus |= MSTATUS_SUM;
     mstatus |= 1 << 19;  // FIXME:
     write_mstatus(mstatus);
-    write_mepc((uint32_t) setup_smode);
+    write_mepc((uint32_t) boot_s_mode);
 
     write_satp(0);
     write_pmpaddr0(0xffffffff);
