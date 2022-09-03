@@ -1,28 +1,15 @@
 #pragma once
+#include <backtrace.h>
 #include <types.h>
 #include <vprintf.h>
 
-#ifdef KERNEL
-#    define printf printk
-void printk(const char *fmt, ...);
+void printf(const char *fmt, ...);
 // TODO:
-// void panic_lock(void);
 static inline void panic_lock(void) {
 }
-#else
-// TODO:
-static inline void printf(const char *fmt, ...) {
-}
-static inline void panic_lock(void) {
-}
-#endif
 
 const char *__program_name(void);
-// void halt(void);
 
-// TODO:
-static inline void backtrace(void) {
-}
 static inline void halt(void) {
     for (;;)
         ;
@@ -33,7 +20,7 @@ static inline void halt(void) {
 #define SGR_WARN     "\e[0;33m"  // Yellow.
 #define SGR_WARN_DBG "\e[1;33m"  // Bold yellow.
 #define SGR_INFO     "\e[0;96m"  // Cyan.
-#define SGR_DEBUG    "\e[1;32m"  // Bold green.
+#define SGR_DEBUG    "\e[1;95m"  // Bold megenta.
 #define SGR_RESET    "\e[0m"
 
 #define TRACE(fmt, ...)                                                        \
@@ -63,12 +50,6 @@ static inline void halt(void) {
     do {                                                                       \
         printf(SGR_WARN_DBG "[%s] WARN: " fmt SGR_RESET "\n",                  \
                __program_name(), ##__VA_ARGS__);                               \
-    } while (0)
-
-#define METRIC(key, value)                                                     \
-    do {                                                                       \
-        printf("{\"type\":\"metric\",\"key\":\"%s\",\"value\":%lld}\n", name,  \
-               value);                                                         \
     } while (0)
 
 #define HEXDUMP(ptr, len)                                                      \

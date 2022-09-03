@@ -38,12 +38,18 @@ static void printchar(__unused struct vprintf_context *ctx, char ch) {
     klog_write(ch);
 }
 
-struct vprintf_context printk_ctx = {
-    .printchar = printchar
-};
+struct vprintf_context printk_ctx = {.printchar = printchar};
 
 /// Prints a message. See vprintf() for detailed formatting specifications.
 void printk(const char *fmt, ...) {
+    va_list vargs;
+    va_start(vargs, fmt);
+    vprintf_with_context(&printk_ctx, fmt, vargs);
+    va_end(vargs);
+}
+
+// FIXME:
+void printf(const char *fmt, ...) {
     va_list vargs;
     va_start(vargs, fmt);
     vprintf_with_context(&printk_ctx, fmt, vargs);

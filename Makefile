@@ -44,8 +44,14 @@ CFLAGS += -Werror=tautological-constant-out-of-range-compare
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -I$(top_dir)
 
+# Required for backtrace().
+CFLAGS += -fno-omit-frame-pointer -fno-optimize-sibling-calls
+
 ifeq ($(RELEASE),)
 CFLAGS += -fsanitize=undefined
+CFLAGS += -O2
+else
+CFLAGS += -O0
 endif
 
 QEMUFLAGS += -serial mon:stdio --no-reboot

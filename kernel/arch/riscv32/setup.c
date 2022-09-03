@@ -67,9 +67,9 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
 
     uint32_t scause = read_scause();
 
-    TRACE("trap(%s) sepc=%p, scause=%p, tp=%p, sscratch=%p, next_sepc=%p",
+    TRACE("trap(%s) sepc=%p, scause=%p",
           (read_sstatus() & (1 << 8)) ? "s-mode" : "u-mode", read_sepc(),
-          read_scause(), tp, sscratch, frame->sepc);
+          read_scause());
 
     if (scause == 8) {
         frame->sepc += 4;

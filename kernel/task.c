@@ -71,6 +71,7 @@ void task_resume(struct task *task) {
 
 task_t task_create(const char *name, uaddr_t ip, struct task *pager,
                    unsigned flags) {
+    backtrace();
     task_t tid = get_unused_tid();
     if (!tid) {
         return ERR_TOO_MANY_TASKS;
