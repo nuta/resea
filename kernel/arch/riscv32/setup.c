@@ -81,6 +81,7 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
 }
 
 __noreturn void riscv32_setup(void) {
+    WARN("%s: ra=%p", __func__, __builtin_return_address(0));
     write_medeleg(0xffff);
     write_mideleg(0xffff);
 
