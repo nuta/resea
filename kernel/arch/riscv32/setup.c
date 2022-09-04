@@ -76,7 +76,7 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
         frame->sepc += 4;
 
         TRACE("syscall: a0=%d, a1=%p, a2=%u", frame->a0, frame->a1, frame->a2);
-        for (int i = 0; i < frame->a2; i++) {
+        for (uint32_t i = 0; i < frame->a2; i++) {
             printf("%c", ((char *) frame->a1)[i]);
         }
     } else if (scause == 0x80000001) {

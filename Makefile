@@ -63,7 +63,7 @@ QEMUFLAGS += $(if $(GDB),-S -s,)
 .PHONY: build
 build: $(kernel_elf)
 	$(PROGRESS) "GEN" "$(BUILD_DIR)/compile_commands.json"
-	$(PYTHON3) ./tools/merge-compile-commands-json.py -o $(BUILD_DIR)/compile_commands.json $(BUILD_DIR)
+	$(PYTHON3) ./tools/merge_compile_commands_json.py -o $(BUILD_DIR)/compile_commands.json $(BUILD_DIR)
 
 .PHONY: clean
 clean:

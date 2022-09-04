@@ -14,7 +14,7 @@ uint32_t read_fp(void) {
 
 /// Prints the stack trace.
 void backtrace(void) {
-    WARN("Backtrace:");
+    WARN("Backtrace");
     uint32_t fp = read_fp();
     for (int i = 0; i < BACKTRACE_MAX; i++) {
         if (!fp) {
@@ -23,8 +23,7 @@ void backtrace(void) {
 
         struct stack_frame *frame =
             (struct stack_frame *) (fp - sizeof(*frame));
-        uint32_t caller = frame->ra - 4 /* size of an instruction */;
-        WARN("    #%d: @sym<%p>", i, caller);
+        TRACE("{{{bt:%d:0x%p:ra}}}", i, frame->ra);
         fp = frame->fp;
     }
 }

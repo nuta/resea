@@ -57,6 +57,7 @@ static task_t get_unused_tid(void) {
 
 struct task *get_task_by_tid(task_t tid) {
     if (0 < tid && tid < NUM_TASKS_MAX) {
+        backtrace();
         return &tasks[tid - 1];
     }
 

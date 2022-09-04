@@ -12,7 +12,6 @@ struct message {
     task_t src;
     union {
         uint8_t data[56];
-
     };
 };
 
@@ -24,7 +23,8 @@ task_t task_self(void);
 caps_t caps_get(task_t task);
 error_t caps_set(task_t task, caps_t caps);
 
-task_t ipc(task_t dst, task_t src, __user struct message *m, unsigned flags);
+error_t ipc(task_t dst, task_t src, __user struct message *m, size_t len,
+            unsigned flags);
 error_t notify(task_t dst, notifications_t notifications);
 
 error_t timer_set(unsigned ms);
