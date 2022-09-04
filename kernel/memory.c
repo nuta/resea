@@ -62,11 +62,13 @@ paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
                     memset(arch_paddr2ptr(paddr), 0, PAGE_SIZE * num_pages);
                 }
 
+                DBG("paddr = %p (%x)", paddr, ALIGN_UP(size, PAGE_SIZE));
                 return paddr;
             }
         }
     }
 
+    PANIC("no memory");
     return 0;
 }
 

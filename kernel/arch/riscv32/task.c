@@ -44,7 +44,10 @@ __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
     sstatus &= ~SSTATUS_SPP_MASK;
     write_sstatus(sstatus);
 
+    // FIXME: DOn't need to switch!
     write_satp((1ul << 31) | satp >> 12);
+    DBG("satp: %p (%d)", satp);
+
     write_sepc(ip);
     __asm__ __volatile__("sret");
     UNREACHABLE();
@@ -52,5 +55,9 @@ __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
 
 void arch_task_switch(struct task *prev, struct task *next) {
     CPUVAR->arch.sp = next->arch.sp;
+
+    write_satp((1ul << 31) | next->vm.table >> 12);
+    DBG("satp: %p (%d)", next->vm.table);
+
     riscv32_task_switch(&prev->arch.sp, &next->arch.sp);
 }
