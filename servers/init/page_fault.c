@@ -15,13 +15,14 @@ error_t handle_page_fault(struct task *task, uaddr_t vaddr, uaddr_t ip,
     uaddr_t vaddr_original = vaddr;
     vaddr = ALIGN_DOWN(vaddr, PAGE_SIZE);
 
-    if (fault & EXP_PF_PRESENT) {
-        // Invalid access. For instance the user thread has tried to write to
-        // readonly area.
-        WARN("%s: invalid memory access at %p (IP=%p, perhaps segfault?)",
-             task->name, vaddr_original, ip);
-        return ERR_ABORTED;  // FIXME:
-    }
+    // TODO:
+    // if (fault & EXP_PF_PRESENT) {
+    //     // Invalid access. For instance the user thread has tried to write to
+    //     // readonly area.
+    //     WARN("%s: invalid memory access at %p (IP=%p, perhaps segfault?)",
+    //          task->name, vaddr_original, ip);
+    //     return ERR_ABORTED;  // FIXME:
+    // }
 
     // Look for the associated program header.
     elf_phdr_t *phdr = NULL;
