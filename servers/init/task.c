@@ -28,7 +28,7 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     // FIXME: void *file_header = malloc(PAGE_SIZE);
     void *file_header = malloc(PAGE_SIZE);
 
-    read_file(file, 0, file_header, PAGE_SIZE);
+    bootfs_read(file, 0, file_header, PAGE_SIZE);
 
     // Ensure that it's an ELF file.
     elf_ehdr_t *ehdr = (elf_ehdr_t *) file_header;
@@ -47,6 +47,7 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
         return tid_or_err;
     }
 
+    task->file = file;
     task->file_header = file_header;
     task->tid = tid_or_err;
     task->pager = task_self();

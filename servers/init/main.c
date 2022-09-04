@@ -51,7 +51,6 @@ void main(void) {
         error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
-        INFO("RESUMING init: %d", __LINE__);
         switch (m.type) {
             case PAGE_FAULT_MSG: {
                 if (m.src != KERNEL_TASK) {
@@ -73,6 +72,7 @@ void main(void) {
                     break;
                 }
 
+                DBG("PF replying to %d", task->tid);
                 m.type = PAGE_FAULT_REPLY_MSG;
                 ipc_reply(task->tid, &m);
                 break;

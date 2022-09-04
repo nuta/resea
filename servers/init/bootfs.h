@@ -16,5 +16,5 @@ struct bootfs_file {
 } __packed;
 
 struct bootfs_file *bootfs_open(unsigned index);
-void read_file(struct bootfs_file *file, offset_t off, void *buf, size_t len);
+void bootfs_read(struct bootfs_file *file, offset_t off, void *buf, size_t len);
 void bootfs_init(void);

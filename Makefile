@@ -46,6 +46,7 @@ CFLAGS += -Werror=switch
 CFLAGS += -Werror=return-type
 CFLAGS += -Werror=pointer-integer-compare
 CFLAGS += -Werror=tautological-constant-out-of-range-compare
+CFLAGS += -Werror=visibility
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -I$(top_dir) -I$(BUILD_DIR)/autogen/include
 

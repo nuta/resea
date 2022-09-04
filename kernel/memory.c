@@ -62,7 +62,6 @@ paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
                     memset(arch_paddr2ptr(paddr), 0, PAGE_SIZE * num_pages);
                 }
 
-                DBG("paddr = %p (%x)", paddr, ALIGN_UP(size, PAGE_SIZE));
                 return paddr;
             }
         }
@@ -80,6 +79,11 @@ void pm_free(paddr_t paddr, size_t num_pages) {
         DEBUG_ASSERT(page->ref_count > 0);
         page->ref_count--;
     }
+}
+
+error_t vm_map(struct task *task, uaddr_t uaddr, paddr_t paddr, size_t size,
+               unsigned attrs) {
+    return arch_vm_map(&task->vm, uaddr, paddr, size, attrs);
 }
 
 /// The page fault handler. It calls a pager to ask to update the page table.

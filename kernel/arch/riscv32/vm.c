@@ -70,7 +70,8 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
         pte_t *pte = walk(vm->table, vaddr + offset, true);
         if (*pte & PTE_V) {
-            return ERR_EXISTS;
+            DBG("ERR_EXISTS: PTE=%p", vaddr);
+            // return ERR_EXISTS;
         }
     }
 
@@ -78,11 +79,14 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
         pte_t *pte = walk(vm->table, vaddr + offset, true);
         DEBUG_ASSERT(pte != NULL);
-        DEBUG_ASSERT((*pte & PTE_V) == 0);
+        // FIXME: DEBUG_ASSERT((*pte & PTE_V) == 0);
 
         *pte = construct_pte(paddr + offset,
                              page_attrs_to_pte_flags(attrs) | PTE_V);
     }
+
+    // TODO: TLB flush
+    __asm__ __volatile__("sfence.vma zero, zero");
 
     return OK;
 }

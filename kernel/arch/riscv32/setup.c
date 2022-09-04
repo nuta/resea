@@ -80,16 +80,13 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
     if (scause == 8) {
         frame->sepc += 4;
 
-        TRACE("syscall: a0=%d, a1=%p, a2=%u", frame->a0, frame->a1, frame->a2);
-        if (frame->a0 == SYS_CONSOLE_WRITE) {
-            for (uint32_t i = 0; i < frame->a2; i++) {
-                printf("%c", ((char *) frame->a1)[i]);
-            }
-        }
+        TRACE("> syscall: a0=%d, a1=%p, a2=%p, a3=%p", frame->a0, frame->a1,
+              frame->a2, frame->a3);
         uint32_t ret = handle_syscall(frame->a0, frame->a1, frame->a2,
                                       frame->a3, frame->a4, frame->a5);
+        TRACE("< done syscall: %p", ret);
         frame->a0 = ret;
-    } else if (scause == 0x0000000c) {
+    } else if (scause == 0x0000000c || scause == 0x0000000d || scause == 0xf) {
         handle_page_fault(read_stval(), frame->sepc, 0 /* FIXME: */);
     } else if (scause == 0x80000001) {
         write_sip(read_sip() & ~2);
@@ -128,7 +125,7 @@ __noreturn void riscv32_setup_m_mode(void) {
 
     uint32_t *mtimecmp = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtimecmp);
     uint32_t *mtime = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtime);
-    *mtimecmp = *mtime + interval;
+    // FIXME: *mtimecmp = *mtime + interval;
 
     write_mtvec((uint32_t) riscv32_timer_handler);
     write_mstatus(read_mstatus() | MSTATUS_MIE);

@@ -1,6 +1,7 @@
 #include "syscall.h"
 #include "arch.h"
 #include "ipc.h"
+#include "memory.h"
 #include "printk.h"
 #include "task.h"
 #include <string.h>
@@ -37,7 +38,6 @@ static task_t sys_task_create(__user const char *name, vaddr_t ip, task_t pager,
     }
 
     // FIXME: check if pager is created
-    DBG("pager_task = %d", pager);
 
     char namebuf[TASK_NAME_LEN];
     strncpy_from_user(namebuf, name, sizeof(namebuf) - 1);
@@ -71,6 +71,25 @@ static error_t sys_task_exit(void) {
 /// Returns the current task's ID.
 static task_t sys_task_self(void) {
     return CURRENT_TASK->tid;
+}
+
+static paddr_t sys_pm_alloc(size_t size, unsigned flags) {
+    return pm_alloc(size, PAGE_TYPE_USER(CURRENT_TASK), PM_ALLOC_ZEROED);
+}
+
+static paddr_t sys_vm_map(task_t tid, uaddr_t uaddr, paddr_t paddr, size_t size,
+                          unsigned attrs) {
+    struct task *task = get_task_by_tid(tid);
+    if (!task) {
+        return ERR_INVALID_TASK;
+    }
+
+    // TODO: check if caller is the owner of the paddr
+    INFO("vm_map: task=%d, uaddr=%p, paddr=%p, size=%d, attrs=%x", task->tid,
+         uaddr, paddr, size, attrs);
+    attrs =
+        PAGE_WRITABLE | PAGE_READABLE | PAGE_EXECUTABLE | PAGE_USER;  // FIXME:
+    return vm_map(task, uaddr, paddr, size, attrs);
 }
 
 /// Send/receive IPC messages.
@@ -140,8 +159,6 @@ static int sys_console_read(__user char *buf, int max_len) {
 
 /// The system call handler.
 long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
-    INFO("syscall: %d, %lx, %lx, %lx, %lx, %lx", n, a1, a2, a3, a4, a5);
-
     long ret;
     switch (n) {
         case SYS_IPC:
@@ -164,6 +181,13 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             break;
         case SYS_TASK_SELF:
             ret = sys_task_self();
+            break;
+        case SYS_PM_ALLOC:
+            ret = sys_pm_alloc(a1, a2);
+            INFO("alloced: %p", ret);
+            break;
+        case SYS_VM_MAP:
+            ret = sys_vm_map(a1, a2, a3, a4, a5);
             break;
         default:
             ret = ERR_INVALID_ARG;

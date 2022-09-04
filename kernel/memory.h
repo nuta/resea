@@ -26,7 +26,11 @@ struct memory_zone {
     struct page pages[0];
 };
 
-paddr_t pm_alloc(size_t num_pages, unsigned type, unsigned flags);
+struct task;
+
+paddr_t pm_alloc(size_t size, unsigned type, unsigned flags);
+error_t vm_map(struct task *task, uaddr_t uaddr, paddr_t paddr, size_t size,
+               unsigned attrs);
 void handle_page_fault(uaddr_t uaddr, vaddr_t ip, unsigned fault);
 
 struct bootinfo;

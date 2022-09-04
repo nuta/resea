@@ -39,6 +39,15 @@ task_t sys_task_self(void) {
     return syscall(SYS_TASK_SELF, 0, 0, 0, 0, 0);
 }
 
+paddr_t sys_pm_alloc(size_t size, unsigned flags) {
+    return syscall(SYS_PM_ALLOC, size, flags, 0, 0, 0);
+}
+
+error_t sys_vm_map(task_t task, uaddr_t uaddr, paddr_t paddr, size_t size,
+                   unsigned attrs) {
+    return syscall(SYS_VM_MAP, task, uaddr, paddr, size, attrs);
+}
+
 error_t sys_console_write(const char *buf, size_t len) {
     return syscall(SYS_CONSOLE_WRITE, (uintptr_t) buf, len, 0, 0, 0);
 }

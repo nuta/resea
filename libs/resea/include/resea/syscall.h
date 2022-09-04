@@ -9,4 +9,7 @@ task_t sys_task_create(const char *name, vaddr_t ip, task_t pager,
 error_t sys_task_destroy(task_t task);
 error_t sys_task_exit(void);
 task_t sys_task_self(void);
+paddr_t sys_pm_alloc(size_t size, unsigned flags);
+error_t sys_vm_map(task_t task, uaddr_t uaddr, paddr_t paddr, size_t size,
+                   unsigned attrs);
 error_t sys_console_write(const char *buf, size_t len);

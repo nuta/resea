@@ -51,11 +51,12 @@ typedef __builtin_va_list va_list;
 #define offsetof(type, field) __builtin_offsetof(type, field)
 #define is_constant(expr)     __builtin_constant_p(expr)
 
-#define __unused   __attribute__((unused))
-#define __packed   __attribute__((packed))
-#define __noreturn __attribute__((noreturn))
-#define __weak     __attribute__((weak))
-#define __mustuse  __attribute__((warn_unused_result))
+#define __unused              __attribute__((unused))
+#define __packed              __attribute__((packed))
+#define __noreturn            __attribute__((noreturn))
+#define __weak                __attribute__((weak))
+#define __mustuse             __attribute__((warn_unused_result))
+#define __aligned(aligned_to) __attribute__((aligned(aligned_to)))
 
 #define __user
 
@@ -78,7 +79,7 @@ typedef __builtin_va_list va_list;
     })
 
 #define IS_OK(err)    (!IS_ERROR(err))
-#define IS_ERROR(err) ((err) < 0)
+#define IS_ERROR(err) (((long) (err)) < 0)
 
 #define OK                 0
 #define ERR_EXISTS         -1
@@ -102,6 +103,8 @@ typedef __builtin_va_list va_list;
 #define SYS_TASK_DESTROY  9
 #define SYS_TASK_EXIT     10
 #define SYS_TASK_SELF     11
+#define SYS_PM_ALLOC      12
+#define SYS_VM_MAP        13
 
 // FIXME:
 static inline const char *err2str(int err) {

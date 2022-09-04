@@ -5,7 +5,8 @@ extern char __bootfs[];
 static struct bootfs_file *files;
 static unsigned num_files;
 
-void read_file(struct bootfs_file *file, offset_t off, void *buf, size_t len) {
+void bootfs_read(struct bootfs_file *file, offset_t off, void *buf,
+                 size_t len) {
     void *p = (void *) (((uintptr_t) __bootfs) + file->offset + off);
     memcpy(buf, p, len);
 }
