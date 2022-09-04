@@ -90,6 +90,7 @@ typedef __builtin_va_list va_list;
 #define PAGE_SIZE     4096
 #define KERNEL_TASK   0
 #define NUM_TASKS_MAX 32
+#define TASK_NAME_LEN 16
 
 // FIXME:
 static inline const char *err2str(int err) {

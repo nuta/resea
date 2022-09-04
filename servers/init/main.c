@@ -43,6 +43,7 @@ static void spawn_servers(void) {
 void main(void) {
     INFO("Hello World from init!");
     bootfs_init();
+    spawn_servers();
 
     while (true) {
         struct message m;

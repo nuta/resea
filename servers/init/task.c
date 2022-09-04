@@ -50,6 +50,9 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     task->file_header = file_header;
     task->tid = tid_or_err;
     task->pager = task_self();
+    task->ehdr = ehdr;
+    task->phdrs = (elf_phdr_t *) ((uintptr_t) file_header + ehdr->e_phoff);
+    task->name[0] = '\0';  // FIXME: copy
     tasks[task->tid - 1] = task;
 
     return task->tid;

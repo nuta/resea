@@ -1,6 +1,6 @@
 #include "page_fault.h"
 #include "task.h"
-#include <print_macros.h>>
+#include <print_macros.h>
 
 /// Tries to fill a page at `vaddr` for the task. Returns the allocated physical
 /// memory address on success or 0 on failure.
@@ -24,7 +24,7 @@ error_t handle_page_fault(struct task *task, uaddr_t vaddr, uaddr_t ip,
     }
 
     // Look for the associated program header.
-    struct elf64_phdr *phdr = NULL;
+    elf_phdr_t *phdr = NULL;
     if (task->ehdr) {
         for (unsigned i = 0; i < task->ehdr->e_phnum; i++) {
             // Ignore GNU_STACK
@@ -42,10 +42,6 @@ error_t handle_page_fault(struct task *task, uaddr_t vaddr, uaddr_t ip,
 
         if (phdr) {
             // Allocate a page and fill it with the file data.
-            paddr_t paddr = 0;
-            if (task_page_alloc(task, &vaddr, &paddr, 1) != OK) {
-                return ERR_ABORTED;  // FIXME:
-            }
 
             // TODO:
             // vaddr_t aligned_vaddr = ALIGN_DOWN(m.page_fault.uaddr,
