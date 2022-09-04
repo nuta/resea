@@ -1,5 +1,6 @@
 #include "page_fault.h"
 #include "task.h"
+#include <print_macros.h>>
 
 /// Tries to fill a page at `vaddr` for the task. Returns the allocated physical
 /// memory address on success or 0 on failure.
