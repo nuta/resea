@@ -42,6 +42,7 @@ typedef uintmax_t paddr_t;
 typedef uintmax_t vaddr_t;
 typedef uintmax_t uaddr_t;
 typedef uintmax_t uintptr_t;
+typedef uintmax_t offset_t;
 
 typedef __builtin_va_list va_list;
 #define va_start(ap, param)   __builtin_va_start(ap, param)

@@ -38,3 +38,31 @@ __weak void memmove(void *dst, const void *src, size_t len) {
         }
     }
 }
+
+size_t strlen(const char *s) {
+    size_t len = 0;
+    while (*s != '\0') {
+        len++;
+        s++;
+    }
+    return len;
+}
+
+int strncmp(const char *s1, const char *s2, size_t len) {
+    while (len > 0) {
+        if (*s1 != *s2) {
+            return *s1 - *s2;
+        }
+
+        if (*s1 == '\0') {
+            // Both `*s1` and `*s2` equal to '\0'.
+            break;
+        }
+
+        s1++;
+        s2++;
+        len--;
+    }
+
+    return 0;
+}
