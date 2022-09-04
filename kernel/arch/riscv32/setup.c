@@ -72,19 +72,19 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
 
     uint32_t scause = read_scause();
 
-    TRACE("trap(%s:%d) sepc=%p, scause=%p, stval=%p",
-          (read_sstatus() & (1 << 8)) ? "s-mode" : "u-mode",
-          (read_sstatus() & (1 << 8)) ? 0 : CURRENT_TASK->tid, read_sepc(),
-          read_scause(), read_stval());
+    // TRACE("trap(%s:%d) sepc=%p, scause=%p, stval=%p",
+    //       (read_sstatus() & (1 << 8)) ? "s-mode" : "u-mode",
+    //       (read_sstatus() & (1 << 8)) ? 0 : CURRENT_TASK->tid, read_sepc(),
+    //       read_scause(), read_stval());
 
     if (scause == 8) {
         frame->sepc += 4;
 
-        TRACE("> syscall: a0=%d, a1=%p, a2=%p, a3=%p", frame->a0, frame->a1,
-              frame->a2, frame->a3);
+        // TRACE("> syscall: a0=%d, a1=%p, a2=%p, a3=%p", frame->a0, frame->a1,
+        //       frame->a2, frame->a3);
         uint32_t ret = handle_syscall(frame->a0, frame->a1, frame->a2,
                                       frame->a3, frame->a4, frame->a5);
-        TRACE("< done syscall: %p", ret);
+        // TRACE("< done syscall: %p", ret);
         frame->a0 = ret;
     } else if (scause == 0x0000000c || scause == 0x0000000d || scause == 0xf) {
         handle_page_fault(read_stval(), frame->sepc, 0 /* FIXME: */);
@@ -125,7 +125,7 @@ __noreturn void riscv32_setup_m_mode(void) {
 
     uint32_t *mtimecmp = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtimecmp);
     uint32_t *mtime = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtime);
-    // FIXME: *mtimecmp = *mtime + interval;
+    *mtimecmp = *mtime + interval;
 
     write_mtvec((uint32_t) riscv32_timer_handler);
     write_mstatus(read_mstatus() | MSTATUS_MIE);

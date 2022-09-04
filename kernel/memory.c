@@ -93,7 +93,7 @@ void handle_page_fault(uaddr_t uaddr, vaddr_t ip, unsigned fault) {
         PANIC("page fault in the init task: addr=%p, ip=%p", uaddr, ip);
     }
 
-    INFO("RESOLVING PAGE FAULT: addr=%p, ip=%p, pager=%p, %d", uaddr, ip, pager,
+    INFO("PAGE FAULT: addr=%p, ip=%p, pager=%p, %d", uaddr, ip, pager,
          pager->tid);
     struct message m;
     m.type = PAGE_FAULT_MSG;

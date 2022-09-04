@@ -85,8 +85,6 @@ static paddr_t sys_vm_map(task_t tid, uaddr_t uaddr, paddr_t paddr, size_t size,
     }
 
     // TODO: check if caller is the owner of the paddr
-    INFO("vm_map: task=%d, uaddr=%p, paddr=%p, size=%d, attrs=%x", task->tid,
-         uaddr, paddr, size, attrs);
     attrs =
         PAGE_WRITABLE | PAGE_READABLE | PAGE_EXECUTABLE | PAGE_USER;  // FIXME:
     return vm_map(task, uaddr, paddr, size, attrs);
@@ -184,7 +182,6 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             break;
         case SYS_PM_ALLOC:
             ret = sys_pm_alloc(a1, a2);
-            INFO("alloced: %p", ret);
             break;
         case SYS_VM_MAP:
             ret = sys_vm_map(a1, a2, a3, a4, a5);

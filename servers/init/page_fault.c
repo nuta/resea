@@ -4,7 +4,7 @@
 #include <print_macros.h>
 #include <resea/syscall.h>
 
-__aligned(PAGE_SIZE) uint8_t tmp_page[PAGE_SIZE];
+__aligned(PAGE_SIZE) uint8_t tmp_page2[PAGE_SIZE];
 
 /// Tries to fill a page at `vaddr` for the task. Returns the allocated physical
 /// memory address on success or 0 on failure.
@@ -51,16 +51,18 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
         // Allocate a page and fill it with the file data.
         // TODO:
         paddr_t paddr = sys_pm_alloc(PAGE_SIZE, 0);
-        DBG("mapping u:%p to p:%p", uaddr, paddr);
+        INFO("mapping u:%p to p:%p", uaddr, paddr);
 
-        void *tmp_page = (void *) 0xa000;
-        ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page, paddr,
+        void *tmp_page2 = (void *) 0xa000;
+        ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page2, paddr,
                              PAGE_SIZE,
                              /*FIXME: */ 0));
 
         size_t offset_in_segment = (uaddr - phdr->p_vaddr) + phdr->p_offset;
         size_t copy_len = MIN(PAGE_SIZE, phdr->p_filesz - offset_in_segment);
-        bootfs_read(task->file, offset_in_segment, (void *) tmp_page, copy_len);
+        TRACE("offset_in_segment=%x, copy_len=%x", offset_in_segment, copy_len);
+        bootfs_read(task->file, offset_in_segment, (void *) tmp_page2,
+                    copy_len);
 
         sys_vm_map(task->tid, uaddr, paddr, PAGE_SIZE,
                    /*FIXME: */ 0);

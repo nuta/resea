@@ -8,6 +8,7 @@ riscv32_user_entry:
 .align 4
 .global riscv32_trap_handler
 riscv32_trap_handler:
+2:
     csrrw tp, sscratch, tp
     sw a0, 0(tp) // Save a0
 

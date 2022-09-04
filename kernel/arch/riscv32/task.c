@@ -8,9 +8,13 @@
 #include <kernel/task.h>
 
 error_t arch_task_init(struct task *task, uaddr_t ip) {
-    uint32_t *sp = (uint32_t *) arch_paddr2ptr(
-        pm_alloc(KERNEL_STACK_SIZE / PAGE_SIZE, PAGE_TYPE_KERNEL,
-                 PM_ALLOC_UNINITIALIZED));
+    paddr_t sp_bottom =
+        pm_alloc(KERNEL_STACK_SIZE, PAGE_TYPE_KERNEL, PM_ALLOC_UNINITIALIZED);
+    if (!sp_bottom) {
+        return ERR_NO_MEMORY;
+    }
+
+    uint32_t *sp = (uint32_t *) arch_paddr2ptr(sp_bottom + KERNEL_STACK_SIZE);
 
     // Registers to be restored in riscv32_user_entry.
     *--sp = task->vm.table;
