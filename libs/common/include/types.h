@@ -77,6 +77,7 @@ typedef __builtin_va_list va_list;
         (__a < __b) ? __a : __b;                                               \
     })
 
+#define IS_OK(err)    (!IS_ERROR(err))
 #define IS_ERROR(err) ((err) < 0)
 
 #define OK                 0
@@ -87,10 +88,18 @@ typedef __builtin_va_list va_list;
 #define ERR_INVALID_ARG    -5
 
 // FIXME:
-#define PAGE_SIZE     4096
-#define KERNEL_TASK   0
-#define NUM_TASKS_MAX 32
-#define TASK_NAME_LEN 16
+#define PAGE_SIZE         4096
+#define KERNEL_TASK       0
+#define NUM_TASKS_MAX     32
+#define TASK_NAME_LEN     16
+#define SYS_IPC           1
+#define SYS_NOTIFY        2
+#define SYS_CONSOLE_WRITE 6
+#define SYS_CONSOLE_READ  7
+#define SYS_TASK_CREATE   8
+#define SYS_TASK_DESTROY  9
+#define SYS_TASK_EXIT     10
+#define SYS_TASK_SELF     11
 
 // FIXME:
 static inline const char *err2str(int err) {

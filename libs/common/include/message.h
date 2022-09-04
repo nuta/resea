@@ -10,6 +10,7 @@ typedef _BitInt(32) notifications_t;
 #define IPC_RECV    (1 << 17)
 #define IPC_NOBLOCK (1 << 18)
 #define IPC_KERNEL  (1 << 19)
+#define IPC_CALL    (IPC_SEND | IPC_RECV)
 
 #define NOTIFY_ABORTED (1 << 0)
 

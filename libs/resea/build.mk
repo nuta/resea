@@ -1,5 +1,5 @@
 name := resea
-objs-y += printf.o syscall.o malloc.o init.o
+objs-y += printf.o syscall.o malloc.o init.o ipc.o task.o
 subdirs-y += arch/$(ARCH)
 
 include $(top_dir)/mk/lib.mk
