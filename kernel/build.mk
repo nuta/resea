@@ -2,6 +2,7 @@ objs-y += main.o printk.o memory.o task.o boot_elf.o
 subdirs-y += arch/$(ARCH)
 cflags-y += -DKERNEL -DBOOT_ELF_PATH='"$(boot_elf)"' -Ikernel/arch/$(ARCH)/include
 libs-y += common
+idls-y += messages.idl
 
 $(build_dir)/boot_elf.S: $(boot_elf)
 	$(MKDIR) $(@D)

@@ -2,6 +2,8 @@ executable_name := $(name)
 build_dir := $(BUILD_DIR)/$(dir)
 objs := $(addprefix $(build_dir)/, $(objs-y))
 
+all_idls += $(addprefix $(dir)/, $(idls-y))
+
 dir-saved = $(dir)
 $(foreach subdir, $(subdirs-y),                                 \
 	$(eval dir := $(dir-saved)/$(subdir))                   \

@@ -11,43 +11,43 @@ from colorama import Fore, Style
 
 parser = Lark(
     r"""
-    %import common.WS
-    %ignore WS
-    %ignore COMMENT
-    %ignore EMPTY_COMMENT
-    COMMENT: /\/\/[^\/][^\n]*/
-    EMPTY_COMMENT: /\/\/[^\/]/
-    NAME: /[a-zA-Z_][a-zA-Z_0-9]*/
-    PATH: /"[^"]+"/
-    NATINT: /[1-9][0-9]*/
-    CONST: /(0x[0-9]+)|([1-9][0-9]*)|0/
+%import common.WS
+%ignore WS
+%ignore COMMENT
+%ignore EMPTY_COMMENT
+COMMENT: /\/\/[^\/][^\n]*/
+EMPTY_COMMENT: /\/\/[^\/]/
+NAME: /[a-zA-Z_][a-zA-Z_0-9]*/
+PATH: /"[^"]+"/
+NATINT: /[1-9][0-9]*/
+CONST: /(0x[0-9]+)|([1-9][0-9]*)|0/
 
-    start: stmts?
-    stmts: stmt*
-    stmt:
-        | doc_comment
-        | msg_def
-        | namespace_def
-        | include_stmt
-        | enum_stmt
-        | type_stmt
-        | const_stmt
+start: stmts?
+stmts: stmt*
+stmt:
+    | doc_comment
+    | msg_def
+    | namespace_def
+    | include_stmt
+    | enum_stmt
+    | type_stmt
+    | const_stmt
 
-    doc_comment: "///" /[^\n]*\n/
-    type_stmt: "type" NAME "=" type ";"
-    const_stmt: "const" NAME ":" type "=" CONST ";"
-    enum_stmt: "enum" NAME "{" enum_items "}" ";"
-    enum_items: (enum_item ("," enum_item)*)? ","?
-    enum_item: NAME "=" CONST
-    include_stmt: "include" PATH ";"
-    namespace_def: "namespace" NAME "{" stmts "}"
-    msg_def: modifiers? MSG_TYPE NAME "(" fields ")" ["->" "(" fields ")"] ";"
-    modifiers: MODIFIER*
-    MSG_TYPE: "rpc" | "oneway"
-    MODIFIER: "async"
-    fields: (field ("," field)*)?
-    field: NAME ":" type
-    type: NAME ("[" NATINT "]")?
+doc_comment: "///" /[^\n]*\n/
+type_stmt: "type" NAME "=" type ";"
+const_stmt: "const" NAME ":" type "=" CONST ";"
+enum_stmt: "enum" NAME "{" enum_items "}" ";"
+enum_items: (enum_item ("," enum_item)*)? ","?
+enum_item: NAME "=" CONST
+include_stmt: "include" PATH ";"
+namespace_def: "namespace" NAME "{" stmts "}"
+msg_def: modifiers? MSG_TYPE NAME "(" fields ")" ["->" "(" fields ")"] ";"
+modifiers: MODIFIER*
+MSG_TYPE: "rpc" | "oneway"
+MODIFIER: "async"
+fields: (field ("," field)*)?
+field: NAME ":" type
+type: NAME ("[" NATINT "]")?
 """
 )
 
@@ -75,8 +75,8 @@ class IDLParser:
         self.doc_comment = ""
         self.prev_stmt = ""
 
-    def parse(self, path):
-        ast = parser.parse(open(path).read())
+    def parse(self, text):
+        ast = parser.parse(text)
         for stmt in ast.children[0].children:
             self.visit_stmt("", stmt)
 
@@ -443,7 +443,7 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
 
 def main():
     parser = argparse.ArgumentParser(description="The IPC stubs generator.")
-    parser.add_argument("--idl", required=True, help="The IDL file.")
+    parser.add_argument("idls", nargs="+", help="The IDL file.")
     parser.add_argument(
         "--lang",
         choices=["c"],
@@ -458,8 +458,13 @@ def main():
     )
     args = parser.parse_args()
 
+    concated_idl = ""
+    for file in args.idls:
+        with open(file, "r") as f:
+            concated_idl += f.read()
+
     try:
-        idl = IDLParser().parse(args.idl)
+        idl = IDLParser().parse(concated_idl)
         if args.lang == "c":
             c_generator(args, idl)
     except ParseError as e:
