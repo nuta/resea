@@ -44,3 +44,5 @@ void *arch_paddr2ptr(paddr_t paddr);
 error_t arch_task_init(struct task *task, uaddr_t ip);
 void arch_task_switch(struct task *prev, struct task *next);
 void arch_idle(void);
+void arch_memcpy_from_user(void *dst, __user const void *src, size_t len);
+void arch_memcpy_to_user(__user void *dst, const void *src, size_t len);

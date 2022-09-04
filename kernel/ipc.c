@@ -144,27 +144,7 @@ error_t ipc(struct task *dst, task_t src, __user struct message *m,
         return ERR_INVALID_ARG;
     }
 
-    // THe send phase: copy the message and resume the receiver task. Note
-    // that this user copy may cause a page fault.
-    memcpy_from_user(&dst->m, m, sizeof(struct message));
-    dst->m.src = CURRENT_TASK->tid;
-    task_resume(dst);
-
-    // #    ifdef CONFIG_TRACE_IPC
-    // INFO("IPC: %s: %s -> %s (fastpath)", msgtype2str(dst->m.type),
-    //   CURRENT_TASK->name, dst->name);
-    // #    endif
-
-    // The receive phase: wait for a message, copy it into the user's
-    // buffer, and return to the user.
-    resume_sender(CURRENT_TASK, src);
-    task_block(CURRENT_TASK);
-    task_switch();
-
-    // This user copy should not cause a page fault since we've filled the
-    // page in the user copy above.
-    memcpy_to_user(m, &CURRENT_TASK->m, sizeof(struct message));
-    return OK;
+    return ipc_slowpath(dst, src, m, flags);
 }
 
 // Notifies notifications to the task.

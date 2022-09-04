@@ -6,9 +6,9 @@ idls-y += messages.idl
 
 $(build_dir)/boot_elf.S: $(boot_elf)
 	$(MKDIR) $(@D)
-	echo ".section .boot_elf"        > $@
-	echo ".global boot_elf"          >> $@
-	echo "boot_elf:"                 >> $@
-	echo "    .incbin BOOT_ELF_PATH" >> $@
+	echo ".section .boot_elf"    > $@
+	echo ".global boot_elf"      >> $@
+	echo "boot_elf:"             >> $@
+	echo ".incbin BOOT_ELF_PATH" >> $@
 
 include $(top_dir)/mk/executable.mk

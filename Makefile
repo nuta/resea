@@ -2,6 +2,7 @@ V ?=
 RELEASE ?=
 ARCH ?= riscv32
 BUILD_DIR ?= build
+SERVERS ?= shell
 
 ifeq ($(shell uname), Darwin)
 LLVM_PREFIX ?= /opt/homebrew/opt/llvm/bin/
@@ -19,6 +20,7 @@ endif
 top_dir := $(shell pwd)
 kernel_elf := $(BUILD_DIR)/resea.elf
 boot_elf := $(BUILD_DIR)/servers/init.elf
+bootfs_bin := $(BUILD_DIR)/bootfs.bin
 
 #
 #  Commands
@@ -137,6 +139,15 @@ $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.S Makefile $(autogen_files)
 	$(PROGRESS) CC $<
 	$(MKDIR) $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
+
+$(bootfs_bin): $(foreach server, $(SERVERS), $(BUILD_DIR)/bootfs/$(server).elf)
+	$(PROGRESS) "MKBOOTFS" "$@"
+	$(MKDIR) $(@D)
+	$(PYTHON3) ./tools/mkbootfs.py -o $@ $(BUILD_DIR)/bootfs
+
+$(BUILD_DIR)/bootfs/%.elf: $(BUILD_DIR)/servers/%.elf
+	$(MKDIR) $(@D)
+	cp $< $@
 
 $(BUILD_DIR)/autogen/include/autogen/ipcstub.h: $(all_idls)
 	$(PROGRESS) "IPCSTUB" "$@"
