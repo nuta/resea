@@ -116,7 +116,7 @@ $(foreach server, $(all_servers),                                 \
 	$(eval include $(dir)/build.mk)                           \
 )
 
-autogen_files := $(BUILD_DIR)/autogen/include/autogen/message.h
+autogen_files := $(BUILD_DIR)/autogen/include/autogen/ipcstub.h
 
 $(BUILD_DIR)/%.o: %.c Makefile $(autogen_files)
 	$(PROGRESS) CC $<
@@ -138,7 +138,7 @@ $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.S Makefile $(autogen_files)
 	$(MKDIR) $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $< -MD -MF $(@:.o=.deps) -MJ $(@:.o=.json)
 
-$(BUILD_DIR)/autogen/include/autogen/message.h: $(all_idls)
+$(BUILD_DIR)/autogen/include/autogen/ipcstub.h: $(all_idls)
 	$(PROGRESS) "IPCSTUB" "$@"
 	$(MKDIR) $(@D)
 	$(PYTHON3) ./tools/ipc_stub.py --lang c -o $@ $^

@@ -56,6 +56,8 @@ typedef __builtin_va_list va_list;
 #define __weak     __attribute__((weak))
 #define __mustuse  __attribute__((warn_unused_result))
 
+#define __user
+
 #define ALIGN_DOWN(value, align) ((value) & ~((align) -1))
 #define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)
 #define IS_ALIGNED(value, align) (((value) & ((align) -1)) == 0)
@@ -79,6 +81,9 @@ typedef __builtin_va_list va_list;
 #define OK                 0
 #define ERR_EXISTS         -1
 #define ERR_TOO_MANY_TASKS -2
+#define ERR_WOULD_BLOCK    -3
+#define ERR_ABORTED        -4
+#define ERR_INVALID_ARG    -5
 
 // FIXME:
 static inline const char *err2str(int err) {

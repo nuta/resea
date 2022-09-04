@@ -1,6 +1,8 @@
 #pragma once
 #include <autogen/ipcstub.h>
 
+typedef _BitInt(32) notifications_t;
+
 struct message {
     /// The type of message. If it's negative, this field represents an error
     /// (error_t).
@@ -19,6 +21,6 @@ struct message {
         //     struct { paddr_t paddr; } page_reply_fault;
         //     ...
         //
-        IDL_MESSAGE_FIELDS
+        IPCSTUB_MESSAGE_FIELDS
     };
 };

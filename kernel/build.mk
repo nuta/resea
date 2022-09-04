@@ -1,4 +1,4 @@
-objs-y += main.o printk.o memory.o task.o boot_elf.o
+objs-y += main.o printk.o memory.o task.o ipc.o syscall.o boot_elf.o
 subdirs-y += arch/$(ARCH)
 cflags-y += -DKERNEL -DBOOT_ELF_PATH='"$(boot_elf)"' -Ikernel/arch/$(ARCH)/include
 libs-y += common

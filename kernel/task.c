@@ -64,6 +64,11 @@ struct task *get_task_by_tid(task_t tid) {
     return NULL;
 }
 
+void task_block(struct task *task) {
+    DEBUG_ASSERT(task->state == TASK_RUNNABLE);
+    task->state = TASK_BLOCKED;
+}
+
 void task_resume(struct task *task) {
     DEBUG_ASSERT(task->state == TASK_BLOCKED);
     task->state = TASK_RUNNABLE;
