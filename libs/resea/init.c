@@ -7,6 +7,7 @@ void main(void);
 __noreturn void resea_init(void) {
     malloc_init();
     main();
-    task_exit();
+    // TODO:
+    // task_exit();
     UNREACHABLE();
 }

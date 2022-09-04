@@ -23,6 +23,10 @@ SECTIONS {
         . = ALIGN(16);
         *(.sbss .sbss.*);
 
+        __heap = .;
+        . += 0x20000;
+        __heap_end = .;
+
         . = . + 256 * 1024;
         __stack = .;
     }
