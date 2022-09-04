@@ -1,4 +1,4 @@
-objs-y += main.o bootfs.o bootfs_image.o
+objs-y += main.o task.o bootfs.o page_fault.o bootfs_image.o
 cflags-y += -DBOOTFS_PATH='"$(bootfs_bin)"'
 
 $(build_dir)/bootfs_image.S: $(bootfs_bin)

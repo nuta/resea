@@ -12,8 +12,6 @@
 #define TASK_RUNNABLE 1
 #define TASK_BLOCKED  2
 
-#define KERNEL_TASK 0
-
 #define IDLE_TASK    (arch_cpuvar_get()->idle_task)
 #define CURRENT_TASK (arch_cpuvar_get()->current_task)
 

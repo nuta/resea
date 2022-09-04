@@ -1,54 +1,10 @@
 #include "bootfs.h"
-#include <elf.h>
+#include "task.h"
 #include <print_macros.h>
+#include <resea/ipc.h>
 #include <resea/malloc.h>
+#include <resea/task.h>
 #include <string.h>
-
-extern char bootfs[];
-
-// FIXME:
-#define PAGE_SIZE 4096
-
-struct task {
-    task_t tid;
-    void *file_header;
-};
-
-/// Execute a ELF file. Returns an task ID on success or an error on failure.
-task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
-    TRACE("launching %s...", file->name);
-    struct task *task = malloc(sizeof(*task));
-    if (!task) {
-        PANIC("too many tasks");
-    }
-
-    // FIXME: void *file_header = malloc(PAGE_SIZE);
-    void *file_header = malloc(PAGE_SIZE);
-
-    read_file(file, 0, file_header, PAGE_SIZE);
-
-    // Ensure that it's an ELF file.
-    elf_ehdr_t *ehdr = (elf_ehdr_t *) file_header;
-    if (memcmp(ehdr->e_ident,
-               "\x7f"
-               "ELF",
-               4)
-        != 0) {
-        WARN("%s: invalid ELF magic, ignoring...", file->name);
-        return ERR_INVALID_ARG;
-    }
-
-    // Create a new task for the server.
-    task_t tid_or_err = task_create(file->name, ehdr->e_entry, task_self(), 0);
-    if (IS_ERROR(tid_or_err)) {
-        return tid_or_err;
-    }
-
-    task->file_header = file_header;
-    task->tid = tid_or_err;
-
-    return task->tid;
-}
 
 static void spawn_servers(void) {
     // Launch servers in bootfs.
@@ -87,21 +43,37 @@ void main(void) {
     INFO("Hello World from init!");
     bootfs_init();
 
-    // while (true) {
-    //     struct message m;
-    //     error_t err = ipc_recv_any(&m);
-    //     ASSERT_OK(err);
+    while (true) {
+        struct message m;
+        error_t err = ipc_recv_any(&m);
+        ASSERT_OK(err);
 
-    //     switch (m.type) {
-    //         case PING_MSG:
-    //             INFO("Got ping from %d", m.src);
-    //             m.type = PONG_MSG;
-    //             err = ipc_reply(m.src, &m);
-    //             break;
-    //         case EXIT_MSG:
-    //             INFO("Got exit from %d", m.src);
-    //             kill(m.src);
-    //             break;
-    //     }
-    // }
+        switch (m.type) {
+            case PAGE_FAULT_MSG: {
+                if (m.src != KERNEL_TASK) {
+                    WARN("forged page fault message from #%d, ignoring...",
+                         m.src);
+                    break;
+                }
+
+                struct task *task = task_lookup(m.page_fault.task);
+                ASSERT(task);
+                ASSERT(task->pager == task_self());
+                ASSERT(m.page_fault.task == task->tid);
+
+                error_t err =
+                    handle_page_fault(task, m.page_fault.uaddr, m.page_fault.ip,
+                                      m.page_fault.fault);
+                if (IS_ERROR(err)) {
+                    ipc_reply_err(m.src, err);
+                    break;
+                }
+
+                m.type = PAGE_FAULT_REPLY_MSG;
+                ipc_reply(task->tid, &m);
+
+                break;
+            }
+        }
+    }
 }
