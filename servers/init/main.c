@@ -1,4 +1,5 @@
 #include "bootfs.h"
+#include "page_fault.h"
 #include "task.h"
 #include <print_macros.h>
 #include <resea/ipc.h>
