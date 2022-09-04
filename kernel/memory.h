@@ -27,6 +27,7 @@ struct memory_zone {
 };
 
 paddr_t pm_alloc(size_t num_pages, unsigned type, unsigned flags);
+void handle_page_fault(uaddr_t uaddr, vaddr_t ip, unsigned fault);
 
 struct bootinfo;
 void memory_init(struct bootinfo *bootinfo);

@@ -1,6 +1,8 @@
 #include "memory.h"
 #include "arch.h"
+#include "ipc.h"
 #include "printk.h"
+#include "task.h"
 #include <string.h>
 
 static list_t zones = LIST_INIT(zones);
@@ -75,6 +77,29 @@ void pm_free(paddr_t paddr, size_t num_pages) {
     for (size_t i = 0; i < num_pages; i++) {
         DEBUG_ASSERT(page->ref_count > 0);
         page->ref_count--;
+    }
+}
+
+/// The page fault handler. It calls a pager to ask to update the page table.
+void handle_page_fault(uaddr_t uaddr, vaddr_t ip, unsigned fault) {
+    struct task *pager = CURRENT_TASK->pager;
+    if (!pager) {
+        PANIC("page fault in the init task: addr=%p, ip=%p", uaddr, ip);
+    }
+
+    INFO("RESOLVING PAGE FAULT: addr=%p, ip=%p, pager=%p, %d", uaddr, ip, pager,
+         pager->tid);
+    struct message m;
+    m.type = PAGE_FAULT_MSG;
+    m.page_fault.task = CURRENT_TASK->tid;
+    m.page_fault.uaddr = uaddr;
+    m.page_fault.ip = ip;
+    m.page_fault.fault = fault;
+    error_t err = ipc(pager, pager->tid, (__user struct message *) &m,
+                      IPC_CALL | IPC_KERNEL);
+    if (err != OK || m.type != PAGE_FAULT_REPLY_MSG) {
+        // TODO:
+        UNREACHABLE();
     }
 }
 

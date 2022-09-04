@@ -3,8 +3,8 @@
 
 typedef _BitInt(32) notifications_t;
 
-#define IPC_ANY  -1
-#define IPC_DENY -2
+#define IPC_ANY  0
+#define IPC_DENY -1
 
 #define IPC_SEND    (1 << 16)
 #define IPC_RECV    (1 << 17)

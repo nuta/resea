@@ -57,7 +57,6 @@ static task_t get_unused_tid(void) {
 
 struct task *get_task_by_tid(task_t tid) {
     if (0 < tid && tid < NUM_TASKS_MAX) {
-        backtrace();
         return &tasks[tid - 1];
     }
 
@@ -92,6 +91,8 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
     task->pager = pager;
     task->ref_count = 1;
 
+    list_init(&task->senders);
+
     error_t err = arch_vm_init(&task->vm);
     if (err != OK) {
         return err;
@@ -104,6 +105,11 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
     }
 
     return tid;
+}
+
+error_t task_destroy(struct task *task) {
+    NYI();
+    return OK;
 }
 
 void task_init(void) {

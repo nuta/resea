@@ -146,17 +146,3 @@ error_t ipc(struct task *dst, task_t src, __user struct message *m,
 
     return ipc_slowpath(dst, src, m, flags);
 }
-
-// Notifies notifications to the task.
-void notify(struct task *dst, notifications_t notifications) {
-    if (dst->state == TASK_BLOCKED && dst->waiting_for == IPC_ANY) {
-        // Send a NOTIFICATIONS_MSG message immediately.
-        NYI();
-        dst->notifications = 0;
-    } else {
-        // The task is not ready for receiving a event message: update the
-        // pending notifications instead.
-        dst->notifications |= notifications;
-        task_resume(dst);
-    }
-}
