@@ -3,6 +3,19 @@
 #include <elf.h>
 #include <resea/malloc.h>
 
+static struct task tasks[NUM_TASKS_MAX];
+
+/// Look for the task in the our task table.
+struct task *task_lookup(task_t tid) {
+    if (tid <= 0 || tid > NUM_TASKS_MAX) {
+        PANIC("invalid tid %d", tid);
+    }
+
+    struct task *task = &tasks[tid - 1];
+    ASSERT(task->in_use);
+    return task;
+}
+
 /// Execute a ELF file. Returns an task ID on success or an error on failure.
 task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     TRACE("launching %s...", file->name);

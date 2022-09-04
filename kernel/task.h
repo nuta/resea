@@ -4,7 +4,6 @@
 #include <message.h>
 #include <types.h>
 
-#define NUM_TASKS_MAX     32
 #define TASK_PRIORITY_MAX 8
 #define TASK_NAME_LEN     16
 

@@ -87,8 +87,9 @@ typedef __builtin_va_list va_list;
 #define ERR_INVALID_ARG    -5
 
 // FIXME:
-#define PAGE_SIZE   4096
-#define KERNEL_TASK 0
+#define PAGE_SIZE     4096
+#define KERNEL_TASK   0
+#define NUM_TASKS_MAX 32
 
 // FIXME:
 static inline const char *err2str(int err) {
