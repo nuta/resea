@@ -127,7 +127,6 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
         if (flags & IPC_KERNEL) {
             memcpy((void *) m, &tmp_m, sizeof(struct message));
         } else {
-            INFO("m = %p", m);
             memcpy_to_user(m, &tmp_m, sizeof(struct message));
         }
     }

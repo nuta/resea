@@ -11,6 +11,8 @@
 struct cpuvar cpuvar_fixme;
 
 __noreturn void riscv32_setup_s_mode(void) {
+    write_sstatus(read_sstatus() | SSTATUS_SUM);
+
     struct bootinfo bootinfo;
     bootinfo.boot_elf = (paddr_t) __boot_elf;
     bootinfo.memory_map.entries[0].paddr =
@@ -109,8 +111,8 @@ __noreturn void riscv32_setup_m_mode(void) {
     uint32_t mstatus = read_mstatus();
     mstatus &= ~MSTATUS_MPP_MASK;
     mstatus |= MSTATUS_MPP_S;
-    mstatus |= MSTATUS_SUM;
-    mstatus |= 1 << 19;  // FIXME:
+    mstatus |= MSTATUS_SUM;  // TODO: Do we need?
+    mstatus |= 1 << 19;      // FIXME:
     write_mstatus(mstatus);
     write_mepc((uint32_t) boot_s_mode);
 
