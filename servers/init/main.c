@@ -46,7 +46,7 @@ void main(void) {
 
     while (true) {
         struct message m;
-        error_t err = ipc_recv_any(&m);
+        error_t err = ipc_recv(IPC_ANY, &m);
         ASSERT_OK(err);
 
         switch (m.type) {

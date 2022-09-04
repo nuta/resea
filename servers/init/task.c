@@ -1,9 +1,12 @@
 #include "task.h"
 #include "bootfs.h"
 #include <elf.h>
+#include <print_macros.h>
 #include <resea/malloc.h>
+#include <resea/task.h>
+#include <string.h>
 
-static struct task tasks[NUM_TASKS_MAX];
+static struct task *tasks[NUM_TASKS_MAX];
 
 /// Look for the task in the our task table.
 struct task *task_lookup(task_t tid) {
@@ -11,9 +14,7 @@ struct task *task_lookup(task_t tid) {
         PANIC("invalid tid %d", tid);
     }
 
-    struct task *task = &tasks[tid - 1];
-    ASSERT(task->in_use);
-    return task;
+    return tasks[tid - 1];
 }
 
 /// Execute a ELF file. Returns an task ID on success or an error on failure.
@@ -49,6 +50,7 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     task->file_header = file_header;
     task->tid = tid_or_err;
     task->pager = task_self();
+    tasks[task->tid - 1] = task;
 
     return task->tid;
 }
