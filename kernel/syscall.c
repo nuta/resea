@@ -174,6 +174,7 @@ static int sys_console_read(__user char *buf, int max_len) {
         if (i == 0) {
             console_reader = CURRENT_TASK;
             task_block(CURRENT_TASK);
+            task_switch();
             // FIXME: check if the task reading in task_destory
         }
     }
