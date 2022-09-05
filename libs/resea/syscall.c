@@ -52,6 +52,6 @@ error_t sys_console_write(const char *buf, size_t len) {
     return syscall(SYS_CONSOLE_WRITE, (uintptr_t) buf, len, 0, 0, 0);
 }
 
-int sys_console_read(char *buf, size_t len) {
-    return syscall(SYS_CONSOLE_READ, (uintptr_t) buf, len, 0, 0, 0);
+int sys_console_read(const char *buf, int max_len) {
+    return syscall(SYS_CONSOLE_READ, (uintptr_t) buf, max_len, 0, 0, 0);
 }

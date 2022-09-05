@@ -1,7 +1,13 @@
 #include <print_macros.h>
+#include <resea/syscall.h>
 
 void main(void) {
     INFO("Hello World from shell!");
+    while (true) {
+        char buf[256];
+        sys_console_read(buf, sizeof(buf));
+        printf("read: %s\n");
+    }
 
     // while (true) {
     //     struct message m;
