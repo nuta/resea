@@ -7,7 +7,6 @@
 #include <kernel/memory.h>
 #include <kernel/printk.h>
 #include <kernel/syscall.h>
-#include <kernel/task.h>
 
 // FIXME:
 struct cpuvar cpuvar_fixme;
@@ -95,6 +94,12 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
         write_sip(read_sip() & ~2);
         // TRACE("timer!");
         // task_switch();
+    } else if (scause == 0x80000009) {
+        int irq = plic_pending();
+        if (irq == UART0_IRQ) {
+            handle_console_interrupt();
+        }
+        plic_ack(irq);
     } else {
         PANIC("unknown trap: scause=%p, stval=%p", read_scause(), read_stval());
     }

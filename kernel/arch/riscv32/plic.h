@@ -7,4 +7,6 @@
 #define PLIC_SPRIORITY(hart) (PLIC_ADDR + 0x201000 + (hart) *0x2000)
 #define PLIC_SCLAIM(hart)    (PLIC_ADDR + 0x201004 + (hart) *0x2000)
 
+int plic_pending(void);
+void plic_ack(int irq);
 void riscv32_plic_init(void);

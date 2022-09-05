@@ -135,6 +135,28 @@ static error_t sys_console_write(__user const char *buf, size_t buf_len) {
     return OK;
 }
 
+// TODO: move
+static struct task *console_reader = NULL;
+static char console_buf[128];
+static int console_buf_rp = 0;
+static int console_buf_wp = 0;
+
+void handle_console_interrupt(void) {
+    while (true) {
+        int ch = arch_console_read();
+        if (ch == -1) {
+            break;
+        }
+
+        console_buf[console_buf_wp] = ch;
+        console_buf_wp = (console_buf_wp + 1) % sizeof(console_buf);
+    }
+
+    if (console_reader) {
+        task_resume(console_reader);
+    }
+}
+
 /// Reads a string from the arch's console (typically a serial port).
 static int sys_console_read(__user char *buf, int max_len) {
     if (!max_len) {
@@ -142,16 +164,21 @@ static int sys_console_read(__user char *buf, int max_len) {
     }
 
     int i = 0;
-    // for (; i < max_len - 1; i++) {
-    //     char ch;
-    //     if ((ch = kdebug_readchar()) <= 0) {
-    //         break;
-    //     }
+    while (true) {
+        for (; i < max_len - 1 && console_buf_rp != console_buf_wp; i++) {
+            char ch = console_buf[console_buf_rp];
+            console_buf_rp = (console_buf_rp + 1) % sizeof(console_buf);
+            memcpy_to_user(buf + i, &ch, 1);
+        }
 
-    //     memcpy_to_user(buf + i, &ch, 1);
-    // }
+        if (i == 0) {
+            console_reader = CURRENT_TASK;
+            task_block(CURRENT_TASK);
+            // FIXME: check if the task reading in task_destory
+        }
+    }
 
-    // memcpy_to_user(buf + i, "\0", 1);
+    memcpy_to_user(buf + i, "\0", 1);
     return i;
 }
 
