@@ -1,6 +1,6 @@
 #include <print_macros.h>
 #include <resea/syscall.h>
-#include <strlen.h>
+#include <string.h>
 
 // FIXME:
 void printf_flush(void);
@@ -9,7 +9,8 @@ void main(void) {
     INFO("Hello World from shell!");
     while (true) {
         char cmdline[256];
-        printf("shell> ");
+        printf("\x1b[1mshell> \x1b[0m");
+        printf_flush();
 
         while (true) {
             char buf[8];
@@ -21,15 +22,13 @@ void main(void) {
 
             for (int i = 0; i < read_len; i++) {
                 if (buf[i] == '\r') {
-                    continue;
+                    buf[i] = '\n';  // TODO:
                 }
-
                 printf("%c", buf[i]);
                 printf_flush();
 
                 if (buf[i] == '\n') {
-                    cmdline[0] = '\0';
-                    break;
+                    goto done;
                 }
 
                 cmdline[strlen(cmdline)] = buf[i];
@@ -37,11 +36,52 @@ void main(void) {
             }
         }
 
+done:
         if (strlen(cmdline) == 0) {
             continue;
         }
 
-        DBG("cmdline: %s", cmdline);
+        // parse cmdline
+        char *argv[16];
+        int argc = 0;
+        char *p = cmdline;
+        while (*p != '\0') {
+            while (*p == ' ') {
+                p++;
+            }
+
+            if (*p == '\0') {
+                break;
+            }
+
+            argv[argc++] = p;
+            while (*p != ' ' && *p != '\0') {
+                p++;
+            }
+
+            if (*p == '\0') {
+                break;
+            }
+
+            *p = '\0';
+            p++;
+
+            if (argc >= 16) {
+                break;
+            }
+        }
+
+        if (argc == 0) {
+            continue;
+        }
+
+        // execute the command
+        if (!strncmp(argv[0], "echo", 4)) {
+            for (int i = 1; i < argc; i++) {
+                printf("%s ", argv[i]);
+            }
+            printf("\n");
+        }
     }
 
     // while (true) {
