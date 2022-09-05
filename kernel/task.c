@@ -40,7 +40,6 @@ void task_switch(void) {
         return;
     }
 
-    TRACE("switch to task %d", next->tid);
     CURRENT_TASK = next;
     arch_task_switch(prev, next);
 }
