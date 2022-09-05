@@ -173,7 +173,6 @@ static int sys_console_read(__user char *buf, int max_len) {
             memcpy_to_user(buf + i, &ch, 1);
         }
 
-        TRACE("console_read: read=%d", i);
         if (i > 0) {
             break;
         }
@@ -181,7 +180,6 @@ static int sys_console_read(__user char *buf, int max_len) {
         console_reader = CURRENT_TASK;
         task_block(CURRENT_TASK);
         task_switch();
-        DBG("resume console read");
         // FIXME: check if the task reading in task_destory
     }
 
