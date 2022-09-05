@@ -150,10 +150,12 @@ void handle_console_interrupt(void) {
 
         console_buf[console_buf_wp] = ch;
         console_buf_wp = (console_buf_wp + 1) % sizeof(console_buf);
+        // TODO: What if it's full
     }
 
     if (console_reader) {
         task_resume(console_reader);
+        console_reader = NULL;
     }
 }
 
@@ -171,12 +173,16 @@ static int sys_console_read(__user char *buf, int max_len) {
             memcpy_to_user(buf + i, &ch, 1);
         }
 
-        if (i == 0) {
-            console_reader = CURRENT_TASK;
-            task_block(CURRENT_TASK);
-            task_switch();
-            // FIXME: check if the task reading in task_destory
+        TRACE("console_read: read=%d", i);
+        if (i > 0) {
+            break;
         }
+
+        console_reader = CURRENT_TASK;
+        task_block(CURRENT_TASK);
+        task_switch();
+        DBG("resume console read");
+        // FIXME: check if the task reading in task_destory
     }
 
     memcpy_to_user(buf + i, "\0", 1);

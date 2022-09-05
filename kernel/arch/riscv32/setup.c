@@ -96,6 +96,7 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
         // task_switch();
     } else if (scause == 0x80000009) {
         int irq = plic_pending();
+        TRACE("irq: %d", irq);
         if (irq == UART0_IRQ) {
             handle_console_interrupt();
         }
@@ -149,7 +150,7 @@ __noreturn void riscv32_setup_m_mode(void) {
 }
 
 void arch_idle(void) {
-    DBG("arch_idle");
+    TRACE("arch_idle");
     write_sstatus(read_sstatus() | SSTATUS_SIE);
     __asm__ __volatile__("wfi");
 }
