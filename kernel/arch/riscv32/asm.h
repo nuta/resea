@@ -1,5 +1,5 @@
 #pragma once
-#include <types.h>
+#include <kernel/arch.h>
 
 #define MSTATUS_SUM      (1 << 18)
 #define MSTATUS_MIE      (1 << 3)
@@ -157,4 +157,20 @@ static inline void write_sscratch(uint32_t value) {
 
 static inline void write_tp(uint32_t value) {
     __asm__ __volatile__("mv tp, %0" ::"r"(value));
+}
+
+static inline void mmio_write8(paddr_t reg, uint8_t val) {
+    *((volatile uint8_t *) arch_paddr2ptr(reg)) = val;
+}
+
+static inline void mmio_write32(paddr_t reg, uint32_t val) {
+    *((volatile uint32_t *) arch_paddr2ptr(reg)) = val;
+}
+
+static inline uint8_t mmio_read8(paddr_t reg) {
+    return *((volatile uint8_t *) arch_paddr2ptr(reg));
+}
+
+static inline uint32_t mmio_read32(paddr_t reg) {
+    return *((volatile uint32_t *) arch_paddr2ptr(reg));
 }

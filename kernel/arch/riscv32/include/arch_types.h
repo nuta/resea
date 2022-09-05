@@ -26,6 +26,7 @@ struct arch_cpuvar {
     uint32_t interval;
     // 4 * 7 = 28
     uint32_t sscratch2;
+    uint32_t hartid;
 };
 
 // FIXME:

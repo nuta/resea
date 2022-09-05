@@ -1,4 +1,6 @@
 #include "asm.h"
+#include "plic.h"
+#include "uart.h"
 #include "vm.h"
 #include <kernel/arch.h>
 #include <kernel/main.h>
@@ -12,6 +14,7 @@ struct cpuvar cpuvar_fixme;
 
 __noreturn void riscv32_setup_s_mode(void) {
     write_sstatus(read_sstatus() | SSTATUS_SUM);
+    riscv32_plic_init();
 
     struct bootinfo bootinfo;
     bootinfo.boot_elf = (paddr_t) __boot_elf;
@@ -90,14 +93,18 @@ void riscv32_trap(struct risc32_trap_frame *frame) {
         handle_page_fault(read_stval(), frame->sepc, 0 /* FIXME: */);
     } else if (scause == 0x80000001) {
         write_sip(read_sip() & ~2);
-        TRACE("timer!");
+        // TRACE("timer!");
         // task_switch();
+    } else {
+        PANIC("unknown trap: scause=%p, stval=%p", read_scause(), read_stval());
     }
 }
 
 __noreturn void riscv32_setup_m_mode(void) {
     write_medeleg(0xffff);
     write_mideleg(0xffff);
+
+    riscv32_uart_init();
 
     write_stvec((uint32_t) riscv32_trap_handler);
     write_sie(read_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
@@ -119,6 +126,7 @@ __noreturn void riscv32_setup_m_mode(void) {
 
     int hart = read_mhartid();
     int interval = 1000000;
+    CPUVAR->arch.hartid = hart;
     CPUVAR->arch.mtimecmp = CLINT_MTIMECMP(hart);
     CPUVAR->arch.mtime = CLINT_MTIME;
     CPUVAR->arch.interval = interval;

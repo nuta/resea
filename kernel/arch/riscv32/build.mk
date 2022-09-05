@@ -1,4 +1,4 @@
-objs-y += boot.o setup.o uart.o task.o vm.o switch.o trap.o usercopy.o
+objs-y += boot.o setup.o task.o vm.o switch.o trap.o usercopy.o uart.o plic.o
 
 ldflags-y += -T$(dir)/kernel.ld
 

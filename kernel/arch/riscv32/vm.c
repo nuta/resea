@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "plic.h"
 #include "uart.h"
 #include <kernel/arch.h>
 #include <kernel/memory.h>
@@ -56,6 +57,8 @@ error_t arch_vm_init(struct arch_vm *vm) {
     ASSERT_OK(arch_vm_map(vm, kernel_data, kernel_data, kernel_data_size,
                           PAGE_READABLE | PAGE_WRITABLE));
     ASSERT_OK(arch_vm_map(vm, UART_ADDR, UART_ADDR, PAGE_SIZE,
+                          PAGE_READABLE | PAGE_WRITABLE));
+    ASSERT_OK(arch_vm_map(vm, PLIC_ADDR, PLIC_ADDR, PLIC_SIZE,
                           PAGE_READABLE | PAGE_WRITABLE));
     return OK;
 }

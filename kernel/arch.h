@@ -37,6 +37,7 @@ struct bootinfo {
 };
 
 void arch_console_write(char ch);
+int arch_console_read(void);
 error_t arch_vm_init(struct arch_vm *vm);
 error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
                     size_t size, unsigned attrs);
