@@ -27,6 +27,7 @@ objs := \
 cflags := $(cflags-y)
 ldflags := $(ldflags-y)
 
+$(objs): EXECUTABLE_NAME := $(executable_name)
 $(objs): CFLAGS := $(CFLAGS) $(cflags) $(foreach lib, $(libs), -Ilibs/$(lib)/include)
 $(executable): LDFLAGS := $(LDFLAGS) $(ldflags)
 $(executable): OBJS := $(objs)
@@ -37,4 +38,4 @@ $(executable): $(objs)
 
 $(BUILD_DIR)/program_names/$(executable_name).c:
 	$(MKDIR) $(@D)
-	echo 'const char *__program_name(void) { return "$(executable_name)"; }' > $(@)
+	echo 'const char *__program_name(void) { return "$(EXECUTABLE_NAME)"; }' > $(@)
