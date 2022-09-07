@@ -48,7 +48,7 @@ void printk(const char *fmt, ...) {
     va_end(vargs);
 }
 
-// FIXME:
+// TODO: remove
 void printf(const char *fmt, ...) {
     va_list vargs;
     va_start(vargs, fmt);

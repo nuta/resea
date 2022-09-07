@@ -62,14 +62,6 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
             size_t copy_len = MIN(PAGE_SIZE, phdr->p_filesz - offset);
             bootfs_read(task->file, phdr->p_offset + offset, (void *) tmp_page2,
                         copy_len);
-
-            TRACE(
-                "MAPP[2]: tid=%d, phdr=%p, uaddr=%p, off=%x, copy_size=%d (filesz=%x)",
-                task->tid, phdr, uaddr, offset, copy_len, phdr->p_filesz);
-        } else {
-            TRACE(
-                "MAPP[2]: tid=%d, phdr=%p, uaddr=%p, off=%x, copy_size=%d (filesz=%x)",
-                task->tid, phdr, uaddr, offset, 0, phdr->p_filesz);
         }
 
         sys_vm_map(task->tid, uaddr, paddr, PAGE_SIZE,

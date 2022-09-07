@@ -189,23 +189,23 @@ static int sys_console_read(__user char *buf, int max_len) {
 }
 
 /// The system call handler.
-long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
+long handle_syscall(long a0, long a1, long a2, long a3, long a4, long n) {
     long ret;
     switch (n) {
         case SYS_IPC:
-            ret = sys_ipc(a1, a2, (__user struct message *) a3, a4);
+            ret = sys_ipc(a0, a1, (__user struct message *) a2, a3);
             break;
         case SYS_CONSOLE_WRITE:
-            ret = sys_console_write((__user const char *) a1, a2);
+            ret = sys_console_write((__user const char *) a0, a1);
             break;
         case SYS_CONSOLE_READ:
-            ret = sys_console_read((__user char *) a1, a2);
+            ret = sys_console_read((__user char *) a0, a1);
             break;
         case SYS_TASK_CREATE:
-            ret = sys_task_create((__user const char *) a1, a2, a3, a4);
+            ret = sys_task_create((__user const char *) a0, a1, a2, a3);
             break;
         case SYS_TASK_DESTROY:
-            ret = sys_task_destroy(a1);
+            ret = sys_task_destroy(a0);
             break;
         case SYS_TASK_EXIT:
             ret = sys_task_exit();
@@ -214,10 +214,10 @@ long handle_syscall(int n, long a1, long a2, long a3, long a4, long a5) {
             ret = sys_task_self();
             break;
         case SYS_PM_ALLOC:
-            ret = sys_pm_alloc(a1, a2);
+            ret = sys_pm_alloc(a0, a1);
             break;
         case SYS_VM_MAP:
-            ret = sys_vm_map(a1, a2, a3, a4, a5);
+            ret = sys_vm_map(a0, a1, a2, a3, a4);
             break;
         default:
             ret = ERR_INVALID_ARG;

@@ -17,9 +17,6 @@ riscv32_trap_handler:
     beqz a0, 1f
 
     // From s-mode
-.align 4
-//2:
-//    j 2b // FIXME:
     mv a0, sp // Keep using the current kernel stack
     j trap_common
 

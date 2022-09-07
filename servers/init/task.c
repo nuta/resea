@@ -9,9 +9,6 @@
 
 static struct task *tasks[NUM_TASKS_MAX];
 
-// FIXME:
-__aligned(PAGE_SIZE) uint8_t tmp_page[PAGE_SIZE];
-
 /// Look for the task in the our task table.
 struct task *task_lookup(task_t tid) {
     if (tid <= 0 || tid > NUM_TASKS_MAX) {
@@ -57,47 +54,7 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     task->ehdr = ehdr;
     task->phdrs = (elf_phdr_t *) ((uintptr_t) file_header + ehdr->e_phoff);
     task->name[0] = '\0';  // FIXME: copy
+
     tasks[task->tid - 1] = task;
-    TRACE("%d, file_header=%p, ehdr=%p", task->tid, file_header, ehdr);
-
-    // for (uint16_t i = 0; i < ehdr->e_phnum; i++) {
-    //     elf_phdr_t *phdr = &task->phdrs[i];
-    //     // Ignore GNU_STACK
-    //     if (!phdr->p_vaddr) {
-    //         continue;
-    //     }
-
-    //     ASSERT(phdr->p_memsz >= phdr->p_filesz);
-
-    //     TRACE("bootelf: %p - %p (%d KiB)", phdr->p_vaddr,
-    //           phdr->p_vaddr + ALIGN_UP(phdr->p_memsz, PAGE_SIZE),
-    //           phdr->p_memsz / 1024);
-
-    //     for (size_t off = 0; off < phdr->p_memsz; off += PAGE_SIZE) {
-    //         void *tmp_page = (void *) 0xa000;
-    //         paddr_t paddr = sys_pm_alloc(PAGE_SIZE, 0);
-    //         ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page, paddr,
-    //                              PAGE_SIZE,
-    //                              /*FIXME: */ 0));
-
-    //         if (off < phdr->p_filesz) {
-    //             bootfs_read(task->file, phdr->p_offset + off, (void *)
-    //             tmp_page,
-    //                         MIN(PAGE_SIZE, phdr->p_filesz - off));
-    //         }
-
-    //         if (off > phdr->p_filesz) {}
-    //         continue;
-
-    //         TRACE("MAPP[1]: tid=%d, uaddr=%p, off=%x, copy_size=%d",
-    //         task->tid,
-    //               phdr->p_vaddr + off, phdr->p_offset + off,
-    //               MIN(PAGE_SIZE, phdr->p_filesz - off));
-
-    //         sys_vm_map(task->tid, phdr->p_vaddr + off, paddr, PAGE_SIZE,
-    //                    /*FIXME: */ 0);
-    //     }
-    // }
-
     return task->tid;
 }

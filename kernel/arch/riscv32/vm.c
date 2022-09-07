@@ -30,7 +30,7 @@ static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
 
             paddr_t paddr =
                 pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, PM_ALLOC_ZEROED);
-            table[index] = construct_pte(paddr, PTE_V);  // FIXME:
+            table[index] = construct_pte(paddr, PTE_V);  // TODO: paddr check
         }
         table = arch_paddr2ptr(PTE_PADDR(table[index]));
     }
@@ -49,7 +49,7 @@ error_t arch_vm_init(struct arch_vm *vm) {
     DEBUG_ASSERT(IS_ALIGNED(kernel_text_end, PAGE_SIZE));
 
     paddr_t kernel_data = kernel_text_end;
-    paddr_t kernel_data_size = 64 * 1024 * 1024;  // FIXME: get from memory map
+    paddr_t kernel_data_size = 64 * 1024 * 1024;  // TODO: get from memory map
     size_t kernel_text_size = kernel_text_end - kernel_text;
 
     ASSERT_OK(arch_vm_map(vm, kernel_text, kernel_text, kernel_text_size,

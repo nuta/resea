@@ -18,7 +18,7 @@ void ipc_reply(task_t dst, struct message *m) {
 }
 
 void ipc_reply_err(task_t dst, error_t error) {
-    struct message m;  // FIXME:
+    struct message m;  // TODO:
     m.type = error;
     ipc_send_noblock(dst, &m);
 }

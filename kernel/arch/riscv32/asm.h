@@ -22,8 +22,6 @@
 #define CLINT_MTIMECMP(hartid)                                                 \
     (CLINT_PADDR + 0x4000 + sizeof(uint64_t) * (hartid))
 
-//  TODO: Support RV64 (XLEN > 32)
-
 static inline void write_mepc(uint32_t value) {
     __asm__ __volatile__("csrw mepc, %0" ::"r"(value));
 }

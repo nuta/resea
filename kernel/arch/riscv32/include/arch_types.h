@@ -37,6 +37,5 @@ static inline struct cpuvar *arch_cpuvar_get(void) {
 }
 
 static inline void *arch_paddr2ptr(paddr_t paddr) {
-    // 4 * = FIXME:
     return (void *) paddr;
 }

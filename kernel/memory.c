@@ -30,8 +30,7 @@ static struct page *find_page_by_paddr(paddr_t paddr) {
 }
 
 static void add_zone(paddr_t paddr, size_t size) {
-    // FIXME: paddr to vaddr
-    struct memory_zone *zone = (struct memory_zone *) paddr;
+    struct memory_zone *zone = (struct memory_zone *) arch_paddr2ptr(paddr);
     // TODO: Is this correct?
     size_t num_pages = ALIGN_UP(size, PAGE_SIZE) / PAGE_SIZE;
 

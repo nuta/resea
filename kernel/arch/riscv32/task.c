@@ -48,9 +48,6 @@ __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
     sstatus &= ~SSTATUS_SPP_MASK;
     write_sstatus(sstatus);
 
-    // FIXME: DOn't need to switch!
-    write_satp((1ul << 31) | satp >> 12);
-
     write_sepc(ip);
     __asm__ __volatile__("sret");
     UNREACHABLE();
