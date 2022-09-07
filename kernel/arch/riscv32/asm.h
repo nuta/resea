@@ -1,7 +1,6 @@
 #pragma once
 #include <kernel/arch.h>
 
-#define MSTATUS_SUM      (1 << 18)
 #define MSTATUS_MIE      (1 << 3)
 #define MSTATUS_MPP_U    (0b00 << 11)
 #define MSTATUS_MPP_S    (0b01 << 11)
