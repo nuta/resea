@@ -22,6 +22,8 @@ static struct task *scheduler(struct task *current) {
     }
 
     if (current->state == TASK_RUNNABLE) {
+        // No other task is runnable, so we can continue running the current
+        // task.
         return current;
     }
 
