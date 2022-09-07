@@ -27,6 +27,7 @@ static struct task *scheduler(struct task *current) {
         return current;
     }
 
+    // No task is runnable.
     return IDLE_TASK;
 }
 

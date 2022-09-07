@@ -12,6 +12,7 @@ struct arch_vm {
 };
 
 struct arch_cpuvar {
+    // TODO: asmoffset
     // 4 * 0 = 0
     uint32_t sscratch;
     // 4 * 1 = 4
