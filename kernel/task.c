@@ -58,7 +58,6 @@ static task_t init_task_struct(const char *name, uaddr_t ip, struct task *pager,
         return err;
     }
 
-    DBG("created a task named %s with tid %d", task->name, tid);
     return tid;
 }
 
