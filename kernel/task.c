@@ -3,6 +3,7 @@
 #include "memory.h"
 #include "printk.h"
 #include <list.h>
+#include <string.h>
 
 static struct task tasks[NUM_TASKS_MAX];
 static list_t runqueues[TASK_PRIORITY_MAX];
@@ -90,6 +91,7 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
     task->pager = pager;
     task->ref_count = 1;
 
+    strncpy2(task->name, name, sizeof(task->name));
     list_elem_init(&task->next);
     list_init(&task->senders);
 
@@ -104,6 +106,7 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
         return err;
     }
 
+    DBG("created a task named %s with tid %d", task->name, tid);
     return tid;
 }
 

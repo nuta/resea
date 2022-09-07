@@ -19,8 +19,9 @@ void memcpy_to_user(__user void *dst, const void *src, size_t len) {
 // have `len + 1` bytes space. In case `len` is zero, caller MUST ensure that
 // `dst` has at least 1-byte space.
 static void strncpy_from_user(char *dst, __user const char *src, size_t len) {
-    memcpy_from_user(dst, src, len);
-    dst[len] = '\0';
+    DEBUG_ASSERT(len > 0);
+    memcpy_from_user(dst, src, len - 1);
+    dst[len - 1] = '\0';
 }
 
 /// Creates a task.
@@ -36,7 +37,7 @@ static task_t sys_task_create(__user const char *name, vaddr_t ip, task_t pager,
     // FIXME: check if pager is created
 
     char namebuf[TASK_NAME_LEN];
-    strncpy_from_user(namebuf, name, sizeof(namebuf) - 1);
+    strncpy_from_user(namebuf, name, sizeof(namebuf));
     task_t task = task_create(namebuf, ip, pager_task, flags);
     if (IS_ERROR(task)) {
         return task;

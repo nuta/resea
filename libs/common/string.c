@@ -69,3 +69,14 @@ int strncmp(const char *s1, const char *s2, size_t len) {
 
     return 0;
 }
+
+char *strncpy2(char *dst, const char *src, size_t num) {
+    size_t i = 0;
+    while (i < num - 1 && src[i] != '\0') {
+        dst[i] = src[i];
+        i++;
+    }
+
+    dst[i] = '\0';
+    return dst;
+}
