@@ -99,7 +99,7 @@ static error_t sys_ipc(task_t dst, task_t src, __user struct message *m,
     }
 
     if (src < 0 || src > NUM_TASKS_MAX) {
-        // FIXME: Check if src surely exist
+        // TODO: Check if src surely exist
         return ERR_INVALID_ARG;
     }
 
