@@ -7,15 +7,11 @@
 #include <string.h>
 
 void memcpy_from_user(void *dst, __user const void *src, size_t len) {
-    // arch_memcpy_from_user(dst, src, len);
-    // FIXME:
-    memcpy(dst, src, len);
+    arch_memcpy_from_user(dst, src, len);
 }
 
 void memcpy_to_user(__user void *dst, const void *src, size_t len) {
-    // FIXME: arch_memcpy_to_user(dst, src, len);
-
-    memcpy(dst, src, len);
+    arch_memcpy_to_user(dst, src, len);
 }
 
 // Copies bytes from the userspace. It doesn't care NUL characters: it simply

@@ -19,15 +19,16 @@ __weak void memset(void *dst, int ch, size_t len) {
     }
 }
 
-__weak void memcpy(void *dst, const void *src, size_t len) {
+__weak void *memcpy(void *dst, const void *src, size_t len) {
     uint8_t *d = dst;
     const uint8_t *s = src;
     while (len-- > 0) {
         *d++ = *s++;
     }
+    return dst;
 }
 
-__weak void memmove(void *dst, const void *src, size_t len) {
+__weak void *memmove(void *dst, const void *src, size_t len) {
     if ((uintptr_t) dst <= (uintptr_t) src) {
         memcpy(dst, src, len);
     } else {
@@ -37,6 +38,7 @@ __weak void memmove(void *dst, const void *src, size_t len) {
             *--d = *--s;
         }
     }
+    return dst;
 }
 
 size_t strlen(const char *s) {
