@@ -77,7 +77,7 @@ trap_common:
     sw a0, 4 * 32(sp) // sstatus
 
     mv a0, sp
-    call riscv32_trap
+    call riscv32_handle_trap
 
     // Restore sepc / sstatus
     lw a0, 4 * 31(sp)

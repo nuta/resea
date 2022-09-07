@@ -1,7 +1,7 @@
 #include "task.h"
 #include "asm.h"
+#include "handler.h"
 #include "switch.h"
-#include "trap.h"
 #include <kernel/arch.h>
 #include <kernel/memory.h>
 #include <kernel/printk.h>

@@ -1,5 +1,6 @@
 #include "asm.h"
 #include "plic.h"
+#include "trap.h"
 #include "uart.h"
 #include "vm.h"
 #include <kernel/arch.h>
@@ -27,83 +28,9 @@ __noreturn void riscv32_setup_s_mode(void) {
     UNREACHABLE();
 }
 
-struct risc32_trap_frame {
-    uint32_t ra;
-    uint32_t gp;
-    uint32_t t0;
-    uint32_t t1;
-    uint32_t t2;
-    uint32_t s0;
-    uint32_t s1;
-    uint32_t a0;
-    uint32_t a1;
-    uint32_t a2;
-    uint32_t a3;
-    uint32_t a4;
-    uint32_t a5;
-    uint32_t a6;
-    uint32_t a7;
-    uint32_t s2;
-    uint32_t s3;
-    uint32_t s4;
-    uint32_t s5;
-    uint32_t s6;
-    uint32_t s7;
-    uint32_t s8;
-    uint32_t s9;
-    uint32_t s10;
-    uint32_t s11;
-    uint32_t t3;
-    uint32_t t4;
-    uint32_t t5;
-    uint32_t t6;
-    uint32_t sp;
-    uint32_t tp;
-    uint32_t sepc;
-    uint32_t sstatus;
-} __packed;
-
 void boot_s_mode(void);
 void riscv32_trap_handler(void);
 void riscv32_timer_handler(void);
-void riscv32_trap(struct risc32_trap_frame *frame) {
-    uint32_t tp;
-    __asm__ __volatile__("mv %0, tp" : "=r"(tp));
-    uint32_t sscratch;
-    __asm__ __volatile__("csrr %0, sscratch" : "=r"(sscratch));
-
-    uint32_t scause = read_scause();
-
-    // TRACE("trap(%s:%d) sepc=%p, scause=%p, stval=%p",
-    //       (read_sstatus() & (1 << 8)) ? "s-mode" : "u-mode",
-    //       (read_sstatus() & (1 << 8)) ? 0 : CURRENT_TASK->tid, read_sepc(),
-    //       read_scause(), read_stval());
-
-    if (scause == 8) {
-        frame->sepc += 4;
-
-        // TRACE("> syscall: a0=%d, a1=%p, a2=%p, a3=%p", frame->a0, frame->a1,
-        //       frame->a2, frame->a3);
-        uint32_t ret = handle_syscall(frame->a0, frame->a1, frame->a2,
-                                      frame->a3, frame->a4, frame->a5);
-        // TRACE("< done syscall: %p", ret);
-        frame->a0 = ret;
-    } else if (scause == 0x0000000c || scause == 0x0000000d || scause == 0xf) {
-        handle_page_fault(read_stval(), frame->sepc, 0 /* FIXME: */);
-    } else if (scause == 0x80000001) {
-        write_sip(read_sip() & ~2);
-        // TRACE("timer!");
-        // task_switch();
-    } else if (scause == 0x80000009) {
-        int irq = plic_pending();
-        if (irq == UART0_IRQ) {
-            handle_console_interrupt();
-        }
-        plic_ack(irq);
-    } else {
-        PANIC("unknown trap: scause=%p, stval=%p", read_scause(), read_stval());
-    }
-}
 
 __noreturn void riscv32_setup_m_mode(void) {
     write_medeleg(0xffff);
