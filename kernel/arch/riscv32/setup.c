@@ -55,7 +55,8 @@ __noreturn void riscv32_setup_m_mode(void) {
 
     int hart = read_mhartid();
     int interval = 1000000;
-    CPUVAR->arch.hartid = hart;
+    ASSERT(hart < NUM_CPUS_MAX);
+    CPUVAR->id = hart;
     CPUVAR->arch.mtimecmp = CLINT_MTIMECMP(hart);
     CPUVAR->arch.mtime = CLINT_MTIME;
     CPUVAR->arch.interval = interval;

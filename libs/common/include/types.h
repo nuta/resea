@@ -95,6 +95,7 @@ typedef __builtin_va_list va_list;
 #define PAGE_SIZE         4096
 #define KERNEL_TASK       0
 #define NUM_TASKS_MAX     32
+#define NUM_CPUS_MAX      32
 #define TASK_NAME_LEN     16
 #define SYS_IPC           1
 #define SYS_NOTIFY        2

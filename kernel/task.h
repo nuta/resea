@@ -47,3 +47,4 @@ void task_resume(struct task *task);
 void task_block(struct task *task);
 void task_switch(void);
 void task_init(void);
+void task_mp_init(void);

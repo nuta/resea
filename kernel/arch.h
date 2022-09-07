@@ -10,6 +10,7 @@ struct task;
 
 struct cpuvar {
     struct arch_cpuvar arch;
+    uint32_t id;
     struct task *idle_task;
     struct task *current_task;
 };

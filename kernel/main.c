@@ -47,10 +47,7 @@ void kernel_main(struct bootinfo *bootinfo) {
     printk("Booting Resea...\n");
     memory_init(bootinfo);
     task_init();
-
-    task_t idle_task = task_create("(idle)", 0, NULL, 0);
-    IDLE_TASK = get_task_by_tid(idle_task);
-    CURRENT_TASK = IDLE_TASK;
+    task_mp_init();
 
     load_boot_elf(bootinfo);
     task_switch();

@@ -6,6 +6,7 @@
 #include <string.h>
 
 static struct task tasks[NUM_TASKS_MAX];
+static struct task idle_tasks[NUM_CPUS_MAX];
 static list_t runqueues[TASK_PRIORITY_MAX];
 
 static void enqueue_task(struct task *task) {
@@ -30,6 +31,35 @@ static struct task *scheduler(struct task *current) {
 
     // No task is runnable.
     return IDLE_TASK;
+}
+
+static task_t init_task_struct(const char *name, uaddr_t ip, struct task *pager,
+                               unsigned flags, task_t tid, struct task *task) {
+    task->tid = tid;
+    task->state = TASK_BLOCKED;
+    task->priority = 0;
+    task->quantum = 0;
+    task->waiting_for = 0;
+    task->pager = pager;
+    task->ref_count = 1;
+
+    strncpy2(task->name, name, sizeof(task->name));
+    list_elem_init(&task->next);
+    list_init(&task->senders);
+
+    error_t err = arch_vm_init(&task->vm);
+    if (err != OK) {
+        return err;
+    }
+
+    err = arch_task_init(task, ip);
+    if (err != OK) {
+        // TODO: free task->vm
+        return err;
+    }
+
+    DBG("created a task named %s with tid %d", task->name, tid);
+    return tid;
 }
 
 void task_switch(void) {
@@ -83,31 +113,7 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
 
     struct task *task = get_task_by_tid(tid);
     DEBUG_ASSERT(task != NULL);
-    task->tid = tid;
-    task->state = TASK_BLOCKED;
-    task->priority = 0;
-    task->quantum = 0;
-    task->waiting_for = 0;
-    task->pager = pager;
-    task->ref_count = 1;
-
-    strncpy2(task->name, name, sizeof(task->name));
-    list_elem_init(&task->next);
-    list_init(&task->senders);
-
-    error_t err = arch_vm_init(&task->vm);
-    if (err != OK) {
-        return err;
-    }
-
-    err = arch_task_init(task, ip);
-    if (err != OK) {
-        // TODO: free task->vm
-        return err;
-    }
-
-    DBG("created a task named %s with tid %d", task->name, tid);
-    return tid;
+    return init_task_struct(name, ip, pager, flags, tid, task);
 }
 
 error_t task_destroy(struct task *task) {
@@ -119,4 +125,10 @@ void task_init(void) {
     for (int i = 0; i < TASK_PRIORITY_MAX; i++) {
         list_init(&runqueues[i]);
     }
+}
+
+void task_mp_init(void) {
+    init_task_struct("(idle)", 0, NULL, 0, 0, &idle_tasks[CPUVAR->id]);
+    IDLE_TASK = &idle_tasks[CPUVAR->id];
+    CURRENT_TASK = IDLE_TASK;
 }
