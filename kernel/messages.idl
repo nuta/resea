@@ -1,3 +1,6 @@
+// FIXME: remove
+rpc add(x: int, y: int) -> (value: int);
+
 /// The kernel sends this message to a pager task when an exception occurs.
 oneway exception(task: task, reason: int);
 

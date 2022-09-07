@@ -40,6 +40,7 @@ typedef struct list_elem list_t;
 typedef struct list_elem list_elem_t;
 
 void list_init(list_t *list);
+void list_elem_init(list_elem_t *elem);
 bool list_is_empty(list_t *list);
 size_t list_len(list_t *list);
 bool list_contains(list_t *list, list_elem_t *elem);

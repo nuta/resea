@@ -14,8 +14,8 @@ static void resume_sender(struct task *receiver, task_t wait_for) {
         if (wait_for == IPC_ANY || wait_for == sender->tid) {
             DEBUG_ASSERT(sender->state == TASK_BLOCKED);
             DEBUG_ASSERT(sender->waiting_for == IPC_DENY);
-            task_resume(sender);
             list_remove(&sender->next);
+            task_resume(sender);
 
             // If src == IPC_ANY, allow only `sender` to send a message. Let's
             // consider the following situation to understand why:

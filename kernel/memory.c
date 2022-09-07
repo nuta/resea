@@ -44,6 +44,7 @@ static void add_zone(paddr_t paddr, size_t size) {
         zone->pages[i].ref_count = 0;
     }
 
+    list_elem_init(&zone->next);
     list_push_back(&zones, &zone->next);
 }
 
@@ -93,8 +94,6 @@ void handle_page_fault(uaddr_t uaddr, vaddr_t ip, unsigned fault) {
         PANIC("page fault in the init task: addr=%p, ip=%p", uaddr, ip);
     }
 
-    INFO("PAGE FAULT: addr=%p, ip=%p, pager=%p, %d", uaddr, ip, pager,
-         pager->tid);
     struct message m;
     m.type = PAGE_FAULT_MSG;
     m.page_fault.task = CURRENT_TASK->tid;

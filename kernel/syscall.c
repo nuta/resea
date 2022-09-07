@@ -74,6 +74,7 @@ static task_t sys_task_self(void) {
 }
 
 static paddr_t sys_pm_alloc(size_t size, unsigned flags) {
+    // TODO: respect flags
     return pm_alloc(size, PAGE_TYPE_USER(CURRENT_TASK), PM_ALLOC_ZEROED);
 }
 

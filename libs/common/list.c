@@ -11,7 +11,7 @@ static void list_insert(list_elem_t *prev, list_elem_t *next,
 }
 
 // Invalidates a list element.
-static void list_nullify(list_elem_t *elem) {
+static void list_elem_nullify(list_elem_t *elem) {
     elem->prev = NULL;
     elem->next = NULL;
 }
@@ -19,6 +19,10 @@ static void list_nullify(list_elem_t *elem) {
 void list_init(list_t *list) {
     list->prev = list;
     list->next = list;
+}
+
+void list_elem_init(list_elem_t *elem) {
+    list_elem_nullify(elem);
 }
 
 bool list_is_empty(list_t *list) {
@@ -42,6 +46,7 @@ bool list_contains(list_t *list, list_elem_t *elem) {
         if (node == elem) {
             return true;
         }
+
         node = node->next;
     }
 
@@ -59,12 +64,13 @@ void list_remove(list_elem_t *elem) {
     elem->next->prev = elem->prev;
 
     // Invalidate the element as they're no longer in the list.
-    list_nullify(elem);
+    list_elem_nullify(elem);
 }
 
 // Appends a element into the list.
 void list_push_back(list_t *list, list_elem_t *new_tail) {
     DEBUG_ASSERT(!list_contains(list, new_tail));
+    DEBUG_ASSERT(new_tail->next == NULL && new_tail->prev == NULL);
     list_insert(list->prev, list, new_tail);
 }
 
@@ -81,6 +87,6 @@ list_elem_t *list_pop_front(list_t *list) {
     next->prev = list;
 
     // Invalidate the element as they're no longer in the list.
-    list_nullify(head);
+    list_elem_nullify(head);
     return head;
 }

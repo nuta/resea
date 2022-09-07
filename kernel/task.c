@@ -90,6 +90,7 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
     task->pager = pager;
     task->ref_count = 1;
 
+    list_elem_init(&task->next);
     list_init(&task->senders);
 
     error_t err = arch_vm_init(&task->vm);

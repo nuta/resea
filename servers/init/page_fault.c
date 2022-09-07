@@ -51,18 +51,26 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
         // Allocate a page and fill it with the file data.
         // TODO:
         paddr_t paddr = sys_pm_alloc(PAGE_SIZE, 0);
-        INFO("mapping u:%p to p:%p", uaddr, paddr);
 
         void *tmp_page2 = (void *) 0xa000;
-        ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page2, paddr,
-                             PAGE_SIZE,
-                             /*FIXME: */ 0));
+        size_t offset = uaddr - phdr->p_vaddr;
+        if (offset < phdr->p_filesz) {
+            ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page2, paddr,
+                                 PAGE_SIZE,
+                                 /*FIXME: */ 0));
 
-        size_t offset_in_segment = (uaddr - phdr->p_vaddr) + phdr->p_offset;
-        size_t copy_len = MIN(PAGE_SIZE, phdr->p_filesz - offset_in_segment);
-        TRACE("offset_in_segment=%x, copy_len=%x", offset_in_segment, copy_len);
-        bootfs_read(task->file, offset_in_segment, (void *) tmp_page2,
-                    copy_len);
+            size_t copy_len = MIN(PAGE_SIZE, phdr->p_filesz - offset);
+            bootfs_read(task->file, phdr->p_offset + offset, (void *) tmp_page2,
+                        copy_len);
+
+            TRACE(
+                "MAPP[2]: tid=%d, phdr=%p, uaddr=%p, off=%x, copy_size=%d (filesz=%x)",
+                task->tid, phdr, uaddr, offset, copy_len, phdr->p_filesz);
+        } else {
+            TRACE(
+                "MAPP[2]: tid=%d, phdr=%p, uaddr=%p, off=%x, copy_size=%d (filesz=%x)",
+                task->tid, phdr, uaddr, offset, 0, phdr->p_filesz);
+        }
 
         sys_vm_map(task->tid, uaddr, paddr, PAGE_SIZE,
                    /*FIXME: */ 0);

@@ -2,7 +2,7 @@ V ?=
 RELEASE ?=
 ARCH ?= riscv32
 BUILD_DIR ?= build
-SERVERS ?= shell
+SERVERS ?= shell pingpong
 
 ifeq ($(shell uname), Darwin)
 LLVM_PREFIX ?= /opt/homebrew/opt/llvm/bin/

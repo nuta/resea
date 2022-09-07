@@ -14,6 +14,7 @@ static void spawn_servers(void) {
     for (int i = 0; (file = bootfs_open(i)) != NULL; i++) {
         // Autostart server names (separated by whitespace).
         char *startups = "shell";  // FIXME:
+        // char *startups = "pingpong";  // FIXME:
 
         // Execute the file if it is listed in the autostarts.
         while (*startups != '\0') {
@@ -51,6 +52,11 @@ void main(void) {
         ASSERT_OK(err);
 
         switch (m.type) {
+            case ADD_MSG:
+                m.type = ADD_REPLY_MSG;
+                m.add_reply.value = m.add.x + m.add.y;
+                ipc_reply(m.src, &m);
+                break;
             case PAGE_FAULT_MSG: {
                 if (m.src != KERNEL_TASK) {
                     WARN("forged page fault message from #%d, ignoring...",
@@ -71,7 +77,6 @@ void main(void) {
                     break;
                 }
 
-                DBG("PF replying to %d", task->tid);
                 m.type = PAGE_FAULT_REPLY_MSG;
                 ipc_reply(task->tid, &m);
                 break;
