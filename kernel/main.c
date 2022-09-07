@@ -55,7 +55,6 @@ void kernel_main(struct bootinfo *bootinfo) {
     load_boot_elf(bootinfo);
     task_switch();
 
-    TRACE("idle");
     for (;;) {
         arch_idle();
         task_switch();

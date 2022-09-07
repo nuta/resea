@@ -6,7 +6,6 @@
 void printf_flush(void);
 
 void main(void) {
-    INFO("Hello World from shell!");
     while (true) {
         char cmdline[256];
         printf("\x1b[1mshell> \x1b[0m");
