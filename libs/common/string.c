@@ -12,11 +12,12 @@ __weak int memcmp(const void *p1, const void *p2, size_t len) {
     return (len > 0) ? *s1 - *s2 : 0;
 }
 
-__weak void memset(void *dst, int ch, size_t len) {
+__weak void *memset(void *dst, int ch, size_t len) {
     uint8_t *d = dst;
     while (len-- > 0) {
         *d++ = ch;
     }
+    return dst;
 }
 
 __weak void *memcpy(void *dst, const void *src, size_t len) {
