@@ -45,7 +45,7 @@ void main(void) {
     bootfs_init();
     spawn_servers();
 
-    TRACE("mainloop...");
+    TRACE("ready");
     while (true) {
         struct message m;
         error_t err = ipc_recv(IPC_ANY, &m);

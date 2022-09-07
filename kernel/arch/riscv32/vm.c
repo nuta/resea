@@ -73,7 +73,7 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
         pte_t *pte = walk(vm->table, vaddr + offset, true);
         if (*pte & PTE_V) {
-            DBG("ERR_EXISTS: PTE=%p", vaddr);
+            // FIXME: DBG("ERR_EXISTS: PTE=%p", vaddr);
             // return ERR_EXISTS;
         }
     }
