@@ -159,6 +159,14 @@ static inline void write_tp(uint32_t value) {
     __asm__ __volatile__("mv tp, %0" ::"r"(value));
 }
 
+static inline void asm_mret(void) {
+    __asm__ __volatile__("mret");
+}
+
+static inline void asm_wfi(void) {
+    __asm__ __volatile__("wfi");
+}
+
 static inline void mmio_write8(paddr_t reg, uint8_t val) {
     *((volatile uint8_t *) arch_paddr2ptr(reg)) = val;
 }

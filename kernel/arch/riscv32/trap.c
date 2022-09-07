@@ -2,7 +2,6 @@
 #include "asm.h"
 #include "plic.h"
 #include "uart.h"
-#include <kernel/arch.h>
 #include <kernel/memory.h>
 #include <kernel/printk.h>
 #include <kernel/syscall.h>

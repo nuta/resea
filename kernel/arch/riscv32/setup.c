@@ -5,9 +5,7 @@
 #include "vm.h"
 #include <kernel/arch.h>
 #include <kernel/main.h>
-#include <kernel/memory.h>
 #include <kernel/printk.h>
-#include <kernel/syscall.h>
 
 // FIXME:
 struct cpuvar cpuvar_fixme;
@@ -71,11 +69,11 @@ __noreturn void riscv32_setup_m_mode(void) {
     write_mstatus(read_mstatus() | MSTATUS_MIE);
     write_mie(read_mie() | MIE_MTIE);
 
-    __asm__ __volatile__("mret");
+    asm_mret();
     UNREACHABLE();
 }
 
 void arch_idle(void) {
     write_sstatus(read_sstatus() | SSTATUS_SIE);
-    __asm__ __volatile__("wfi");
+    asm_wfi();
 }
