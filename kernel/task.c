@@ -12,11 +12,6 @@ static void enqueue_task(struct task *task) {
 }
 
 static struct task *scheduler(struct task *current) {
-    if (current != IDLE_TASK && current->state == TASK_RUNNABLE) {
-        // The current task is still runnable. Enqueue into the runqueue.
-        enqueue_task(current);
-    }
-
     // Look for the task with the highest priority. Tasks with the same priority
     // is scheduled in round-robin fashion.
     for (int i = 0; i < TASK_PRIORITY_MAX; i++) {
@@ -24,6 +19,10 @@ static struct task *scheduler(struct task *current) {
         if (next) {
             return next;
         }
+    }
+
+    if (current->state == TASK_RUNNABLE) {
+        return current;
     }
 
     return IDLE_TASK;
