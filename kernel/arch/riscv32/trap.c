@@ -2,6 +2,7 @@
 #include "asm.h"
 #include "plic.h"
 #include "uart.h"
+#include "usercopy.h"
 #include <kernel/memory.h>
 #include <kernel/printk.h>
 #include <kernel/syscall.h>
@@ -16,6 +17,14 @@ void riscv32_handle_trap(struct risc32_trap_frame *frame) {
                                       frame->a3, frame->a4, frame->a5);
         frame->a0 = ret;
     } else if (scause == 0x0000000c || scause == 0x0000000d || scause == 0xf) {
+        uint32_t sepc = read_sepc();
+        if (sepc == (uint32_t) usercopy_point1
+            || sepc == (uint32_t) usercopy_point2) {
+            // fault in usercopy
+            DBG("fault in usercopy");
+            return;
+        }
+
         handle_page_fault(read_stval(), frame->sepc, 0 /* FIXME: */);
     } else if (scause == 0x80000001) {
         write_sip(read_sip() & ~2);
