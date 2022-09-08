@@ -303,7 +303,7 @@ def c_generator(args, idl):
         if type_["name"] == "bytes":
             return [
                 f"uint8_t {field['name']}[{type_['nr']}]",
-                f"uint8_t {field['name']}_len",
+                f"size_t {field['name']}_len",
             ]
         else:
             def_ = resolve_type(ns, type_)
@@ -407,7 +407,6 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
 {%- endif %}
 {% endfor %}
 
-//        _Static_assert((len) < 0x1000, "\\"" name "\\" message is too large, should be less than 4096 bytes");
 #define __DEFINE_MSG_TYPE(type, len) ((type) << 12 | (len))
 
 {% for msg in msgs %}
@@ -438,6 +437,22 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
         {%- endif %}
     {% endfor %} \\
     {{ "}" }}
+
+#define IPCSTUB_STATIC_ASSERTIONS \\
+{%- for msg in msgs %}
+    _Static_assert( \\
+        sizeof(struct {{ msg | msg_name }}_fields) < 4096, \\
+        "'{{ msg | msg_name }}' message is too large, should be less than 4096 bytes" \\
+    ); \\
+{%- if not msg.oneway %}
+    _Static_assert( \\
+        sizeof(struct {{ msg | msg_name }}_reply_fields) < 4096, \\
+        "'{{ msg | msg_name }}_reply' message is too large, should be less than 4096 bytes" \\
+    ); \\
+{%- endif %}
+{%- endfor %}
+
+
 """
     )
 

@@ -37,3 +37,5 @@ struct message {
         IPCSTUB_MESSAGE_FIELDS
     };
 };
+
+IPCSTUB_STATIC_ASSERTIONS
