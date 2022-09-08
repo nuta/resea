@@ -409,9 +409,9 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
 {% endfor %}
 
 {%- for msg in msgs %}
-#define {{ msg | msg_name | upper }}_MSG MSG_TYPE(({{ msg.id }}))
+#define {{ msg | msg_name | upper }}_MSG MSG_TYPE({{ msg.id }})
 {%- if not msg.oneway %}
-#define {{ msg | msg_name | upper }}_REPLY_MSG MSG_TYPE(({{ msg.reply_id }}))
+#define {{ msg | msg_name | upper }}_REPLY_MSG MSG_TYPE({{ msg.reply_id }})
 {%- endif %}
 {%- endfor %}
 

@@ -14,6 +14,8 @@ typedef _BitInt(32) notifications_t;
 
 #define NOTIFY_ABORTED (1 << 0)
 
+#define MSG_TYPE(type) ((type))
+
 struct message {
     /// The type of message. If it's negative, this field represents an error
     /// (error_t).
