@@ -299,6 +299,9 @@ def c_generator(args, idl):
             return resolved_type
 
     def field_defs(fields, ns):
+        # TODO: Reorder fields to remove padding. This is crucial from the
+        #       security point of view - padding might leak sensitive data
+        #       in the sender's address space.
         defs = []
         for field in fields:
             type_ = field["type"]
