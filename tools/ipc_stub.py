@@ -267,7 +267,6 @@ def c_generator(args, idl):
         char="char",
         bool="bool",
         int="int",
-        task="task_t",
         uint="unsigned",
         int8="int8_t",
         int16="int16_t",
@@ -281,7 +280,7 @@ def c_generator(args, idl):
         offset="offset_t",
         uaddr="uaddr_t",
         paddr="paddr_t",
-        exception_type="enum exception_type",
+        task="task_t",
     )
 
     def resolve_type(ns, type_):
@@ -408,10 +407,13 @@ struct {{ msg | msg_name }}_reply_fields {{ "{" }}
 {%- endif %}
 {% endfor %}
 
-{%- for msg in msgs %}
-#define {{ msg | msg_name | upper }}_MSG MSG_TYPE({{ msg.id }})
+//        _Static_assert((len) < 0x1000, "\\"" name "\\" message is too large, should be less than 4096 bytes");
+#define __DEFINE_MSG_TYPE(type, len) ((type) << 12 | (len))
+
+{% for msg in msgs %}
+#define {{ msg | msg_name | upper }}_MSG __DEFINE_MSG_TYPE({{ msg.id }}, sizeof(struct {{ msg | msg_name }}_fields))
 {%- if not msg.oneway %}
-#define {{ msg | msg_name | upper }}_REPLY_MSG MSG_TYPE({{ msg.reply_id }})
+#define {{ msg | msg_name | upper }}_REPLY_MSG __DEFINE_MSG_TYPE({{ msg.reply_id }}, sizeof(struct {{ msg | msg_name }}_fields))
 {%- endif %}
 {%- endfor %}
 

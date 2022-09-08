@@ -119,7 +119,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
             task_switch();
 
             // Copy into `tmp_m` since memcpy_to_user may cause a page fault and
-            // CURRENT_TASK->m will be overwritten by page fault mesages.
+            // CURRENT_TASK->m will be overwritten by page fault messages.
             memcpy(&tmp_m, &CURRENT_TASK->m, sizeof(struct message));
         }
 
