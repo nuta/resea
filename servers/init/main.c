@@ -13,7 +13,7 @@ static void spawn_servers(void) {
     struct bootfs_file *file;
     for (int i = 0; (file = bootfs_open(i)) != NULL; i++) {
         // Autostart server names (separated by whitespace).
-        char *startups = "shell";  // FIXME:
+        char *startups = "test";  // FIXME:
         // char *startups = "pingpong";  // FIXME:
 
         // Execute the file if it is listed in the autostarts.

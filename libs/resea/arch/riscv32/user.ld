@@ -11,6 +11,11 @@ SECTIONS {
         *(.rodata .rodata.*);
         . = ALIGN(16);
         *(.srodata .srodata.*);
+
+        . = ALIGN(16);
+        __unit_tests = .;
+        *(.unit_tests);
+        __unit_tests_end = .;
     }
 
     .data : ALIGN(4096) {

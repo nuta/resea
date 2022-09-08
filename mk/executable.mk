@@ -34,7 +34,7 @@ $(executable): OBJS := $(objs)
 $(executable): $(objs)
 	$(PROGRESS) LD $(@)
 	$(MKDIR) $(@D)
-	$(LD) $(LDFLAGS) -o $(@) $(OBJS)
+	$(LD) $(LDFLAGS) -Map $(@:.elf=.map) -o $(@) $(OBJS)
 
 $(BUILD_DIR)/program_names/$(executable_name).c:
 	$(MKDIR) $(@D)
