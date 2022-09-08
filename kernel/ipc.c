@@ -52,11 +52,17 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
         // Copy the message into the receiver's buffer in case the receiver is
         // the current's pager task and accessing `m` cause the page fault. If
         // it happens, it leads to a dead lock.
+        int type;
+        size_t copy_len;
         struct message tmp_m;
         if (flags & IPC_KERNEL) {
-            memcpy(&tmp_m, (const void *) m, sizeof(struct message));
+            memcpy(&type, (const void *) &m->type, sizeof(type));
+            copy_len = MSG_LEN(type);
+            memcpy(&tmp_m.raw, (const void *) &m->raw, copy_len);
         } else {
-            memcpy_from_user(&tmp_m, m, sizeof(struct message));
+            memcpy_from_user(&type, (const void *) &m->type, sizeof(type));
+            copy_len = MSG_LEN(type);
+            memcpy_from_user(&tmp_m.raw, (const void *) &m->raw, copy_len);
         }
 
         // Check whether the destination (receiver) task is ready for receiving.
@@ -88,8 +94,9 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
         // If you need to do so, push CURRENT back into the senders queue.
 
         // Copy the message.
-        tmp_m.src = (flags & IPC_KERNEL) ? KERNEL_TASK : CURRENT_TASK->tid;
-        memcpy(&dst->m, &tmp_m, sizeof(dst->m));
+        dst->m.type = type;
+        dst->m.src = (flags & IPC_KERNEL) ? KERNEL_TASK : CURRENT_TASK->tid;
+        memcpy(&dst->m.raw, &tmp_m.raw, copy_len);
 
         // Resume the receiver task.
         task_resume(dst);
@@ -103,6 +110,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
     // Receive a message.
     if (flags & IPC_RECV) {
         struct message tmp_m;
+        size_t copy_len;
         if (src == IPC_ANY && CURRENT_TASK->notifications) {
             // Receive pending notifications as a message.
             NYI();
@@ -120,14 +128,15 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
 
             // Copy into `tmp_m` since memcpy_to_user may cause a page fault and
             // CURRENT_TASK->m will be overwritten by page fault messages.
-            memcpy(&tmp_m, &CURRENT_TASK->m, sizeof(struct message));
+            copy_len = MSG_HEADER_LEN + MSG_LEN(CURRENT_TASK->m.type);
+            memcpy(&tmp_m, &CURRENT_TASK->m, copy_len);
         }
 
         // Received a message. Copy it into the receiver buffer.
         if (flags & IPC_KERNEL) {
-            memcpy((void *) m, &tmp_m, sizeof(struct message));
+            memcpy((void *) m, &tmp_m, copy_len);
         } else {
-            memcpy_to_user(m, &tmp_m, sizeof(struct message));
+            memcpy_to_user(m, &tmp_m, copy_len);
         }
     }
 

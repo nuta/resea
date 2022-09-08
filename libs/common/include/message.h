@@ -14,9 +14,8 @@ typedef _BitInt(32) notifications_t;
 
 #define NOTIFY_ABORTED (1 << 0)
 
-#define MSG_HEADER_LEN  (sizeof(int) + sizeof(task_t))
-#define IPC_TYPE_LEN(x) ((x) & (0xfff))
-#define MSG_LEN(x)      ((x) & (0xfff))
+#define MSG_HEADER_LEN (sizeof(int) + sizeof(task_t))
+#define MSG_LEN(x)     ((x) & (0xfff))
 
 struct message {
     /// The type of message. If it's negative, this field represents an error
