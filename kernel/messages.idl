@@ -1,5 +1,6 @@
 // FIXME: remove
 rpc add(x: int, y: int) -> (value: int);
+rpc copy_test(data: bytes[128]) -> (ret_data: int);
 
 /// The kernel sends this message to a pager task when an exception occurs.
 oneway exception(task: task, reason: int);

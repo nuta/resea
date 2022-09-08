@@ -232,16 +232,13 @@ class IDLParser:
         return msg_def
 
     def visit_fields(self, trees):
-        inline_fields = []
         fields = []
         for tree in trees:
             field = self.visit_field(tree)
-            inline_fields.append(field)
             fields.append(field)
 
         return {
             "fields": fields,
-            "inlines": inline_fields,
         }
 
     def visit_field(self, tree):
@@ -267,8 +264,6 @@ class IDLParser:
 def c_generator(args, idl):
     user_types = {}
     builtins = dict(
-        str="char *",
-        bytes="void *",
         char="char",
         bool="bool",
         int="int",
@@ -306,11 +301,17 @@ def c_generator(args, idl):
 
     def field_def(field, ns):
         type_ = field["type"]
-        def_ = resolve_type(ns, type_)
-        def_ += f" {field['name']}"
-        if type_["nr"]:
-            def_ += f"[{type_['nr']}]"
-        return def_
+        if type_["name"] == "bytes":
+            return [
+                f"uint8_t {field['name']}[{type_['nr']}]",
+                f"uint8_t {field['name']}_len",
+            ]
+        else:
+            def_ = resolve_type(ns, type_)
+            def_ += f" {field['name']}"
+            if type_["nr"]:
+                def_ += f"[{type_['nr']}]"
+            return [def_]
 
     def const_def(c):
         type_ = c["type"]
@@ -389,15 +390,19 @@ enum {{ e | enum_name }} {{ "{" }}
 //
 {% for msg in msgs %}
 struct {{ msg | msg_name }}_fields {{ "{" }}
-{%- for field in msg.args.inlines %}
-    {{ field | field_def(msg.namespace) }};
+{%- for field in msg.args.fields %}
+{%- for field in field | field_def(msg.namespace) %}
+    {{ field }};
+{%- endfor %}
 {%- endfor %}
 {{ "};" }}
 
 {%- if not msg.oneway %}
 struct {{ msg | msg_name }}_reply_fields {{ "{" }}
-{%- for field in msg.rets.inlines %}
-    {{ field | field_def(msg.namespace) }};
+{%- for field in msg.rets.fields %}
+{%- for field in field | field_def(msg.namespace) %}
+    {{ field }};
+{%- endfor %}
 {%- endfor %}
 {{ "};" }}
 {%- endif %}
