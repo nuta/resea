@@ -298,19 +298,22 @@ def c_generator(args, idl):
                 raise ParseError(f"Uknown data type: '{type_['name']}'")
             return resolved_type
 
-    def field_def(field, ns):
-        type_ = field["type"]
-        if type_["name"] == "bytes":
-            return [
-                f"uint8_t {field['name']}[{type_['nr']}]",
-                f"size_t {field['name']}_len",
-            ]
-        else:
-            def_ = resolve_type(ns, type_)
-            def_ += f" {field['name']}"
-            if type_["nr"]:
-                def_ += f"[{type_['nr']}]"
-            return [def_]
+    def field_defs(fields, ns):
+        defs = []
+        for field in fields:
+            type_ = field["type"]
+            if type_["name"] == "bytes":
+                defs.append(f"uint8_t {field['name']}[{type_['nr']}]")
+                defs.append(f"size_t {field['name']}_len")
+            elif type_["name"] == "cstr":
+                defs.append(f"char {field['name']}[{type_['nr']}]")
+            else:
+                def_ = resolve_type(ns, type_)
+                def_ += f" {field['name']}"
+                if type_["nr"]:
+                    def_ += f"[{type_['nr']}]"
+                defs.append(def_)
+        return defs
 
     def const_def(c):
         type_ = c["type"]
@@ -347,7 +350,7 @@ def c_generator(args, idl):
         f"{e['namespace']}_".lstrip("_") + f"{e['name']}_".lstrip("_") + i["name"]
     ).upper()
     renderer.filters["newlines_to_whitespaces"] = lambda text: text.replace("\n", " ")
-    renderer.filters["field_def"] = field_def
+    renderer.filters["field_defs"] = field_defs
     renderer.filters["const_def"] = const_def
     renderer.filters["type_def"] = type_def
     renderer.filters["msg_str"] = lambda m: f"{m['namespace']}.".lstrip(".") + m["name"]
@@ -389,19 +392,15 @@ enum {{ e | enum_name }} {{ "{" }}
 //
 {% for msg in msgs %}
 struct {{ msg | msg_name }}_fields {{ "{" }}
-{%- for field in msg.args.fields %}
-{%- for field in field | field_def(msg.namespace) %}
+{%- for field in msg.args.fields | field_defs(msg.namespace) %}
     {{ field }};
-{%- endfor %}
 {%- endfor %}
 {{ "};" }}
 
 {%- if not msg.oneway %}
 struct {{ msg | msg_name }}_reply_fields {{ "{" }}
-{%- for field in msg.rets.fields %}
-{%- for field in field | field_def(msg.namespace) %}
+{%- for field in msg.rets.fields | field_defs(msg.namespace) %}
     {{ field }};
-{%- endfor %}
 {%- endfor %}
 {{ "};" }}
 {%- endif %}
