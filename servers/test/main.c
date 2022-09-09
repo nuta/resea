@@ -11,5 +11,6 @@ void main(void) {
 UNIT_TEST("hello") {
     INFO("Hello, world from unittest!");
     EXPECT_EQ(1, 1);
+    EXPECT_TRUE(true);
     EXPECT_EQ(1, 2);
 }

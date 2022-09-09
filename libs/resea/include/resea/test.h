@@ -15,12 +15,21 @@ struct __unit_test {
             .name = (__name), .fn = __CONCAT(__unit_test_fn_, __LINE__)};      \
     void __CONCAT(__unit_test_fn_, __LINE__)(void)
 
-#define EXPECT_EQ(__expected, __actual)                                        \
+#define EXPECT_TRUE(expr)                                                      \
     do {                                                                       \
-        __typeof__(__expected) __expected__ = (__expected);                    \
-        __typeof__(__actual) __actual__ = (__actual);                          \
-        if (__expected__ != __actual__) {                                      \
+        __typeof__(expr) _expr = (expr);                                       \
+        if (!_expr) {                                                          \
+            PANIC("%s:%d: expected, '" #expr "' to be true", __FILE__,         \
+                  __LINE__);                                                   \
+        }                                                                      \
+    } while (0)
+
+#define EXPECT_EQ(expected, actual)                                            \
+    do {                                                                       \
+        __typeof__(expected) _expected = (expected);                           \
+        __typeof__(actual) _actual = (actual);                                 \
+        if (_expected != _actual) {                                            \
             PANIC("%s:%d: expected %d, but got %d", __FILE__, __LINE__,        \
-                  (__expected__), (__actual__));                               \
+                  (_expected), (_actual));                                     \
         }                                                                      \
     } while (0)
