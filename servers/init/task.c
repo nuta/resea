@@ -54,12 +54,14 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     task->ehdr = ehdr;
     task->phdrs = (elf_phdr_t *) ((uintptr_t) file_header + ehdr->e_phoff);
 
+    // Copy the task name.
     size_t i = 0;
     for (; i < sizeof(task->name) - 1 && file->name[i] != '\0'; i++) {
         task->name[i] = file->name[i];
     }
     task->name[i] = '\0';
 
+    // Register the created task in the TID table.
     tasks[task->tid - 1] = task;
     return task->tid;
 }
