@@ -32,12 +32,14 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
 
     // Ensure that it's an ELF file.
     elf_ehdr_t *ehdr = (elf_ehdr_t *) file_header;
-    if (memcmp(ehdr->e_ident,
-               "\x7f"
-               "ELF",
-               4)
-        != 0) {
-        WARN("%s: invalid ELF magic, ignoring...", file->name);
+    if (memcmp(ehdr->e_ident, ELF_MAGIC, 4) != 0) {
+        WARN("%s: invalid ELF magic", file->name);
+        return ERR_INVALID_ARG;
+    }
+
+    // Ensure that it's an executable file.
+    if (ehdr->e_type != ET_EXEC) {
+        WARN("%s: not an executable file", file->name);
         return ERR_INVALID_ARG;
     }
 

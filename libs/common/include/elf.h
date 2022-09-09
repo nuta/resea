@@ -2,6 +2,7 @@
 #include <types.h>
 
 #define ELF_MAGIC "\177ELF"
+#define ET_EXEC   2
 #define PT_NOTE   4
 
 struct elf32_ehdr {
