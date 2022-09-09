@@ -54,7 +54,7 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     task->ehdr = ehdr;
     task->phdrs = (elf_phdr_t *) ((uintptr_t) file_header + ehdr->e_phoff);
 
-    int i = 0;
+    size_t i = 0;
     for (; i < sizeof(task->name) - 1 && file->name[i] != '\0'; i++) {
         task->name[i] = file->name[i];
     }
