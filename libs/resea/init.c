@@ -20,7 +20,8 @@ static void run_unit_tests(void) {
 __noreturn void resea_init(void) {
     malloc_init();
 
-    run_unit_tests();
+    // FIXME:
+    // run_unit_tests();
 
     main();
     // TODO:
