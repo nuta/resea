@@ -1,4 +1,5 @@
 #include <print_macros.h>
+#include <resea/ipc.h>
 #include <resea/syscall.h>
 #include <string.h>
 
@@ -89,6 +90,11 @@ done:
                 printf("%s ", argv[i]);
             }
             printf("\n");
+        } else {
+            struct message m;
+            m.type = SPAWN_TASK_MSG;
+            strncpy2(m.spawn_task.name, argv[0], sizeof(m.spawn_task.name));
+            ipc_call(1, &m);
         }
     }
 

@@ -11,7 +11,7 @@ static void spawn_servers(void) {
     // Launch servers in bootfs.
     int num_launched = 0;
     struct bootfs_file *file;
-    for (int i = 0; (file = bootfs_open(i)) != NULL; i++) {
+    for (int i = 0; (file = bootfs_open_iter(i)) != NULL; i++) {
         // Autostart server names (separated by whitespace).
         char *startups = STARTUP_SERVERS;
 
@@ -56,6 +56,25 @@ void main(void) {
                 m.add_reply.value = m.add.x + m.add.y;
                 ipc_reply(m.src, &m);
                 break;
+            case SPAWN_TASK_MSG: {
+                // FIXME: m.spawn_task.name is not null-terminated.
+                struct bootfs_file *file = bootfs_open(m.spawn_task.name);
+                if (!file) {
+                    ipc_reply_err(m.src, ERR_NOT_FOUND);
+                    break;
+                }
+
+                task_t task_or_err = task_spawn(file, "");
+                if (IS_ERROR(task_or_err)) {
+                    ipc_reply_err(m.src, task_or_err);
+                    break;
+                }
+
+                m.type = SPAWN_TASK_REPLY_MSG;
+                m.spawn_task_reply.task = task_or_err;
+                ipc_reply(m.src, &m);
+                break;
+            }
             case PAGE_FAULT_MSG: {
                 if (m.src != KERNEL_TASK) {
                     WARN("forged page fault message from #%d, ignoring...",

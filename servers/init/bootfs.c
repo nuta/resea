@@ -11,7 +11,18 @@ void bootfs_read(struct bootfs_file *file, offset_t off, void *buf,
     memcpy(buf, p, len);
 }
 
-struct bootfs_file *bootfs_open(unsigned index) {
+struct bootfs_file *bootfs_open(const char *path) {
+    struct bootfs_file *file;
+    for (int i = 0; (file = bootfs_open_iter(i)) != NULL; i++) {
+        if (!strncmp(file->name, path, sizeof(file->name))) {
+            return file;
+        }
+    }
+
+    return NULL;
+}
+
+struct bootfs_file *bootfs_open_iter(unsigned index) {
     if (index >= num_files) {
         return NULL;
     }
