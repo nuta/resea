@@ -14,11 +14,13 @@
 
 typedef uint32_t pte_t;
 
-extern char __kernel_text[];
-extern char __kernel_text_end[];
-extern char __kernel_data[];
-extern char __kernel_data_end[];
-extern char __kernel_image_end[];
+extern char __text[];
+extern char __text_end[];
+extern char __data[];
+extern char __data_end[];
+extern char __bss[];
+extern char __bss_end[];
+extern char __image_end[];
 extern char __boot_elf[];
 
 bool riscv32_is_mapped(uint32_t satp, vaddr_t vaddr);

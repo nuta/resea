@@ -79,8 +79,8 @@ error_t arch_vm_init(struct arch_vm *vm) {
     // TODO: Handle out of memory
     vm->table = pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, PM_ALLOC_ZEROED);
 
-    paddr_t kernel_text = (paddr_t) __kernel_text;
-    paddr_t kernel_text_end = (paddr_t) __kernel_text_end;
+    paddr_t kernel_text = (paddr_t) __text;
+    paddr_t kernel_text_end = (paddr_t) __text_end;
 
     DEBUG_ASSERT(IS_ALIGNED(kernel_text, PAGE_SIZE));
     DEBUG_ASSERT(IS_ALIGNED(kernel_text_end, PAGE_SIZE));

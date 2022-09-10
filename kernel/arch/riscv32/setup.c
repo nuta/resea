@@ -7,6 +7,7 @@
 #include <kernel/arch.h>
 #include <kernel/main.h>
 #include <kernel/printk.h>
+#include <string.h>
 
 // FIXME:
 struct cpuvar cpuvar_fixme;
@@ -18,7 +19,7 @@ __noreturn void riscv32_setup_s_mode(void) {
     struct bootinfo bootinfo;
     bootinfo.boot_elf = (paddr_t) __boot_elf;
     bootinfo.memory_map.entries[0].paddr =
-        ALIGN_UP((paddr_t) __kernel_image_end, PAGE_SIZE);
+        ALIGN_UP((paddr_t) __image_end, PAGE_SIZE);
     bootinfo.memory_map.entries[0].size = 64 * 1024 * 1024;
     bootinfo.memory_map.entries[0].type = MEMORY_MAP_FREE;
     bootinfo.memory_map.num_entries = 1;
@@ -54,6 +55,8 @@ __noreturn void riscv32_setup_m_mode(void) {
     write_satp(0);
     write_pmpaddr0(0xffffffff);
     write_pmpcfg0(0xf);
+
+    memset(__bss, 0, (vaddr_t) __bss_end - (vaddr_t) __bss);
 
     int hart = read_mhartid();
     int interval = 1000000;
