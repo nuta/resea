@@ -20,11 +20,7 @@ void backtrace(void) {
         return;
     }
 
-    for (int i = 0; i < BACKTRACE_MAX; i++) {
-        if (!fp) {
-            break;
-        }
-
+    for (int i = 0; fp && i < BACKTRACE_MAX; i++) {
         struct stack_frame *frame =
             (struct stack_frame *) (fp - sizeof(*frame));
         TRACE("{{{bt:%d:0x%p:ra}}}", i, frame->ra);
