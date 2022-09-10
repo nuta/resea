@@ -4,8 +4,6 @@
 #include <print_macros.h>
 #include <resea/syscall.h>
 
-static __aligned(PAGE_SIZE) uint8_t tmp_page[PAGE_SIZE];
-
 /// Tries to fill a page at `vaddr` for the task. Returns the allocated physical
 /// memory address on success or 0 on failure.
 error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
@@ -54,9 +52,18 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
 
         size_t offset = uaddr - phdr->p_vaddr;
         if (offset < phdr->p_filesz) {
+            static __aligned(PAGE_SIZE) uint8_t tmp_page[PAGE_SIZE];
+
+            // Unmap `tmp_page` first since it is already mapped by the kernel.
+            ASSERT_OK(
+                sys_vm_unmap(sys_task_self(), (uaddr_t) tmp_page, PAGE_SIZE));
+
+            // Now map the page to `tmp_page` to access `paddr` from our virtual
+            // address space.
             ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page, paddr,
                                  PAGE_SIZE, PAGE_READABLE | PAGE_WRITABLE));
 
+            //
             size_t copy_len = MIN(PAGE_SIZE, phdr->p_filesz - offset);
             bootfs_read(task->file, phdr->p_offset + offset, tmp_page,
                         copy_len);

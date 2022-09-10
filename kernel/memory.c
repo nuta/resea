@@ -96,6 +96,11 @@ error_t vm_map(struct task *task, uaddr_t uaddr, paddr_t paddr, size_t size,
     return arch_vm_map(&task->vm, uaddr, paddr, size, attrs);
 }
 
+error_t vm_unmap(struct task *task, uaddr_t uaddr, size_t size) {
+    // FIXME: Deny kernel addresses.
+    return arch_vm_unmap(&task->vm, uaddr, size);
+}
+
 /// The page fault handler. It calls a pager to ask to update the page table.
 void handle_page_fault(vaddr_t vaddr, vaddr_t ip, unsigned fault) {
     if ((fault & PAGE_FAULT_USER) == 0) {

@@ -118,6 +118,7 @@ typedef __builtin_va_list va_list;
 #define SYS_TASK_SELF      11
 #define SYS_PM_ALLOC       12
 #define SYS_VM_MAP         13
+#define SYS_VM_UNMAP       14
 
 // FIXME:
 static inline const char *err2str(int err) {

@@ -48,6 +48,10 @@ error_t sys_vm_map(task_t task, uaddr_t uaddr, paddr_t paddr, size_t size,
     return syscall(task, uaddr, paddr, size, attrs, SYS_VM_MAP);
 }
 
+error_t sys_vm_unmap(task_t task, uaddr_t uaddr, size_t size) {
+    return syscall(task, uaddr, size, 0, 0, SYS_VM_UNMAP);
+}
+
 error_t sys_console_write(const char *buf, size_t len) {
     return syscall((uintptr_t) buf, len, 0, 0, 0, SYS_CONSOLE_WRITE);
 }

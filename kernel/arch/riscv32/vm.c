@@ -48,8 +48,9 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
         pte_t *pte = walk(vm->table, vaddr + offset, true);
         if (*pte & PTE_V) {
-            // FIXME: DBG("ERR_EXISTS: PTE=%p", vaddr);
-            // return ERR_EXISTS;
+            DBG("Page already mapped: vaddr=%p, paddr=%p", vaddr + offset,
+                PTE_PADDR(*pte));
+            return ERR_EXISTS;
         }
     }
 
@@ -57,7 +58,7 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
         pte_t *pte = walk(vm->table, vaddr + offset, true);
         DEBUG_ASSERT(pte != NULL);
-        // FIXME: DEBUG_ASSERT((*pte & PTE_V) == 0);
+        DEBUG_ASSERT((*pte & PTE_V) == 0);
 
         *pte = construct_pte(paddr + offset,
                              page_attrs_to_pte_flags(attrs) | PTE_V);
@@ -66,6 +67,23 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     // TODO: TLB flush
     __asm__ __volatile__("sfence.vma zero, zero");
 
+    return OK;
+}
+
+error_t arch_vm_unmap(struct arch_vm *vm, vaddr_t vaddr, size_t size) {
+    for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
+        pte_t *pte = walk(vm->table, vaddr + offset, true);
+        if ((*pte & PTE_V) == 0) {
+            return ERR_NOT_FOUND;
+        }
+
+        paddr_t paddr = PTE_PADDR(*pte);
+        *pte = 0;
+        pm_free(paddr, PAGE_SIZE);
+    }
+
+    // TODO: TLB flush
+    __asm__ __volatile__("sfence.vma zero, zero");
     return OK;
 }
 

@@ -95,6 +95,19 @@ static paddr_t sys_vm_map(task_t tid, uaddr_t uaddr, paddr_t paddr, size_t size,
     return vm_map(task, uaddr, paddr, size, attrs);
 }
 
+static paddr_t sys_vm_unmap(task_t tid, uaddr_t uaddr, size_t size) {
+    struct task *task = get_task_by_tid(tid);
+    if (!task) {
+        return ERR_INVALID_TASK;
+    }
+
+    if (!IS_ALIGNED(uaddr, PAGE_SIZE) || !IS_ALIGNED(size, PAGE_SIZE)) {
+        return ERR_INVALID_ARG;
+    }
+
+    return vm_unmap(task, uaddr, size);
+}
+
 /// Send/receive IPC messages.
 static error_t sys_ipc(task_t dst, task_t src, __user struct message *m,
                        unsigned flags) {
@@ -221,6 +234,9 @@ long handle_syscall(long a0, long a1, long a2, long a3, long a4, long n) {
             break;
         case SYS_VM_MAP:
             ret = sys_vm_map(a0, a1, a2, a3, a4);
+            break;
+        case SYS_VM_UNMAP:
+            ret = sys_vm_unmap(a0, a1, a2);
             break;
         default:
             ret = ERR_INVALID_ARG;

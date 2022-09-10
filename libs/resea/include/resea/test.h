@@ -5,10 +5,10 @@ struct __unit_test {
     void (*fn)(void);
 };
 
-#ifdef TEST
+#define ___CONCAT(x, y) x##y
+#define __CONCAT(x, y)  ___CONCAT(x, y)
 
-#    define ___CONCAT(x, y) x##y
-#    define __CONCAT(x, y)  ___CONCAT(x, y)
+#ifdef TEST
 
 #    define UNIT_TEST(__name)                                                  \
         void __CONCAT(__unit_test_fn_, __LINE__)(void);                        \
