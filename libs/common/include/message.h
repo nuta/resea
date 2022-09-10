@@ -26,7 +26,7 @@ struct message {
     /// The message contents. Note that it's a union, not struct!
     union {
         // The message contents as raw bytes.
-        uint8_t raw[0];
+        uint8_t data[0];
 
         // Auto-generated message fields:
         //

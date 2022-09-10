@@ -36,7 +36,7 @@ typedef char bool;
 #define NULL ((void *) 0)
 
 typedef int error_t;
-typedef int16_t task_t;
+typedef int task_t;
 typedef uintmax_t size_t;
 typedef uintmax_t paddr_t;
 typedef uintmax_t vaddr_t;
@@ -94,31 +94,32 @@ typedef __builtin_va_list va_list;
 #define ERR_NOT_FOUND      -10
 
 // FIXME:
-#define PAGE_SIZE          4096
-#define PAGE_READABLE      (1 << 1)
-#define PAGE_WRITABLE      (1 << 2)
-#define PAGE_EXECUTABLE    (1 << 3)
-#define PAGE_USER          (1 << 4)
-#define PAGE_FAULT_READ    (1 << 0)
-#define PAGE_FAULT_WRITE   (1 << 1)
-#define PAGE_FAULT_EXEC    (1 << 2)
-#define PAGE_FAULT_USER    (1 << 3)
-#define PAGE_FAULT_PRESENT (1 << 4)
-#define KERNEL_TASK        0
-#define NUM_TASKS_MAX      32
-#define NUM_CPUS_MAX       32
-#define TASK_NAME_LEN      16
-#define SYS_IPC            1
-#define SYS_NOTIFY         2
-#define SYS_CONSOLE_WRITE  6
-#define SYS_CONSOLE_READ   7
-#define SYS_TASK_CREATE    8
-#define SYS_TASK_DESTROY   9
-#define SYS_TASK_EXIT      10
-#define SYS_TASK_SELF      11
-#define SYS_PM_ALLOC       12
-#define SYS_VM_MAP         13
-#define SYS_VM_UNMAP       14
+#define PAGE_SIZE            4096
+#define PAGE_READABLE        (1 << 1)
+#define PAGE_WRITABLE        (1 << 2)
+#define PAGE_EXECUTABLE      (1 << 3)
+#define PAGE_USER            (1 << 4)
+#define PAGE_FAULT_READ      (1 << 0)
+#define PAGE_FAULT_WRITE     (1 << 1)
+#define PAGE_FAULT_EXEC      (1 << 2)
+#define PAGE_FAULT_USER      (1 << 3)
+#define PAGE_FAULT_PRESENT   (1 << 4)
+#define KERNEL_TASK          0
+#define NUM_TASKS_MAX        32
+#define NUM_CPUS_MAX         32
+#define TASK_NAME_LEN        16
+#define SYS_IPC              1
+#define SYS_NOTIFY           2
+#define SYS_CONSOLE_WRITE    6
+#define SYS_CONSOLE_READ     7
+#define SYS_TASK_CREATE      8
+#define SYS_TASK_DESTROY     9
+#define SYS_TASK_EXIT        10
+#define SYS_TASK_SELF        11
+#define SYS_PM_ALLOC         12
+#define SYS_VM_MAP           13
+#define SYS_VM_UNMAP         14
+#define EXCEPTION_GRACE_EXIT 1
 
 // FIXME:
 static inline const char *err2str(int err) {

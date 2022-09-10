@@ -16,3 +16,4 @@ struct task {
 
 struct task *task_lookup(task_t tid);
 task_t task_spawn(struct bootfs_file *file, const char *cmdline);
+void task_destroy2(struct task *task);

@@ -58,11 +58,11 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
         if (flags & IPC_KERNEL) {
             memcpy(&type, (const void *) &m->type, sizeof(type));
             copy_len = MSG_LEN(type);
-            memcpy(&tmp_m.raw, (const void *) &m->raw, copy_len);
+            memcpy(&tmp_m.data, (const void *) &m->data, copy_len);
         } else {
             memcpy_from_user(&type, (const void *) &m->type, sizeof(type));
             copy_len = MSG_LEN(type);
-            memcpy_from_user(&tmp_m.raw, (const void *) &m->raw, copy_len);
+            memcpy_from_user(&tmp_m.data, (const void *) &m->data, copy_len);
         }
 
         // Check whether the destination (receiver) task is ready for receiving.
@@ -96,15 +96,10 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
         // Copy the message.
         dst->m.type = type;
         dst->m.src = (flags & IPC_KERNEL) ? KERNEL_TASK : CURRENT_TASK->tid;
-        memcpy(&dst->m.raw, &tmp_m.raw, copy_len);
+        memcpy(&dst->m.data, &tmp_m.data, copy_len);
 
         // Resume the receiver task.
         task_resume(dst);
-
-#ifdef CONFIG_TRACE_IPC
-        TRACE("IPC: %s: %s -> %s", msgtype2str(tmp_m.type), CURRENT_TASK->name,
-              dst->name);
-#endif
     }
 
     // Receive a message.
@@ -153,5 +148,6 @@ error_t ipc(struct task *dst, task_t src, __user struct message *m,
         return ERR_INVALID_ARG;
     }
 
+    // TODO: fastpath
     return ipc_slowpath(dst, src, m, flags);
 }

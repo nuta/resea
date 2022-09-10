@@ -93,7 +93,12 @@ void pm_free(paddr_t paddr, size_t size) {
 error_t vm_map(struct task *task, uaddr_t uaddr, paddr_t paddr, size_t size,
                unsigned attrs) {
     // FIXME: Deny kernel addresses.
-    return arch_vm_map(&task->vm, uaddr, paddr, size, attrs);
+    error_t err = arch_vm_map(&task->vm, uaddr, paddr, size, attrs);
+    if (err != OK) {
+        return err;
+    }
+
+    return OK;
 }
 
 error_t vm_unmap(struct task *task, uaddr_t uaddr, size_t size) {

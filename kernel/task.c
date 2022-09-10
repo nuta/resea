@@ -1,5 +1,6 @@
 #include "task.h"
 #include "arch.h"
+#include "ipc.h"
 #include "memory.h"
 #include "printk.h"
 #include <list.h>
@@ -119,6 +120,7 @@ error_t task_destroy(struct task *task) {
     DEBUG_ASSERT(task != CURRENT_TASK);
     DEBUG_ASSERT(task != IDLE_TASK);
     DEBUG_ASSERT(task->state != TASK_UNUSED);
+    DEBUG_ASSERT(task->ref_count > 0);
 
     if (task->tid == 1) {
         WARN_DBG("tried to destroy the init task");
@@ -126,6 +128,7 @@ error_t task_destroy(struct task *task) {
     }
 
     task->pager->ref_count--;
+    task->ref_count--;
 
     if (task->ref_count > 0) {
         WARN_DBG("%s (#%d) is still referenced from %d tasks", task->name,
@@ -144,6 +147,28 @@ error_t task_destroy(struct task *task) {
     arch_task_destroy(task);
     task->state = TASK_UNUSED;
     return OK;
+}
+
+__noreturn void task_exit(int exception) {
+    struct task *pager = CURRENT_TASK->pager;
+    ASSERT(pager != NULL);
+
+    struct message m;
+    m.type = EXCEPTION_MSG;
+    m.exception.task = CURRENT_TASK->tid;
+    m.exception.reason = exception;
+    error_t err = ipc(CURRENT_TASK->pager, IPC_DENY,
+                      (__user struct message *) &m, IPC_SEND | IPC_KERNEL);
+
+    if (err != OK) {
+        WARN("%s: failed to send an exit message to '%s': %s",
+             CURRENT_TASK->name, pager->name, err2str(err));
+    }
+
+    task_block(CURRENT_TASK);
+    task_switch();
+
+    UNREACHABLE();
 }
 
 void task_init(void) {

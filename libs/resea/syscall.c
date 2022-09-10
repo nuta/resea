@@ -31,8 +31,10 @@ error_t sys_task_destroy(task_t task) {
     return syscall(task, 0, 0, 0, 0, SYS_TASK_DESTROY);
 }
 
-error_t sys_task_exit(void) {
-    return syscall(0, 0, 0, 0, 0, SYS_TASK_EXIT);
+__noreturn void sys_task_exit(void) {
+    syscall(0, 0, 0, 0, 0, SYS_TASK_EXIT);
+    // FIXME: rename
+    __builtin_unreachable();
 }
 
 task_t sys_task_self(void) {

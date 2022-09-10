@@ -43,6 +43,7 @@ struct task *get_task_by_tid(task_t tid);
 task_t task_create(const char *name, uaddr_t ip, struct task *pager,
                    unsigned flags);
 error_t task_destroy(struct task *task);
+__noreturn void task_exit(int exception);
 void task_resume(struct task *task);
 void task_block(struct task *task);
 void task_switch(void);

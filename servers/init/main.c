@@ -57,7 +57,7 @@ void main(void) {
                 ipc_reply(m.src, &m);
                 break;
             case SPAWN_TASK_MSG: {
-                // FIXME: m.spawn_task.name is not null-terminated.
+                // TODO: m.spawn_task.name is not null-terminated.
                 struct bootfs_file *file = bootfs_open(m.spawn_task.name);
                 if (!file) {
                     ipc_reply_err(m.src, ERR_NOT_FOUND);
@@ -73,6 +73,24 @@ void main(void) {
                 m.type = SPAWN_TASK_REPLY_MSG;
                 m.spawn_task_reply.task = task_or_err;
                 ipc_reply(m.src, &m);
+                break;
+            }
+            case EXCEPTION_MSG: {
+                struct task *task = task_lookup(m.exception.task);
+                if (!task) {
+                    WARN("unknown task %d", m.exception.task);
+                    break;
+                }
+
+                switch (m.exception.reason) {
+                    case EXCEPTION_GRACE_EXIT:
+                        task_destroy2(task);
+                        TRACE("%s exited gracefully", task->name);
+                        break;
+                    default:
+                        WARN("unknown exception type %d", m.exception.reason);
+                        break;
+                }
                 break;
             }
             case PAGE_FAULT_MSG: {

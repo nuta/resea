@@ -67,3 +67,10 @@ task_t task_spawn(struct bootfs_file *file, const char *cmdline) {
     tasks[task->tid - 1] = task;
     return task->tid;
 }
+
+void task_destroy2(struct task *task) {
+    ASSERT_OK(task_destroy(task->tid));
+    free(task->file_header);
+    free(task);
+    tasks[task_self() - 1] = NULL;
+}

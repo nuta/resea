@@ -58,10 +58,8 @@ static error_t sys_task_destroy(task_t tid) {
 }
 
 /// Exits the current task.
-static error_t sys_task_exit(void) {
-    // TODO:
-    // task_exit(EXP_GRACE_EXIT);
-    NYI();
+__noreturn static void sys_task_exit(void) {
+    task_exit(EXCEPTION_GRACE_EXIT);
 }
 
 /// Returns the current task's ID.
@@ -224,8 +222,8 @@ long handle_syscall(long a0, long a1, long a2, long a3, long a4, long n) {
             ret = sys_task_destroy(a0);
             break;
         case SYS_TASK_EXIT:
-            ret = sys_task_exit();
-            break;
+            sys_task_exit();
+            UNREACHABLE();
         case SYS_TASK_SELF:
             ret = sys_task_self();
             break;
