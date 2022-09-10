@@ -90,23 +90,25 @@ paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
     return 0;
 }
 
-void pm_free(paddr_t paddr, size_t size) {
-    struct page *page = find_page_by_paddr(paddr);
-    ASSERT(page != NULL);
+static void free_page(struct page *page) {
+    DEBUG_ASSERT(page->ref_count > 0);
+    page->ref_count--;
+    list_remove(&page->next);
+}
 
+void pm_free(paddr_t paddr, size_t size) {
     size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
     size_t num_pages = aligned_size / PAGE_SIZE;
-
-    for (size_t i = 0; i < num_pages; i++) {
-        DEBUG_ASSERT(page->ref_count > 0);
-        page->ref_count--;
+    for (size_t offset = 0; offset < num_pages; offset += PAGE_SIZE) {
+        struct page *page = find_page_by_paddr(paddr + offset);
+        ASSERT(page != NULL);
+        free_page(page);
     }
 }
 
 void pm_free_list(list_t *pages) {
     LIST_FOR_EACH (page, pages, struct page, next) {
-        DEBUG_ASSERT(page->ref_count > 0);
-        page->ref_count--;
+        free_page(page);
     }
 }
 
