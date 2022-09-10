@@ -24,7 +24,12 @@ __noreturn void resea_init(void) {
     // run_unit_tests();
 
     main();
-    // TODO:
-    // task_exit();
-    UNREACHABLE();
+    task_exit();
+}
+
+void panic_lock(void) {
+}
+
+__noreturn void halt(void) {
+    task_exit();
 }

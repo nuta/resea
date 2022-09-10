@@ -1,4 +1,5 @@
 #include "asm.h"
+#include "mp.h"
 #include "plic.h"
 #include "trap.h"
 #include "uart.h"
@@ -22,6 +23,7 @@ __noreturn void riscv32_setup_s_mode(void) {
     bootinfo.memory_map.entries[0].type = MEMORY_MAP_FREE;
     bootinfo.memory_map.num_entries = 1;
 
+    mp_lock();
     kernel_main(&bootinfo);
     UNREACHABLE();
 }
@@ -69,11 +71,15 @@ __noreturn void riscv32_setup_m_mode(void) {
     write_mstatus(read_mstatus() | MSTATUS_MIE);
     write_mie(read_mie() | MIE_MTIE);
 
+    // TODO: mp init
+
     asm_mret();
     UNREACHABLE();
 }
 
 void arch_idle(void) {
+    mp_unlock();
     write_sstatus(read_sstatus() | SSTATUS_SIE);
     asm_wfi();
+    mp_lock();
 }

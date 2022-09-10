@@ -4,16 +4,9 @@
 #include <vprintf.h>
 
 void printf(const char *fmt, ...);
-// TODO:
-static inline void panic_lock(void) {
-}
-
+void panic_lock(void);
 const char *__program_name(void);
-
-static inline void halt(void) {
-    for (;;)
-        ;
-}
+__noreturn void halt(void);
 
 // ANSI escape sequences (SGR).
 #define SGR_ERR      "\e[1;91m"  // Bold red.
