@@ -82,9 +82,17 @@ static paddr_t sys_vm_map(task_t tid, uaddr_t uaddr, paddr_t paddr, size_t size,
         return ERR_INVALID_TASK;
     }
 
+    if ((attrs & ~(PAGE_WRITABLE | PAGE_READABLE | PAGE_EXECUTABLE)) != 0) {
+        return ERR_INVALID_ARG;
+    }
+
+    if (!IS_ALIGNED(uaddr, PAGE_SIZE) || !IS_ALIGNED(paddr, PAGE_SIZE)
+        || !IS_ALIGNED(size, PAGE_SIZE)) {
+        return ERR_INVALID_ARG;
+    }
+
     // TODO: check if caller is the owner of the paddr
-    attrs =
-        PAGE_WRITABLE | PAGE_READABLE | PAGE_EXECUTABLE | PAGE_USER;  // FIXME:
+    attrs |= PAGE_USER;
     return vm_map(task, uaddr, paddr, size, attrs);
 }
 

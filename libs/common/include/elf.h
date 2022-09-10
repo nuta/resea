@@ -5,6 +5,10 @@
 #define ET_EXEC   2
 #define PT_NOTE   4
 
+#define PF_R (1 << 2)
+#define PF_W (1 << 1)
+#define PF_X (1 << 0)
+
 struct elf32_ehdr {
     uint8_t e_ident[16];
     uint16_t e_type;

@@ -56,16 +56,20 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
         size_t offset = uaddr - phdr->p_vaddr;
         if (offset < phdr->p_filesz) {
             ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page2, paddr,
-                                 PAGE_SIZE,
-                                 /*FIXME: */ 0));
+                                 PAGE_SIZE, PAGE_READABLE | PAGE_WRITABLE));
 
             size_t copy_len = MIN(PAGE_SIZE, phdr->p_filesz - offset);
             bootfs_read(task->file, phdr->p_offset + offset, (void *) tmp_page2,
                         copy_len);
         }
 
-        sys_vm_map(task->tid, uaddr, paddr, PAGE_SIZE,
-                   /*FIXME: */ 0);
+        unsigned attrs = PAGE_USER;
+        attrs |= (phdr->p_flags & PF_R) ? PAGE_READABLE : 0;
+        attrs |= (phdr->p_flags & PF_W) ? PAGE_WRITABLE : 0;
+        attrs |= (phdr->p_flags & PF_X) ? PAGE_EXECUTABLE : 0;
+
+        attrs = PAGE_READABLE | PAGE_WRITABLE | PAGE_EXECUTABLE;
+        sys_vm_map(task->tid, uaddr, paddr, PAGE_SIZE, attrs);
         return OK;
     }
 

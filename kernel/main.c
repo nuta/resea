@@ -34,10 +34,15 @@ void load_boot_elf(struct bootinfo *bootinfo) {
             pm_alloc(phdr->p_memsz, PAGE_TYPE_USER(task), PM_ALLOC_ZEROED);
         memcpy(arch_paddr2ptr(paddr),
                (void *) ((vaddr_t) header + phdr->p_offset), phdr->p_filesz);
-        ASSERT_OK(arch_vm_map(
-            &task->vm, phdr->p_vaddr, paddr, ALIGN_UP(phdr->p_memsz, PAGE_SIZE),
-            // FIXME: check phdr->p_flags
-            PAGE_EXECUTABLE | PAGE_WRITABLE | PAGE_READABLE | PAGE_USER));
+
+        unsigned attrs = PAGE_USER;
+        attrs |= (phdr->p_flags & PF_R) ? PAGE_READABLE : 0;
+        attrs |= (phdr->p_flags & PF_W) ? PAGE_WRITABLE : 0;
+        attrs |= (phdr->p_flags & PF_X) ? PAGE_EXECUTABLE : 0;
+
+        attrs = PAGE_USER | PAGE_READABLE | PAGE_WRITABLE | PAGE_EXECUTABLE;
+        ASSERT_OK(arch_vm_map(&task->vm, phdr->p_vaddr, paddr,
+                              ALIGN_UP(phdr->p_memsz, PAGE_SIZE), attrs));
     }
 
     task_resume(task);
