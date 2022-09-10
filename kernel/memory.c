@@ -93,6 +93,8 @@ paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
 static void free_page(struct page *page) {
     DEBUG_ASSERT(page->ref_count > 0);
     page->ref_count--;
+    if (!page->ref_count)
+        DBG("removed completely!");
     list_remove(&page->next);
 }
 
