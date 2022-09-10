@@ -1,4 +1,5 @@
 V ?=
+TEST ?=
 RELEASE ?=
 ARCH ?= riscv32
 BUILD_DIR ?= build
@@ -53,6 +54,10 @@ CFLAGS += -I$(top_dir) -I$(BUILD_DIR)/autogen/include
 
 # Required for backtrace().
 CFLAGS += -fno-omit-frame-pointer -fno-optimize-sibling-calls
+
+ifneq ($(TEST),)
+CFLAGS += -DTEST
+endif
 
 ifeq ($(RELEASE),)
 CFLAGS += -O1 -fsanitize=undefined

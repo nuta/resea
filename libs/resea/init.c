@@ -10,10 +10,17 @@ extern char __unit_tests_end[];
 
 static void run_unit_tests(void) {
     struct __unit_test *test = (struct __unit_test *) __unit_tests;
+
+    unsigned n = 0;
     while ((uintptr_t) test < (uintptr_t) __unit_tests_end) {
-        INFO("Running unit test: %s", test->name);
+        INFO("unit test: %s", test->name);
         test->fn();
         test++;
+        n++;
+    }
+
+    if (n > 0) {
+        INFO("all %d unit tests passed", n);
     }
 }
 
