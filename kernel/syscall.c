@@ -34,7 +34,7 @@ static task_t sys_task_create(__user const char *name, vaddr_t ip, task_t pager,
         return ERR_INVALID_ARG;
     }
 
-    // FIXME: check if pager is created
+    // TODO: check if pager is created
 
     char namebuf[TASK_NAME_LEN];
     strncpy_from_user(namebuf, name, sizeof(namebuf));
@@ -186,7 +186,7 @@ static int sys_console_read(__user char *buf, int max_len) {
         console_reader = CURRENT_TASK;
         task_block(CURRENT_TASK);
         task_switch();
-        // FIXME: check if the task reading in task_destory
+        // TODO: check if the task reading in task_destory
     }
 
     memcpy_to_user(buf + i, "\0", 1);
