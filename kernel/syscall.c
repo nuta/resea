@@ -43,7 +43,6 @@ static task_t sys_task_create(__user const char *name, vaddr_t ip, task_t pager,
         return task;
     }
 
-    // FIXME: Wait for startup message instead of thsi auto resume
     task_resume(get_task_by_tid(task));
     return task;
 }
