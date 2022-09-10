@@ -8,6 +8,25 @@
 #include <kernel/printk.h>
 #include <kernel/task.h>
 
+__noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
+    uint32_t sstatus = read_sstatus();
+    sstatus &= ~SSTATUS_SPP;
+    write_sstatus(sstatus);
+
+    write_sepc(ip);
+    __asm__ __volatile__("sret");
+    UNREACHABLE();
+}
+
+void arch_task_switch(struct task *prev, struct task *next) {
+    CPUVAR->arch.sp = next->arch.sp;
+    CPUVAR->arch.sp_top = next->arch.sp_top;
+
+    write_satp((1ul << 31) | next->vm.table >> 12);
+
+    riscv32_task_switch(&prev->arch.sp, &next->arch.sp);
+}
+
 error_t arch_task_init(struct task *task, uaddr_t ip) {
     // Allocate a kernel stack. Should be aligned to the stack size
     // (PM_ALLOC_ALIGNED) because of the stack canary.
@@ -46,21 +65,6 @@ error_t arch_task_init(struct task *task, uaddr_t ip) {
     return OK;
 }
 
-__noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
-    uint32_t sstatus = read_sstatus();
-    sstatus &= ~SSTATUS_SPP;
-    write_sstatus(sstatus);
-
-    write_sepc(ip);
-    __asm__ __volatile__("sret");
-    UNREACHABLE();
-}
-
-void arch_task_switch(struct task *prev, struct task *next) {
-    CPUVAR->arch.sp = next->arch.sp;
-    CPUVAR->arch.sp_top = next->arch.sp_top;
-
-    write_satp((1ul << 31) | next->vm.table >> 12);
-
-    riscv32_task_switch(&prev->arch.sp, &next->arch.sp);
+void arch_task_destroy(struct task *task) {
+    // Nothing to do.
 }

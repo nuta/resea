@@ -116,7 +116,32 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
 }
 
 error_t task_destroy(struct task *task) {
-    NYI();
+    DEBUG_ASSERT(task != CURRENT_TASK);
+    DEBUG_ASSERT(task != IDLE_TASK);
+    DEBUG_ASSERT(task->state != TASK_UNUSED);
+
+    if (task->tid == 1) {
+        WARN_DBG("tried to destroy the init task");
+        return ERR_INVALID_ARG;
+    }
+
+    task->pager->ref_count--;
+
+    if (task->ref_count > 0) {
+        WARN_DBG("%s (#%d) is still referenced from %d tasks", task->name,
+                 task->tid, task->ref_count);
+        return ERR_IN_USE;
+    }
+
+    // Abort sender IPC operations.
+    LIST_FOR_EACH(sender, &task->senders, struct task, next) {
+        // TODO: notify(sender, NOTIFY_ABORTED);
+        list_remove(&sender->next);
+    }
+
+    arch_vm_destroy(&task->vm);
+    arch_task_destroy(task);
+    task->state = TASK_UNUSED;
     return OK;
 }
 

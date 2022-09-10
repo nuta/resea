@@ -40,10 +40,12 @@ struct bootinfo {
 void arch_console_write(char ch);
 int arch_console_read(void);
 error_t arch_vm_init(struct arch_vm *vm);
+void arch_vm_destroy(struct arch_vm *vm);
 error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
                     size_t size, unsigned attrs);
 void *arch_paddr2ptr(paddr_t paddr);
 error_t arch_task_init(struct task *task, uaddr_t ip);
+void arch_task_destroy(struct task *task);
 void arch_task_switch(struct task *prev, struct task *next);
 void arch_idle(void);
 void arch_memcpy_from_user(void *dst, __user const void *src, size_t len);

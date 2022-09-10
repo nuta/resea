@@ -90,6 +90,7 @@ typedef __builtin_va_list va_list;
 #define ERR_INVALID_TASK   -6
 #define ERR_TOO_LARGE      -7
 #define ERR_NO_MEMORY      -8
+#define ERR_IN_USE         -9
 
 // FIXME:
 #define PAGE_SIZE          4096

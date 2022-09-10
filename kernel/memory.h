@@ -25,6 +25,7 @@ struct memory_zone {
 struct task;
 
 paddr_t pm_alloc(size_t size, unsigned type, unsigned flags);
+void pm_free(paddr_t paddr, size_t size);
 error_t vm_map(struct task *task, uaddr_t uaddr, paddr_t paddr, size_t size,
                unsigned attrs);
 void handle_page_fault(uaddr_t uaddr, vaddr_t ip, unsigned fault);

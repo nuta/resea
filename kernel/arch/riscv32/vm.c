@@ -99,3 +99,17 @@ error_t arch_vm_init(struct arch_vm *vm) {
                           PAGE_READABLE | PAGE_WRITABLE));
     return OK;
 }
+
+void arch_vm_destroy(struct arch_vm *vm) {
+    uint32_t *table0 = arch_paddr2ptr(vm->table);
+    for (int i = 0; i < 1024; i++) {
+        if (table0[i] & PTE_V) {
+            uint32_t *table1 = arch_paddr2ptr(PTE_PADDR(table0[i]));
+            for (int j = 0; j < 1024; j++) {
+                if (table1[j] & PTE_V) {
+                    pm_free(PTE_PADDR(table1[j]), PAGE_SIZE);
+                }
+            }
+        }
+    }
+}

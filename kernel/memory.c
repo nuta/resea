@@ -77,9 +77,12 @@ paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
     return 0;
 }
 
-void pm_free(paddr_t paddr, size_t num_pages) {
+void pm_free(paddr_t paddr, size_t size) {
     struct page *page = find_page_by_paddr(paddr);
     ASSERT(page != NULL);
+
+    size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
+    size_t num_pages = aligned_size / PAGE_SIZE;
 
     for (size_t i = 0; i < num_pages; i++) {
         DEBUG_ASSERT(page->ref_count > 0);
