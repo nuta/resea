@@ -61,7 +61,6 @@ static error_t sys_task_destroy(task_t tid) {
 static error_t sys_task_exit(void) {
     // TODO:
     // task_exit(EXP_GRACE_EXIT);
-    UNREACHABLE();
 }
 
 /// Returns the current task's ID.
