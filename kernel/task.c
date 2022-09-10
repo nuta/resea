@@ -47,6 +47,7 @@ static task_t init_task_struct(const char *name, uaddr_t ip, struct task *pager,
     strncpy2(task->name, name, sizeof(task->name));
     list_elem_init(&task->next);
     list_init(&task->senders);
+    list_init(&task->pages);
 
     error_t err = arch_vm_init(&task->vm);
     if (err != OK) {
@@ -145,6 +146,7 @@ error_t task_destroy(struct task *task) {
 
     arch_vm_destroy(&task->vm);
     arch_task_destroy(task);
+    pm_free_list(&task->pages);
     task->state = TASK_UNUSED;
     return OK;
 }

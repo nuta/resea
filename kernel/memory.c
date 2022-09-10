@@ -47,7 +47,13 @@ static void add_zone(paddr_t paddr, size_t size) {
     list_push_back(&zones, &zone->next);
 }
 
+static task_t get_page_owner(int type) {
+    return ((type & 1) == 0) ? (type >> 1) : 0;
+}
+
 paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
+    task_t owner = get_page_owner(type);
+    struct task *task = get_task_by_tid(owner);
     size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
     size_t num_pages = aligned_size / PAGE_SIZE;
     LIST_FOR_EACH (zone, &zones, struct memory_zone, next) {
@@ -60,8 +66,15 @@ paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
 
             if (is_contiguously_free(zone, start, num_pages)) {
                 for (size_t i = 0; i < num_pages; i++) {
-                    zone->pages[start + i].ref_count = 1;
-                    zone->pages[start + i].type = type;
+                    struct page *page = &zone->pages[start + i];
+                    page->ref_count = 1;
+                    page->type = type;
+                    list_elem_init(&page->next);
+
+                    if (task) {
+                        DEBUG_ASSERT(task);
+                        list_push_back(&task->pages, &page->next);
+                    }
                 }
 
                 if (flags & PM_ALLOC_UNINITIALIZED) {
@@ -90,12 +103,25 @@ void pm_free(paddr_t paddr, size_t size) {
     }
 }
 
+void pm_free_list(list_t *pages) {
+    LIST_FOR_EACH (page, pages, struct page, next) {
+        DEBUG_ASSERT(page->ref_count > 0);
+        page->ref_count--;
+    }
+}
+
 error_t vm_map(struct task *task, uaddr_t uaddr, paddr_t paddr, size_t size,
                unsigned attrs) {
     // FIXME: Deny kernel addresses.
     error_t err = arch_vm_map(&task->vm, uaddr, paddr, size, attrs);
     if (err != OK) {
         return err;
+    }
+
+    for (size_t offset = 0; offset < size; offset += PAGE_SIZE) {
+        struct page *page = find_page_by_paddr(paddr + offset);
+        DEBUG_ASSERT(page != NULL);
+        page->ref_count++;
     }
 
     return OK;

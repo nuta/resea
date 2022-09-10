@@ -31,6 +31,7 @@ struct task {
 
     struct task *pager;
     uint16_t ref_count;
+    list_t pages;
 
     task_t waiting_for;
     notifications_t notifications;

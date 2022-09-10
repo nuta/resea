@@ -124,12 +124,6 @@ void arch_vm_destroy(struct arch_vm *vm) {
         if (table0[i] & PTE_V) {
             paddr_t paddr = PTE_PADDR(table0[i]);
             pm_free(paddr, PAGE_SIZE);
-            // TODO: removeme
-            // for (int j = 0; j < 1024; j++) {
-            //     if (table1[j] & PTE_V) {
-            //         pm_free(PTE_PADDR(table1[j]), PAGE_SIZE);
-            //     }
-            // }
         }
     }
 

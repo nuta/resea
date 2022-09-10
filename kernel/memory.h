@@ -13,6 +13,7 @@
 struct page {
     unsigned type;
     unsigned ref_count;
+    list_elem_t next;
 };
 
 struct memory_zone {
@@ -26,6 +27,7 @@ struct task;
 
 paddr_t pm_alloc(size_t size, unsigned type, unsigned flags);
 void pm_free(paddr_t paddr, size_t size);
+void pm_free_list(list_t *pages);
 error_t vm_map(struct task *task, uaddr_t uaddr, paddr_t paddr, size_t size,
                unsigned attrs);
 error_t vm_unmap(struct task *task, uaddr_t uaddr, size_t size);
