@@ -47,3 +47,4 @@ SpacesInContainerLiterals: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 ForEachMacros:
+  - LIST_FOR_EACH

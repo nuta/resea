@@ -10,7 +10,7 @@
 /// Resumes a sender task for the `receiver` tasks and updates
 /// `receiver->waiting_for` properly.
 static void resume_sender(struct task *receiver, task_t wait_for) {
-    LIST_FOR_EACH(sender, &receiver->senders, struct task, next) {
+    LIST_FOR_EACH (sender, &receiver->senders, struct task, next) {
         if (wait_for == IPC_ANY || wait_for == sender->tid) {
             DEBUG_ASSERT(sender->state == TASK_BLOCKED);
             DEBUG_ASSERT(sender->waiting_for == IPC_DENY);

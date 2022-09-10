@@ -134,10 +134,11 @@ error_t task_destroy(struct task *task) {
     }
 
     // Abort sender IPC operations.
-    LIST_FOR_EACH(sender, &task->senders, struct task, next) {
-        // TODO: notify(sender, NOTIFY_ABORTED);
-        list_remove(&sender->next);
+    LIST_FOR_EACH (sender, &task->senders, struct task, next) {
+        // notify(sender, NOTIFY_ABORTED);
     }
+
+    list_remove(&task->next);
 
     arch_vm_destroy(&task->vm);
     arch_task_destroy(task);

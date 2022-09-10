@@ -141,7 +141,7 @@ static error_t sys_console_write(__user const char *buf, size_t buf_len) {
 }
 
 // TODO: move
-static struct task *console_reader = NULL;
+static list_t console_readers = LIST_INIT(console_readers);
 static char console_buf[128];
 static int console_buf_rp = 0;
 static int console_buf_wp = 0;
@@ -158,9 +158,9 @@ void handle_console_interrupt(void) {
         // TODO: What if it's full
     }
 
-    if (console_reader) {
-        task_resume(console_reader);
-        console_reader = NULL;
+    LIST_FOR_EACH (task, &console_readers, struct task, next) {
+        list_remove(&task->next);
+        task_resume(task);
     }
 }
 
@@ -182,10 +182,9 @@ static int sys_console_read(__user char *buf, int max_len) {
             break;
         }
 
-        console_reader = CURRENT_TASK;
+        list_push_back(&console_readers, &CURRENT_TASK->next);
         task_block(CURRENT_TASK);
         task_switch();
-        // TODO: check if the task reading in task_destory
     }
 
     memcpy_to_user(buf + i, "\0", 1);

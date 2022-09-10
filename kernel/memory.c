@@ -18,7 +18,7 @@ static bool is_contiguously_free(struct memory_zone *zone, size_t start,
 }
 
 static struct page *find_page_by_paddr(paddr_t paddr) {
-    LIST_FOR_EACH(zone, &zones, struct memory_zone, next) {
+    LIST_FOR_EACH (zone, &zones, struct memory_zone, next) {
         if (zone->base <= paddr
             && paddr < zone->base + zone->num_pages * PAGE_SIZE) {
             size_t start = (paddr - zone->base) / PAGE_SIZE;
@@ -50,7 +50,7 @@ static void add_zone(paddr_t paddr, size_t size) {
 paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
     size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
     size_t num_pages = aligned_size / PAGE_SIZE;
-    LIST_FOR_EACH(zone, &zones, struct memory_zone, next) {
+    LIST_FOR_EACH (zone, &zones, struct memory_zone, next) {
         for (size_t start = 0; start < zone->num_pages; start++) {
             paddr_t paddr = zone->base + start * PAGE_SIZE;
             if ((flags & PM_ALLOC_ALIGNED) != 0
