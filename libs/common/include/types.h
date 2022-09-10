@@ -91,33 +91,31 @@ typedef __builtin_va_list va_list;
 #define ERR_TOO_LARGE      -7
 #define ERR_NO_MEMORY      -8
 
-#define PAGE_SIZE       4096
-#define PAGE_READABLE   (1 << 1)
-#define PAGE_WRITABLE   (1 << 2)
-#define PAGE_EXECUTABLE (1 << 3)
-#define PAGE_USER       (1 << 4)
-
+// FIXME:
+#define PAGE_SIZE          4096
+#define PAGE_READABLE      (1 << 1)
+#define PAGE_WRITABLE      (1 << 2)
+#define PAGE_EXECUTABLE    (1 << 3)
+#define PAGE_USER          (1 << 4)
 #define PAGE_FAULT_READ    (1 << 0)
 #define PAGE_FAULT_WRITE   (1 << 1)
 #define PAGE_FAULT_EXEC    (1 << 2)
 #define PAGE_FAULT_USER    (1 << 3)
 #define PAGE_FAULT_PRESENT (1 << 4)
-
-// FIXME:
-#define KERNEL_TASK       0
-#define NUM_TASKS_MAX     32
-#define NUM_CPUS_MAX      32
-#define TASK_NAME_LEN     16
-#define SYS_IPC           1
-#define SYS_NOTIFY        2
-#define SYS_CONSOLE_WRITE 6
-#define SYS_CONSOLE_READ  7
-#define SYS_TASK_CREATE   8
-#define SYS_TASK_DESTROY  9
-#define SYS_TASK_EXIT     10
-#define SYS_TASK_SELF     11
-#define SYS_PM_ALLOC      12
-#define SYS_VM_MAP        13
+#define KERNEL_TASK        0
+#define NUM_TASKS_MAX      32
+#define NUM_CPUS_MAX       32
+#define TASK_NAME_LEN      16
+#define SYS_IPC            1
+#define SYS_NOTIFY         2
+#define SYS_CONSOLE_WRITE  6
+#define SYS_CONSOLE_READ   7
+#define SYS_TASK_CREATE    8
+#define SYS_TASK_DESTROY   9
+#define SYS_TASK_EXIT      10
+#define SYS_TASK_SELF      11
+#define SYS_PM_ALLOC       12
+#define SYS_VM_MAP         13
 
 // FIXME:
 static inline const char *err2str(int err) {
