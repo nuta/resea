@@ -4,7 +4,7 @@
 #include <print_macros.h>
 #include <resea/syscall.h>
 
-__aligned(PAGE_SIZE) uint8_t tmp_page2[PAGE_SIZE];
+static __aligned(PAGE_SIZE) uint8_t tmp_page[PAGE_SIZE];
 
 /// Tries to fill a page at `vaddr` for the task. Returns the allocated physical
 /// memory address on success or 0 on failure.
@@ -52,14 +52,13 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
         // TODO:
         paddr_t paddr = sys_pm_alloc(PAGE_SIZE, 0);
 
-        void *tmp_page2 = (void *) 0xa000;
         size_t offset = uaddr - phdr->p_vaddr;
         if (offset < phdr->p_filesz) {
-            ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page2, paddr,
+            ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page, paddr,
                                  PAGE_SIZE, PAGE_READABLE | PAGE_WRITABLE));
 
             size_t copy_len = MIN(PAGE_SIZE, phdr->p_filesz - offset);
-            bootfs_read(task->file, phdr->p_offset + offset, (void *) tmp_page2,
+            bootfs_read(task->file, phdr->p_offset + offset, tmp_page,
                         copy_len);
         }
 
