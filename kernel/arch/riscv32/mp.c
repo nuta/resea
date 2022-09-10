@@ -29,6 +29,7 @@ void mp_unlock(void) {
 }
 
 __noreturn void halt(void) {
+    WARN("halted");
     for (;;)
         __asm__ __volatile__("wfi");
 }
