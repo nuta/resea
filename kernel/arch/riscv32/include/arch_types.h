@@ -3,6 +3,7 @@
 
 struct arch_task {
     uint32_t sp;
+    uint32_t sp_top;
 };
 
 struct arch_vm {
@@ -25,6 +26,8 @@ struct arch_cpuvar {
     uint32_t interval;
     // 4 * 7 = 28
     uint32_t sscratch2;
+    // 4 * 8 = 32
+    uint32_t sp_top;
 };
 
 // FIXME:

@@ -15,7 +15,8 @@ error_t arch_task_init(struct task *task, uaddr_t ip) {
         return ERR_NO_MEMORY;
     }
 
-    uint32_t *sp = (uint32_t *) arch_paddr2ptr(sp_bottom + KERNEL_STACK_SIZE);
+    uint32_t sp_top = sp_bottom + KERNEL_STACK_SIZE;
+    uint32_t *sp = (uint32_t *) arch_paddr2ptr(sp_top);
 
     // Registers to be restored in riscv32_user_entry.
     *--sp = task->vm.table;
@@ -37,12 +38,14 @@ error_t arch_task_init(struct task *task, uaddr_t ip) {
     *--sp = (uint32_t) riscv32_user_entry;  // ra
 
     task->arch.sp = (uint32_t) sp;
+    task->arch.sp_top = (uint32_t) sp_top;
+    INFO("sp_bottom = %p", sp_bottom);
+    stack_set_canary(sp_bottom);
+
     return OK;
 }
 
 __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
-    stack_set_canary();
-
     uint32_t sstatus = read_sstatus();
     sstatus &= ~SSTATUS_SPP;
     write_sstatus(sstatus);
@@ -54,6 +57,7 @@ __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
 
 void arch_task_switch(struct task *prev, struct task *next) {
     CPUVAR->arch.sp = next->arch.sp;
+    CPUVAR->arch.sp_top = next->arch.sp_top;
 
     write_satp((1ul << 31) | next->vm.table >> 12);
 

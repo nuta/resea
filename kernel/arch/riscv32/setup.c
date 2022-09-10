@@ -27,7 +27,7 @@ __noreturn void riscv32_setup_s_mode(void) {
     bootinfo.memory_map.num_entries = 1;
 
     mp_lock();
-    stack_set_canary();
+    stack_reset_current_canary();
     kernel_main(&bootinfo);
     UNREACHABLE();
 }
@@ -71,7 +71,7 @@ __noreturn void riscv32_setup_m_mode(void) {
 
     uint32_t *mtimecmp = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtimecmp);
     uint32_t *mtime = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtime);
-    *mtimecmp = *mtime + interval;
+    // *mtimecmp = *mtime + interval;
 
     write_mtvec((uint32_t) riscv32_timer_handler);
     write_mstatus(read_mstatus() | MSTATUS_MIE);

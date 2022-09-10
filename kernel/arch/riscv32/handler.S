@@ -8,26 +8,10 @@ riscv32_user_entry:
 .align 4
 .global riscv32_trap_handler
 riscv32_trap_handler:
-2:
     csrrw tp, sscratch, tp
     sw a0, 0(tp) // Save a0
+    lw a0, 32(tp) // Load kernel sp from ARCH_CPUVAR.
 
-    csrr a0, sstatus
-    andi a0, a0, 1 << 8 // SPP
-    beqz a0, 1f
-
-    // From s-mode
-    mv a0, sp // Keep using the current kernel stack
-    j trap_common
-
-.align 4
-1:
-    // From u-mode
-    lw a0, 4(tp) // Load kernel sp from ARCH_CPUVAR.
-    j trap_common
-
-.align 4
-trap_common:
     addi a0, a0, -4 * 33
     sw ra,  4 * 0(a0)
     sw gp,  4 * 1(a0)

@@ -23,7 +23,8 @@ void backtrace(void) {
 
         struct stack_frame *frame =
             (struct stack_frame *) (fp - sizeof(*frame));
-        TRACE("{{{bt:%d:0x%p:ra}}}", i, frame->ra);
+        // TRACE("{{{bt:%d:0x%p:ra}}}", i, frame->ra);
+        TRACE("{{{bt:%d:  0x%p  :ra}}}", i, frame->ra);
         fp = frame->fp;
     }
 }
