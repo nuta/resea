@@ -63,12 +63,11 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
                         copy_len);
         }
 
-        unsigned attrs = PAGE_USER;
+        unsigned attrs = 0;
         attrs |= (phdr->p_flags & PF_R) ? PAGE_READABLE : 0;
         attrs |= (phdr->p_flags & PF_W) ? PAGE_WRITABLE : 0;
         attrs |= (phdr->p_flags & PF_X) ? PAGE_EXECUTABLE : 0;
 
-        attrs = PAGE_READABLE | PAGE_WRITABLE | PAGE_EXECUTABLE;  // FIXME:
         sys_vm_map(task->tid, uaddr, paddr, PAGE_SIZE, attrs);
         return OK;
     }
