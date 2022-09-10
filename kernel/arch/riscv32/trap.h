@@ -1,7 +1,14 @@
 #pragma once
 #include <types.h>
 
-struct risc32_trap_frame {
+#define SCAUSE_S_SOFT_INTR      ((1L << 31) | 1)
+#define SCAUSE_S_EXT_INTR       ((1L << 31) | 9)
+#define SCAUSE_ENV_CALL         8
+#define SCAUSE_INST_PAGE_FAULT  12
+#define SCAUSE_LOAD_PAGE_FAULT  13
+#define SCAUSE_STORE_PAGE_FAULT 15
+
+struct riscv32_trap_frame {
     uint32_t ra;
     uint32_t gp;
     uint32_t t0;
@@ -37,4 +44,4 @@ struct risc32_trap_frame {
     uint32_t sstatus;
 } __packed;
 
-void riscv32_handle_trap(struct risc32_trap_frame *frame);
+void riscv32_handle_trap(struct riscv32_trap_frame *frame);

@@ -1,8 +1,6 @@
 #pragma once
 #include <types.h>
 
-#define PAGE_SIZE 4096
-
 struct arch_task {
     uint32_t sp;
 };

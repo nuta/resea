@@ -9,11 +9,6 @@
 #define PAGE_TYPE_KERNEL     1
 #define PAGE_TYPE_USER(task) ((task)->tid << 1)
 
-#define PAGE_READABLE   (1 << 1)
-#define PAGE_WRITABLE   (1 << 2)
-#define PAGE_EXECUTABLE (1 << 3)
-#define PAGE_USER       (1 << 4)
-
 struct page {
     unsigned type;
     unsigned ref_count;

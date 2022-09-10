@@ -91,8 +91,18 @@ typedef __builtin_va_list va_list;
 #define ERR_TOO_LARGE      -7
 #define ERR_NO_MEMORY      -8
 
+#define PAGE_SIZE       4096
+#define PAGE_READABLE   (1 << 1)
+#define PAGE_WRITABLE   (1 << 2)
+#define PAGE_EXECUTABLE (1 << 3)
+#define PAGE_USER       (1 << 4)
+
+#define PAGE_FAULT_READ  (1 << 0)
+#define PAGE_FAULT_WRITE (1 << 1)
+#define PAGE_FAULT_EXEC  (1 << 2)
+#define PAGE_FAULT_USER  (1 << 3)
+
 // FIXME:
-#define PAGE_SIZE         4096
 #define KERNEL_TASK       0
 #define NUM_TASKS_MAX     32
 #define NUM_CPUS_MAX      32
