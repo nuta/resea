@@ -45,7 +45,7 @@ __noreturn void error() {
 
 __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
     uint32_t sstatus = read_sstatus();
-    sstatus &= ~SSTATUS_SPP_MASK;
+    sstatus &= ~SSTATUS_SPP;
     write_sstatus(sstatus);
 
     write_sepc(ip);

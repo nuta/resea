@@ -9,9 +9,9 @@
 
 #define MIE_MTIE (1 << 7)
 
-#define SSTATUS_SPP_MASK (1 << 8)
-#define SSTATUS_SIE      (1 << 1)
-#define SSTATUS_SUM      (1 << 18)
+#define SSTATUS_SPP (1 << 8)
+#define SSTATUS_SIE (1 << 1)
+#define SSTATUS_SUM (1 << 18)
 
 #define SIE_SSIE (1 << 1)
 #define SIE_STIE (1 << 5)
@@ -141,6 +141,12 @@ static inline uint32_t read_scause(void) {
 static inline uint32_t read_stval(void) {
     uint32_t value;
     __asm__ __volatile__("csrr %0, stval" : "=r"(value));
+    return value;
+}
+
+static inline uint32_t read_satp(void) {
+    uint32_t value;
+    __asm__ __volatile__("csrr %0, satp" : "=r"(value));
     return value;
 }
 

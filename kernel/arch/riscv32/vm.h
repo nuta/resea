@@ -20,3 +20,5 @@ extern char __kernel_data[];
 extern char __kernel_data_end[];
 extern char __kernel_image_end[];
 extern char __boot_elf[];
+
+bool riscv32_is_mapped(uint32_t satp, vaddr_t vaddr);

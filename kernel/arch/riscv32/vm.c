@@ -38,31 +38,6 @@ static pte_t *walk(paddr_t root_table, vaddr_t vaddr, bool alloc) {
     return &table[PTE_INDEX(0, vaddr)];
 }
 
-error_t arch_vm_init(struct arch_vm *vm) {
-    // TODO: Handle out of memory
-    vm->table = pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, PM_ALLOC_ZEROED);
-
-    paddr_t kernel_text = (paddr_t) __kernel_text;
-    paddr_t kernel_text_end = (paddr_t) __kernel_text_end;
-
-    DEBUG_ASSERT(IS_ALIGNED(kernel_text, PAGE_SIZE));
-    DEBUG_ASSERT(IS_ALIGNED(kernel_text_end, PAGE_SIZE));
-
-    paddr_t kernel_data = kernel_text_end;
-    paddr_t kernel_data_size = 64 * 1024 * 1024;  // TODO: get from memory map
-    size_t kernel_text_size = kernel_text_end - kernel_text;
-
-    ASSERT_OK(arch_vm_map(vm, kernel_text, kernel_text, kernel_text_size,
-                          PAGE_READABLE | PAGE_EXECUTABLE));
-    ASSERT_OK(arch_vm_map(vm, kernel_data, kernel_data, kernel_data_size,
-                          PAGE_READABLE | PAGE_WRITABLE));
-    ASSERT_OK(arch_vm_map(vm, UART_ADDR, UART_ADDR, PAGE_SIZE,
-                          PAGE_READABLE | PAGE_WRITABLE));
-    ASSERT_OK(arch_vm_map(vm, PLIC_ADDR, PLIC_ADDR, PLIC_SIZE,
-                          PAGE_READABLE | PAGE_WRITABLE));
-    return OK;
-}
-
 error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
                     size_t size, unsigned attrs) {
     DEBUG_ASSERT(IS_ALIGNED(vaddr, PAGE_SIZE));
@@ -91,5 +66,36 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     // TODO: TLB flush
     __asm__ __volatile__("sfence.vma zero, zero");
 
+    return OK;
+}
+
+bool riscv32_is_mapped(uint32_t satp, vaddr_t vaddr) {
+    satp = (satp & 0x3fffffff) << 12;  // TODO:
+    uint32_t *pte = walk(satp, ALIGN_DOWN(vaddr, PAGE_SIZE), false);
+    return pte != NULL && (*pte & PTE_V);
+}
+
+error_t arch_vm_init(struct arch_vm *vm) {
+    // TODO: Handle out of memory
+    vm->table = pm_alloc(PAGE_SIZE, PAGE_TYPE_KERNEL, PM_ALLOC_ZEROED);
+
+    paddr_t kernel_text = (paddr_t) __kernel_text;
+    paddr_t kernel_text_end = (paddr_t) __kernel_text_end;
+
+    DEBUG_ASSERT(IS_ALIGNED(kernel_text, PAGE_SIZE));
+    DEBUG_ASSERT(IS_ALIGNED(kernel_text_end, PAGE_SIZE));
+
+    paddr_t kernel_data = kernel_text_end;
+    paddr_t kernel_data_size = 64 * 1024 * 1024;  // TODO: get from memory map
+    size_t kernel_text_size = kernel_text_end - kernel_text;
+
+    ASSERT_OK(arch_vm_map(vm, kernel_text, kernel_text, kernel_text_size,
+                          PAGE_READABLE | PAGE_EXECUTABLE));
+    ASSERT_OK(arch_vm_map(vm, kernel_data, kernel_data, kernel_data_size,
+                          PAGE_READABLE | PAGE_WRITABLE));
+    ASSERT_OK(arch_vm_map(vm, UART_ADDR, UART_ADDR, PAGE_SIZE,
+                          PAGE_READABLE | PAGE_WRITABLE));
+    ASSERT_OK(arch_vm_map(vm, PLIC_ADDR, PLIC_ADDR, PLIC_SIZE,
+                          PAGE_READABLE | PAGE_WRITABLE));
     return OK;
 }

@@ -3,6 +3,7 @@
 #include "plic.h"
 #include "uart.h"
 #include "usercopy.h"
+#include "vm.h"
 #include <kernel/memory.h>
 #include <kernel/printk.h>
 #include <kernel/syscall.h>
@@ -45,6 +46,13 @@ static void handle_page_fault_trap(struct riscv32_trap_frame *frame) {
             UNREACHABLE();
     }
 
+    if ((frame->sstatus & SSTATUS_SPP) == 0) {
+        reason = PAGE_FAULT_USER;
+    }
+
+    vaddr_t vaddr = read_stval();
+    reason |= riscv32_is_mapped(read_satp(), vaddr) ? PAGE_FAULT_PRESENT : 0;
+
     uint32_t sepc = read_sepc();
     if (sepc == (uint32_t) usercopy_point1
         || sepc == (uint32_t) usercopy_point2) {
@@ -53,7 +61,7 @@ static void handle_page_fault_trap(struct riscv32_trap_frame *frame) {
         return;
     }
 
-    handle_page_fault(read_stval(), frame->sepc, reason);
+    handle_page_fault(vaddr, frame->sepc, reason);
 }
 
 void riscv32_handle_trap(struct riscv32_trap_frame *frame) {

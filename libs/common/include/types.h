@@ -97,10 +97,11 @@ typedef __builtin_va_list va_list;
 #define PAGE_EXECUTABLE (1 << 3)
 #define PAGE_USER       (1 << 4)
 
-#define PAGE_FAULT_READ  (1 << 0)
-#define PAGE_FAULT_WRITE (1 << 1)
-#define PAGE_FAULT_EXEC  (1 << 2)
-#define PAGE_FAULT_USER  (1 << 3)
+#define PAGE_FAULT_READ    (1 << 0)
+#define PAGE_FAULT_WRITE   (1 << 1)
+#define PAGE_FAULT_EXEC    (1 << 2)
+#define PAGE_FAULT_USER    (1 << 3)
+#define PAGE_FAULT_PRESENT (1 << 4)
 
 // FIXME:
 #define KERNEL_TASK       0

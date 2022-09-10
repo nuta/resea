@@ -87,16 +87,18 @@ error_t vm_map(struct task *task, uaddr_t uaddr, paddr_t paddr, size_t size,
 }
 
 /// The page fault handler. It calls a pager to ask to update the page table.
-void handle_page_fault(uaddr_t uaddr, vaddr_t ip, unsigned fault) {
+void handle_page_fault(vaddr_t vaddr, vaddr_t ip, unsigned fault) {
     struct task *pager = CURRENT_TASK->pager;
     if (!pager) {
-        PANIC("page fault in the init task: addr=%p, ip=%p", uaddr, ip);
+        PANIC("page fault in the init task: addr=%p, ip=%p", vaddr, ip);
     }
+
+    // TODO: Check if vaddr is kernel
 
     struct message m;
     m.type = PAGE_FAULT_MSG;
     m.page_fault.task = CURRENT_TASK->tid;
-    m.page_fault.uaddr = uaddr;
+    m.page_fault.uaddr = vaddr;
     m.page_fault.ip = ip;
     m.page_fault.fault = fault;
     error_t err = ipc(pager, pager->tid, (__user struct message *) &m,
