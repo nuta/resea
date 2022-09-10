@@ -1,5 +1,6 @@
 #include "trap.h"
 #include "asm.h"
+#include "debug.h"
 #include "plic.h"
 #include "uart.h"
 #include "usercopy.h"
@@ -65,6 +66,8 @@ static void handle_page_fault_trap(struct riscv32_trap_frame *frame) {
 }
 
 void riscv32_handle_trap(struct riscv32_trap_frame *frame) {
+    stack_check();
+
     uint32_t scause = read_scause();
     switch (scause) {
         case SCAUSE_S_SOFT_INTR:
@@ -85,4 +88,6 @@ void riscv32_handle_trap(struct riscv32_trap_frame *frame) {
             PANIC("unknown trap: scause=%p, stval=%p", read_scause(),
                   read_stval());
     }
+
+    stack_check();
 }

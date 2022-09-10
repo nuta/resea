@@ -1,6 +1,8 @@
 #include "asm.h"
+#include "debug.h"
 #include "mp.h"
 #include "plic.h"
+#include "task.h"
 #include "trap.h"
 #include "uart.h"
 #include "vm.h"
@@ -25,6 +27,7 @@ __noreturn void riscv32_setup_s_mode(void) {
     bootinfo.memory_map.num_entries = 1;
 
     mp_lock();
+    stack_set_canary();
     kernel_main(&bootinfo);
     UNREACHABLE();
 }

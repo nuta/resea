@@ -83,14 +83,22 @@ void pm_free(paddr_t paddr, size_t num_pages) {
 
 error_t vm_map(struct task *task, uaddr_t uaddr, paddr_t paddr, size_t size,
                unsigned attrs) {
+    // FIXME: Deny kernel addresses.
     return arch_vm_map(&task->vm, uaddr, paddr, size, attrs);
 }
 
 /// The page fault handler. It calls a pager to ask to update the page table.
 void handle_page_fault(vaddr_t vaddr, vaddr_t ip, unsigned fault) {
+    if ((fault & PAGE_FAULT_USER) == 0) {
+        for (;;)
+            __asm__ __volatile__("wfi");
+        PANIC("page fault in kernel space: vaddr=%p, ip=%p, reason=%x", vaddr,
+              ip, fault);
+    }
+
     struct task *pager = CURRENT_TASK->pager;
     if (!pager) {
-        PANIC("page fault in the init task: addr=%p, ip=%p", vaddr, ip);
+        PANIC("page fault in the init task: vaddr=%p, ip=%p", vaddr, ip);
     }
 
     // TODO: Check if vaddr is kernel

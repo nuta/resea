@@ -1,5 +1,6 @@
 #include "task.h"
 #include "asm.h"
+#include "debug.h"
 #include "handler.h"
 #include "switch.h"
 #include <kernel/arch.h>
@@ -39,11 +40,9 @@ error_t arch_task_init(struct task *task, uaddr_t ip) {
     return OK;
 }
 
-__noreturn void error() {
-    PANIC("Exception!");
-}
-
 __noreturn void do_riscv32_user_entry(uint32_t ip, uint32_t satp) {
+    stack_set_canary();
+
     uint32_t sstatus = read_sstatus();
     sstatus &= ~SSTATUS_SPP;
     write_sstatus(sstatus);
