@@ -15,6 +15,11 @@ uint32_t read_fp(void) {
 /// Prints the stack trace.
 void backtrace(void) {
     uint32_t fp = read_fp();
+    if (!fp) {
+        WARN("backtrace: fp is NULL");
+        return;
+    }
+
     for (int i = 0; i < BACKTRACE_MAX; i++) {
         if (!fp) {
             break;
