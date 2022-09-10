@@ -58,10 +58,16 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
         if (flags & IPC_KERNEL) {
             memcpy(&type, (const void *) &m->type, sizeof(type));
             copy_len = MSG_LEN(type);
+            if (copy_len > sizeof(tmp_m)) {
+                return ERR_TOO_LARGE;
+            }
             memcpy(&tmp_m.data, (const void *) &m->data, copy_len);
         } else {
             memcpy_from_user(&type, (const void *) &m->type, sizeof(type));
             copy_len = MSG_LEN(type);
+            if (copy_len > sizeof(tmp_m)) {
+                return ERR_TOO_LARGE;
+            }
             memcpy_from_user(&tmp_m.data, (const void *) &m->data, copy_len);
         }
 

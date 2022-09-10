@@ -93,8 +93,6 @@ paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
 static void free_page(struct page *page) {
     DEBUG_ASSERT(page->ref_count > 0);
     page->ref_count--;
-    if (!page->ref_count)
-        DBG("removed completely!");
     list_remove(&page->next);
 }
 
@@ -139,8 +137,6 @@ error_t vm_unmap(struct task *task, uaddr_t uaddr, size_t size) {
 /// The page fault handler. It calls a pager to ask to update the page table.
 void handle_page_fault(vaddr_t vaddr, vaddr_t ip, unsigned fault) {
     if ((fault & PAGE_FAULT_USER) == 0) {
-        for (;;)
-            __asm__ __volatile__("wfi");
         PANIC("page fault in kernel space: vaddr=%p, ip=%p, reason=%x", vaddr,
               ip, fault);
     }

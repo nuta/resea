@@ -18,21 +18,18 @@ void ipc_reply(task_t dst, struct message *m) {
 }
 
 void ipc_reply_err(task_t dst, error_t error) {
-    struct message m;  // TODO:
-    m.type = error;
+    struct message m;
+    m.type = ERROR_MSG;
+    m.error.error = error;
     ipc_send_noblock(dst, &m);
 }
 
 error_t ipc_recv(task_t src, struct message *m) {
     error_t err = sys_ipc(0, src, m, IPC_RECV);
-    // Handle the case when m.type is negative: a message represents an error
-    // (sent by `ipc_send_err()`).
-    return (IS_OK(err) && m->type < 0) ? m->type : err;
+    return (IS_OK(err) && m->type == ERROR_MSG) ? m->error.error : err;
 }
 
 error_t ipc_call(task_t dst, struct message *m) {
     error_t err = sys_ipc(dst, dst, m, IPC_CALL);
-    // Handle the case when m.type is negative: a message represents an error
-    // (sent by `ipc_send_err()`).
-    return (IS_OK(err) && m->type < 0) ? m->type : err;
+    return (IS_OK(err) && m->type == ERROR_MSG) ? m->error.error : err;
 }

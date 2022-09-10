@@ -94,7 +94,11 @@ done:
             struct message m;
             m.type = SPAWN_TASK_MSG;
             strncpy2(m.spawn_task.name, argv[0], sizeof(m.spawn_task.name));
-            ipc_call(1, &m);
+            error_t err = ipc_call(1, &m);
+            if (IS_ERROR(err)) {
+                WARN("failed to spawn %s: %s", argv[0], err2str(err));
+                continue;
+            }
         }
     }
 
