@@ -11,8 +11,7 @@
 #include <kernel/printk.h>
 #include <string.h>
 
-// FIXME:
-struct cpuvar cpuvar_fixme;
+struct cpuvar cpuvars[NUM_CPUS_MAX];
 
 __noreturn void riscv32_setup_s_mode(void) {
     write_sstatus(read_sstatus() | SSTATUS_SUM);
@@ -44,9 +43,13 @@ __noreturn void riscv32_setup_m_mode(void) {
 
     write_stvec((uint32_t) riscv32_trap_handler);
     write_sie(read_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
-    write_sscratch((uint32_t) &cpuvar_fixme);
-    write_mscratch((uint32_t) &cpuvar_fixme);
-    write_tp((uint32_t) &cpuvar_fixme);
+
+    int hart = read_mhartid();
+    ASSERT(hart < NUM_CPUS_MAX);
+    struct cpuvar *cpuvar = &cpuvars[hart];
+    write_sscratch((uint32_t) cpuvar);
+    write_mscratch((uint32_t) cpuvar);
+    write_tp((uint32_t) cpuvar);
 
     uint32_t mstatus = read_mstatus();
     mstatus &= ~MSTATUS_MPP_MASK;
@@ -61,17 +64,15 @@ __noreturn void riscv32_setup_m_mode(void) {
 
     memset(__bss, 0, (vaddr_t) __bss_end - (vaddr_t) __bss);
 
-    int hart = read_mhartid();
     int interval = 1000000;
-    ASSERT(hart < NUM_CPUS_MAX);
-    CPUVAR->id = hart;
-    CPUVAR->arch.mtimecmp = CLINT_MTIMECMP(hart);
-    CPUVAR->arch.mtime = CLINT_MTIME;
-    CPUVAR->arch.interval = interval;
+    cpuvar->id = hart;
+    cpuvar->arch.mtimecmp = CLINT_MTIMECMP(hart);
+    cpuvar->arch.mtime = CLINT_MTIME;
+    cpuvar->arch.interval = interval;
 
-    uint32_t *mtimecmp = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtimecmp);
-    uint32_t *mtime = (uint32_t *) arch_paddr2ptr(CPUVAR->arch.mtime);
-    // *mtimecmp = *mtime + interval;
+    uint32_t *mtimecmp = (uint32_t *) arch_paddr2ptr(cpuvar->arch.mtimecmp);
+    uint32_t *mtime = (uint32_t *) arch_paddr2ptr(cpuvar->arch.mtime);
+    *mtimecmp = *mtime + interval;
 
     write_mtvec((uint32_t) riscv32_timer_handler);
     write_mstatus(read_mstatus() | MSTATUS_MIE);

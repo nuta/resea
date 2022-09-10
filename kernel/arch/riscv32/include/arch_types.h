@@ -30,11 +30,10 @@ struct arch_cpuvar {
     uint32_t sp_top;
 };
 
-// FIXME:
-extern struct cpuvar cpuvar_fixme;
-
 static inline struct cpuvar *arch_cpuvar_get(void) {
-    return &cpuvar_fixme;
+    uint32_t tp;
+    __asm__ __volatile__("mv %0, tp" : "=r"(tp));
+    return (struct cpuvar *) tp;
 }
 
 static inline void *arch_paddr2ptr(paddr_t paddr) {
