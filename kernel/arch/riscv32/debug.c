@@ -5,7 +5,6 @@
 static uint32_t *stack_bottom(void) {
     uint32_t sp;
     __asm__ __volatile__("mv %0, sp" : "=r"(sp));
-    DBG("sp = %p, bottom_sp = %p", sp, ALIGN_DOWN(sp, KERNEL_STACK_SIZE));
     return (uint32_t *) ALIGN_DOWN(sp, KERNEL_STACK_SIZE);
 }
 

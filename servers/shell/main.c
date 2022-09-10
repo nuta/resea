@@ -7,8 +7,10 @@ void printf_flush(void);
 
 void main(void) {
     TRACE("ready");
+start:
     while (true) {
-        char cmdline[256];
+        char cmdline[64];
+        memset(cmdline, '\0', sizeof(cmdline));
         printf("\x1b[1mshell> \x1b[0m");
         printf_flush();
 
@@ -20,7 +22,13 @@ void main(void) {
                 continue;
             }
 
+            int j = strlen(cmdline);
             for (int i = 0; i < read_len; i++) {
+                if (j == sizeof(cmdline) - 1) {
+                    WARN("command line is too long");
+                    goto start;
+                }
+
                 if (buf[i] == '\r') {
                     buf[i] = '\n';  // TODO:
                 }
@@ -31,8 +39,8 @@ void main(void) {
                     goto done;
                 }
 
-                cmdline[strlen(cmdline)] = buf[i];
-                cmdline[strlen(cmdline) + 1] = '\0';
+                cmdline[j++] = buf[i];
+                cmdline[j] = '\0';
             }
         }
 

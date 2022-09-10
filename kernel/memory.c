@@ -48,16 +48,22 @@ static void add_zone(paddr_t paddr, size_t size) {
 }
 
 paddr_t pm_alloc(size_t size, unsigned type, unsigned flags) {
-    size_t num_pages = ALIGN_UP(size, PAGE_SIZE) / PAGE_SIZE;
+    size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
+    size_t num_pages = aligned_size / PAGE_SIZE;
     LIST_FOR_EACH(zone, &zones, struct memory_zone, next) {
         for (size_t start = 0; start < zone->num_pages; start++) {
+            paddr_t paddr = zone->base + start * PAGE_SIZE;
+            if ((flags & PM_ALLOC_ALIGNED) != 0
+                && !IS_ALIGNED(paddr, aligned_size)) {
+                continue;
+            }
+
             if (is_contiguously_free(zone, start, num_pages)) {
                 for (size_t i = 0; i < num_pages; i++) {
                     zone->pages[start + i].ref_count = 1;
                     zone->pages[start + i].type = type;
                 }
 
-                paddr_t paddr = zone->base + start * PAGE_SIZE;
                 if (flags & PM_ALLOC_UNINITIALIZED) {
                     memset(arch_paddr2ptr(paddr), 0, PAGE_SIZE * num_pages);
                 }

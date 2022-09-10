@@ -9,8 +9,10 @@
 #include <kernel/task.h>
 
 error_t arch_task_init(struct task *task, uaddr_t ip) {
-    paddr_t sp_bottom =
-        pm_alloc(KERNEL_STACK_SIZE, PAGE_TYPE_KERNEL, PM_ALLOC_UNINITIALIZED);
+    // Allocate a kernel stack. Should be aligned to the stack size
+    // (PM_ALLOC_ALIGNED) because of the stack canary.
+    paddr_t sp_bottom = pm_alloc(KERNEL_STACK_SIZE, PAGE_TYPE_KERNEL,
+                                 PM_ALLOC_ALIGNED | PM_ALLOC_UNINITIALIZED);
     if (!sp_bottom) {
         return ERR_NO_MEMORY;
     }
@@ -39,7 +41,6 @@ error_t arch_task_init(struct task *task, uaddr_t ip) {
 
     task->arch.sp = (uint32_t) sp;
     task->arch.sp_top = (uint32_t) sp_top;
-    INFO("sp_bottom = %p", sp_bottom);
     stack_set_canary(sp_bottom);
 
     return OK;

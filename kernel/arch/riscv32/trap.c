@@ -66,11 +66,8 @@ static void handle_page_fault_trap(struct riscv32_trap_frame *frame) {
 }
 
 void riscv32_handle_trap(struct riscv32_trap_frame *frame) {
-    uint32_t scause = read_scause();
-    uint32_t sp;
-    __asm__("mv %0, sp" : "=r"(sp));
-    TRACE("%s: scause = %x, %p", CURRENT_TASK->name, scause, sp);
     stack_check();
+    uint32_t scause = read_scause();
     switch (scause) {
         case SCAUSE_S_SOFT_INTR:
             handle_soft_interrupt_trap();

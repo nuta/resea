@@ -1,3 +1,3 @@
 #pragma once
 
-#define KERNEL_STACK_SIZE (0x1000)
+#define KERNEL_STACK_SIZE (32 * 1024)

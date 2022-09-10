@@ -5,6 +5,7 @@
 // Flags for pm_alloc().
 #define PM_ALLOC_UNINITIALIZED (1 << 0)
 #define PM_ALLOC_ZEROED        (0 << 0)
+#define PM_ALLOC_ALIGNED       (1 << 1)
 
 #define PAGE_TYPE_KERNEL     1
 #define PAGE_TYPE_USER(task) ((task)->tid << 1)
