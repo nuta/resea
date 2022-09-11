@@ -94,7 +94,7 @@ void main(void) {
                 break;
             }
             case PAGE_FAULT_MSG: {
-                if (m.src != KERNEL_TASK) {
+                if (m.src != KERNEL_TASK_ID) {
                     WARN("forged page fault message from #%d, ignoring...",
                          m.src);
                     break;

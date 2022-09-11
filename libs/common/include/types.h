@@ -104,7 +104,7 @@ typedef __builtin_va_list va_list;
 #define PAGE_FAULT_EXEC      (1 << 2)
 #define PAGE_FAULT_USER      (1 << 3)
 #define PAGE_FAULT_PRESENT   (1 << 4)
-#define KERNEL_TASK          0
+#define KERNEL_TASK_ID       -1
 #define NUM_TASKS_MAX        32
 #define NUM_CPUS_MAX         32
 #define TASK_NAME_LEN        16

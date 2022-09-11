@@ -101,7 +101,7 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
 
         // Copy the message.
         dst->m.type = type;
-        dst->m.src = (flags & IPC_KERNEL) ? KERNEL_TASK : CURRENT_TASK->tid;
+        dst->m.src = (flags & IPC_KERNEL) ? KERNEL_TASK_ID : CURRENT_TASK->tid;
         memcpy(&dst->m.data, &tmp_m.data, copy_len);
 
         // Resume the receiver task.
