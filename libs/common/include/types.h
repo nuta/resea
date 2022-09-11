@@ -73,6 +73,7 @@ typedef __builtin_va_list va_list;
 #define ERR_TOO_SMALL       -14
 #define ERR_WOULD_BLOCK     -15
 #define ERR_ABORTED         -16
+#define ERR_END             -17
 
 // The size of a memory page in bytes.
 #define PAGE_SIZE 4096

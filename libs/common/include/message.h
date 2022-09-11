@@ -1,6 +1,7 @@
 #pragma once
 #include <autogen/ipcstub.h>
 
+// TODO: consider the max # of tasks
 typedef _BitInt(32) notifications_t;
 
 #define IPC_ANY  0
@@ -14,6 +15,7 @@ typedef _BitInt(32) notifications_t;
 
 #define NOTIFY_ABORTED (1 << 0)
 
+#define MSG_ID(type)   ((type) >> 12)
 #define MSG_HEADER_LEN (sizeof(int) + sizeof(task_t))
 #define MSG_LEN(x)     ((x) & (0xfff))
 
@@ -38,4 +40,4 @@ struct message {
     };
 };
 
-IPCSTUB_STATIC_ASSERTIONS
+const char *msgtype2str(int type);
