@@ -109,8 +109,7 @@ void main(void) {
                     handle_page_fault(task, m.page_fault.uaddr, m.page_fault.ip,
                                       m.page_fault.fault);
                 if (IS_ERROR(err)) {
-                    ipc_reply_err(m.src, err);
-                    break;
+                    task_destroy2(task);
                 }
 
                 m.type = PAGE_FAULT_REPLY_MSG;

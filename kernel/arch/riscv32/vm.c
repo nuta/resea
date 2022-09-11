@@ -50,7 +50,7 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
         if (*pte & PTE_V) {
             DBG("Page already mapped: vaddr=%p, paddr=%p", vaddr + offset,
                 PTE_PADDR(*pte));
-            return ERR_EXISTS;
+            return ERR_ALREADY_EXISTS;
         }
     }
 

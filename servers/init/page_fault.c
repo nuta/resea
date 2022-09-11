@@ -12,7 +12,7 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
     if (uaddr < PAGE_SIZE) {
         WARN("%s (%d): null pointer dereference at vaddr=%p, ip=%p", task->name,
              task->tid, uaddr, ip);
-        return ERR_ABORTED;  // FIXME:
+        return ERR_INVALID_ARG;
     }
 
     uaddr_t uaddr_original = uaddr;
@@ -24,7 +24,7 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
         // readonly area.
         WARN("%s: invalid memory access at %p (IP=%p, perhaps segfault?)",
              task->name, uaddr_original, ip);
-        return ERR_ABORTED;  // FIXME:
+        return ERR_INVALID_ARG;
     }
 
     // Look for the associated program header.
@@ -79,7 +79,7 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
         return OK;
     }
 
-    WARN("invalid memory access (addr=%p, IP=%p), killing %s...",
-         uaddr_original, ip, task->name);
-    return ERR_ABORTED;  // FIXME:
+    ERROR("invalid memory access (addr=%p, IP=%p), killing %s...",
+          uaddr_original, ip, task->name);
+    return ERR_INVALID_ARG;
 }

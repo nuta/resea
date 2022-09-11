@@ -40,6 +40,12 @@ __noreturn void halt(void);
                ##__VA_ARGS__);                                                 \
     } while (0)
 
+#define ERROR(fmt, ...)                                                        \
+    do {                                                                       \
+        printf(SGR_ERR "[%s] ERROR: " fmt SGR_RESET "\n", __program_name(),    \
+               ##__VA_ARGS__);                                                 \
+    } while (0)
+
 #define WARN_DBG(fmt, ...)                                                     \
     do {                                                                       \
         printf(SGR_WARN_DBG "[%s] WARN: " fmt SGR_RESET "\n",                  \

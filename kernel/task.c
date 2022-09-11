@@ -134,7 +134,7 @@ error_t task_destroy(struct task *task) {
     if (task->ref_count > 0) {
         WARN_DBG("%s (#%d) is still referenced from %d tasks", task->name,
                  task->tid, task->ref_count);
-        return ERR_IN_USE;
+        return ERR_STILL_USED;
     }
 
     // Abort sender IPC operations.

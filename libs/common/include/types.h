@@ -54,19 +54,25 @@ typedef __builtin_va_list va_list;
 #define IS_ALIGNED(value, align) __builtin_is_aligned(value, align)
 #define STATIC_ASSERT(expr)      _Static_assert(expr, #expr);
 
-#define IS_OK(err)         (!IS_ERROR(err))
-#define IS_ERROR(err)      (((long) (err)) < 0)
-#define OK                 0
-#define ERR_EXISTS         -1
-#define ERR_TOO_MANY_TASKS -2
-#define ERR_WOULD_BLOCK    -3
-#define ERR_ABORTED        -4
-#define ERR_INVALID_ARG    -5
-#define ERR_INVALID_TASK   -6
-#define ERR_TOO_LARGE      -7
-#define ERR_NO_MEMORY      -8
-#define ERR_IN_USE         -9
-#define ERR_NOT_FOUND      -10
+#define IS_OK(err)          (!IS_ERROR(err))
+#define IS_ERROR(err)       (((long) (err)) < 0)
+#define OK                  0
+#define ERR_NO_MEMORY       -1
+#define ERR_NO_RESOURCES    -2
+#define ERR_NOT_FOUND       -3
+#define ERR_ALREADY_EXISTS  -4
+#define ERR_ALREADY_USED    -5
+#define ERR_STILL_USED      -6
+#define ERR_NOT_ALLOWED     -7
+#define ERR_NOT_SUPPORTED   -8
+#define ERR_INVALID_ARG     -9
+#define ERR_INVALID_TASK    -10
+#define ERR_INVALID_SYSCALL -11
+#define ERR_TOO_MANY_TASKS  -12
+#define ERR_TOO_LARGE       -13
+#define ERR_TOO_SMALL       -14
+#define ERR_WOULD_BLOCK     -15
+#define ERR_ABORTED         -16
 
 // The size of a memory page in bytes.
 #define PAGE_SIZE 4096
