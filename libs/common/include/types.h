@@ -68,19 +68,6 @@ typedef __builtin_va_list va_list;
 #define IS_ALIGNED(value, align) (((value) & ((align) -1)) == 0)
 #define STATIC_ASSERT(expr)      _Static_assert(expr, #expr);
 
-#define MAX(a, b)                                                              \
-    ({                                                                         \
-        __typeof__(a) __a = (a);                                               \
-        __typeof__(b) __b = (b);                                               \
-        (__a > __b) ? __a : __b;                                               \
-    })
-#define MIN(a, b)                                                              \
-    ({                                                                         \
-        __typeof__(a) __a = (a);                                               \
-        __typeof__(b) __b = (b);                                               \
-        (__a < __b) ? __a : __b;                                               \
-    })
-
 #define IS_OK(err)    (!IS_ERROR(err))
 #define IS_ERROR(err) (((long) (err)) < 0)
 

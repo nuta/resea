@@ -1,6 +1,7 @@
 #include "page_fault.h"
 #include "bootfs.h"
 #include "task.h"
+#include <math.h>
 #include <print_macros.h>
 #include <resea/syscall.h>
 

@@ -4,6 +4,7 @@
 #include "memory.h"
 #include "printk.h"
 #include "task.h"
+#include <math.h>
 #include <string.h>
 
 void memcpy_from_user(void *dst, __user const void *src, size_t len) {

@@ -1,5 +1,6 @@
 #include "printk.h"
 #include "arch.h"
+#include <math.h>
 #include <string.h>
 #include <vprintf.h>
 
