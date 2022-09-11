@@ -1,4 +1,4 @@
-#include <print_macros.h>
+#include <print.h>
 #include <resea/ipc.h>
 #include <resea/syscall.h>
 #include <string.h>

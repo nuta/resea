@@ -1,5 +1,5 @@
 #pragma once
-#include <print_macros.h>
+#include <print.h>
 
 #define KLOG_BUF_SIZE 1024
 

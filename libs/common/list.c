@@ -1,5 +1,5 @@
 #include <list.h>
-#include <print_macros.h>
+#include <print.h>
 
 // Inserts a new element between `prev` and `next`.
 static void list_insert(list_elem_t *prev, list_elem_t *next,

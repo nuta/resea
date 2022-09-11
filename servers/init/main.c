@@ -1,7 +1,7 @@
 #include "bootfs.h"
 #include "page_fault.h"
 #include "task.h"
-#include <print_macros.h>
+#include <print.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/task.h>

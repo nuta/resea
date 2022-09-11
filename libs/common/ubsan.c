@@ -3,7 +3,7 @@
 // https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 //
 #include "ubsan.h"
-#include "print_macros.h"
+#include "print.h"
 
 static inline void report_ubsan_event(const char *event) {
     PANIC("detected an undefined behavior: %s (ip=%p)", event,

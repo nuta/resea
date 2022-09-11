@@ -1,7 +1,7 @@
 #include "task.h"
 #include "bootfs.h"
 #include <elf.h>
-#include <print_macros.h>
+#include <print.h>
 #include <resea/malloc.h>
 #include <resea/syscall.h>
 #include <resea/task.h>

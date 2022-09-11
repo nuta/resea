@@ -2,7 +2,7 @@
 #include "bootfs.h"
 #include "task.h"
 #include <math.h>
-#include <print_macros.h>
+#include <print.h>
 #include <resea/syscall.h>
 
 /// Tries to fill a page at `vaddr` for the task. Returns the allocated physical

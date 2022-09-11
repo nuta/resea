@@ -1,4 +1,4 @@
-#include <print_macros.h>
+#include <print.h>
 #include <resea/malloc.h>
 #include <resea/task.h>
 #include <resea/test.h>
