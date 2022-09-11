@@ -1,5 +1,6 @@
 #pragma once
 #include <backtrace.h>
+#include <error.h>
 #include <types.h>
 #include <vprintf.h>
 

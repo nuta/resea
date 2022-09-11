@@ -9,19 +9,6 @@ typedef unsigned short uint16_t;
 typedef unsigned uint32_t;
 typedef unsigned long long uint64_t;
 
-#define INT8_MIN   -128
-#define INT16_MIN  -32768
-#define INT32_MIN  -2147483648
-#define INT64_MIN  -9223372036854775808LL
-#define INT8_MAX   127
-#define INT16_MAX  32767
-#define INT32_MAX  2147483647
-#define INT64_MAX  9223372036854775807LL
-#define UINT8_MAX  255
-#define UINT16_MAX 65535
-#define UINT32_MAX 4294967295U
-#define UINT64_MAX 18446744073709551615ULL
-
 #ifdef __LP64__
 typedef int64_t intmax_t;
 typedef uint64_t uintmax_t;
@@ -44,13 +31,6 @@ typedef uintmax_t uaddr_t;
 typedef uintmax_t uintptr_t;
 typedef uintmax_t offset_t;
 
-typedef __builtin_va_list va_list;
-#define va_start(ap, param)   __builtin_va_start(ap, param)
-#define va_end(ap)            __builtin_va_end(ap)
-#define va_arg(ap, type)      __builtin_va_arg(ap, type)
-#define offsetof(type, field) __builtin_offsetof(type, field)
-#define is_constant(expr)     __builtin_constant_p(expr)
-
 #define __unused              __attribute__((unused))
 #define __packed              __attribute__((packed))
 #define __noreturn            __attribute__((noreturn))
@@ -63,14 +43,19 @@ typedef __builtin_va_list va_list;
 /// memcpy_to_user!
 #define __user __attribute__((noderef, address_space(1)))
 
-#define ALIGN_DOWN(value, align) ((value) & ~((align) -1))
-#define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)
-#define IS_ALIGNED(value, align) (((value) & ((align) -1)) == 0)
+typedef __builtin_va_list va_list;
+#define va_start(ap, param) __builtin_va_start(ap, param)
+#define va_end(ap)          __builtin_va_end(ap)
+#define va_arg(ap, type)    __builtin_va_arg(ap, type)
+
+#define offsetof(type, field)    __builtin_offsetof(type, field)
+#define ALIGN_DOWN(value, align) __builtin_align_down(value, align)
+#define ALIGN_UP(value, align)   __builtin_align_up(value, align)
+#define IS_ALIGNED(value, align) __builtin_is_aligned(value, align)
 #define STATIC_ASSERT(expr)      _Static_assert(expr, #expr);
 
-#define IS_OK(err)    (!IS_ERROR(err))
-#define IS_ERROR(err) (((long) (err)) < 0)
-
+#define IS_OK(err)         (!IS_ERROR(err))
+#define IS_ERROR(err)      (((long) (err)) < 0)
 #define OK                 0
 #define ERR_EXISTS         -1
 #define ERR_TOO_MANY_TASKS -2
@@ -124,8 +109,3 @@ typedef __builtin_va_list va_list;
 
 // Exception codes.
 #define EXCEPTION_GRACE_EXIT 1
-
-// FIXME:
-static inline const char *err2str(int err) {
-    return "";
-}
