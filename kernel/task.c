@@ -123,7 +123,7 @@ error_t task_destroy(struct task *task) {
     DEBUG_ASSERT(task->state != TASK_UNUSED);
     DEBUG_ASSERT(task->ref_count > 0);
 
-    if (task->tid == 1) {
+    if (task->tid == INIT_TASK_ID) {
         WARN_DBG("tried to destroy the init task");
         return ERR_INVALID_ARG;
     }

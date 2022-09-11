@@ -58,7 +58,10 @@ typedef __builtin_va_list va_list;
 #define __mustuse             __attribute__((warn_unused_result))
 #define __aligned(aligned_to) __attribute__((aligned(aligned_to)))
 
-#define __user
+/// An attribute for a pointer given by the user. Don't dereference it directly:
+/// access it through safe functions such as memcpy_from_user and
+/// memcpy_to_user!
+#define __user __attribute__((noderef, address_space(1)))
 
 #define ALIGN_DOWN(value, align) ((value) & ~((align) -1))
 #define ALIGN_UP(value, align)   ALIGN_DOWN((value) + (align) -1, align)
@@ -93,32 +96,46 @@ typedef __builtin_va_list va_list;
 #define ERR_IN_USE         -9
 #define ERR_NOT_FOUND      -10
 
-// FIXME:
-#define PAGE_SIZE            4096
-#define PAGE_READABLE        (1 << 1)
-#define PAGE_WRITABLE        (1 << 2)
-#define PAGE_EXECUTABLE      (1 << 3)
-#define PAGE_USER            (1 << 4)
-#define PAGE_FAULT_READ      (1 << 0)
-#define PAGE_FAULT_WRITE     (1 << 1)
-#define PAGE_FAULT_EXEC      (1 << 2)
-#define PAGE_FAULT_USER      (1 << 3)
-#define PAGE_FAULT_PRESENT   (1 << 4)
-#define KERNEL_TASK_ID       -1
-#define NUM_TASKS_MAX        32
-#define NUM_CPUS_MAX         32
-#define TASK_NAME_LEN        16
-#define SYS_IPC              1
-#define SYS_NOTIFY           2
-#define SYS_CONSOLE_WRITE    6
-#define SYS_CONSOLE_READ     7
-#define SYS_TASK_CREATE      8
-#define SYS_TASK_DESTROY     9
-#define SYS_TASK_EXIT        10
-#define SYS_TASK_SELF        11
-#define SYS_PM_ALLOC         12
-#define SYS_VM_MAP           13
-#define SYS_VM_UNMAP         14
+// The size of a memory page in bytes.
+#define PAGE_SIZE 4096
+
+// Build config.
+// TODO: Move to a separate file.
+#define NUM_TASKS_MAX 32
+#define NUM_CPUS_MAX  32
+#define TASK_NAME_LEN 16
+
+// Remarkable task IDs.
+#define KERNEL_TASK_ID -1
+#define INIT_TASK_ID   1
+
+// System call numbers.
+#define SYS_IPC           1
+#define SYS_NOTIFY        2
+#define SYS_CONSOLE_WRITE 6
+#define SYS_CONSOLE_READ  7
+#define SYS_TASK_CREATE   8
+#define SYS_TASK_DESTROY  9
+#define SYS_TASK_EXIT     10
+#define SYS_TASK_SELF     11
+#define SYS_PM_ALLOC      12
+#define SYS_VM_MAP        13
+#define SYS_VM_UNMAP      14
+
+// Page attributes.
+#define PAGE_READABLE   (1 << 1)
+#define PAGE_WRITABLE   (1 << 2)
+#define PAGE_EXECUTABLE (1 << 3)
+#define PAGE_USER       (1 << 4)
+
+// Page fault reasons.
+#define PAGE_FAULT_READ    (1 << 0)
+#define PAGE_FAULT_WRITE   (1 << 1)
+#define PAGE_FAULT_EXEC    (1 << 2)
+#define PAGE_FAULT_USER    (1 << 3)
+#define PAGE_FAULT_PRESENT (1 << 4)
+
+// Exception codes.
 #define EXCEPTION_GRACE_EXIT 1
 
 // FIXME:
