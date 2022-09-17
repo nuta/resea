@@ -147,7 +147,9 @@ void handle_page_fault(vaddr_t vaddr, vaddr_t ip, unsigned fault) {
         PANIC("page fault in the init task: vaddr=%p, ip=%p", vaddr, ip);
     }
 
-    // TODO: Check if vaddr is kernel
+    if (!arch_is_mappable_uaddr(vaddr)) {
+        task_exit(EXCEPTION_INVALID_UADDR_ACCESS);
+    }
 
     struct message m;
     m.type = PAGE_FAULT_MSG;
@@ -158,8 +160,7 @@ void handle_page_fault(vaddr_t vaddr, vaddr_t ip, unsigned fault) {
     error_t err = ipc(pager, pager->tid, (__user struct message *) &m,
                       IPC_CALL | IPC_KERNEL);
     if (err != OK || m.type != PAGE_FAULT_REPLY_MSG) {
-        // TODO:
-        UNREACHABLE();
+        task_exit(EXCEPTION_INVALID_PAGE_FAULT_REPLY);
     }
 }
 

@@ -39,3 +39,7 @@ static inline struct cpuvar *arch_cpuvar_get(void) {
 static inline void *arch_paddr2ptr(paddr_t paddr) {
     return (void *) paddr;
 }
+
+static inline bool arch_is_mappable_uaddr(uaddr_t uaddr) {
+    return PAGE_SIZE <= uaddr && uaddr < 0x80000000;
+}

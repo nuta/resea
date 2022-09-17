@@ -89,6 +89,10 @@ static paddr_t sys_vm_map(task_t tid, uaddr_t uaddr, paddr_t paddr, size_t size,
         return ERR_INVALID_ARG;
     }
 
+    if (!arch_is_mappable_uaddr(uaddr)) {
+        return ERR_NOT_ALLOWED;
+    }
+
     // TODO: check if caller is the owner of the paddr
     attrs |= PAGE_USER;
     return vm_map(task, uaddr, paddr, size, attrs);
@@ -102,6 +106,10 @@ static paddr_t sys_vm_unmap(task_t tid, uaddr_t uaddr, size_t size) {
 
     if (!IS_ALIGNED(uaddr, PAGE_SIZE) || !IS_ALIGNED(size, PAGE_SIZE)) {
         return ERR_INVALID_ARG;
+    }
+
+    if (!arch_is_mappable_uaddr(uaddr)) {
+        return ERR_NOT_ALLOWED;
     }
 
     return vm_unmap(task, uaddr, size);

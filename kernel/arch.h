@@ -45,6 +45,7 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
                     size_t size, unsigned attrs);
 error_t arch_vm_unmap(struct arch_vm *vm, vaddr_t vaddr, size_t size);
 void *arch_paddr2ptr(paddr_t paddr);
+bool arch_is_mappable_uaddr(uaddr_t uaddr);
 error_t arch_task_init(struct task *task, uaddr_t ip);
 void arch_task_destroy(struct task *task);
 void arch_task_switch(struct task *prev, struct task *next);

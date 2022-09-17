@@ -33,7 +33,7 @@ error_t sys_task_destroy(task_t task) {
 
 __noreturn void sys_task_exit(void) {
     syscall(0, 0, 0, 0, 0, SYS_TASK_EXIT);
-    // FIXME: rename
+    // TODO: rename
     __builtin_unreachable();
 }
 

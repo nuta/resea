@@ -13,7 +13,7 @@ void load_boot_elf(struct bootinfo *bootinfo) {
     }
 
     task_t tid = task_create("init", header->e_entry, NULL, 0);
-    ASSERT(tid > 0);  // TODO: ASSERT_OK
+    ASSERT_OK(tid);
     struct task *task = get_task_by_tid(tid);
 
     elf_phdr_t *phdrs = (elf_phdr_t *) ((vaddr_t) header + header->e_phoff);

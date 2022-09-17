@@ -87,6 +87,10 @@ void main(void) {
                         task_destroy2(task);
                         TRACE("%s exited gracefully", task->name);
                         break;
+                    case EXCEPTION_INVALID_PAGE_FAULT_REPLY:
+                        ERROR("unexpected exception type %d",
+                              m.exception.reason);
+                        break;
                     default:
                         WARN("unknown exception type %d", m.exception.reason);
                         break;
