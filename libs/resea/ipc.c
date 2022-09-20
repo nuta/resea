@@ -75,8 +75,10 @@ retry:
         case ASYNC_RECV_MSG:
             if (src == IPC_ANY) {
                 error_t err = async_reply(m->src);
-                WARN_DBG("failed to send a async message to %d: %s", m->src,
-                         err2str(err));
+                if (err != OK) {
+                    WARN_DBG("failed to send a async message to %d: %s", m->src,
+                             err2str(err));
+                }
             }
             goto retry;
     }

@@ -2,6 +2,7 @@
 #include "page_fault.h"
 #include "task.h"
 #include <print.h>
+#include <resea/async_ipc.h>
 #include <resea/ipc.h>
 #include <resea/malloc.h>
 #include <resea/task.h>
@@ -54,6 +55,12 @@ void main(void) {
             case PING_MSG: {
                 m.type = PING_REPLY_MSG;
                 ipc_reply(m.src, &m);
+                break;
+            }
+            case ASYNC_PING_MSG: {
+                m.type = ASYNC_PONG_MSG;
+                m.async_pong.a = 84;
+                ipc_send_async(m.src, &m);
                 break;
             }
             case SPAWN_TASK_MSG: {

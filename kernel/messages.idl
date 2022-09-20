@@ -4,6 +4,8 @@ rpc add2(x: bytes[7], Y: int) -> (value: cstr[128]);
 rpc copy_test(data: bytes[128]) -> (ret_data: int);
 
 rpc ping(a: uint8, b: int, c: bytes[77], d: uint) -> (a: uint8, b: int, c: bytes[77], d: uint);
+oneway async_ping(a: int);
+oneway async_pong(a: int);
 
 rpc spawn_task(name: cstr[32]) -> (task: task);
 
