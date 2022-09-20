@@ -3,7 +3,7 @@
 
 #define ELF_MAGIC "\177ELF"
 #define ET_EXEC   2
-#define PT_NOTE   4
+#define PT_LOAD   1
 
 #define PF_R (1 << 2)
 #define PF_W (1 << 1)

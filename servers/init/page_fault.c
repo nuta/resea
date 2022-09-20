@@ -29,8 +29,7 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
     // Look for the associated program header.
     elf_phdr_t *phdr = NULL;
     for (unsigned i = 0; i < task->ehdr->e_phnum; i++) {
-        // Ignore GNU_STACK
-        if (!task->phdrs[i].p_vaddr) {
+        if (task->phdrs[i].p_type != PT_LOAD) {
             continue;
         }
 

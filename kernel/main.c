@@ -19,8 +19,7 @@ void load_boot_elf(struct bootinfo *bootinfo) {
     elf_phdr_t *phdrs = (elf_phdr_t *) ((vaddr_t) header + header->e_phoff);
     for (uint16_t i = 0; i < header->e_phnum; i++) {
         elf_phdr_t *phdr = &phdrs[i];
-        // Ignore GNU_STACK
-        if (!phdr->p_vaddr) {
+        if (phdr->p_type != PT_LOAD) {
             continue;
         }
 
