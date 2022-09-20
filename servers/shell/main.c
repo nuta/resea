@@ -3,9 +3,6 @@
 #include <resea/syscall.h>
 #include <string.h>
 
-// FIXME:
-void printf_flush(void);
-
 void main(void) {
     TRACE("ready");
 start:

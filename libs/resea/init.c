@@ -13,8 +13,10 @@ static void run_unit_tests(void) {
 
     unsigned n = 0;
     while ((uintptr_t) test < (uintptr_t) __unit_tests_end) {
-        INFO("unit test: %s", test->name);
+        printf("test %s ... ", test->name);
+        printf_flush();
         test->fn();
+        printf("\x1b[92mok\x1b[0m\n");
         test++;
         n++;
     }

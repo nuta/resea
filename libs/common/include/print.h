@@ -5,6 +5,7 @@
 #include <vprintf.h>
 
 void printf(const char *fmt, ...);
+void printf_flush(void);
 void panic_lock(void);
 const char *__program_name(void);
 __noreturn void halt(void);

@@ -56,3 +56,7 @@ void printf(const char *fmt, ...) {
     vprintf_with_context(&printk_ctx, fmt, vargs);
     va_end(vargs);
 }
+
+// TODO: remove
+void printf_flush(void) {
+}
