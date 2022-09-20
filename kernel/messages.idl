@@ -3,6 +3,8 @@ rpc add(x: int, y: int) -> (value: int);
 rpc add2(x: bytes[7], Y: int) -> (value: cstr[128]);
 rpc copy_test(data: bytes[128]) -> (ret_data: int);
 
+rpc ping(a: uint8, b: int, c: bytes[77], d: uint) -> (a: uint8, b: int, c: bytes[77], d: uint);
+
 rpc spawn_task(name: cstr[32]) -> (task: task);
 
 oneway error(error: int);

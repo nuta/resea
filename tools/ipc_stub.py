@@ -204,7 +204,7 @@ class IDLParser:
         next_msg_id += 1
 
         is_oneway = "oneway" == msg_type or "async" in modifiers
-        if len(tree.children) > 4:
+        if len(tree.children) > 4 and tree.children[4] is not None:
             rets = self.visit_fields(tree.children[4].children)
             reply_id = next_msg_id
             next_msg_id += 1

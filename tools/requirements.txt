@@ -1,3 +1,4 @@
 jinja2
 lark
 markdown
+colorama
