@@ -86,12 +86,21 @@ static task_t get_unused_tid(void) {
     return 0;
 }
 
-struct task *get_task_by_tid(task_t tid) {
+struct task *get_task_by_tid_unchecked(task_t tid) {
     if (0 < tid && tid < NUM_TASKS_MAX) {
         return &tasks[tid - 1];
     }
 
     return NULL;
+}
+
+struct task *get_task_by_tid(task_t tid) {
+    struct task *task = get_task_by_tid_unchecked(tid);
+    if (!task || task->state == TASK_UNUSED) {
+        return NULL;
+    }
+
+    return task;
 }
 
 void task_block(struct task *task) {
@@ -112,7 +121,7 @@ task_t task_create(const char *name, uaddr_t ip, struct task *pager,
         return ERR_TOO_MANY_TASKS;
     }
 
-    struct task *task = get_task_by_tid(tid);
+    struct task *task = get_task_by_tid_unchecked(tid);
     DEBUG_ASSERT(task != NULL);
     return init_task_struct(name, ip, pager, flags, tid, task);
 }

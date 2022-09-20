@@ -28,14 +28,10 @@ static void strncpy_from_user(char *dst, __user const char *src, size_t len) {
 /// Creates a task.
 static task_t sys_task_create(__user const char *name, vaddr_t ip, task_t pager,
                               unsigned flags) {
-    // Create a task. We handle pager == 0 as an error here.
-    // TODO: Remove pager arg
     struct task *pager_task = get_task_by_tid(pager);
     if (!pager_task) {
         return ERR_INVALID_ARG;
     }
-
-    // TODO: check if pager is created
 
     char namebuf[TASK_NAME_LEN];
     strncpy_from_user(namebuf, name, sizeof(namebuf));
