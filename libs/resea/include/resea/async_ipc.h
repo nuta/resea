@@ -10,7 +10,6 @@ struct async_message {
 };
 
 error_t async_recv(task_t src, struct message *m);
-bool async_is_empty(task_t dst);
 error_t async_reply(task_t dst);
 
 error_t ipc_send_async(task_t dst, struct message *m);

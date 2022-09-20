@@ -33,29 +33,22 @@ error_t async_reply(task_t dst) {
         if (am->dst == dst) {
             if (sent) {
                 // Notify that we have more messages for `dst`.
-                ipc_notify(dst, NOTIFY_ASYNC(task_self()));
-            } else {
-                ipc_reply(dst, &am->m);
-                list_remove(&am->next);
-                free(am);
-                sent = true;
+                error_t err = ipc_notify(dst, NOTIFY_ASYNC(task_self()));
+                if (err != OK) {
+                    return err;
+                }
+
+                break;
             }
+
+            ipc_reply(dst, &am->m);
+            list_remove(&am->next);
+            free(am);
+            sent = true;
         }
     }
 
-    // Return ER_NOT_FOUND if there're no messages asynchronously sent to `dst`
-    // in the queue.
-    return (sent) ? OK : ERR_NOT_FOUND;
-}
-
-bool async_is_empty(task_t dst) {
-    LIST_FOR_EACH (am, get_queue(dst), struct async_message, next) {
-        if (am->dst == dst) {
-            return false;
-        }
-    }
-
-    return true;
+    return OK;
 }
 
 error_t ipc_send_async(task_t dst, struct message *m) {

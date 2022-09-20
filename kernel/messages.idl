@@ -10,7 +10,6 @@ rpc spawn_task(name: cstr[32]) -> (task: task);
 oneway error(error: int);
 oneway notify(notifications: notifications);
 oneway notify_aborted();
-oneway notify_async(task: task);
 
 // FIXME: Returns any
 rpc async_recv() -> () ;
