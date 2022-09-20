@@ -51,11 +51,11 @@ void main(void) {
         ASSERT_OK(err);
 
         switch (m.type) {
-            case ADD_MSG:
-                m.type = ADD_REPLY_MSG;
-                m.add_reply.value = m.add.x + m.add.y;
+            case PING_MSG: {
+                m.type = PING_REPLY_MSG;
                 ipc_reply(m.src, &m);
                 break;
+            }
             case SPAWN_TASK_MSG: {
                 // TODO: m.spawn_task.name is not null-terminated.
                 struct bootfs_file *file = bootfs_open(m.spawn_task.name);
@@ -120,6 +120,10 @@ void main(void) {
                 ipc_reply(task->tid, &m);
                 break;
             }
+            default:
+                WARN("unknown message type: %s from %d", msgtype2str(m.type),
+                     m.src);
+                break;
         }
     }
 }
