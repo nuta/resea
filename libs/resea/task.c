@@ -16,5 +16,6 @@ __noreturn void task_exit(void) {
 }
 
 task_t task_self(void) {
+    // TODO: cache the result
     return sys_task_self();
 }

@@ -21,7 +21,7 @@ void ipc_reply_err(task_t dst, error_t error) {
     struct message m;
     m.type = ERROR_MSG;
     m.error.error = error;
-    ipc_send_noblock(dst, &m);
+    ipc_reply(dst, &m);
 }
 
 static notifications_t pending = 0;
@@ -73,4 +73,8 @@ error_t ipc_recv(task_t src, struct message *m) {
 error_t ipc_call(task_t dst, struct message *m) {
     error_t err = sys_ipc(dst, dst, m, IPC_CALL);
     return (IS_OK(err) && m->type == ERROR_MSG) ? m->error.error : err;
+}
+
+error_t ipc_notify(task_t dst, notifications_t notifications) {
+    return sys_notify(dst, notifications);
 }

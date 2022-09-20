@@ -12,6 +12,9 @@ oneway notify(notifications: notifications);
 oneway notify_aborted();
 oneway notify_async(task: task);
 
+// FIXME: Returns any
+rpc async_recv() -> () ;
+
 /// The kernel sends this message to a pager task when an exception occurs.
 oneway exception(task: task, reason: int);
 

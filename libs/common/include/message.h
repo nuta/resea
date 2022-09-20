@@ -12,7 +12,7 @@
 
 #define NOTIFY_ABORTED      (1 << 0)
 #define NOTIFY_ASYNC_OFF    8
-#define NOTIFY_ASYNC(tid)   (1 << 0)
+#define NOTIFY_ASYNC(tid)   (1 << (8 + tid))  // TODO: DEBUG_CHECK(tid < 64)
 #define NOTIFY_ASYNC_OFFEND (8 + NUM_TASKS_MAX)
 
 #define MSG_ID(type)   ((type) >> 12)
