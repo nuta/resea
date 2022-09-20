@@ -8,8 +8,6 @@
 UNIT_TEST("async IPC") {
     struct message m;
     m.type = ASYNC_PING_MSG;
-    m.ping.a = 42;
-
     ipc_send(TEST_SERVER, &m);
 
     memset(&m, 0, sizeof(m));
