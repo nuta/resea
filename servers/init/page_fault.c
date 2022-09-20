@@ -12,19 +12,18 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
     if (uaddr < PAGE_SIZE) {
         WARN("%s (%d): null pointer dereference at vaddr=%p, ip=%p", task->name,
              task->tid, uaddr, ip);
-        return ERR_INVALID_ARG;
+        return ERR_NOT_ALLOWED;
     }
 
     uaddr_t uaddr_original = uaddr;
     uaddr = ALIGN_DOWN(uaddr, PAGE_SIZE);
 
-    // TODO:
     if (fault & PAGE_FAULT_PRESENT) {
         // Invalid access. For instance the user thread has tried to write to
         // readonly area.
         WARN("%s: invalid memory access at %p (IP=%p, perhaps segfault?)",
              task->name, uaddr_original, ip);
-        return ERR_INVALID_ARG;
+        return ERR_NOT_ALLOWED;
     }
 
     // Look for the associated program header.
@@ -43,43 +42,43 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
         }
     }
 
-    if (phdr) {
-        // TODO: return err instead
-        ASSERT(phdr->p_memsz >= phdr->p_filesz);
-
-        // Allocate a page and fill it with the file data.
-        // TODO:
-        paddr_t paddr = sys_pm_alloc(PAGE_SIZE, 0);
-
-        size_t offset = uaddr - phdr->p_vaddr;
-        if (offset < phdr->p_filesz) {
-            static __aligned(PAGE_SIZE) uint8_t tmp_page[PAGE_SIZE];
-
-            // Unmap `tmp_page` first since it is already mapped by the kernel.
-            ASSERT_OK(
-                sys_vm_unmap(sys_task_self(), (uaddr_t) tmp_page, PAGE_SIZE));
-
-            // Now map the page to `tmp_page` to access `paddr` from our virtual
-            // address space.
-            ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page, paddr,
-                                 PAGE_SIZE, PAGE_READABLE | PAGE_WRITABLE));
-
-            //
-            size_t copy_len = MIN(PAGE_SIZE, phdr->p_filesz - offset);
-            bootfs_read(task->file, phdr->p_offset + offset, tmp_page,
-                        copy_len);
-        }
-
-        unsigned attrs = 0;
-        attrs |= (phdr->p_flags & PF_R) ? PAGE_READABLE : 0;
-        attrs |= (phdr->p_flags & PF_W) ? PAGE_WRITABLE : 0;
-        attrs |= (phdr->p_flags & PF_X) ? PAGE_EXECUTABLE : 0;
-
-        sys_vm_map(task->tid, uaddr, paddr, PAGE_SIZE, attrs);
-        return OK;
+    if (!phdr) {
+        ERROR("invalid memory access (addr=%p, IP=%p), killing %s...",
+              uaddr_original, ip, task->name);
+        return ERR_INVALID_ARG;
     }
 
-    ERROR("invalid memory access (addr=%p, IP=%p), killing %s...",
-          uaddr_original, ip, task->name);
-    return ERR_INVALID_ARG;
+    if (phdr->p_memsz < phdr->p_filesz) {
+        WARN("%s: invalid program header: p_memsz < p_filesz", task->name);
+        return ERR_INVALID_ARG;
+    }
+
+    // Allocate a page and fill it with the file data.
+    // TODO:
+    paddr_t paddr = sys_pm_alloc(PAGE_SIZE, 0);
+
+    size_t offset = uaddr - phdr->p_vaddr;
+    if (offset < phdr->p_filesz) {
+        static __aligned(PAGE_SIZE) uint8_t tmp_page[PAGE_SIZE];
+
+        // Unmap `tmp_page` first since it is already mapped by the kernel.
+        ASSERT_OK(sys_vm_unmap(sys_task_self(), (uaddr_t) tmp_page, PAGE_SIZE));
+
+        // Now map the page to `tmp_page` to access `paddr` from our virtual
+        // address space.
+        ASSERT_OK(sys_vm_map(sys_task_self(), (uaddr_t) tmp_page, paddr,
+                             PAGE_SIZE, PAGE_READABLE | PAGE_WRITABLE));
+
+        //
+        size_t copy_len = MIN(PAGE_SIZE, phdr->p_filesz - offset);
+        bootfs_read(task->file, phdr->p_offset + offset, tmp_page, copy_len);
+    }
+
+    unsigned attrs = 0;
+    attrs |= (phdr->p_flags & PF_R) ? PAGE_READABLE : 0;
+    attrs |= (phdr->p_flags & PF_W) ? PAGE_WRITABLE : 0;
+    attrs |= (phdr->p_flags & PF_X) ? PAGE_EXECUTABLE : 0;
+
+    sys_vm_map(task->tid, uaddr, paddr, PAGE_SIZE, attrs);
+    return OK;
 }

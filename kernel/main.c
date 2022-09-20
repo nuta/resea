@@ -26,9 +26,12 @@ void load_boot_elf(struct bootinfo *bootinfo) {
 
         ASSERT(phdr->p_memsz >= phdr->p_filesz);
 
-        TRACE("bootelf: %p - %p (%d KiB)", phdr->p_vaddr,
-              phdr->p_vaddr + ALIGN_UP(phdr->p_memsz, PAGE_SIZE),
-              phdr->p_memsz / 1024);
+        char r = (phdr->p_flags & PF_R) ? 'r' : '-';
+        char w = (phdr->p_flags & PF_W) ? 'w' : '-';
+        char x = (phdr->p_flags & PF_X) ? 'x' : '-';
+        size_t size_in_kb = phdr->p_memsz / 1024;
+        TRACE("bootelf: %p - %p %c%c%c (%d KiB)", phdr->p_vaddr,
+              phdr->p_vaddr + phdr->p_memsz, r, w, x, size_in_kb);
 
         paddr_t paddr =
             pm_alloc(phdr->p_memsz, PAGE_TYPE_USER(task), PM_ALLOC_ZEROED);
