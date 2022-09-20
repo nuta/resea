@@ -42,8 +42,12 @@ void load_boot_elf(struct bootinfo *bootinfo) {
         attrs |= (phdr->p_flags & PF_W) ? PAGE_WRITABLE : 0;
         attrs |= (phdr->p_flags & PF_X) ? PAGE_EXECUTABLE : 0;
 
-        ASSERT_OK(arch_vm_map(&task->vm, phdr->p_vaddr, paddr,
-                              ALIGN_UP(phdr->p_memsz, PAGE_SIZE), attrs));
+        error_t err = arch_vm_map(&task->vm, phdr->p_vaddr, paddr,
+                                  ALIGN_UP(phdr->p_memsz, PAGE_SIZE), attrs);
+        if (err != OK) {
+            PANIC("bootelf: failed to map %p - %p", phdr->p_vaddr,
+                  phdr->p_vaddr + phdr->p_memsz);
+        }
     }
 
     task_resume(task);
