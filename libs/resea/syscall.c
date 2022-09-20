@@ -22,6 +22,10 @@ error_t sys_ipc(task_t dst, task_t src, struct message *m, unsigned flags) {
     return syscall(dst, src, (uintptr_t) m, flags, 0, SYS_IPC);
 }
 
+error_t sys_notify(task_t dst, notifications_t notifications) {
+    return syscall(dst, notifications, 0, 0, 0, SYS_NOTIFY);
+}
+
 task_t sys_task_create(const char *name, vaddr_t ip, task_t pager,
                        unsigned flags) {
     return syscall((uintptr_t) name, ip, pager, flags, 0, SYS_TASK_CREATE);

@@ -4,6 +4,7 @@
 struct message;
 
 error_t sys_ipc(task_t dst, task_t src, struct message *m, unsigned flags);
+error_t sys_notify(task_t dst, notifications_t notifications);
 task_t sys_task_create(const char *name, vaddr_t ip, task_t pager,
                        unsigned flags);
 error_t sys_task_destroy(task_t task);

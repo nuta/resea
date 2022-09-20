@@ -137,6 +137,17 @@ static error_t sys_ipc(task_t dst, task_t src, __user struct message *m,
     return ipc(dst_task, src, m, flags);
 }
 
+/// Sends notifications.
+static error_t sys_notify(task_t dst, notifications_t notifications) {
+    struct task *dst_task = get_task_by_tid(dst);
+    if (!dst_task) {
+        return ERR_INVALID_TASK;
+    }
+
+    notify(dst_task, notifications);
+    return OK;
+}
+
 /// Writes log messages into the arch's console (typically a serial port) and
 /// the kernel log buffer.
 static error_t sys_console_write(__user const char *buf, size_t buf_len) {
@@ -216,6 +227,9 @@ long handle_syscall(long a0, long a1, long a2, long a3, long a4, long n) {
     switch (n) {
         case SYS_IPC:
             ret = sys_ipc(a0, a1, (__user struct message *) a2, a3);
+            break;
+        case SYS_NOTIFY:
+            ret = sys_notify(a0, a1);
             break;
         case SYS_CONSOLE_WRITE:
             ret = sys_console_write((__user const char *) a0, a1);

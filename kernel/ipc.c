@@ -160,3 +160,19 @@ error_t ipc(struct task *dst, task_t src, __user struct message *m,
     // TODO: fastpath
     return ipc_slowpath(dst, src, m, flags);
 }
+
+// Notifies notifications to the task.
+void notify(struct task *dst, notifications_t notifications) {
+    if (dst->state == TASK_BLOCKED && dst->waiting_for == IPC_ANY) {
+        // Send a NOTIFY_MSG message immediately.
+        dst->m.type = NOTIFY_MSG;
+        dst->m.src = KERNEL_TASK_ID;
+        dst->m.notify.notifications = dst->notifications | notifications;
+        dst->notifications = 0;
+        task_resume(dst);
+    } else {
+        // The task is not ready for receiving a event message: update the
+        // pending notifications instead.
+        dst->notifications |= notifications;
+    }
+}
