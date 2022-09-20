@@ -1,8 +1,8 @@
 #pragma once
 #include <types.h>
 
-#define MALLOC_FREE        0x0a110ced0a110cedULL /* hexspeak of "alloced" */
-#define MALLOC_IN_USE      0xdea110cddea110cdULL /* hexspeak of "deallocd" */
+#define MALLOC_FREE        0x0a110ced /* hexspeak of "alloced" */
+#define MALLOC_IN_USE      0xdea110cd /* hexspeak of "deallocd" */
 #define MALLOC_REDZONE_LEN 16
 #define MALLOC_FRAME_LEN   (sizeof(struct malloc_chunk) + MALLOC_REDZONE_LEN)
 
@@ -15,7 +15,7 @@ struct malloc_chunk {
     struct malloc_chunk *next;
     size_t capacity;
     size_t size;
-    uint64_t magic;
+    uint32_t magic;
     uint8_t underflow_redzone[MALLOC_REDZONE_LEN];
     uint8_t data[];
     // `overflow_redzone` follows immediately after `data`.

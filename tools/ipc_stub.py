@@ -281,6 +281,7 @@ def c_generator(args, idl):
         uaddr="uaddr_t",
         paddr="paddr_t",
         task="task_t",
+        notifications="notifications_t",
     )
 
     def resolve_type(ns, type_):

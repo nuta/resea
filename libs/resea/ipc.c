@@ -24,9 +24,50 @@ void ipc_reply_err(task_t dst, error_t error) {
     ipc_send_noblock(dst, &m);
 }
 
+static notifications_t pending = 0;
+static void recv_notification_as_message(struct message *m) {
+    // FIXME: ffsll doesn't cover bigger values!
+    int index = __builtin_ffsll(pending) - 1;
+    DEBUG_ASSERT(index >= 0);
+    switch (index) {
+        case NOTIFY_ABORTED:
+            m->type = NOTIFY_ABORTED_MSG;
+            break;
+        case NOTIFY_ASYNC_OFF ... NOTIFY_ASYNC_OFFEND - 1:
+            m->type = NOTIFY_ASYNC_MSG;
+            m->notify_async.task = index - NOTIFY_ASYNC_OFF;
+            break;
+    }
+
+    pending &= ~(1 << index);
+}
+
 error_t ipc_recv(task_t src, struct message *m) {
+    if (pending) {
+        recv_notification_as_message(m);
+        return OK;
+    }
+
     error_t err = sys_ipc(0, src, m, IPC_RECV);
-    return (IS_OK(err) && m->type == ERROR_MSG) ? m->error.error : err;
+    if (err != OK) {
+        return err;
+    }
+
+    switch (m->type) {
+        case ERROR_MSG:
+            return m->error.error;
+        case NOTIFY_MSG:
+            if (m->src != KERNEL_TASK_ID) {
+                WARN_DBG("received a notification from a non-kernel task %d",
+                         m->src);
+                return ERR_TRY_AGAIN;
+            }
+
+            pending |= m->notify.notifications;
+            recv_notification_as_message(m);
+    }
+
+    return OK;
 }
 
 error_t ipc_call(task_t dst, struct message *m) {

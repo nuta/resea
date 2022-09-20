@@ -1,5 +1,11 @@
 #pragma once
 
+// Build config.
+// TODO: Move to a separate file.
+#define NUM_TASKS_MAX 32
+#define NUM_CPUS_MAX  32
+#define TASK_NAME_LEN 16
+
 typedef char int8_t;
 typedef short int16_t;
 typedef int int32_t;
@@ -24,6 +30,8 @@ typedef char bool;
 
 typedef int error_t;
 typedef int task_t;
+// FIXME: typedef _BitInt(8 + NUM_TASKS_MAX) notifications_t;
+typedef uint32_t notifications_t;
 typedef uintmax_t size_t;
 typedef uintmax_t paddr_t;
 typedef uintmax_t vaddr_t;
@@ -72,17 +80,12 @@ typedef __builtin_va_list va_list;
 #define ERR_TOO_LARGE       -13
 #define ERR_TOO_SMALL       -14
 #define ERR_WOULD_BLOCK     -15
-#define ERR_ABORTED         -16
-#define ERR_END             -17
+#define ERR_TRY_AGAIN       -16
+#define ERR_ABORTED         -17
+#define ERR_END             -18
 
 // The size of a memory page in bytes.
 #define PAGE_SIZE 4096
-
-// Build config.
-// TODO: Move to a separate file.
-#define NUM_TASKS_MAX 32
-#define NUM_CPUS_MAX  32
-#define TASK_NAME_LEN 16
 
 // Remarkable task IDs.
 #define KERNEL_TASK_ID -1

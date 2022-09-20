@@ -8,6 +8,9 @@ rpc ping(a: uint8, b: int, c: bytes[77], d: uint) -> (a: uint8, b: int, c: bytes
 rpc spawn_task(name: cstr[32]) -> (task: task);
 
 oneway error(error: int);
+oneway notify(notifications: notifications);
+oneway notify_aborted();
+oneway notify_async(task: task);
 
 /// The kernel sends this message to a pager task when an exception occurs.
 oneway exception(task: task, reason: int);

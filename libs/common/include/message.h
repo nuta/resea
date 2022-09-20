@@ -1,9 +1,6 @@
 #pragma once
 #include <autogen/ipcstub.h>
 
-// TODO: consider the max # of tasks
-typedef _BitInt(32) notifications_t;
-
 #define IPC_ANY  0
 #define IPC_DENY -1
 
@@ -13,7 +10,10 @@ typedef _BitInt(32) notifications_t;
 #define IPC_KERNEL  (1 << 19)
 #define IPC_CALL    (IPC_SEND | IPC_RECV)
 
-#define NOTIFY_ABORTED (1 << 0)
+#define NOTIFY_ABORTED      (1 << 0)
+#define NOTIFY_ASYNC_OFF    8
+#define NOTIFY_ASYNC(tid)   (1 << 0)
+#define NOTIFY_ASYNC_OFFEND (8 + NUM_TASKS_MAX)
 
 #define MSG_ID(type)   ((type) >> 12)
 #define MSG_HEADER_LEN (sizeof(int) + sizeof(task_t))

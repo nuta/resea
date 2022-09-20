@@ -23,11 +23,9 @@ struct task {
     int priority;
     int quantum;
 
-    // struct message m;
-    // notifications_t notifications;
     list_t senders;
     list_elem_t next;
-    // caps
+    // TODO: caps
 
     struct task *pager;
     uint16_t ref_count;
