@@ -65,8 +65,11 @@ static task_t sys_task_self(void) {
 }
 
 static paddr_t sys_pm_alloc(size_t size, unsigned flags) {
-    // TODO: respect flags
-    return pm_alloc(size, PAGE_TYPE_USER(CURRENT_TASK), PM_ALLOC_ZEROED);
+    if ((flags & ~(PM_ALLOC_ZEROED | PM_ALLOC_ALIGNED)) != 0) {
+        return ERR_INVALID_ARG;
+    }
+
+    return pm_alloc(size, PAGE_TYPE_USER(CURRENT_TASK), flags);
 }
 
 static paddr_t sys_vm_map(task_t tid, uaddr_t uaddr, paddr_t paddr, size_t size,
