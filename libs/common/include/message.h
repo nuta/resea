@@ -30,7 +30,7 @@ struct message {
         // The message contents as raw bytes.
         uint8_t data[0];
 
-        // Auto-generated message fields:
+        // Auto-generated message fields defined in autogen/ipcstub.h:
         //
         //     struct { int x; int y; } add;
         //     struct { int answer; } add_reply;

@@ -114,7 +114,10 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
         size_t copy_len;
         if (src == IPC_ANY && CURRENT_TASK->notifications) {
             // Receive pending notifications as a message.
-            NYI();
+            tmp_m.type = NOTIFY_MSG;
+            tmp_m.src = KERNEL_TASK_ID;
+            tmp_m.notify.notifications = CURRENT_TASK->notifications;
+            copy_len = MSG_HEADER_LEN + sizeof(tmp_m.notify);
             CURRENT_TASK->notifications = 0;
         } else {
             if ((flags & IPC_NOBLOCK) != 0) {
