@@ -59,7 +59,7 @@ void main(void) {
             }
             case ASYNC_PING_MSG: {
                 m.type = ASYNC_PONG_MSG;
-                m.async_pong.a = 84;
+                m.async_pong.a = 42;
                 ipc_send_async(m.src, &m);
                 break;
             }
