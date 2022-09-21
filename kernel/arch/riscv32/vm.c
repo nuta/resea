@@ -65,6 +65,7 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
                              page_attrs_to_pte_flags(attrs) | PTE_V);
     }
 
+    // TODO: move sfence.vma into the above loop
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
         asm_sfence_vma(vaddr + offset);
     }
