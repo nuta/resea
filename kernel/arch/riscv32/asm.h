@@ -162,6 +162,11 @@ static inline void write_tp(uint32_t value) {
     __asm__ __volatile__("mv tp, %0" ::"r"(value));
 }
 
+static inline void asm_sfence_vma(vaddr_t vaddr) {
+    // __asm__ __volatile__("sfence.vma %0, zero" ::"r"(vaddr));
+    __asm__ __volatile__("sfence.vma zero, zero");
+}
+
 static inline void asm_mret(void) {
     __asm__ __volatile__("mret");
 }

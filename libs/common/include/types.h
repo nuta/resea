@@ -30,7 +30,7 @@ typedef char bool;
 
 typedef int error_t;
 typedef int task_t;
-// FIXME: typedef _BitInt(8 + NUM_TASKS_MAX) notifications_t;
+// FIXME: typedef _UnsignedBitInt(8 + NUM_TASKS_MAX) notifications_t;
 typedef uint32_t notifications_t;
 typedef uintmax_t size_t;
 typedef uintmax_t paddr_t;

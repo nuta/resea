@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "asm.h"
 #include "plic.h"
 #include "uart.h"
 #include <kernel/arch.h>
@@ -64,8 +65,9 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
                              page_attrs_to_pte_flags(attrs) | PTE_V);
     }
 
-    // TODO: TLB flush
-    __asm__ __volatile__("sfence.vma zero, zero");
+    for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
+        asm_sfence_vma(vaddr + offset);
+    }
 
     return OK;
 }
@@ -80,10 +82,9 @@ error_t arch_vm_unmap(struct arch_vm *vm, vaddr_t vaddr, size_t size) {
         paddr_t paddr = PTE_PADDR(*pte);
         *pte = 0;
         pm_free(paddr, PAGE_SIZE);
+        asm_sfence_vma(vaddr + offset);
     }
 
-    // TODO: TLB flush
-    __asm__ __volatile__("sfence.vma zero, zero");
     return OK;
 }
 
