@@ -22,7 +22,9 @@ void arch_task_switch(struct task *prev, struct task *next) {
     CPUVAR->arch.sp = next->arch.sp;
     CPUVAR->arch.sp_top = next->arch.sp_top;
 
+    asm_sfence_vma();
     write_satp((1ul << 31) | next->vm.table >> 12);
+    asm_sfence_vma();
 
     riscv32_task_switch(&prev->arch.sp, &next->arch.sp);
 }
