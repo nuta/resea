@@ -53,7 +53,7 @@ error_t handle_page_fault(struct task *task, uaddr_t uaddr, uaddr_t ip,
     }
 
     // Allocate a page and fill it with the file data.
-    // TODO:
+    // TODO: error check
     paddr_t paddr = sys_pm_alloc(PAGE_SIZE, 0);
 
     size_t offset = uaddr - phdr->p_vaddr;

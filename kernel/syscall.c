@@ -66,6 +66,7 @@ static task_t sys_task_self(void) {
 
 static paddr_t sys_pm_alloc(size_t size, unsigned flags) {
     if ((flags & ~(PM_ALLOC_ZEROED | PM_ALLOC_ALIGNED)) != 0) {
+        // FIXME: paddr is unsigned
         return ERR_INVALID_ARG;
     }
 

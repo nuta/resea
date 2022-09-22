@@ -62,7 +62,7 @@ endif
 ifeq ($(RELEASE),)
 CFLAGS += -O1 -fsanitize=undefined
 else
-CFLAGS += -O3
+CFLAGS += -O3 -DDEBUG_BUILD
 endif
 
 QEMUFLAGS += -serial mon:stdio --no-reboot

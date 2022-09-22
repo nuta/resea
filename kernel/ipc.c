@@ -80,6 +80,19 @@ static error_t ipc_slowpath(struct task *dst, task_t src,
                 return ERR_WOULD_BLOCK;
             }
 
+#ifdef DEBUG_BUILD
+            LIST_FOR_EACH (task, &CURRENT_TASK->senders, struct task, next) {
+                if (task->tid == dst->tid) {
+                    ERROR(
+                        "dead lock detected: %s (#%d) and %s (#%d) are trying to send a message to each other"
+                        " (hint: consider using ipc_send_async())",
+                        CURRENT_TASK->name, CURRENT_TASK->tid, dst->name,
+                        dst->tid);
+                    return ERR_ABORTED;
+                }
+            }
+#endif
+
             // The receiver task is not ready. Sleep until it resumes the
             // current task.
             CURRENT_TASK->waiting_for = IPC_DENY;

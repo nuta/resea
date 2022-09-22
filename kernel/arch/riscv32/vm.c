@@ -49,8 +49,6 @@ error_t arch_vm_map(struct arch_vm *vm, vaddr_t vaddr, paddr_t paddr,
     for (uint32_t offset = 0; offset < size; offset += PAGE_SIZE) {
         pte_t *pte = walk(vm->table, vaddr + offset, true);
         if (*pte & PTE_V) {
-            DBG("Page already mapped: vaddr=%p, paddr=%p", vaddr + offset,
-                PTE_PADDR(*pte));
             return ERR_ALREADY_EXISTS;
         }
     }
