@@ -163,7 +163,7 @@ static error_t sys_console_write(__user const char *buf, size_t buf_len) {
         int copy_len = MIN(remaining, (int) sizeof(kbuf));
         memcpy_from_user(kbuf, buf, copy_len);
         for (int i = 0; i < copy_len; i++) {
-            printk("%c", kbuf[i]);
+            printf("%c", kbuf[i]);
         }
         remaining -= copy_len;
     }

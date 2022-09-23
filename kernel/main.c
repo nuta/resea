@@ -54,7 +54,7 @@ void load_boot_elf(struct bootinfo *bootinfo) {
 }
 
 void kernel_main(struct bootinfo *bootinfo) {
-    printk("Booting Resea...\n");
+    printf("Booting Resea...\n");
     memory_init(bootinfo);
     task_init();
     task_mp_init();
