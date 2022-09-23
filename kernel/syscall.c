@@ -56,7 +56,7 @@ static error_t sys_task_destroy(task_t tid) {
 
 /// Exits the current task.
 __noreturn static void sys_task_exit(void) {
-    task_exit(EXCEPTION_GRACE_EXIT);
+    task_exit(EXP_GRACE_EXIT);
 }
 
 /// Returns the current task's ID.

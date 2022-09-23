@@ -90,11 +90,11 @@ void main(void) {
                 }
 
                 switch (m.exception.reason) {
-                    case EXCEPTION_GRACE_EXIT:
+                    case EXP_GRACE_EXIT:
                         task_destroy2(task);
                         TRACE("%s exited gracefully", task->name);
                         break;
-                    case EXCEPTION_INVALID_PAGE_FAULT_REPLY:
+                    case EXP_INVALID_PAGER_REPLY:
                         ERROR("unexpected exception type %d",
                               m.exception.reason);
                         break;

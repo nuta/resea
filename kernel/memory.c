@@ -148,7 +148,7 @@ void handle_page_fault(vaddr_t vaddr, vaddr_t ip, unsigned fault) {
     }
 
     if (!arch_is_mappable_uaddr(vaddr)) {
-        task_exit(EXCEPTION_INVALID_UADDR_ACCESS);
+        task_exit(EXP_INVALID_UADDR);
     }
 
     struct message m;
@@ -160,7 +160,7 @@ void handle_page_fault(vaddr_t vaddr, vaddr_t ip, unsigned fault) {
     error_t err = ipc(pager, pager->tid, (__user struct message *) &m,
                       IPC_CALL | IPC_KERNEL);
     if (err != OK || m.type != PAGE_FAULT_REPLY_MSG) {
-        task_exit(EXCEPTION_INVALID_PAGE_FAULT_REPLY);
+        task_exit(EXP_INVALID_PAGER_REPLY);
     }
 }
 

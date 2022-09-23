@@ -118,6 +118,6 @@ typedef __builtin_va_list va_list;
 #define PAGE_FAULT_PRESENT (1 << 4)
 
 // Exception codes.
-#define EXCEPTION_GRACE_EXIT               1
-#define EXCEPTION_INVALID_UADDR_ACCESS     2
-#define EXCEPTION_INVALID_PAGE_FAULT_REPLY 3
+#define EXP_GRACE_EXIT          1
+#define EXP_INVALID_UADDR       2
+#define EXP_INVALID_PAGER_REPLY 3
