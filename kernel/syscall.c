@@ -70,6 +70,7 @@ static paddr_t sys_pm_alloc(size_t size, unsigned flags) {
         return ERR_INVALID_ARG;
     }
 
+    flags |= PM_ALLOC_ZEROED;
     return pm_alloc(size, PAGE_TYPE_USER(CURRENT_TASK), flags);
 }
 

@@ -143,7 +143,7 @@ void handle_page_fault(vaddr_t vaddr, vaddr_t ip, unsigned fault) {
 
     struct task *pager = CURRENT_TASK->pager;
     if (!pager) {
-        DEBUG_ASSERT(CURRENT_TASK->tid = INIT_TASK_ID);
+        DEBUG_ASSERT(CURRENT_TASK->tid == 1);
         PANIC("page fault in the init task: vaddr=%p, ip=%p", vaddr, ip);
     }
 

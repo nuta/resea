@@ -21,7 +21,7 @@ endif
 
 top_dir := $(shell pwd)
 kernel_elf := $(BUILD_DIR)/resea.elf
-boot_elf := $(BUILD_DIR)/servers/init.elf
+boot_elf := $(BUILD_DIR)/servers/vm.elf
 bootfs_bin := $(BUILD_DIR)/bootfs.bin
 
 #

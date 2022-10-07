@@ -82,6 +82,16 @@ void main(void) {
                 ipc_reply(m.src, &m);
                 break;
             }
+            case VM_ALLOC_PHYSICAL_MSG: {
+                struct task *task = task_lookup(m.src);
+                ASSERT(task);
+
+                m.type = VM_ALLOC_PHYSICAL_REPLY_MSG;
+                // m.vm_alloc_physical_reply.uaddr = uaddr;
+                // m.vm_alloc_physical_reply.paddr = paddr;
+                ipc_reply(m.src, &m);
+                break;
+            }
             case EXCEPTION_MSG: {
                 struct task *task = task_lookup(m.exception.task);
                 if (!task) {

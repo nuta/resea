@@ -30,6 +30,7 @@ typedef char bool;
 
 typedef int error_t;
 typedef int task_t;
+typedef int handle_t;
 // FIXME: typedef _UnsignedBitInt(8 + NUM_TASKS_MAX) notifications_t;
 typedef uint32_t notifications_t;
 typedef uintmax_t size_t;
@@ -89,7 +90,6 @@ typedef __builtin_va_list va_list;
 
 // Remarkable task IDs.
 #define KERNEL_TASK_ID -1
-#define INIT_TASK_ID   1
 
 // System call numbers.
 #define SYS_IPC           1

@@ -22,3 +22,7 @@ oneway exception(task: task, reason: int);
 /// The kernel calls this RPC when a page fault occurs.
 /// When the pager task replies, the kernel continues executing the page-faulted task.
 rpc page_fault(task: task, uaddr: uaddr, ip: uaddr, fault: uint) -> ();
+
+namespace vm {
+    rpc alloc_physical(size: size, paddr: paddr) -> (uaddr: uaddr, paddr: paddr);
+}
