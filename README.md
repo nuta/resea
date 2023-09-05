@@ -10,7 +10,7 @@ It aims to provide an attractive developer experience and be *hackable*:
 intuitive to understand the whole design, easy to customize the system, and fun
 to extend the functionality.
 
-See **[Documentation](https://resea.org/docs)** for more detials.
+See **[Documentation](https://resea.org/docs)** for more details.
 
 Features
 --------
