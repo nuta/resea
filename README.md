@@ -12,6 +12,10 @@ to extend the functionality.
 
 See **[Documentation](https://resea.org/docs)** for more details.
 
+> [!IMPORTANT]
+> 
+> This software is no longer maintained. If you are interested in a exciting modern microkernel-based OS, check out my new project **[Starina](https://starina.dev)**.
+
 Features
 --------
 - A **minimalistic and policy-free microkernel** based operating system written entirely from scratch in C (and less than 5000 LoC). *Everything is message passing!*
