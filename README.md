@@ -1,7 +1,5 @@
 Resea
 =====
-[![Integrated Tests](https://github.com/nuta/resea/workflows/Integrated%20Tests/badge.svg)](https://github.com/nuta/resea/actions/workflows/integrated_tests.yml)
-[![Gitter chat](https://badges.gitter.im/resea/community.svg)](https://gitter.im/resea/community)
 
 ![screenshot](https://gist.githubusercontent.com/nuta/42b36c50df15142ac25c3a5420607f2a/raw/e6c05de775f4649f6ba29638fd3ed8f40ea2f74f/screenshot.png)
 
@@ -14,7 +12,7 @@ See **[Documentation](https://resea.org/docs)** for more details.
 
 > [!IMPORTANT]
 > 
-> This software is no longer maintained. If you are interested in a exciting modern microkernel-based OS, check out my new project **[Starina](https://starina.dev)**.
+> This software is no longer maintained. If you are interested in an exciting modern microkernel-based OS, check out my new project **[Starina](https://starina.dev)**.
 
 Features
 --------
